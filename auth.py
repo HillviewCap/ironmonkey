@@ -5,6 +5,7 @@ from models import User, db
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField
 from wtforms.validators import DataRequired, Email, EqualTo
+import sqlalchemy.exc
 
 login_manager = LoginManager()
 
@@ -52,7 +53,11 @@ def register():
         hashed_password = generate_password_hash(form.password.data)
         new_user = User(email=form.email.data, password=hashed_password)
         db.session.add(new_user)
-        db.session.commit()
-        flash('Your account has been created! You are now able to log in', 'success')
-        return redirect(url_for('login'))
+        try:
+            db.session.commit()
+            flash('Your account has been created! You are now able to log in', 'success')
+            return redirect(url_for('login'))
+        except sqlalchemy.exc.IntegrityError:
+            db.session.rollback()
+            flash('Error: Email address already exists. Please use a different email.', 'danger')
     return render_template('register.html', form=form)
