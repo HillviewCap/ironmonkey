@@ -7,10 +7,11 @@ from pydantic import BaseModel, Field
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin
 from werkzeug.security import check_password_hash
+import uuid
+import xml.etree.ElementTree as ET
+import requests
 
 db = SQLAlchemy()
-
-import uuid
 from sqlalchemy.dialects.postgresql import UUID
 
 class User(UserMixin, db.Model):
@@ -23,6 +24,22 @@ class User(UserMixin, db.Model):
 
     def check_password(self, password: str) -> bool:
         return check_password_hash(self.password, password)
+
+class RSSFeed(db.Model):
+    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    url = db.Column(db.String(255), unique=True, nullable=False)
+    title = db.Column(db.String(255), nullable=False)
+    category = db.Column(db.String(100), nullable=False)
+    description = db.Column(db.Text, nullable=True)
+
+    @staticmethod
+    def fetch_feed_info(url):
+        response = requests.get(url)
+        root = ET.fromstring(response.content)
+        channel = root.find('channel')
+        title = channel.find('title').text
+        description = channel.find('description').text
+        return title, description
 
 class SearchParams(BaseModel):
     query: str

@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>RSS Feed Manager</h1>
+
+<form method="POST">
+    {{ form.hidden_tag() }}
+    <div>
+        {{ form.url.label }}
+        {{ form.url() }}
+    </div>
+    <div>
+        {{ form.category.label }}
+        {{ form.category() }}
+    </div>
+    {{ form.submit() }}
+</form>
+
+<h2>Existing RSS Feeds</h2>
+<ul>
+    {% for feed in feeds %}
+    <li>
+        <strong>{{ feed.title }}</strong> ({{ feed.category }})
+        <br>
+        {{ feed.description }}
+        <br>
+        <a href="{{ feed.url }}" target="_blank">{{ feed.url }}</a>
+    </li>
+    {% endfor %}
+</ul>
+{% endblock %}

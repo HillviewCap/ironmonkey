@@ -1,6 +1,6 @@
 from flask import Flask, render_template, request, jsonify
 from sqlalchemy import create_engine, text
-from models import SearchParams, SearchResult, User, db
+from models import SearchParams, SearchResult, User, db, RSSFeed
 from datetime import datetime
 from flask_login import login_required, current_user
 from auth import init_auth, login, logout, register
@@ -26,9 +26,11 @@ app.route('/login', methods=['GET', 'POST'])(login)
 app.route('/logout')(logout)
 app.route('/register', methods=['GET', 'POST'])(register)
 
+from rss_manager import rss_manager
+app.register_blueprint(rss_manager)
+
 with app.app_context():
     db.create_all()
-
 
 from auth import index
 
