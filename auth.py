@@ -22,8 +22,8 @@ def init_auth(app):
     @login_manager.user_loader
     def load_user(user_id):
         try:
-            return User.query.get(user_id)
-        except ValueError:
+            return User.query.get(uuid.UUID(user_id))
+        except (ValueError, AttributeError):
             return None
 
 @login_required

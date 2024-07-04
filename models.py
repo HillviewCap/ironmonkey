@@ -19,7 +19,7 @@ class User(UserMixin, db.Model):
     password = db.Column(db.String(255), nullable=False)
 
     def get_id(self):
-        return str(self.id)
+        return str(self.id) if self.id else None
 
     def check_password(self, password: str) -> bool:
         return check_password_hash(self.password, password)
