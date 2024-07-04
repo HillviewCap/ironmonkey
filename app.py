@@ -18,6 +18,9 @@ app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
 db.init_app(app)
 init_auth(app)
 
+with app.app_context():
+    db.create_all()
+
 
 @app.route('/')
 @login_required
