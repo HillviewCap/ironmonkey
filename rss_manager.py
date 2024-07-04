@@ -1,9 +1,10 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash
+from flask import Blueprint, render_template, redirect, url_for, flash
 from flask_login import login_required
 from models import db, RSSFeed
 from flask_wtf import FlaskForm
 from wtforms import StringField, SubmitField
 from wtforms.validators import DataRequired, URL
+from typing import List
 
 rss_manager = Blueprint('rss_manager', __name__)
 
@@ -15,13 +16,13 @@ class RSSFeedForm(FlaskForm):
 @rss_manager.route('/rss_manager', methods=['GET', 'POST'])
 @login_required
 def manage_rss():
-    form = RSSFeedForm()
+    form: RSSFeedForm = RSSFeedForm()
     if form.validate_on_submit():
-        url = form.url.data
-        category = form.category.data
+        url: str = form.url.data
+        category: str = form.category.data
         try:
             title, description = RSSFeed.fetch_feed_info(url)
-            new_feed = RSSFeed(url=url, title=title, category=category, description=description)
+            new_feed: RSSFeed = RSSFeed(url=url, title=title, category=category, description=description)
             db.session.add(new_feed)
             db.session.commit()
             flash('RSS Feed added successfully!', 'success')
@@ -29,5 +30,5 @@ def manage_rss():
             flash(f'Error adding RSS Feed: {str(e)}', 'error')
         return redirect(url_for('rss_manager.manage_rss'))
     
-    feeds = RSSFeed.query.all()
+    feeds: List[RSSFeed] = RSSFeed.query.all()
     return render_template('rss_manager.html', form=form, feeds=feeds)
