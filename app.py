@@ -1,9 +1,9 @@
-from flask import Flask, render_template, request, jsonify, redirect, url_for, flash
+from flask import Flask, render_template, request, jsonify
 from sqlalchemy import create_engine, text
 from models import SearchParams, SearchResult, User, db
 from datetime import datetime
-from flask_login import login_required, current_user, login_user
-from auth import init_auth, LoginForm
+from flask_login import login_required, current_user
+from auth import init_auth
 import os
 from dotenv import load_dotenv
 from werkzeug.exceptions import BadRequest
@@ -18,18 +18,6 @@ app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
 db.init_app(app)
 init_auth(app)
 
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    form = LoginForm()
-    if form.validate_on_submit():
-        user = User.query.filter_by(email=form.email.data).first()
-        if user and user.check_password(form.password.data):
-            login_user(user)
-            next_page = request.args.get('next')
-            return redirect(next_page or url_for('home'))
-        else:
-            flash('Invalid email or password')
-    return render_template('login.html', form=form)
 
 @app.route('/')
 @login_required
