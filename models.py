@@ -18,6 +18,11 @@ class User(UserMixin, db.Model):
     email = db.Column(db.String(120), unique=True, nullable=False)
     password = db.Column(db.String(255), nullable=False)
 
+    def __init__(self, **kwargs):
+        super(User, self).__init__(**kwargs)
+        if self.id is None:
+            self.id = uuid.uuid4()
+
     def check_password(self, password: str) -> bool:
         return check_password_hash(self.password, password)
 
