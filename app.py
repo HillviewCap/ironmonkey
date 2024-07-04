@@ -1,24 +1,36 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, jsonify
 from sqlalchemy import create_engine, text
-from models import SearchParams, SearchResult
+from models import SearchParams, SearchResult, User, db
 from datetime import datetime
+from flask_login import login_required
+from auth import init_auth
+import os
+from dotenv import load_dotenv
+from werkzeug.exceptions import BadRequest
+import bleach
+
+load_dotenv()
 
 app = Flask(__name__)
-engine = create_engine('sqlite:///threats.db')  # Replace with your actual database URL
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
+db.init_app(app)
+init_auth(app)
 
 @app.route('/')
+@login_required
 def home():
     return render_template('index.html')
 
-@app.route('/search')
+@app.route('/search', methods=['POST'])
+@login_required
 def search():
-    search_params = SearchParams(
-        query=request.args.get('query', ''),
-        start_date=request.args.get('start_date'),
-        end_date=request.args.get('end_date'),
-        source_types=request.args.getlist('source_types'),
-        keywords=request.args.getlist('keywords')
-    )
+    try:
+        data = request.json
+        search_params = SearchParams(**data)
+    except ValueError as e:
+        raise BadRequest(str(e))
 
     query = """
         SELECT id, title, description, source_type, date, url
@@ -26,7 +38,7 @@ def search():
         WHERE (title LIKE :query OR description LIKE :query)
     """
     
-    params = {'query': f'%{search_params.query}%'}
+    params = {'query': f'%{bleach.clean(search_params.query)}%'}
 
     if search_params.start_date:
         query += " AND date >= :start_date"
@@ -39,20 +51,20 @@ def search():
     if search_params.source_types:
         query += f" AND source_type IN ({','.join([':source_type_' + str(i) for i in range(len(search_params.source_types))])})"
         for i, source_type in enumerate(search_params.source_types):
-            params[f'source_type_{i}'] = source_type
+            params[f'source_type_{i}'] = bleach.clean(source_type)
 
     if search_params.keywords:
         for i, keyword in enumerate(search_params.keywords):
             query += f" AND (title LIKE :keyword{i} OR description LIKE :keyword{i})"
-            params[f'keyword{i}'] = f'%{keyword}%'
+            params[f'keyword{i}'] = f'%{bleach.clean(keyword)}%'
 
     query = text(query)
 
-    with engine.connect() as conn:
+    with db.engine.connect() as conn:
         result = conn.execute(query, params)
         results = [SearchResult(**row._mapping) for row in result]
 
-    return render_template('search_results.html', results=results, search_params=search_params)
+    return jsonify([result.dict() for result in results])
 
 if __name__ == '__main__':
     app.run(debug=True)
