@@ -20,30 +20,32 @@ def search():
         keywords=request.args.getlist('keywords')
     )
 
-    query = text("""
+    query = """
         SELECT id, title, description, source_type, date, url
         FROM threats
         WHERE title LIKE :query OR description LIKE :query
-    """)
+    """
     
     params = {'query': f'%{search_params.query}%'}
 
     if search_params.start_date:
-        query = query.add_text(" AND date >= :start_date")
+        query += " AND date >= :start_date"
         params['start_date'] = search_params.start_date
 
     if search_params.end_date:
-        query = query.add_text(" AND date <= :end_date")
+        query += " AND date <= :end_date"
         params['end_date'] = search_params.end_date
 
     if search_params.source_types:
-        query = query.add_text(" AND source_type IN :source_types")
+        query += " AND source_type IN :source_types"
         params['source_types'] = tuple(search_params.source_types)
 
     if search_params.keywords:
         for i, keyword in enumerate(search_params.keywords):
-            query = query.add_text(f" AND (title LIKE :keyword{i} OR description LIKE :keyword{i})")
+            query += f" AND (title LIKE :keyword{i} OR description LIKE :keyword{i})"
             params[f'keyword{i}'] = f'%{keyword}%'
+
+    query = text(query)
 
     with engine.connect() as conn:
         result = conn.execute(query, params)
