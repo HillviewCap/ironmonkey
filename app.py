@@ -9,6 +9,7 @@ from dotenv import load_dotenv
 from werkzeug.exceptions import BadRequest
 import bleach
 from flask_wtf.csrf import CSRFProtect
+from flask_migrate import Migrate
 
 load_dotenv()
 
@@ -19,6 +20,7 @@ app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
 db.init_app(app)
 csrf = CSRFProtect(app)
 init_auth(app)
+migrate = Migrate(app, db)
 
 app.route('/login', methods=['GET', 'POST'])(login)
 app.route('/logout')(logout)

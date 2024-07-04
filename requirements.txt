@@ -8,3 +8,4 @@ Flask-SQLAlchemy
 python-dotenv
 bleach
 email_validator
+Flask-Migrate
