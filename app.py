@@ -45,39 +45,42 @@ def search():
     except ValueError as e:
         raise BadRequest(str(e))
 
-    query = """
-        SELECT id, title, description, source_type, date, url
-        FROM threats
-        WHERE (title LIKE :query OR description LIKE :query)
-    """
+    query = db.session.query(Threat)
     
-    params = {'query': f'%{bleach.clean(search_params.query)}%'}
+    query = query.filter(
+        db.or_(
+            Threat.title.ilike(f'%{bleach.clean(search_params.query)}%'),
+            Threat.description.ilike(f'%{bleach.clean(search_params.query)}%')
+        )
+    )
 
     if search_params.start_date:
-        query += " AND date >= :start_date"
-        params['start_date'] = search_params.start_date
+        query = query.filter(Threat.date >= search_params.start_date)
 
     if search_params.end_date:
-        query += " AND date <= :end_date"
-        params['end_date'] = search_params.end_date
+        query = query.filter(Threat.date <= search_params.end_date)
 
     if search_params.source_types:
-        query += f" AND source_type IN ({','.join([':source_type_' + str(i) for i in range(len(search_params.source_types))])})"
-        for i, source_type in enumerate(search_params.source_types):
-            params[f'source_type_{i}'] = bleach.clean(source_type)
+        query = query.filter(Threat.source_type.in_([bleach.clean(st) for st in search_params.source_types]))
 
     if search_params.keywords:
-        for i, keyword in enumerate(search_params.keywords):
-            query += f" AND (title LIKE :keyword{i} OR description LIKE :keyword{i})"
-            params[f'keyword{i}'] = f'%{bleach.clean(keyword)}%'
+        for keyword in search_params.keywords:
+            query = query.filter(
+                db.or_(
+                    Threat.title.ilike(f'%{bleach.clean(keyword)}%'),
+                    Threat.description.ilike(f'%{bleach.clean(keyword)}%')
+                )
+            )
 
-    query = text(query)
-
-    with db.engine.connect() as conn:
-        result = conn.execute(query, params)
-        results = [SearchResult(**row._mapping) for row in result]
-
-    return jsonify([result.dict() for result in results])
+    results = query.all()
+    return jsonify([SearchResult(
+        id=str(threat.id),
+        title=threat.title,
+        description=threat.description,
+        source_type=threat.source_type,
+        date=threat.date,
+        url=threat.url
+    ).dict() for threat in results])
 
 if __name__ == '__main__':
     app.run(debug=True)
