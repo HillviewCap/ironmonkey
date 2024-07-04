@@ -21,8 +21,8 @@ def manage_rss():
         url: str = form.url.data
         category: str = form.category.data
         try:
-            title, description = RSSFeed.fetch_feed_info(url)
-            new_feed: RSSFeed = RSSFeed(url=url, title=title, category=category, description=description)
+            title, description, last_build_date = RSSFeed.fetch_feed_info(url)
+            new_feed: RSSFeed = RSSFeed(url=url, title=title, category=category, description=description, last_build_date=last_build_date)
             db.session.add(new_feed)
             db.session.commit()
             flash('RSS Feed added successfully!', 'success')

@@ -25,6 +25,8 @@
         {{ feed.description }}
         <br>
         <a href="{{ feed.url }}" target="_blank">{{ feed.url }}</a>
+        <br>
+        Last Build Date: {{ feed.last_build_date or 'Not available' }}
     </li>
     {% endfor %}
 </ul>

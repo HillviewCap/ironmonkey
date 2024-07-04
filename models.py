@@ -30,16 +30,19 @@ class RSSFeed(db.Model):
     title = db.Column(db.String(255), nullable=False)
     category = db.Column(db.String(100), nullable=False)
     description = db.Column(db.Text, nullable=True)
+    last_build_date = db.Column(db.String(100), nullable=True)
 
     @staticmethod
-    def fetch_feed_info(url: str) -> tuple[str, str]:
+    def fetch_feed_info(url: str) -> tuple[str, str, str]:
         with httpx.Client() as client:
             response = client.get(url)
         root = ET.fromstring(response.content)
         channel = root.find('channel')
         title = channel.find('title').text
         description = channel.find('description').text
-        return title, description
+        last_build_date = channel.find('lastBuildDate')
+        last_build_date = last_build_date.text if last_build_date is not None else None
+        return title, description, last_build_date
 
 class SearchParams(BaseModel):
     query: str
