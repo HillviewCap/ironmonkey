@@ -1,7 +1,7 @@
 from flask import Flask, redirect, url_for, render_template, request, flash
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
-from werkzeug.security import check_password_hash
-from models import User
+from werkzeug.security import check_password_hash, generate_password_hash
+from models import User, db
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField
 from wtforms.validators import DataRequired, Email, EqualTo
