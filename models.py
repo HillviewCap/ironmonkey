@@ -2,14 +2,13 @@ from __future__ import annotations
 
 from datetime import datetime
 from typing import List, Optional
-from uuid import UUID as PyUUID
+from uuid import UUID as PyUUID, uuid4
 from pydantic import BaseModel, Field
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin
 from werkzeug.security import check_password_hash
-import uuid
 import xml.etree.ElementTree as ET
-import requests
+import httpx
 
 db = SQLAlchemy()
 from sqlalchemy.dialects.postgresql import UUID
@@ -26,15 +25,16 @@ class User(UserMixin, db.Model):
         return check_password_hash(self.password, password)
 
 class RSSFeed(db.Model):
-    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     url = db.Column(db.String(255), unique=True, nullable=False)
     title = db.Column(db.String(255), nullable=False)
     category = db.Column(db.String(100), nullable=False)
     description = db.Column(db.Text, nullable=True)
 
     @staticmethod
-    def fetch_feed_info(url):
-        response = requests.get(url)
+    def fetch_feed_info(url: str) -> tuple[str, str]:
+        with httpx.Client() as client:
+            response = client.get(url)
         root = ET.fromstring(response.content)
         channel = root.find('channel')
         title = channel.find('title').text
