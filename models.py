@@ -61,3 +61,11 @@ class SearchResult(BaseModel):
 
     class Config:
         arbitrary_types_allowed = True
+
+class Threat(db.Model):
+    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    title = db.Column(db.String(255), nullable=False)
+    description = db.Column(db.Text, nullable=False)
+    source_type = db.Column(db.String(100), nullable=False)
+    date = db.Column(db.DateTime, nullable=False)
+    url = db.Column(db.String(255), nullable=False)
