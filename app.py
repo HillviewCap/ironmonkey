@@ -10,6 +10,7 @@ from werkzeug.exceptions import BadRequest
 import bleach
 from flask_wtf.csrf import CSRFProtect
 from flask_migrate import Migrate
+from typing import List
 
 load_dotenv()
 
@@ -38,7 +39,12 @@ app.route('/')(index)
 
 @app.route('/search', methods=['POST'])
 @login_required
-def search():
+def search() -> List[dict]:
+    """
+    Perform a search based on the provided search parameters.
+    
+    :return: A list of search results as dictionaries
+    """
     try:
         data = request.json
         search_params = SearchParams(**data)
