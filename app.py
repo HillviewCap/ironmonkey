@@ -22,11 +22,9 @@ with app.app_context():
     db.create_all()
 
 
-@app.route('/')
-@app.route('/index')
-@login_required
-def index():
-    return render_template('index.html', user=current_user)
+from auth import index
+
+app.route('/')(index)
 
 @app.route('/search', methods=['POST'])
 @login_required
