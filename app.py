@@ -3,7 +3,7 @@ from sqlalchemy import create_engine, text
 from models import SearchParams, SearchResult, User, db
 from datetime import datetime
 from flask_login import login_required, current_user
-from auth import init_auth, login, logout
+from auth import init_auth, login, logout, register
 import os
 from dotenv import load_dotenv
 from werkzeug.exceptions import BadRequest
@@ -22,6 +22,7 @@ init_auth(app)
 
 app.route('/login', methods=['GET', 'POST'])(login)
 app.route('/logout')(logout)
+app.route('/register', methods=['GET', 'POST'])(register)
 
 with app.app_context():
     db.create_all()
