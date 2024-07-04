@@ -9,4 +9,4 @@ python-dotenv
 bleach
 email_validator
 Flask-Migrate
-requests
+httpx
