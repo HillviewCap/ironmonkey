@@ -3,10 +3,33 @@
 {% block content %}
 <div class="mb-8">
     <h2 class="text-2xl font-bold mb-4">Search Results</h2>
+    <form action="{{ url_for('search') }}" method="get" class="mb-4">
+        <input type="text" name="query" value="{{ search_params.query }}" placeholder="Search threats..." class="p-2 border rounded-lg w-64 mb-2">
+        <div class="flex space-x-4 mb-2">
+            <input type="date" name="start_date" value="{{ search_params.start_date }}" class="p-2 border rounded-lg">
+            <input type="date" name="end_date" value="{{ search_params.end_date }}" class="p-2 border rounded-lg">
+        </div>
+        <div class="mb-2">
+            <label class="block">Source Types:</label>
+            <input type="checkbox" name="source_types" value="news" {% if 'news' in search_params.source_types %}checked{% endif %}> News
+            <input type="checkbox" name="source_types" value="blog" {% if 'blog' in search_params.source_types %}checked{% endif %}> Blog
+            <input type="checkbox" name="source_types" value="report" {% if 'report' in search_params.source_types %}checked{% endif %}> Report
+        </div>
+        <div class="mb-2">
+            <label class="block">Keywords:</label>
+            <input type="text" name="keywords" value="{{ search_params.keywords|join(', ') }}" placeholder="Enter keywords" class="p-2 border rounded-lg w-64">
+        </div>
+        <button type="submit" class="bg-blue-600 text-white p-2 rounded-lg">Search</button>
+    </form>
     {% if results %}
-        <ul class="list-disc list-inside">
+        <ul class="space-y-4">
         {% for result in results %}
-            <li class="mb-2">{{ result }}</li>
+            <li class="border p-4 rounded-lg">
+                <h3 class="text-xl font-bold">{{ result.title }}</h3>
+                <p class="text-gray-600">{{ result.description }}</p>
+                <p class="text-sm text-gray-500">Source: {{ result.source_type }} | Date: {{ result.date.strftime('%Y-%m-%d') }}</p>
+                <a href="{{ result.url }}" target="_blank" class="text-blue-600 hover:underline">Read more</a>
+            </li>
         {% endfor %}
         </ul>
     {% else %}
