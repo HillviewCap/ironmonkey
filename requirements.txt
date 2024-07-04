@@ -4,3 +4,4 @@ pydantic
 Flask-Login
 Flask-Principal
 Flask-WTF
+Flask-SQLAlchemy
