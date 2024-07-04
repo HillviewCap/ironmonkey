@@ -23,8 +23,9 @@ with app.app_context():
 
 
 @app.route('/')
+@app.route('/index')
 @login_required
-def home():
+def index():
     return render_template('index.html', user=current_user)
 
 @app.route('/search', methods=['POST'])
