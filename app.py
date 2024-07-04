@@ -3,7 +3,7 @@ from sqlalchemy import create_engine, text
 from models import SearchParams, SearchResult, User, db
 from datetime import datetime
 from flask_login import login_required, current_user
-from auth import init_auth
+from auth import init_auth, login, logout
 import os
 from dotenv import load_dotenv
 from werkzeug.exceptions import BadRequest
@@ -17,6 +17,9 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
 db.init_app(app)
 init_auth(app)
+
+app.route('/login', methods=['GET', 'POST'])(login)
+app.route('/logout')(logout)
 
 with app.app_context():
     db.create_all()
