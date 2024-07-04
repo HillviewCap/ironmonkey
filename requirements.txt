@@ -7,3 +7,4 @@ Flask-WTF
 Flask-SQLAlchemy
 python-dotenv
 bleach
+email_validator
