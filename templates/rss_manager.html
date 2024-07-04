@@ -4,18 +4,31 @@
 <div class="max-w-4xl mx-auto p-6">
     <h1 class="text-3xl font-bold mb-6">RSS Feed Manager</h1>
 
-    <form method="POST" class="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
-        {{ form.hidden_tag() }}
-        <div class="mb-4">
-            {{ form.url.label(class="block text-gray-700 text-sm font-bold mb-2") }}
-            {{ form.url(class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline") }}
-        </div>
-        <div class="mb-4">
-            {{ form.category.label(class="block text-gray-700 text-sm font-bold mb-2") }}
-            {{ form.category(class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline") }}
-        </div>
-        {{ form.submit(class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline") }}
-    </form>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+        <form method="POST" class="bg-white shadow-md rounded px-8 pt-6 pb-8">
+            {{ form.hidden_tag() }}
+            <h2 class="text-xl font-bold mb-4">Add Single Feed</h2>
+            <div class="mb-4">
+                {{ form.url.label(class="block text-gray-700 text-sm font-bold mb-2") }}
+                {{ form.url(class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline") }}
+            </div>
+            <div class="mb-4">
+                {{ form.category.label(class="block text-gray-700 text-sm font-bold mb-2") }}
+                {{ form.category(class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline") }}
+            </div>
+            {{ form.submit(class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline") }}
+        </form>
+
+        <form method="POST" enctype="multipart/form-data" class="bg-white shadow-md rounded px-8 pt-6 pb-8">
+            {{ csv_form.hidden_tag() }}
+            <h2 class="text-xl font-bold mb-4">Import Feeds from CSV</h2>
+            <div class="mb-4">
+                {{ csv_form.file.label(class="block text-gray-700 text-sm font-bold mb-2") }}
+                {{ csv_form.file(class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline") }}
+            </div>
+            {{ csv_form.submit(class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline") }}
+        </form>
+    </div>
 
     <h2 class="text-2xl font-bold mb-4">Existing RSS Feeds</h2>
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">

@@ -2,9 +2,11 @@ from flask import Blueprint, render_template, redirect, url_for, flash, request
 from flask_login import login_required
 from models import db, RSSFeed
 from flask_wtf import FlaskForm
-from wtforms import StringField, SubmitField
+from wtforms import StringField, SubmitField, FileField
 from wtforms.validators import DataRequired, URL
 from typing import List
+import csv
+from io import TextIOWrapper
 
 rss_manager = Blueprint('rss_manager', __name__)
 
@@ -13,10 +15,16 @@ class RSSFeedForm(FlaskForm):
     category = StringField('Category', validators=[DataRequired()])
     submit = SubmitField('Add RSS Feed')
 
+class CSVUploadForm(FlaskForm):
+    file = FileField('CSV File', validators=[DataRequired()])
+    submit = SubmitField('Import Feeds')
+
 @rss_manager.route('/rss_manager', methods=['GET', 'POST'])
 @login_required
 def manage_rss():
     form: RSSFeedForm = RSSFeedForm()
+    csv_form: CSVUploadForm = CSVUploadForm()
+    
     if form.validate_on_submit():
         url: str = form.url.data
         category: str = form.category.data
@@ -30,8 +38,28 @@ def manage_rss():
             flash(f'Error adding RSS Feed: {str(e)}', 'error')
         return redirect(url_for('rss_manager.manage_rss'))
     
+    if csv_form.validate_on_submit():
+        csv_file = csv_form.file.data
+        try:
+            csv_file = TextIOWrapper(csv_file, encoding='utf-8')
+            csv_reader = csv.reader(csv_file)
+            for row in csv_reader:
+                if len(row) >= 2:
+                    url, category = row[0], row[1]
+                    try:
+                        title, description, last_build_date = RSSFeed.fetch_feed_info(url)
+                        new_feed: RSSFeed = RSSFeed(url=url, title=title, category=category, description=description, last_build_date=last_build_date)
+                        db.session.add(new_feed)
+                    except Exception as e:
+                        flash(f'Error adding RSS Feed {url}: {str(e)}', 'error')
+            db.session.commit()
+            flash('CSV file processed successfully!', 'success')
+        except Exception as e:
+            flash(f'Error processing CSV file: {str(e)}', 'error')
+        return redirect(url_for('rss_manager.manage_rss'))
+    
     feeds: List[RSSFeed] = RSSFeed.query.all()
-    return render_template('rss_manager.html', form=form, feeds=feeds)
+    return render_template('rss_manager.html', form=form, csv_form=csv_form, feeds=feeds)
 
 @rss_manager.route('/delete_feed/<uuid:feed_id>', methods=['POST'])
 @login_required
