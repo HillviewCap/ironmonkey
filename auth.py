@@ -5,9 +5,11 @@ from wtforms import StringField, PasswordField, SubmitField
 from wtforms.validators import DataRequired, Email
 from werkzeug.security import generate_password_hash, check_password_hash
 from models import User, db
-from flask import current_app, request, redirect, url_for, flash
+from flask import current_app, request, redirect, url_for, flash, render_template
 
 login_manager = LoginManager()
+login_manager.login_view = 'login'
+login_manager.login_message = 'Please log in to access this page.'
 principal = Principal()
 
 class LoginForm(FlaskForm):
