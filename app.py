@@ -23,7 +23,7 @@ def search():
     query = """
         SELECT id, title, description, source_type, date, url
         FROM threats
-        WHERE title LIKE :query OR description LIKE :query
+        WHERE (title LIKE :query OR description LIKE :query)
     """
     
     params = {'query': f'%{search_params.query}%'}
@@ -37,8 +37,9 @@ def search():
         params['end_date'] = search_params.end_date
 
     if search_params.source_types:
-        query += " AND source_type IN :source_types"
-        params['source_types'] = tuple(search_params.source_types)
+        query += f" AND source_type IN ({','.join([':source_type_' + str(i) for i in range(len(search_params.source_types))])})"
+        for i, source_type in enumerate(search_params.source_types):
+            params[f'source_type_{i}'] = source_type
 
     if search_params.keywords:
         for i, keyword in enumerate(search_params.keywords):
