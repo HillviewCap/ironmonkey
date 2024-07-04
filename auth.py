@@ -4,7 +4,7 @@ from werkzeug.security import check_password_hash
 from models import User
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField
-from wtforms.validators import DataRequired, Email
+from wtforms.validators import DataRequired, Email, EqualTo
 
 login_manager = LoginManager()
 
@@ -39,3 +39,20 @@ def login():
 def logout():
     logout_user()
     return redirect(url_for('index'))
+
+class RegisterForm(FlaskForm):
+    email = StringField('Email', validators=[DataRequired(), Email()])
+    password = PasswordField('Password', validators=[DataRequired()])
+    confirm_password = PasswordField('Confirm Password', validators=[DataRequired(), EqualTo('password')])
+    submit = SubmitField('Register')
+
+def register():
+    form = RegisterForm()
+    if form.validate_on_submit():
+        hashed_password = generate_password_hash(form.password.data)
+        new_user = User(email=form.email.data, password=hashed_password)
+        db.session.add(new_user)
+        db.session.commit()
+        flash('Your account has been created! You are now able to log in', 'success')
+        return redirect(url_for('login'))
+    return render_template('register.html', form=form)
