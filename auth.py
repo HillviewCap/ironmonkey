@@ -3,16 +3,18 @@ from flask_login import LoginManager, UserMixin, login_user, login_required, log
 from werkzeug.security import check_password_hash, generate_password_hash
 from models import User, db
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SubmitField
+from wtforms import StringField, PasswordField, SubmitField, BooleanField
 from wtforms.validators import DataRequired, Email, EqualTo
 import sqlalchemy.exc
 import uuid
+from datetime import timedelta
 
 login_manager = LoginManager()
 
 class LoginForm(FlaskForm):
     email = StringField('Email', validators=[DataRequired(), Email()])
     password = PasswordField('Password', validators=[DataRequired()])
+    remember = BooleanField('Remember Me')
     submit = SubmitField('Log In')
 
 def init_auth(app):
@@ -35,7 +37,7 @@ def login():
     if form.validate_on_submit():
         user = User.query.filter_by(email=form.email.data).first()
         if user and check_password_hash(user.password, form.password.data):
-            login_user(user)
+            login_user(user, remember=form.remember.data, duration=timedelta(days=30))
             return redirect(url_for('index'))
         else:
             flash('Invalid email or password')
