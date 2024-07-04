@@ -1,33 +1,38 @@
 {% extends "base.html" %}
 
 {% block content %}
-<h1>RSS Feed Manager</h1>
+<div class="max-w-4xl mx-auto p-6">
+    <h1 class="text-3xl font-bold mb-6">RSS Feed Manager</h1>
 
-<form method="POST">
-    {{ form.hidden_tag() }}
-    <div>
-        {{ form.url.label }}
-        {{ form.url() }}
-    </div>
-    <div>
-        {{ form.category.label }}
-        {{ form.category() }}
-    </div>
-    {{ form.submit() }}
-</form>
+    <form method="POST" class="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
+        {{ form.hidden_tag() }}
+        <div class="mb-4">
+            {{ form.url.label(class="block text-gray-700 text-sm font-bold mb-2") }}
+            {{ form.url(class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline") }}
+        </div>
+        <div class="mb-4">
+            {{ form.category.label(class="block text-gray-700 text-sm font-bold mb-2") }}
+            {{ form.category(class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline") }}
+        </div>
+        {{ form.submit(class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline") }}
+    </form>
 
-<h2>Existing RSS Feeds</h2>
-<ul>
-    {% for feed in feeds %}
-    <li>
-        <strong>{{ feed.title }}</strong> ({{ feed.category }})
-        <br>
-        {{ feed.description }}
-        <br>
-        <a href="{{ feed.url }}" target="_blank">{{ feed.url }}</a>
-        <br>
-        Last Build Date: {{ feed.last_build_date or 'Not available' }}
-    </li>
-    {% endfor %}
-</ul>
+    <h2 class="text-2xl font-bold mb-4">Existing RSS Feeds</h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {% for feed in feeds %}
+        <div class="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
+            <h3 class="text-xl font-bold mb-2">{{ feed.title }}</h3>
+            <p class="text-gray-600 mb-2">Category: {{ feed.category }}</p>
+            <p class="text-sm text-gray-500 mb-2">{{ feed.description }}</p>
+            <a href="{{ feed.url }}" target="_blank" class="text-blue-500 hover:text-blue-700">{{ feed.url }}</a>
+            <p class="text-sm text-gray-500 mt-2">Last Build Date: {{ feed.last_build_date or 'Not available' }}</p>
+            <form action="{{ url_for('rss_manager.delete_feed', feed_id=feed.id) }}" method="POST" class="mt-4">
+                <button type="submit" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+                    Delete Feed
+                </button>
+            </form>
+        </div>
+        {% endfor %}
+    </div>
+</div>
 {% endblock %}

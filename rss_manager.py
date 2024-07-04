@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, redirect, url_for, flash
+from flask import Blueprint, render_template, redirect, url_for, flash, request
 from flask_login import login_required
 from models import db, RSSFeed
 from flask_wtf import FlaskForm
@@ -32,3 +32,12 @@ def manage_rss():
     
     feeds: List[RSSFeed] = RSSFeed.query.all()
     return render_template('rss_manager.html', form=form, feeds=feeds)
+
+@rss_manager.route('/delete_feed/<uuid:feed_id>', methods=['POST'])
+@login_required
+def delete_feed(feed_id):
+    feed = RSSFeed.query.get_or_404(feed_id)
+    db.session.delete(feed)
+    db.session.commit()
+    flash('RSS Feed deleted successfully!', 'success')
+    return redirect(url_for('rss_manager.manage_rss'))
