@@ -8,6 +8,7 @@ import os
 from dotenv import load_dotenv
 from werkzeug.exceptions import BadRequest
 import bleach
+from flask_wtf.csrf import CSRFProtect
 
 load_dotenv()
 
@@ -16,6 +17,7 @@ app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
 db.init_app(app)
+csrf = CSRFProtect(app)
 init_auth(app)
 
 app.route('/login', methods=['GET', 'POST'])(login)
