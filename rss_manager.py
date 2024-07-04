@@ -43,6 +43,7 @@ def manage_rss():
         try:
             csv_file = TextIOWrapper(csv_file, encoding='utf-8')
             csv_reader = csv.reader(csv_file)
+            errors = []
             for row in csv_reader:
                 if len(row) >= 2:
                     url, category = row[0], row[1]
@@ -51,7 +52,10 @@ def manage_rss():
                         new_feed: RSSFeed = RSSFeed(url=url, title=title, category=category, description=description, last_build_date=last_build_date)
                         db.session.add(new_feed)
                     except Exception as e:
-                        flash(f'Error adding RSS Feed {url}: {str(e)}', 'error')
+                        errors.append(f'Error adding RSS Feed {url}: {str(e)}')
+            if errors:
+                for error in errors:
+                    flash(error, 'error')
             db.session.commit()
             flash('CSV file processed successfully!', 'success')
         except Exception as e:
