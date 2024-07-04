@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="mb-8">
+    <h2 class="text-2xl font-bold mb-4">Search Results</h2>
+    {% if results %}
+        <ul class="list-disc list-inside">
+        {% for result in results %}
+            <li class="mb-2">{{ result }}</li>
+        {% endfor %}
+        </ul>
+    {% else %}
+        <p>No results found.</p>
+    {% endif %}
+</div>
+<a href="/" class="bg-blue-600 text-white p-2 rounded">Back to Home</a>
+{% endblock %}
