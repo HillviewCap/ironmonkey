@@ -1,6 +1,6 @@
 from flask import Flask, render_template, request, jsonify
 from sqlalchemy import create_engine, text
-from models import SearchParams, SearchResult, User, db, RSSFeed
+from models import SearchParams, SearchResult, User, db, RSSFeed, Threat
 from datetime import datetime
 from flask_login import login_required, current_user
 from auth import init_auth, login, logout, register
