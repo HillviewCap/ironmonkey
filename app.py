@@ -1,8 +1,8 @@
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, redirect, url_for, flash
 from sqlalchemy import create_engine, text
 from models import SearchParams, SearchResult, User, db
 from datetime import datetime
-from flask_login import login_required, current_user
+from flask_login import login_required, current_user, login_user
 from auth import init_auth, LoginForm
 import os
 from dotenv import load_dotenv
