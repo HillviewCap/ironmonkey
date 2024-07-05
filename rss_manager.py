@@ -114,63 +114,6 @@ async def parse_single_feed(feed: RSSFeed):
         raise
 
 
-@rss_manager.route("/edit_feed/<uuid:feed_id>", methods=["GET", "POST"])
-@login_required
-def edit_feed(feed_id: uuid.UUID) -> Union[str, Response]:
-    """
-    Edit an existing RSS feed.
-
-    Args:
-        feed_id (uuid.UUID): The UUID of the feed to be edited.
-
-    Returns:
-        Union[str, Response]: Rendered HTML template or redirect response.
-    """
-    feed = RSSFeed.query.get_or_404(feed_id)
-    form = EditRSSFeedForm(obj=feed)
-    if form.validate_on_submit():
-        feed.url = form.url.data
-        feed.title = form.title.data
-        feed.category = form.category.data
-        feed.description = form.description.data
-        feed.last_build_date = form.last_build_date.data
-        try:
-            db.session.commit()
-            flash("RSS Feed updated successfully!", "success")
-            logging_config.logger.info(f"RSS Feed updated: {feed.url}")
-        except Exception as e:
-            db.session.rollback()
-            logging_config.logger.error(f"Error updating RSS Feed: {str(e)}")
-            flash(f"Error updating RSS Feed: {str(e)}", "error")
-        return redirect(url_for("rss_manager.manage_rss"))
-    return render_template("edit_rss_feed.html", form=form, feed=feed)
-
-
-async def parse_single_feed(feed: RSSFeed):
-    """Parse a single RSS feed and store new content."""
-    try:
-        async with httpx.AsyncClient() as client:
-            response = await client.get(feed.url)
-            feed_data = feedparser.parse(response.text)
-
-            for entry in feed_data.entries:
-                existing_content = ParsedContent.query.filter_by(url=entry.link).first()
-                if not existing_content:
-                    parsed_data = await parse_content(entry.link)
-                    new_content = ParsedContent(
-                        title=parsed_data["title"],
-                        url=parsed_data["url"],
-                        content=parsed_data["content"],
-                        links=parsed_data["links"],
-                        feed_id=feed.id,
-                    )
-                    db.session.add(new_content)
-            db.session.commit()
-    except Exception as e:
-        logging_config.logger.error(f"Error parsing feed {feed.url}: {str(e)}")
-        raise
-
-
 async def parse_single_feed(feed: RSSFeed):
     """Parse a single RSS feed and store new content."""
     try:
