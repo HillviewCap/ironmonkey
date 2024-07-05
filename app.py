@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import logging_config
 from flask import Flask, render_template, request, jsonify
-from flask_sqlalchemy import Pagination
 from sqlalchemy import create_engine, text
 from models import SearchParams, SearchResult, User, db, RSSFeed, Threat, ParsedContent
 from datetime import datetime, date
@@ -115,7 +114,7 @@ def search():
                 )
             )
 
-    paginated_results = query.paginate(page=page, per_page=per_page, error_out=False)
+    paginated_results = query.paginate(page=page, per_page=per_page)
     
     if request.method == 'GET':
         return render_template('search.html', results=paginated_results, search_params=search_params)
