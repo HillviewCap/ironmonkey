@@ -26,11 +26,11 @@ logger = logging.getLogger(__name__)
 load_dotenv()
 
 app = Flask(__name__)
-# Ensure the instance folder exists
-os.makedirs(app.instance_path, exist_ok=True)
 from config import Config
 
 app.config.from_object(Config)
+# Ensure the instance folder exists
+os.makedirs(app.instance_path, exist_ok=True)
 db.init_app(app)
 csrf = CSRFProtect(app)
 init_auth(app)
