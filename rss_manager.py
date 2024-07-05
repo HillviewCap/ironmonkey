@@ -30,7 +30,10 @@ class CSVUploadForm(FlaskForm):
 
 class EditRSSFeedForm(FlaskForm):
     url = StringField('RSS Feed URL', validators=[DataRequired(), URL()])
+    title = StringField('Title', validators=[DataRequired()])
     category = StringField('Category', validators=[DataRequired()])
+    description = StringField('Description')
+    last_build_date = StringField('Last Build Date')
     submit = SubmitField('Update Feed')
 
 @rss_manager.route('/rss_manager', methods=['GET', 'POST'])
@@ -165,16 +168,16 @@ def edit_feed(feed_id: uuid.UUID) -> Union[str, Response]:
     form = EditRSSFeedForm(obj=feed)
     if form.validate_on_submit():
         feed.url = form.url.data
+        feed.title = form.title.data
         feed.category = form.category.data
+        feed.description = form.description.data
+        feed.last_build_date = form.last_build_date.data
         try:
-            title, description, last_build_date = RSSFeed.fetch_feed_info(feed.url)
-            feed.title = title if title else 'Not available'
-            feed.description = description if description else 'Not available'
-            feed.last_build_date = last_build_date if last_build_date else None
             db.session.commit()
             flash('RSS Feed updated successfully!', 'success')
             logging_config.logger.info(f'RSS Feed updated: {feed.url}')
         except Exception as e:
+            db.session.rollback()
             logging_config.logger.error(f'Error updating RSS Feed: {str(e)}')
             flash(f'Error updating RSS Feed: {str(e)}', 'error')
         return redirect(url_for('rss_manager.manage_rss'))
