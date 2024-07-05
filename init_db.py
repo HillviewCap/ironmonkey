@@ -1,5 +1,5 @@
 from flask import Flask
-from models import db, User, RSSFeed, ParsedContent, Entity, Uris, Type, EntityType, Mention, Location, Category, Sentiment, Topic
+from models import db
 from config import Config
 
 def create_app():
@@ -11,6 +11,8 @@ def create_app():
 def init_db():
     app = create_app()
     with app.app_context():
+        # Import all models here to ensure they are registered with SQLAlchemy
+        from models import User, RSSFeed, ParsedContent, Entity, Uris, Type, EntityType, Mention, Location, Category, Sentiment, Topic
         # Create all tables
         db.create_all()
         print("Database tables created successfully.")
