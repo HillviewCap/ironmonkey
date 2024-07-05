@@ -46,10 +46,14 @@ from rss_manager import rss_manager
 app.register_blueprint(rss_manager)
 
 def init_db():
-    with app.app_context():
-        logger.info("Starting database initialization")
-        db.create_all()
-        logger.info("Database initialization completed")
+    db_path = app.config['SQLALCHEMY_DATABASE_URI'].replace('sqlite:///', '')
+    if os.path.exists(db_path):
+        logger.info("Database already exists, skipping initialization")
+    else:
+        with app.app_context():
+            logger.info("Starting database initialization")
+            db.create_all()
+            logger.info("Database initialization completed")
 
 init_db()  # Call init_db() to create tables if they don't exist
 
