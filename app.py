@@ -35,11 +35,14 @@ app.route('/register', methods=['GET', 'POST'])(register)
 from rss_manager import rss_manager
 app.register_blueprint(rss_manager)
 
-with app.app_context():
-    db.create_all()
-    # Run database migrations
-    from flask_migrate import upgrade as _upgrade
-    _upgrade()
+def init_db():
+    with app.app_context():
+        db.create_all()
+        # Run database migrations
+        from flask_migrate import upgrade as _upgrade
+        _upgrade()
+
+init_db()
 
 from auth import index
 
