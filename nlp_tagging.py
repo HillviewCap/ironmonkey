@@ -13,6 +13,8 @@ from models import (
     Location,
     Category,
 )
+from sqlalchemy.dialects.postgresql import UUID
+import uuid
 from config import Config
 from typing import List, Dict, Any
 import asyncio
@@ -54,7 +56,7 @@ class DatabaseHandler:
 
     def get_all_parsed_content(self) -> List[ParsedContent]:
         with self.Session() as session:
-            return session.query(ParsedContent).all()
+            return session.query(ParsedContent).filter(ParsedContent.id != None).all()
 
     def add_entity(
         self, session, entity_data: Dict[str, Any], content: ParsedContent
