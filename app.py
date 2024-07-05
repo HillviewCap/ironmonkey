@@ -18,6 +18,7 @@ import httpx
 import asyncio
 import logging
 from flask_migrate import Migrate
+from sqlalchemy.exc import SQLAlchemyError
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -30,7 +31,16 @@ from config import Config
 
 app.config.from_object(Config)
 Config.init_app(app)
-db.init_app(app)
+
+# Log the database URI (make sure to remove any sensitive information)
+logger.info(f"Database URI: {app.config['SQLALCHEMY_DATABASE_URI']}")
+
+try:
+    db.init_app(app)
+    logger.info("SQLAlchemy initialized successfully")
+except Exception as e:
+    logger.error(f"Error initializing SQLAlchemy: {str(e)}")
+
 csrf = CSRFProtect(app)
 init_auth(app)
 migrate = Migrate(app, db)
@@ -47,15 +57,26 @@ app.register_blueprint(rss_manager)
 
 def init_db():
     db_path = app.config['SQLALCHEMY_DATABASE_URI'].replace('sqlite:///', '')
+    logger.info(f"Database path: {db_path}")
     if os.path.exists(db_path):
         logger.info("Database already exists, skipping initialization")
     else:
-        with app.app_context():
-            logger.info("Starting database initialization")
-            db.create_all()
-            logger.info("Database initialization completed")
+        logger.info("Database does not exist, creating it")
+        try:
+            with app.app_context():
+                logger.info("Starting database initialization")
+                db.create_all()
+                logger.info("Database initialization completed")
+        except SQLAlchemyError as e:
+            logger.error(f"SQLAlchemy error during database initialization: {str(e)}")
+        except Exception as e:
+            logger.error(f"Unexpected error during database initialization: {str(e)}")
 
-init_db()  # Call init_db() to create tables if they don't exist
+try:
+    init_db()  # Call init_db() to create tables if they don't exist
+    logger.info("Database initialization function completed")
+except Exception as e:
+    logger.error(f"Error during database initialization: {str(e)}")
 
 from auth import index
 
