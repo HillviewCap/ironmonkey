@@ -1,3 +1,4 @@
+import logging_config
 from flask import Flask, render_template, request, jsonify
 from sqlalchemy import create_engine, text
 from models import SearchParams, SearchResult, User, db, RSSFeed, Threat
