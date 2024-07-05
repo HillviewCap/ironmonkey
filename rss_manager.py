@@ -4,7 +4,7 @@ from flask import Blueprint, render_template, redirect, url_for, flash, request
 import logging_config
 from flask_login import login_required
 from models import db, RSSFeed
-from flask_wtf import FlaskForm
+from flask_wtf import FlaskForm, CSRFProtect
 from wtforms import StringField, SubmitField, FileField
 from wtforms.validators import DataRequired, URL
 from typing import List
@@ -117,7 +117,8 @@ def manage_rss() -> str:
         return redirect(url_for('rss_manager.manage_rss'))
     
     feeds: List[RSSFeed] = RSSFeed.query.all()
-    return render_template('rss_manager.html', form=form, csv_form=csv_form, feeds=feeds)
+    delete_form = FlaskForm()  # Create a new form for CSRF protection
+    return render_template('rss_manager.html', form=form, csv_form=csv_form, feeds=feeds, delete_form=delete_form)
 
 @rss_manager.route('/delete_feed/<uuid:feed_id>', methods=['POST'])
 @login_required

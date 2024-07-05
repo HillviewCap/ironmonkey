@@ -10,3 +10,5 @@ bleach
 email_validator
 Flask-Migrate
 httpx
+beautifulsoup4
+lxml
