@@ -73,6 +73,9 @@ def search():
         logger.info("Rendering search.html template")
         return render_template('search.html', form=form)
     
+    if form.validate_on_submit():
+        # Rest of the search logic here
+    
     page = request.args.get('page', 1, type=int)
     per_page = 10  # Number of results per page
 
