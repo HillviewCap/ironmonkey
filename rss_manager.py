@@ -60,6 +60,7 @@ async def fetch_and_parse_feed(feed: RSSFeed) -> None:
     try:
         async with httpx.AsyncClient() as client:
             response = await client.get(feed.url)
+            response.raise_for_status()  # Raise an exception for bad status codes
             feed_data = feedparser.parse(response.text)
 
             for entry in feed_data.entries:
@@ -74,8 +75,14 @@ async def fetch_and_parse_feed(feed: RSSFeed) -> None:
                     )
                     db.session.add(new_content)
             db.session.commit()
+    except httpx.HTTPStatusError as e:
+        logging_config.logger.error(f"HTTP error occurred while fetching feed {feed.url}: {e}")
+        raise
+    except httpx.RequestError as e:
+        logging_config.logger.error(f"An error occurred while requesting {feed.url}: {e}")
+        raise
     except Exception as e:
-        logging_config.logger.error(f"Error parsing feed {feed.url}: {str(e)}")
+        logging_config.logger.error(f"Unexpected error occurred while parsing feed {feed.url}: {e}", exc_info=True)
         raise
 
 
