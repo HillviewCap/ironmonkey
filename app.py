@@ -5,19 +5,17 @@ import logging
 import asyncio
 from datetime import datetime
 from typing import List
-from flask_login import login_required
 
+import httpx
+import bleach
+from dotenv import load_dotenv
 from flask import Flask, render_template, request, jsonify, current_app
 from flask_migrate import Migrate
 from flask_wtf import FlaskForm
 from flask_wtf.csrf import CSRFProtect
+from flask_login import login_required
 from sqlalchemy.exc import SQLAlchemyError
 from werkzeug.exceptions import BadRequest
-import bleach
-from dotenv import load_dotenv
-
-load_dotenv()  # This line ensures that environment variables are loaded from .env file
-import httpx
 
 import logging_config
 from models import SearchParams, SearchResult, User, db, RSSFeed, Threat, ParsedContent
@@ -26,13 +24,14 @@ from config import Config
 from rss_manager import rss_manager
 from nlp_tagging import DiffbotClient, DatabaseHandler
 
+# Load environment variables
+load_dotenv()
+
 # Configure logging
 logging.basicConfig(
     level=logging.DEBUG, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
-
-load_dotenv()
 
 
 def create_app():
@@ -44,7 +43,7 @@ def create_app():
     try:
         os.makedirs(app.instance_path)
     except OSError:
-        pass
+        logger.warning(f"Could not create instance folder at {app.instance_path}")
 
     # Database configuration
     app.config["SQLALCHEMY_DATABASE_URI"] = (
@@ -52,24 +51,54 @@ def create_app():
     )
     logger.info(f"Database URI: {app.config['SQLALCHEMY_DATABASE_URI']}")
 
-    db.init_app(app)
-    csrf = CSRFProtect(app)
-    init_auth(app)
-    migrate = Migrate(app, db)
+    try:
+        db.init_app(app)
+        CSRFProtect(app)
+        init_auth(app)
+        Migrate(app, db)
 
-    # Register blueprints
-    app.register_blueprint(rss_manager)
+        # Register blueprints
+        app.register_blueprint(rss_manager)
 
-    # Route registrations
-    app.add_url_rule("/login", "login", login, methods=["GET", "POST"])
-    app.add_url_rule("/logout", "logout", logout)
-    app.add_url_rule("/register", "register", register, methods=["GET", "POST"])
+        # Route registrations
+        app.add_url_rule("/login", "login", login, methods=["GET", "POST"])
+        app.add_url_rule("/logout", "logout", logout)
+        app.add_url_rule("/register", "register", register, methods=["GET", "POST"])
+    except Exception as e:
+        logger.error(f"Error during app initialization: {str(e)}")
+        raise
 
     @app.route("/tag_content", methods=["POST"])
     @login_required
     async def tag_content():
-        # ... (keep the existing tag_content function)
-        pass  # Remove this line once you add the actual content of the tag_content function
+        diffbot_api_key = os.getenv("DIFFBOT_API_KEY")
+        if not diffbot_api_key:
+            return jsonify({"error": "DIFFBOT_API_KEY not set"}), 500
+
+        diffbot_client = DiffbotClient(diffbot_api_key)
+        db_handler = DatabaseHandler(app.config["SQLALCHEMY_DATABASE_URI"])
+
+        content_id = request.json.get("content_id")
+        if not content_id:
+            return jsonify({"error": "content_id is required"}), 400
+
+        content = ParsedContent.query.get(content_id)
+        if not content:
+            return jsonify({"error": "Content not found"}), 404
+
+        try:
+            async with httpx.AsyncClient() as client:
+                result = await diffbot_client.tag_content(content.content, client)
+            db_handler.process_nlp_result(content, result)
+            
+            # Update the summary field
+            content.summary = result.get("summary", {}).get("text")
+            db.session.commit()
+            
+            return jsonify({"message": "Content tagged successfully"}), 200
+        except Exception as e:
+            current_app.logger.error(f"Error tagging content: {str(e)}")
+            return jsonify({"error": "Error tagging content"}), 500
 
     @app.route("/batch_tag_content", methods=["POST"])
     @login_required
