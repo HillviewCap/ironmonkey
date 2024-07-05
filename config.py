@@ -18,13 +18,14 @@ class Config:
 
     @staticmethod
     def init_app(app):
-        # Ensure the instance folder exists
-        os.makedirs(instance_path, exist_ok=True)
-        
-        # Ensure the database file can be created
+        # Ensure the directory for the database file exists
         db_path = app.config['SQLALCHEMY_DATABASE_URI'].replace('sqlite:///', '')
         db_dir = os.path.dirname(db_path)
-        os.makedirs(db_dir, exist_ok=True)
-        
-        # Try to create an empty file to ensure write permissions
-        open(db_path, 'a').close()
+        if not os.path.exists(db_dir):
+            try:
+                os.makedirs(db_dir, exist_ok=True)
+                logging.getLogger(__name__).info(f"Created directory for database file at {db_dir}")
+            except Exception as e:
+                logging.getLogger(__name__).error(f"Error creating directory for database file: {str(e)}")
+        else:
+            logging.getLogger(__name__).info(f"Directory for database file already exists at {db_dir}")
