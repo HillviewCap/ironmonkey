@@ -63,29 +63,25 @@ def parse_feeds_command():
 @app.route('/search', methods=['GET', 'POST'])
 @login_required
 def search():
+    if request.method == 'GET':
+        return render_template('search.html')
+    
     page = request.args.get('page', 1, type=int)
     per_page = 10  # Number of results per page
 
-    if request.method == 'GET':
-        query = request.args.get('query', '')
-        start_date = request.args.get('start_date')
-        end_date = request.args.get('end_date')
-        source_types = request.args.getlist('source_types')
-        keywords = request.args.get('keywords', '').split(',') if request.args.get('keywords') else []
+    query = request.form.get('query', '')
+    start_date = request.form.get('start_date')
+    end_date = request.form.get('end_date')
+    source_types = request.form.getlist('source_types')
+    keywords = request.form.get('keywords', '').split(',') if request.form.get('keywords') else []
 
-        search_params = SearchParams(
-            query=query,
-            start_date=datetime.strptime(start_date, '%Y-%m-%d').date() if start_date else None,
-            end_date=datetime.strptime(end_date, '%Y-%m-%d').date() if end_date else None,
-            source_types=source_types,
-            keywords=keywords
-        )
-    else:  # POST
-        try:
-            data = request.json
-            search_params = SearchParams(**data)
-        except ValueError as e:
-            raise BadRequest(str(e))
+    search_params = SearchParams(
+        query=query,
+        start_date=datetime.strptime(start_date, '%Y-%m-%d').date() if start_date else None,
+        end_date=datetime.strptime(end_date, '%Y-%m-%d').date() if end_date else None,
+        source_types=source_types,
+        keywords=keywords
+    )
 
     query = db.session.query(ParsedContent)
     
@@ -116,22 +112,7 @@ def search():
 
     paginated_results = query.paginate(page=page, per_page=per_page)
     
-    if request.method == 'GET':
-        return render_template('search.html', results=paginated_results, search_params=search_params)
-    else:  # POST
-        return jsonify({
-            'results': [SearchResult(
-                id=str(content.id),
-                title=content.title,
-                description=content.content[:200] + '...' if len(content.content) > 200 else content.content,
-                source_type=content.source_type,
-                date=content.date,
-                url=content.url
-            ).dict() for content in paginated_results.items],
-            'total': paginated_results.total,
-            'pages': paginated_results.pages,
-            'current_page': page
-        })
+    return render_template('search_results.html', results=paginated_results, search_params=search_params)
 
 if __name__ == '__main__':
     init_db()

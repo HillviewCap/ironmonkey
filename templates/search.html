@@ -3,7 +3,8 @@
 {% block content %}
 <div class="text-center">
     <h1 class="text-4xl font-bold mb-8">IronMonkey Threat Research Search</h1>
-    <form action="{{ url_for('search') }}" method="get" class="mb-8">
+    <form action="{{ url_for('search') }}" method="post" class="mb-8">
+        {{ csrf_token() }}
         <input type="text" name="query" placeholder="Search threats..." class="p-2 border rounded-lg w-64 mb-2">
         <div class="flex justify-center space-x-4 mb-2">
             <input type="date" name="start_date" placeholder="Start Date (optional)" class="p-2 border rounded-lg">
