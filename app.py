@@ -13,7 +13,7 @@ from flask import Flask, render_template, request, jsonify, current_app
 from flask_migrate import Migrate
 from flask_wtf import FlaskForm
 from flask_wtf.csrf import CSRFProtect
-from flask_login import login_required
+from flask_login import login_required, current_user
 from sqlalchemy.exc import SQLAlchemyError
 from werkzeug.exceptions import BadRequest
 
@@ -71,6 +71,7 @@ def create_app():
 
         # Route registrations
         app.add_url_rule("/login", "login", login, methods=["GET", "POST"])
+        app.add_url_rule("/", "index", index)
         app.add_url_rule("/logout", "logout", logout)
         app.add_url_rule("/register", "register", register, methods=["GET", "POST"])
     except Exception as e:
@@ -166,13 +167,15 @@ def create_app():
             return jsonify({"error": "Error tagging content"}), 500
 
     @app.route("/")
-    @login_required
     def index():
         current_app.logger.info("Entering index route")
         try:
-            # Fetch the 6 most recent ParsedContent items
-            recent_items = ParsedContent.query.order_by(ParsedContent.created_at.desc()).limit(6).all()
-            return render_template("index.html", recent_items=recent_items)
+            if current_user.is_authenticated:
+                # Fetch the 6 most recent ParsedContent items
+                recent_items = ParsedContent.query.order_by(ParsedContent.created_at.desc()).limit(6).all()
+                return render_template("index.html", recent_items=recent_items)
+            else:
+                return redirect(url_for('login'))
         except Exception as e:
             current_app.logger.error(f"Error in index route: {str(e)}", exc_info=True)
             return render_error_page()
