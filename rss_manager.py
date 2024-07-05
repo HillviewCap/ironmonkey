@@ -19,7 +19,7 @@ import asyncio
 from models import db, RSSFeed, ParsedContent
 from jina_api import parse_content
 import logging_config
-from nlp_tagging import tag_single_content
+from nlp_tagging import DiffbotClient, DatabaseHandler
 
 rss_manager = Blueprint("rss_manager", __name__)
 csrf = CSRFProtect()
