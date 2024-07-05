@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import List, Optional, Tuple
 from uuid import UUID as PyUUID, uuid4
+import uuid
 from pydantic import BaseModel, Field
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin
