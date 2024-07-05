@@ -63,7 +63,8 @@ def manage_rss():
                 if errors:
                     for error in errors:
                         flash(error, 'error')
-                    logging_config.logger.error(f'Error fetching info for RSS Feed {url}: {str(e)}')
+                    for error in errors:
+                        logging_config.logger.error(error)
                 else:
                     logging_config.logger.info(f'RSS Feed added from CSV: {url}')
                     db.session.bulk_save_objects(feeds_to_add)
