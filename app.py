@@ -45,6 +45,8 @@ if not os.path.exists(db_dir):
         logger.info(f"Created directory for database file at {db_dir}")
     except Exception as e:
         logger.error(f"Error creating directory for database file: {str(e)}")
+else:
+    logger.info(f"Directory for database file already exists at {db_dir}")
 
 try:
     db.init_app(app)
@@ -65,6 +67,11 @@ if os.path.exists(db_path):
         logger.error("Database file exists but is not accessible (check permissions)")
 else:
     logger.warning(f"Database file does not exist at {db_path}")
+    try:
+        with open(db_path, 'w'):
+            logger.info(f"Created an empty database file at {db_path}")
+    except Exception as e:
+        logger.error(f"Error creating an empty database file: {str(e)}")
 
 app.route('/login', methods=['GET', 'POST'])(login)
 app.route('/logout')(logout)
