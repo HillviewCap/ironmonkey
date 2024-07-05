@@ -28,6 +28,7 @@ db.init_app(app)
 csrf = CSRFProtect(app)
 init_auth(app)
 migrate = Migrate(app, db)
+app.cli.add_command(migrate.cli)
 
 app.route('/login', methods=['GET', 'POST'])(login)
 app.route('/logout')(logout)
@@ -43,9 +44,14 @@ def init_db():
         if not os.path.exists('migrations'):
             os.makedirs('migrations')
             os.system('flask db init')
-        # Run database migrations
-        from flask_migrate import upgrade as _upgrade
-        _upgrade()
+        
+        # Check if env.py exists before running migrations
+        if os.path.exists(os.path.join('migrations', 'env.py')):
+            # Run database migrations
+            from flask_migrate import upgrade as _upgrade
+            _upgrade()
+        else:
+            print("Warning: migrations/env.py not found. Skipping database migrations.")
 
 init_db()
 
