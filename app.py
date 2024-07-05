@@ -13,6 +13,7 @@ from werkzeug.exceptions import BadRequest
 import bleach
 from flask_wtf.csrf import CSRFProtect
 from flask_migrate import Migrate
+import os
 from typing import List, Dict
 import httpx
 import asyncio
@@ -38,6 +39,10 @@ app.register_blueprint(rss_manager)
 def init_db():
     with app.app_context():
         db.create_all()
+        # Create migrations directory if it doesn't exist
+        if not os.path.exists('migrations'):
+            os.makedirs('migrations')
+            os.system('flask db init')
         # Run database migrations
         from flask_migrate import upgrade as _upgrade
         _upgrade()
