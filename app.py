@@ -51,7 +51,7 @@ def init_db():
         if not os.path.exists('migrations'):
             logger.info("Initializing Flask-Migrate")
             try:
-                migrate.init()
+                os.system('flask db init')
             except Exception as e:
                 logger.error(f"Error initializing Flask-Migrate: {e}")
                 return
@@ -61,7 +61,7 @@ def init_db():
         if not os.path.exists(versions_dir) or not os.listdir(versions_dir):
             logger.info("Creating initial migration")
             try:
-                migrate.migrate(message="Initial migration")
+                os.system('flask db migrate -m "Initial migration"')
             except Exception as e:
                 logger.error(f"Error creating initial migration: {e}")
                 return
@@ -69,7 +69,7 @@ def init_db():
         # Apply all migrations
         logger.info("Applying migrations")
         try:
-            migrate.upgrade()
+            os.system('flask db upgrade')
         except Exception as e:
             logger.error(f"Error applying migrations: {e}")
             return
