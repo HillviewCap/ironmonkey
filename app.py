@@ -12,6 +12,7 @@ import bleach
 from dotenv import load_dotenv
 from flask import Flask, render_template, request, jsonify, current_app
 from flask_migrate import Migrate
+import shutil
 from flask_wtf import FlaskForm
 from flask_wtf.csrf import CSRFProtect
 from flask import redirect, url_for
