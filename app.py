@@ -74,12 +74,10 @@ def search():
         return render_template('search.html', form=form)
     
     if form.validate_on_submit():
-        # Rest of the search logic here
-    
-    page = request.args.get('page', 1, type=int)
-    per_page = 10  # Number of results per page
+        page = request.args.get('page', 1, type=int)
+        per_page = 10  # Number of results per page
 
-    query = request.form.get('query', '')
+        query = request.form.get('query', '')
     start_date = request.form.get('start_date')
     end_date = request.form.get('end_date')
     source_types = request.form.getlist('source_types')
