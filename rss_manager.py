@@ -20,9 +20,12 @@ import feedparser
 from jina_api import parse_content
 import asyncio
 from sqlalchemy import func
+from flask import request
 
 rss_manager = Blueprint('rss_manager', __name__)
 csrf = CSRFProtect()
+
+PER_PAGE_OPTIONS = [10, 25, 50, 100]
 
 @rss_manager.route('/parse_feeds', methods=['POST'])
 @login_required
@@ -160,9 +163,29 @@ async def manage_rss() -> str:
 @rss_manager.route('/parsed_content')
 @login_required
 def parsed_content():
-    """Display parsed content from the database."""
-    posts = ParsedContent.query.order_by(ParsedContent.created_at.desc()).all()
-    return render_template('parsed_content.html', posts=posts)
+    """Display parsed content from the database with pagination and search."""
+    page = request.args.get('page', 1, type=int)
+    per_page = request.args.get('per_page', 10, type=int)
+    search_query = request.args.get('search', '')
+
+    query = ParsedContent.query.order_by(ParsedContent.created_at.desc())
+
+    if search_query:
+        query = query.filter(
+            (ParsedContent.title.ilike(f'%{search_query}%')) |
+            (ParsedContent.content.ilike(f'%{search_query}%')) |
+            (ParsedContent.url.ilike(f'%{search_query}%'))
+        )
+
+    pagination = query.paginate(page=page, per_page=per_page, error_out=False)
+    posts = pagination.items
+
+    return render_template('parsed_content.html', 
+                           posts=posts, 
+                           pagination=pagination, 
+                           search_query=search_query,
+                           per_page=per_page,
+                           per_page_options=PER_PAGE_OPTIONS)
 
 @rss_manager.route('/delete_feed/<uuid:feed_id>', methods=['POST'])
 @login_required
