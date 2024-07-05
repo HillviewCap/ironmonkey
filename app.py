@@ -53,7 +53,8 @@ app.route('/')(index)
 
 @app.route('/search', methods=['GET'])
 def search_page():
-    return render_template('search.html')
+    form = FlaskForm()
+    return render_template('search.html', form=form)
 
 @app.cli.command("parse-feeds")
 def parse_feeds_command():
