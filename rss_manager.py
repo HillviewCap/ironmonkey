@@ -28,6 +28,11 @@ class CSVUploadForm(FlaskForm):
     file = FileField('CSV File', validators=[DataRequired()])
     submit = SubmitField('Import Feeds')
 
+class EditRSSFeedForm(FlaskForm):
+    url = StringField('RSS Feed URL', validators=[DataRequired(), URL()])
+    category = StringField('Category', validators=[DataRequired()])
+    submit = SubmitField('Update Feed')
+
 @rss_manager.route('/rss_manager', methods=['GET', 'POST'])
 @login_required
 def manage_rss() -> str:
@@ -143,3 +148,34 @@ def delete_feed(feed_id: uuid.UUID) -> Response:
     logging_config.logger.info(f'RSS Feed deleted: {feed.url}')
     flash('RSS Feed deleted successfully!', 'success')
     return redirect(url_for('rss_manager.manage_rss'))
+
+@rss_manager.route('/edit_feed/<uuid:feed_id>', methods=['GET', 'POST'])
+@login_required
+def edit_feed(feed_id: uuid.UUID) -> Union[str, Response]:
+    """
+    Edit an existing RSS feed.
+
+    Args:
+        feed_id (uuid.UUID): The UUID of the feed to be edited.
+
+    Returns:
+        Union[str, Response]: Rendered HTML template or redirect response.
+    """
+    feed = RSSFeed.query.get_or_404(feed_id)
+    form = EditRSSFeedForm(obj=feed)
+    if form.validate_on_submit():
+        feed.url = form.url.data
+        feed.category = form.category.data
+        try:
+            title, description, last_build_date = RSSFeed.fetch_feed_info(feed.url)
+            feed.title = title if title else 'Not available'
+            feed.description = description if description else 'Not available'
+            feed.last_build_date = last_build_date if last_build_date else None
+            db.session.commit()
+            flash('RSS Feed updated successfully!', 'success')
+            logging_config.logger.info(f'RSS Feed updated: {feed.url}')
+        except Exception as e:
+            logging_config.logger.error(f'Error updating RSS Feed: {str(e)}')
+            flash(f'Error updating RSS Feed: {str(e)}', 'error')
+        return redirect(url_for('rss_manager.manage_rss'))
+    return render_template('edit_rss_feed.html', form=form, feed=feed)
