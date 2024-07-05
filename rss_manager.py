@@ -257,6 +257,11 @@ async def tag_content(post_id):
     except Exception as e:
         db.session.rollback()
         flash(f"Error tagging content: {str(e)}", "error")
+    except ValueError as e:
+        flash(f"Error: {str(e)}", "error")
+    except Exception as e:
+        db.session.rollback()
+        flash(f"Error tagging content: {str(e)}", "error")
     return redirect(url_for("rss_manager.parsed_content"))
 
 
