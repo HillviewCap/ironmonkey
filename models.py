@@ -133,7 +133,7 @@ class ParsedContent(db.Model):
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     entities = db.relationship("Entity", back_populates="parsed_content")
     categories = db.relationship("Category", back_populates="parsed_content")
-    summary = db.Column(db.Text, nullable=True)  # Add this field for Diffbot's summary
+    summary = db.Column(db.Text, nullable=True)
 
 
 class Entity(db.Model):
