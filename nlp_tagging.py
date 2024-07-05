@@ -29,7 +29,7 @@ class DiffbotClient:
             "content-type": "application/json",
         }
 
-    async def tag_content(self, content: str) -> Dict[str, Any]:
+    async def tag_content(self, content: str, client: httpx.AsyncClient) -> Dict[str, Any]:
         payload = [
             {
                 "lang": "auto",
@@ -40,8 +40,7 @@ class DiffbotClient:
             }
         ]
 
-        async with httpx.AsyncClient() as client:
-            response = await client.post(self.url, json=payload, headers=self.headers)
+        response = await client.post(self.url, json=payload, headers=self.headers)
 
         if response.status_code != 200:
             raise Exception(f"Error processing content: {response.status_code}")
