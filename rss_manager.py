@@ -7,7 +7,7 @@ from flask_login import login_required
 from models import db, RSSFeed, ParsedContent
 from flask_wtf import FlaskForm
 from flask_wtf.csrf import CSRFProtect
-from wtforms import StringField, SubmitField, FileField
+from wtforms import StringField, SubmitField, FileField, SelectField
 from wtforms.validators import DataRequired, URL
 from typing import List
 import csv
@@ -52,7 +52,7 @@ async def parse_feeds():
 
 class RSSFeedForm(FlaskForm):
     url = StringField('RSS Feed URL', validators=[DataRequired(), URL()])
-    category = StringField('Category', validators=[DataRequired()])
+    category = SelectField('Category', choices=[('News', 'News'), ('Blog', 'Blog'), ('Research', 'Research')], validators=[DataRequired()])
     submit = SubmitField('Add RSS Feed')
 
 class CSVUploadForm(FlaskForm):
