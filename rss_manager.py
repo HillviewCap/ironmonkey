@@ -32,6 +32,7 @@ def manage_rss():
             title, description, last_build_date = RSSFeed.fetch_feed_info(url)
             new_feed: RSSFeed = RSSFeed(url=url, title=title, category=category, description=description, last_build_date=last_build_date)
             db.session.add(new_feed)
+            db.session.commit()
             flash('RSS Feed added successfully!', 'success')
         except Exception as e:
             flash(f'Error adding RSS Feed: {str(e)}', 'error')
