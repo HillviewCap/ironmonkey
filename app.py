@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging_config
 from flask import Flask, render_template, request, jsonify
 from sqlalchemy import create_engine, text
@@ -11,7 +13,8 @@ from werkzeug.exceptions import BadRequest
 import bleach
 from flask_wtf.csrf import CSRFProtect
 from flask_migrate import Migrate
-from typing import List
+from typing import List, Dict
+import httpx
 
 load_dotenv()
 
@@ -40,11 +43,20 @@ app.route('/')(index)
 
 @app.route('/search', methods=['POST'])
 @login_required
-def search() -> List[dict]:
+def search() -> List[Dict[str, str | datetime]]:
     """
     Perform a search based on the provided search parameters.
     
-    :return: A list of search results as dictionaries
+    This function expects a JSON payload with search parameters, validates them,
+    and then queries the database for matching Threat entries. It applies filters
+    based on the search query, date range, source types, and keywords.
+    
+    Returns:
+        List[Dict[str, str | datetime]]: A list of search results as dictionaries,
+        where each dictionary represents a Threat object with its attributes.
+    
+    Raises:
+        BadRequest: If the provided search parameters are invalid.
     """
     try:
         data = request.json
