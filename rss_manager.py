@@ -61,6 +61,7 @@ def manage_rss():
                         except Exception as e:
                             errors.append(f'Error fetching info for RSS Feed {url}: {str(e)}')
                 if errors:
+                    url = None  # Ensure url is defined before logging
                     for error in errors:
                         flash(error, 'error')
                     for error in errors:
