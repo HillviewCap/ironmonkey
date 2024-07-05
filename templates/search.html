@@ -4,6 +4,7 @@
 <div class="text-center">
     <h1 class="text-4xl font-bold mb-8">IronMonkey Threat Research Search</h1>
     <form action="{{ url_for('search') }}" method="post" class="mb-8">
+        {{ form.csrf_token }}
         {{ csrf_token() }}
         <input type="text" name="query" placeholder="Search threats..." class="p-2 border rounded-lg w-64 mb-2">
         <div class="flex justify-center space-x-4 mb-2">

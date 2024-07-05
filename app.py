@@ -12,6 +12,7 @@ from dotenv import load_dotenv
 from werkzeug.exceptions import BadRequest
 import bleach
 from flask_wtf.csrf import CSRFProtect
+from flask_wtf import FlaskForm
 from typing import List, Dict
 import httpx
 import asyncio
@@ -66,9 +67,11 @@ def parse_feeds_command():
 def search():
     logger.info(f"Search request received. Method: {request.method}")
     
+    form = FlaskForm()
+    
     if request.method == 'GET':
         logger.info("Rendering search.html template")
-        return render_template('search.html')
+        return render_template('search.html', form=form)
     
     page = request.args.get('page', 1, type=int)
     per_page = 10  # Number of results per page
