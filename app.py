@@ -114,7 +114,14 @@ def search():
     results = query.all()
     
     if request.method == 'GET':
-        return render_template('search_results.html', results=results, search_params=search_params)
+        return render_template('search.html', results=[SearchResult(
+            id=str(content.id),
+            title=content.title,
+            description=content.content[:200] + '...' if len(content.content) > 200 else content.content,
+            source_type=content.source_type,
+            date=content.date,
+            url=content.url
+        ) for content in results], search_params=search_params)
     else:  # POST
         return jsonify([SearchResult(
             id=str(content.id),
