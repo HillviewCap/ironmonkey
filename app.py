@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging_config
 from flask import Flask, render_template, request, jsonify
 from sqlalchemy import create_engine, text
-from models import SearchParams, SearchResult, User, db, RSSFeed, Threat
+from models import SearchParams, SearchResult, User, db, RSSFeed, Threat, ParsedContent
 from datetime import datetime, date
 from flask_login import login_required, current_user
 from auth import init_auth, login, logout, register
@@ -84,30 +84,30 @@ def search():
         except ValueError as e:
             raise BadRequest(str(e))
 
-    query = db.session.query(Threat)
+    query = db.session.query(ParsedContent)
     
     query = query.filter(
         db.or_(
-            Threat.title.ilike(f'%{bleach.clean(search_params.query)}%'),
-            Threat.description.ilike(f'%{bleach.clean(search_params.query)}%')
+            ParsedContent.title.ilike(f'%{bleach.clean(search_params.query)}%'),
+            ParsedContent.content.ilike(f'%{bleach.clean(search_params.query)}%')
         )
     )
 
     if search_params.start_date:
-        query = query.filter(Threat.date >= search_params.start_date)
+        query = query.filter(ParsedContent.date >= search_params.start_date)
 
     if search_params.end_date:
-        query = query.filter(Threat.date <= search_params.end_date)
+        query = query.filter(ParsedContent.date <= search_params.end_date)
 
     if search_params.source_types:
-        query = query.filter(Threat.source_type.in_([bleach.clean(st) for st in search_params.source_types]))
+        query = query.filter(ParsedContent.source_type.in_([bleach.clean(st) for st in search_params.source_types]))
 
     if search_params.keywords:
         for keyword in search_params.keywords:
             query = query.filter(
                 db.or_(
-                    Threat.title.ilike(f'%{bleach.clean(keyword)}%'),
-                    Threat.description.ilike(f'%{bleach.clean(keyword)}%')
+                    ParsedContent.title.ilike(f'%{bleach.clean(keyword)}%'),
+                    ParsedContent.content.ilike(f'%{bleach.clean(keyword)}%')
                 )
             )
 
@@ -117,13 +117,13 @@ def search():
         return render_template('search_results.html', results=results, search_params=search_params)
     else:  # POST
         return jsonify([SearchResult(
-            id=str(threat.id),
-            title=threat.title,
-            description=threat.description,
-            source_type=threat.source_type,
-            date=threat.date,
-            url=threat.url
-        ).dict() for threat in results])
+            id=str(content.id),
+            title=content.title,
+            description=content.content[:200] + '...' if len(content.content) > 200 else content.content,
+            source_type=content.source_type,
+            date=content.date,
+            url=content.url
+        ).dict() for content in results])
 
 if __name__ == '__main__':
     init_db()
