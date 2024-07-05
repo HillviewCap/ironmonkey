@@ -101,6 +101,27 @@ def create_app():
         app.add_url_rule("/login", "login", login, methods=["GET", "POST"])
         app.add_url_rule("/logout", "logout", logout)
         app.add_url_rule("/register", "register", register, methods=["GET", "POST"])
+
+        @app.cli.command("reinit-db")
+        def reinit_db():
+            """Reinitialize the database by removing existing migrations and creating new ones."""
+            migrations_dir = os.path.join(app.root_path, 'migrations')
+            if os.path.exists(migrations_dir):
+                shutil.rmtree(migrations_dir)
+                print("Removed existing migrations directory.")
+            
+            # Initialize migrations
+            Migrate(app, db)
+            with app.app_context():
+                db.create_all()
+            
+            # Create a new migration
+            os.system('flask db init')
+            os.system('flask db migrate -m "Initial migration"')
+            os.system('flask db upgrade')
+            
+            print("Database reinitialized successfully.")
+
     except Exception as e:
         logger.error(f"Error during app initialization: {str(e)}")
         raise
