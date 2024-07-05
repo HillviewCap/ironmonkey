@@ -1,8 +1,7 @@
 import requests
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from models import ParsedContent
-import json
+from models import ParsedContent, Entity, Uris, Type, EntityType, Mention, Location, Category
 from config import Config
 
 def tag_content():
@@ -37,14 +36,66 @@ def tag_content():
         if response.status_code == 200:
             result = response.json()
             
-            # Extract entities and categories
-            entities = result[0].get('entities', [])
-            categories = result[0].get('categories', [])
-            
-            # Update the ParsedContent object
-            content.entities = json.dumps(entities)
-            content.categories = json.dumps(categories)
-            
+            # Process entities
+            for entity_data in result[0].get('entities', []):
+                entity = Entity(
+                    name=entity_data['name'],
+                    diffbot_uri=entity_data.get('diffbotUri'),
+                    confidence=entity_data.get('confidence'),
+                    salience=entity_data.get('salience'),
+                    is_custom=entity_data.get('isCustom', False),
+                    parsed_content=content
+                )
+                session.add(entity)
+
+                # Add URIs
+                for uri_data in entity_data.get('uris', []):
+                    uri = Uris(uri=uri_data['uri'], type=uri_data['type'], entity=entity)
+                    session.add(uri)
+
+                # Add types
+                for type_data in entity_data.get('types', []):
+                    type_obj = Type(
+                        name=type_data['name'],
+                        diffbot_uri=type_data.get('diffbotUri'),
+                        dbpedia_uri=type_data.get('dbpediaUri')
+                    )
+                    session.add(type_obj)
+                    entity_type = EntityType(entity=entity, type=type_obj)
+                    session.add(entity_type)
+
+                # Add mentions
+                for mention_data in entity_data.get('mentions', []):
+                    mention = Mention(
+                        text=mention_data['text'],
+                        begin_offset=mention_data['beginOffset'],
+                        end_offset=mention_data['endOffset'],
+                        confidence=mention_data.get('confidence'),
+                        entity=entity
+                    )
+                    session.add(mention)
+
+                # Add locations
+                for location_data in entity_data.get('locations', []):
+                    location = Location(
+                        latitude=location_data['latitude'],
+                        longitude=location_data['longitude'],
+                        precision=location_data.get('precision'),
+                        entity=entity
+                    )
+                    session.add(location)
+
+            # Process categories
+            for category_data in result[0].get('categories', []):
+                category = Category(
+                    type=category_data['type'],
+                    id_category=category_data['id'],
+                    name=category_data['name'],
+                    path=category_data.get('path'),
+                    parsed_content=content
+                )
+                session.add(category)
+
             # Commit the changes
             session.commit()
         else:
