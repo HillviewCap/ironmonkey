@@ -17,6 +17,10 @@ import os
 from typing import List, Dict
 import httpx
 import asyncio
+import logging
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 load_dotenv()
 
@@ -40,24 +44,43 @@ app.register_blueprint(rss_manager)
 
 def init_db():
     with app.app_context():
+        logger.info("Starting database initialization")
         db.create_all()
         # Create migrations directory if it doesn't exist
         if not os.path.exists('migrations'):
+            logger.info("Creating migrations directory")
             os.makedirs('migrations')
-            os.system('flask db init')
+            try:
+                logger.info("Initializing Flask-Migrate")
+                os.system('flask db init')
+            except Exception as e:
+                logger.error(f"Error initializing database: {e}")
+                return
         
         # Check if the versions directory exists
         versions_dir = os.path.join('migrations', 'versions')
         if not os.path.exists(versions_dir):
+            logger.info("Creating versions directory")
             os.makedirs(versions_dir)
         
         # Check if there are any existing migration scripts
         if not os.listdir(versions_dir):
             # If no migration scripts exist, create an initial migration
-            os.system('flask db migrate -m "Initial migration"')
+            logger.info("Creating initial migration")
+            try:
+                os.system('flask db migrate -m "Initial migration"')
+            except Exception as e:
+                logger.error(f"Error creating initial migration: {e}")
+                return
         
         # Apply all migrations
-        os.system('flask db upgrade')
+        logger.info("Applying migrations")
+        try:
+            os.system('flask db upgrade')
+        except Exception as e:
+            logger.error(f"Error applying migrations: {e}")
+        
+        logger.info("Database initialization completed")
 
 init_db()
 
