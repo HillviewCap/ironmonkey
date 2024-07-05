@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging_config
 from flask import Flask, render_template, request, jsonify
+from flask_sqlalchemy import Pagination
 from sqlalchemy import create_engine, text
 from models import SearchParams, SearchResult, User, db, RSSFeed, Threat, ParsedContent
 from datetime import datetime, date
@@ -63,6 +64,9 @@ def parse_feeds_command():
 @app.route('/search', methods=['GET', 'POST'])
 @login_required
 def search():
+    page = request.args.get('page', 1, type=int)
+    per_page = 10  # Number of results per page
+
     if request.method == 'GET':
         query = request.args.get('query', '')
         start_date = request.args.get('start_date')
@@ -111,26 +115,24 @@ def search():
                 )
             )
 
-    results = query.all()
+    paginated_results = query.paginate(page=page, per_page=per_page, error_out=False)
     
     if request.method == 'GET':
-        return render_template('search.html', results=[SearchResult(
-            id=str(content.id),
-            title=content.title,
-            description=content.content[:200] + '...' if len(content.content) > 200 else content.content,
-            source_type=content.source_type,
-            date=content.date,
-            url=content.url
-        ) for content in results], search_params=search_params)
+        return render_template('search.html', results=paginated_results, search_params=search_params)
     else:  # POST
-        return jsonify([SearchResult(
-            id=str(content.id),
-            title=content.title,
-            description=content.content[:200] + '...' if len(content.content) > 200 else content.content,
-            source_type=content.source_type,
-            date=content.date,
-            url=content.url
-        ).dict() for content in results])
+        return jsonify({
+            'results': [SearchResult(
+                id=str(content.id),
+                title=content.title,
+                description=content.content[:200] + '...' if len(content.content) > 200 else content.content,
+                source_type=content.source_type,
+                date=content.date,
+                url=content.url
+            ).dict() for content in paginated_results.items],
+            'total': paginated_results.total,
+            'pages': paginated_results.pages,
+            'current_page': page
+        })
 
 if __name__ == '__main__':
     init_db()
