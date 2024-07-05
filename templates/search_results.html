@@ -33,12 +33,12 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {% for result in results %}
+                    {% for result in results.items %}
                     <tr class="{% if loop.index % 2 == 0 %}bg-gray-100{% endif %}">
                         <td class="border px-2 py-2 truncate">{{ result.title[:50] }}</td>
-                        <td class="border px-2 py-2 truncate">{{ result.description[:50] }}</td>
+                        <td class="border px-2 py-2 truncate">{{ result.content[:50] }}</td>
                         <td class="border px-2 py-2 text-sm text-gray-500">
-                            {{ result.source_type }} | {{ result.date.strftime('%Y-%m-%d') }}
+                            {{ result.source_type }} | {{ result.date.strftime('%Y-%m-%d') if result.date else 'N/A' }}
                         </td>
                         <td class="border px-2 py-2">
                             <a href="{{ result.url }}" target="_blank" class="text-blue-600 hover:underline">Read more</a>
