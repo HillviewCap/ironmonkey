@@ -3,7 +3,7 @@ from __future__ import annotations
 from flask import Blueprint, render_template, redirect, url_for, flash, request
 import logging_config
 from flask_login import login_required
-from models import db, RSSFeed
+from models import db, RSSFeed, ParsedContent
 from flask_wtf import FlaskForm
 from flask_wtf.csrf import CSRFProtect
 from wtforms import StringField, SubmitField, FileField
@@ -15,9 +15,38 @@ import httpx
 import uuid
 from werkzeug.wrappers import Response
 from sqlalchemy.exc import IntegrityError
+import feedparser
+from jina_api import parse_content
+import asyncio
 
 rss_manager = Blueprint('rss_manager', __name__)
 csrf = CSRFProtect()
+
+@rss_manager.route('/parse_feeds', methods=['POST'])
+@login_required
+async def parse_feeds():
+    feeds = RSSFeed.query.all()
+    for feed in feeds:
+        try:
+            parsed_feed = feedparser.parse(feed.url)
+            for entry in parsed_feed.entries:
+                existing_content = ParsedContent.query.filter_by(url=entry.link).first()
+                if not existing_content:
+                    parsed_data = await parse_content(entry.link)
+                    new_content = ParsedContent(
+                        title=parsed_data['title'],
+                        url=parsed_data['url'],
+                        content=parsed_data['content'],
+                        links=parsed_data['links'],
+                        feed_id=feed.id
+                    )
+                    db.session.add(new_content)
+            db.session.commit()
+        except Exception as e:
+            logging_config.logger.error(f"Error parsing feed {feed.url}: {str(e)}")
+    
+    flash('Feed parsing completed', 'success')
+    return redirect(url_for('rss_manager.manage_rss'))
 
 class RSSFeedForm(FlaskForm):
     url = StringField('RSS Feed URL', validators=[DataRequired(), URL()])

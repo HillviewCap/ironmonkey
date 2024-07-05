@@ -101,3 +101,13 @@ class Threat(db.Model):
     source_type = db.Column(db.String(100), nullable=False)
     date = db.Column(db.DateTime, nullable=False)
     url = db.Column(db.String(255), nullable=False)
+
+class ParsedContent(db.Model):
+    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    title = db.Column(db.String(255), nullable=False)
+    url = db.Column(db.String(255), nullable=False)
+    content = db.Column(db.Text, nullable=False)
+    links = db.Column(db.JSON, nullable=True)
+    feed_id = db.Column(UUID(as_uuid=True), db.ForeignKey('rss_feed.id'), nullable=False)
+    feed = db.relationship('RSSFeed', backref=db.backref('parsed_contents', lazy=True))
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
