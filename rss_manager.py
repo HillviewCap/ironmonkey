@@ -21,6 +21,7 @@ from jina_api import parse_content
 import asyncio
 from sqlalchemy import func
 from flask import request
+from nlp_tagging import tag_single_content
 
 rss_manager = Blueprint('rss_manager', __name__)
 csrf = CSRFProtect()
@@ -194,6 +195,17 @@ def parsed_content():
                            search_query=search_query,
                            per_page=per_page,
                            per_page_options=PER_PAGE_OPTIONS)
+
+@rss_manager.route('/tag_content/<uuid:post_id>', methods=['POST'])
+@login_required
+def tag_content(post_id):
+    post = ParsedContent.query.get_or_404(post_id)
+    try:
+        tag_single_content(post)
+        flash('Content tagged successfully!', 'success')
+    except Exception as e:
+        flash(f'Error tagging content: {str(e)}', 'error')
+    return redirect(url_for('rss_manager.parsed_content'))
 
 @rss_manager.route('/delete_feed/<uuid:feed_id>', methods=['POST'])
 @login_required
