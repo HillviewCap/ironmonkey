@@ -170,7 +170,9 @@ def create_app():
     def index():
         current_app.logger.info("Entering index route")
         try:
-            return render_template("index.html")
+            # Fetch the 6 most recent ParsedContent items
+            recent_items = ParsedContent.query.order_by(ParsedContent.created_at.desc()).limit(6).all()
+            return render_template("index.html", recent_items=recent_items)
         except Exception as e:
             current_app.logger.error(f"Error in index route: {str(e)}", exc_info=True)
             return render_error_page()
