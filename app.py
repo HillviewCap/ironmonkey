@@ -37,17 +37,6 @@ logger.info(f"Database URI: {app.config['SQLALCHEMY_DATABASE_URI']}")
 db_path = app.config['SQLALCHEMY_DATABASE_URI'].replace('sqlite:///', '')
 logger.info(f"Database file path: {db_path}")
 
-# Ensure the directory for the database file exists
-db_dir = os.path.dirname(db_path)
-if not os.path.exists(db_dir):
-    try:
-        os.makedirs(db_dir)
-        logger.info(f"Created directory for database file at {db_dir}")
-    except Exception as e:
-        logger.error(f"Error creating directory for database file: {str(e)}")
-else:
-    logger.info(f"Directory for database file already exists at {db_dir}")
-
 try:
     db.init_app(app)
     logger.info("SQLAlchemy initialized successfully")
