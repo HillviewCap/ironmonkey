@@ -46,13 +46,13 @@ def init_db():
             os.makedirs('migrations')
             os.system('flask db init')
         
-        # Check if env.py exists before running migrations
-        if os.path.exists(os.path.join('migrations', 'env.py')):
-            # Run database migrations
-            from flask_migrate import upgrade as _upgrade
-            _upgrade()
-        else:
-            print("Warning: migrations/env.py not found. Skipping database migrations.")
+        # Check if there are any existing migration scripts
+        if not os.listdir(os.path.join('migrations', 'versions')):
+            # If no migration scripts exist, create an initial migration
+            os.system('flask db migrate -m "Initial migration"')
+        
+        # Apply all migrations
+        os.system('flask db upgrade')
 
 init_db()
 
