@@ -12,8 +12,6 @@ from dotenv import load_dotenv
 from werkzeug.exceptions import BadRequest
 import bleach
 from flask_wtf.csrf import CSRFProtect
-from flask_migrate import Migrate
-import os
 from typing import List, Dict
 import httpx
 import asyncio
@@ -31,9 +29,6 @@ app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
 db.init_app(app)
 csrf = CSRFProtect(app)
 init_auth(app)
-migrate = Migrate(app, db)
-from flask_migrate import cli as migrate_cli
-app.cli.add_command(migrate_cli.db)
 
 app.route('/login', methods=['GET', 'POST'])(login)
 app.route('/logout')(logout)
@@ -45,33 +40,7 @@ app.register_blueprint(rss_manager)
 def init_db():
     with app.app_context():
         logger.info("Starting database initialization")
-        # Backup the database before dropping all tables
-        backup_file = f"backup_{datetime.now().strftime('%Y%m%d%H%M%S')}.sql"
-        os.system(f"sqlite3 {os.getenv('DATABASE_URL').split('///')[-1]} .dump > {backup_file}")
-        logger.info(f"Database backed up to {backup_file}")
-
-        db.drop_all()
         db.create_all()
-        
-        # Check if migrations directory exists and is not empty
-        if os.path.exists('migrations'):
-            logger.info("Removing existing migrations directory")
-            try:
-                import shutil
-                shutil.rmtree('migrations')
-            except Exception as e:
-                logger.error(f"Error removing migrations directory: {e}")
-                return
-
-        logger.info("Initializing Flask-Migrate and creating initial migration")
-        try:
-            os.system('flask db init')
-            os.system('flask db migrate -m "Initial migration"')
-            os.system('flask db upgrade')
-        except Exception as e:
-            logger.error(f"Error during migration setup: {e}")
-            return
-
         logger.info("Database initialization completed")
 
 from auth import index
