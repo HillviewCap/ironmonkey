@@ -11,6 +11,8 @@ from typing import List
 import csv
 from io import TextIOWrapper
 import httpx
+import uuid
+from werkzeug.wrappers import Response
 
 rss_manager = Blueprint('rss_manager', __name__)
 
@@ -105,7 +107,7 @@ def manage_rss() -> str:
 
 @rss_manager.route('/delete_feed/<uuid:feed_id>', methods=['POST'])
 @login_required
-def delete_feed(feed_id: uuid.UUID) -> werkzeug.wrappers.Response:
+def delete_feed(feed_id: uuid.UUID) -> Response:
     """
     Delete an RSS feed from the database.
 
