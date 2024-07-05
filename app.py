@@ -71,10 +71,6 @@ def create_app():
         app.register_blueprint(rss_manager)
 
         # Route registrations
-        app.add_url_rule("/login", "login", login, methods=["GET", "POST"])
-        app.add_url_rule("/logout", "logout", logout)
-        app.add_url_rule("/register", "register", register, methods=["GET", "POST"])
-        
         @app.route("/")
         def index():
             current_app.logger.info("Entering index route")
@@ -88,6 +84,12 @@ def create_app():
             except Exception as e:
                 current_app.logger.error(f"Error in index route: {str(e)}", exc_info=True)
                 return render_error_page()
+
+        # Route registrations
+        app.add_url_rule("/", "index", index)
+        app.add_url_rule("/login", "login", login, methods=["GET", "POST"])
+        app.add_url_rule("/logout", "logout", logout)
+        app.add_url_rule("/register", "register", register, methods=["GET", "POST"])
     except Exception as e:
         logger.error(f"Error during app initialization: {str(e)}")
         raise
