@@ -135,6 +135,7 @@ class ParsedContent(db.Model):
     categories = db.relationship("Category", back_populates="parsed_content")
     summary = db.Column(db.Text, nullable=True)
     summary = db.Column(db.Text, nullable=True)
+    summary = db.Column(db.Text, nullable=True)
 
 
 class Entity(db.Model):
