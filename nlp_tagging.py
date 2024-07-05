@@ -2,7 +2,6 @@ import httpx
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from models import db, ParsedContent, Entity, Uris, Type, EntityType, Mention, Location, Category
-from app import app
 from config import Config
 
 async def tag_single_content(content):
