@@ -135,6 +135,15 @@ class ParsedContent(db.Model):
     entities = db.relationship("Entity", back_populates="parsed_content")
     categories = db.relationship("Category", back_populates="parsed_content")
 
+    @classmethod
+    def get_by_id(cls, content_id):
+        if isinstance(content_id, str):
+            try:
+                content_id = uuid.UUID(content_id)
+            except ValueError:
+                return None
+        return cls.query.get(content_id)
+
 
 class Entity(db.Model):
     id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
