@@ -1,91 +1,76 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="max-w-4xl mx-auto p-6">
+<div class="max-w-6xl mx-auto p-6">
     <h1 class="text-3xl font-bold mb-6">RSS Feed Manager</h1>
 
     {% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %}
-    <div class="mb-4">
-        {% for category, message in messages %}
-        <div class="alert alert-{{ category }} mb-2">
-            {{ message }}
-        </div>
-        {% endfor %}
-    </div>
-    {% endif %}
+        {% if messages %}
+            <div class="mb-4">
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} mb-2 p-2 rounded {% if category == 'error' %}bg-red-100 text-red-700{% elif category == 'success' %}bg-green-100 text-green-700{% else %}bg-blue-100 text-blue-700{% endif %}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
     {% endwith %}
     
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-        <form method="POST" class="bg-white shadow-md rounded px-8 pt-6 pb-8">
-            {{ form.hidden_tag() }}
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        <!-- Add Single Feed Form -->
+        <div class="bg-white shadow-md rounded px-8 pt-6 pb-8">
             <h2 class="text-xl font-bold mb-4">Add Single Feed</h2>
-            <div class="mb-4">
-                {{ form.url.label(class="block text-gray-700 text-sm font-bold mb-2") }}
-                {{ form.url(class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline") }}
-            </div>
-            <div class="mb-4">
-                {{ form.category.label(class="block text-gray-700 text-sm font-bold mb-2") }}
-                {{ form.category(class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline") }}
-            </div>
-            {{ form.submit(class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline") }}
-        </form>
+            <form method="POST">
+                {{ form.hidden_tag() }}
+                <div class="mb-4">
+                    {{ form.url.label(class="block text-gray-700 text-sm font-bold mb-2") }}
+                    {{ form.url(class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline") }}
+                </div>
+                <div class="mb-4">
+                    {{ form.category.label(class="block text-gray-700 text-sm font-bold mb-2") }}
+                    {{ form.category(class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline") }}
+                </div>
+                {{ form.submit(class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline") }}
+            </form>
+        </div>
 
-        <form method="POST" enctype="multipart/form-data" class="bg-white shadow-md rounded px-8 pt-6 pb-8">
-            {{ csv_form.hidden_tag() }}
+        <!-- Import Feeds from CSV Form -->
+        <div class="bg-white shadow-md rounded px-8 pt-6 pb-8">
             <h2 class="text-xl font-bold mb-4">Import Feeds from CSV</h2>
-            <div class="mb-4">
-                {{ csv_form.file.label(class="block text-gray-700 text-sm font-bold mb-2") }}
-                {{ csv_form.file(class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline") }}
-            </div>
-            {{ csv_form.submit(class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline") }}
-        </form>
+            <form method="POST" enctype="multipart/form-data">
+                {{ csv_form.hidden_tag() }}
+                <div class="mb-4">
+                    {{ csv_form.file.label(class="block text-gray-700 text-sm font-bold mb-2") }}
+                    {{ csv_form.file(class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline") }}
+                </div>
+                {{ csv_form.submit(class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline") }}
+            </form>
+        </div>
     </div>
 
     <h2 class="text-2xl font-bold mb-4">Existing RSS Feeds</h2>
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {% for feed in feeds %}
-        <div class="bg-white shadow-md rounded px-6 py-4 flex flex-col h-full">
-            <div class="flex-grow">
-                <h3 class="text-lg font-semibold mb-2">{{ feed.title }}</h3>
-                <p class="text-sm text-gray-600 mb-2">Category: {{ feed.category }}</p>
-                <p class="text-sm text-gray-500 mb-2">{{ feed.description }}</p>
-                <a href="{{ feed.url }}" target="_blank" class="text-blue-500 hover:text-blue-700">{{ feed.url }}</a>
-                <p class="text-sm text-gray-500 mt-2">Last Build Date: {{ feed.last_build_date or 'Not available' }}</p>
+            <div class="bg-white shadow-md rounded px-6 py-4 flex flex-col h-full">
+                <div class="flex-grow">
+                    <h3 class="text-lg font-semibold mb-2">{{ feed.title }}</h3>
+                    <p class="text-sm text-gray-600 mb-2">Category: {{ feed.category }}</p>
+                    <p class="text-sm text-gray-500 mb-2">{{ feed.description }}</p>
+                    <a href="{{ feed.url }}" target="_blank" class="text-blue-500 hover:text-blue-700 break-all">{{ feed.url }}</a>
+                    <p class="text-sm text-gray-500 mt-2">Last Build Date: {{ feed.last_build_date or 'Not available' }}</p>
+                </div>
+                <div class="mt-4 flex space-x-2">
+                    <a href="{{ url_for('rss_manager.edit_feed', feed_id=feed.id) }}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+                        Edit
+                    </a>
+                    <form action="{{ url_for('rss_manager.delete_feed', feed_id=feed.id) }}" method="POST" class="inline">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                        <button type="submit" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+                            Delete
+                        </button>
+                    </form>
+                </div>
             </div>
-            <div class="mt-4 flex space-x-2">
-                <a href="{{ url_for('rss_manager.edit_feed', feed_id=feed.id) }}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
-                    Edit Feed
-                </a>
-                <form action="{{ url_for('rss_manager.delete_feed', feed_id=feed.id) }}" method="POST" class="inline">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                    <button type="submit" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
-                        Delete Feed
-                    </button>
-                </form>
-            </div>
-=======
-        <div class="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4 flex flex-col h-full">
-            <div class="flex-grow">
-                <h3 class="text-xl font-bold mb-2">{{ feed.title }}</h3>
-                <p class="text-gray-600 mb-2">Category: {{ feed.category }}</p>
-                <p class="text-sm text-gray-500 mb-2">{{ feed.description }}</p>
-                <a href="{{ feed.url }}" target="_blank" class="text-blue-500 hover:text-blue-700">{{ feed.url }}</a>
-                <p class="text-sm text-gray-500 mt-2">Last Build Date: {{ feed.last_build_date or 'Not available' }}</p>
-            </div>
-            <div class="mt-4 flex space-x-2">
-                <a href="{{ url_for('rss_manager.edit_feed', feed_id=feed.id) }}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
-                    Edit Feed
-                </a>
-                <form action="{{ url_for('rss_manager.delete_feed', feed_id=feed.id) }}" method="POST" class="inline">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                    <button type="submit" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
-                        Delete Feed
-                    </button>
-                </form>
-            </div>
->>>>>>> 5f1296b (Removed the old SEARCH/REPLACE block and replaced it with the corrected version.)
-        </div>
         {% endfor %}
     </div>
 </div>
