@@ -9,6 +9,8 @@ from flask_login import UserMixin
 from werkzeug.security import check_password_hash
 import xml.etree.ElementTree as ET
 import httpx
+from bs4 import BeautifulSoup
+import requests
 
 db = SQLAlchemy()
 from sqlalchemy.dialects.postgresql import UUID
@@ -34,20 +36,29 @@ class RSSFeed(db.Model):
 
     @staticmethod
     def fetch_feed_info(url: str) -> tuple[str, str, str]:
-        with httpx.Client() as client:
-            response = client.get(url)
         try:
-            root = ET.fromstring(response.content)
-            channel = root.find('channel')
-            title = channel.find('title').text
-            description = channel.find('description').text
-            last_build_date = channel.find('lastBuildDate')
-            last_build_date = last_build_date.text if last_build_date is not None else None
-            return title, description, last_build_date
-        except ET.ParseError as e:
-            raise ValueError(f"Error parsing XML: {str(e)}")
+            feed = feedparser.parse(url)
+            title = feed.feed.title if 'title' in feed.feed else 'Unknown Title'
+            description = feed.feed.description if 'description' in feed.feed else 'No description available'
+            last_build_date = feed.feed.updated if 'updated' in feed.feed else None
         except Exception as e:
-            raise ValueError(f"Error fetching feed info: {str(e)}")
+            logging_config.logger.error(f'Error parsing feed with feedparser: {str(e)}')
+            title, description, last_build_date = 'Unknown Title', 'No description available', None
+
+        if title == 'Unknown Title' or description == 'No description available':
+            try:
+                response = requests.get(url)
+                soup = BeautifulSoup(response.content, 'lxml')
+                if title == 'Unknown Title':
+                    title_tag = soup.find('title')
+                    title = title_tag.text if title_tag else 'Unknown Title'
+                if description == 'No description available':
+                    description_tag = soup.find('meta', attrs={'name': 'description'})
+                    description = description_tag['content'] if description_tag else 'No description available'
+            except Exception as e:
+                logging_config.logger.error(f'Error scraping feed with BeautifulSoup: {str(e)}')
+
+        return title, description, last_build_date
 
 class SearchParams(BaseModel):
     query: str
