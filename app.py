@@ -79,8 +79,15 @@ except Exception as e:
     logger.error(f"Error during database initialization: {str(e)}")
 
 from auth import index
+from flask import current_app
 
-app.route('/')(index)
+@app.route('/')
+def root():
+    try:
+        return index()
+    except Exception as e:
+        current_app.logger.error(f"Error in index route: {str(e)}", exc_info=True)
+        return "An error occurred", 500
 
 @app.route('/search', methods=['GET'])
 def search_page():
