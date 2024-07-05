@@ -48,23 +48,23 @@ def init_db():
         db.create_all()
         
         # Check if migrations directory exists and is not empty
-        if not os.path.exists('migrations') or not os.listdir('migrations'):
-            logger.info("Initializing Flask-Migrate and creating initial migration")
+        if os.path.exists('migrations'):
+            logger.info("Removing existing migrations directory")
             try:
-                os.system('flask db init')
-                os.system('flask db migrate -m "Initial migration"')
-                os.system('flask db upgrade')
+                import shutil
+                shutil.rmtree('migrations')
             except Exception as e:
-                logger.error(f"Error during migration setup: {e}")
+                logger.error(f"Error removing migrations directory: {e}")
                 return
-        else:
-            # Apply all migrations
-            logger.info("Applying migrations")
-            try:
-                os.system('flask db upgrade')
-            except Exception as e:
-                logger.error(f"Error applying migrations: {e}")
-                return
+
+        logger.info("Initializing Flask-Migrate and creating initial migration")
+        try:
+            os.system('flask db init')
+            os.system('flask db migrate -m "Initial migration"')
+            os.system('flask db upgrade')
+        except Exception as e:
+            logger.error(f"Error during migration setup: {e}")
+            return
 
         logger.info("Database initialization completed")
 
