@@ -8,7 +8,7 @@ from flask_wtf import FlaskForm
 from flask_wtf.csrf import CSRFProtect
 from wtforms import StringField, SubmitField, FileField
 from wtforms.validators import DataRequired, URL
-from typing import List
+from typing import List, Union
 import csv
 from io import TextIOWrapper
 import httpx
