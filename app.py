@@ -100,7 +100,12 @@ def root():
         return result
     except Exception as e:
         current_app.logger.error(f"Error in index route: {str(e)}", exc_info=True)
-        return render_template('error.html', error="An error occurred. Please try again later."), 500
+        try:
+            current_app.logger.debug("Attempting to render error.html")
+            return render_template('error.html', error="An error occurred. Please try again later."), 500
+        except Exception as template_error:
+            current_app.logger.error(f"Error rendering error template: {str(template_error)}", exc_info=True)
+            return "An error occurred, and we couldn't render the error page. Please try again later.", 500
 
 @app.route('/search', methods=['GET'])
 def search_page():
