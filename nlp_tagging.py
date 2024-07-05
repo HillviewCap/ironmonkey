@@ -125,17 +125,22 @@ class DatabaseHandler:
             )
             session.add(category)
 
-    def process_nlp_result(self, content: ParsedContent, result: Dict[str, Any]):
-        with self.Session() as session:
-            for entity_data in result.get("entities", []):
-                entity = self.add_entity(session, entity_data, content)
-                self.add_uris(session, entity, entity_data.get("uris", []))
-                self.add_types(session, entity, entity_data.get("types", []))
-                self.add_mentions(session, entity, entity_data.get("mentions", []))
-                self.add_locations(session, entity, entity_data.get("locations", []))
+    def process_nlp_result(self, content: ParsedContent, result: Dict[str, Any], session=None):
+        if session is None:
+            with self.Session() as session:
+                self._process_nlp_result(content, result, session)
+        else:
+            self._process_nlp_result(content, result, session)
 
-            self.add_categories(session, result.get("categories", []), content)
-            session.commit()
+    def _process_nlp_result(self, content: ParsedContent, result: Dict[str, Any], session):
+        for entity_data in result.get("entities", []):
+            entity = self.add_entity(session, entity_data, content)
+            self.add_uris(session, entity, entity_data.get("uris", []))
+            self.add_types(session, entity, entity_data.get("types", []))
+            self.add_mentions(session, entity, entity_data.get("mentions", []))
+            self.add_locations(session, entity, entity_data.get("locations", []))
+
+        self.add_categories(session, result.get("categories", []), content)
 
 
 async def process_single_content(
