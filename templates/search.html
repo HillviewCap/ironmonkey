@@ -6,18 +6,19 @@
     <form action="{{ url_for('search') }}" method="get" class="mb-8">
         <input type="text" name="query" placeholder="Search threats..." class="p-2 border rounded-lg w-64 mb-2">
         <div class="flex justify-center space-x-4 mb-2">
-            <input type="date" name="start_date" placeholder="Start Date" class="p-2 border rounded-lg">
-            <input type="date" name="end_date" placeholder="End Date" class="p-2 border rounded-lg">
+            <input type="date" name="start_date" placeholder="Start Date (optional)" class="p-2 border rounded-lg">
+            <input type="date" name="end_date" placeholder="End Date (optional)" class="p-2 border rounded-lg">
         </div>
         <div class="mb-2">
-            <label class="block">Source Types:</label>
+            <label class="block">Source Types (optional):</label>
             <input type="checkbox" name="source_types" value="news"> News
             <input type="checkbox" name="source_types" value="blog"> Blog
             <input type="checkbox" name="source_types" value="report"> Report
         </div>
         <div class="mb-2">
-            <input type="text" name="keywords" placeholder="Enter keywords (comma-separated)" class="p-2 border rounded-lg w-64">
+            <input type="text" name="keywords" placeholder="Enter optional keywords (comma-separated)" class="p-2 border rounded-lg w-64">
         </div>
+        <p class="text-sm text-gray-600 mb-2">All fields are optional. Leave blank to search all dates, sources, and keywords.</p>
         <button type="submit" class="bg-blue-600 text-white p-2 rounded-lg">Search</button>
     </form>
 </div>
