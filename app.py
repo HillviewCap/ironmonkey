@@ -46,8 +46,13 @@ def init_db():
             os.makedirs('migrations')
             os.system('flask db init')
         
+        # Check if the versions directory exists
+        versions_dir = os.path.join('migrations', 'versions')
+        if not os.path.exists(versions_dir):
+            os.makedirs(versions_dir)
+        
         # Check if there are any existing migration scripts
-        if not os.listdir(os.path.join('migrations', 'versions')):
+        if not os.listdir(versions_dir):
             # If no migration scripts exist, create an initial migration
             os.system('flask db migrate -m "Initial migration"')
         
