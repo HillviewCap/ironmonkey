@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from flask import Blueprint, render_template, redirect, url_for, flash, request
 import logging_config
 from flask_login import login_required
@@ -8,6 +10,7 @@ from wtforms.validators import DataRequired, URL
 from typing import List
 import csv
 from io import TextIOWrapper
+import httpx
 
 rss_manager = Blueprint('rss_manager', __name__)
 
@@ -22,7 +25,17 @@ class CSVUploadForm(FlaskForm):
 
 @rss_manager.route('/rss_manager', methods=['GET', 'POST'])
 @login_required
-def manage_rss():
+def manage_rss() -> str:
+    """
+    Handle RSS feed management operations.
+    
+    This function handles both GET and POST requests for the RSS manager page.
+    It processes form submissions for adding individual RSS feeds and importing
+    feeds from CSV files.
+
+    Returns:
+        str: Rendered HTML template for the RSS manager page.
+    """
     form: RSSFeedForm = RSSFeedForm()
     csv_form: CSVUploadForm = CSVUploadForm()
     
@@ -92,7 +105,16 @@ def manage_rss():
 
 @rss_manager.route('/delete_feed/<uuid:feed_id>', methods=['POST'])
 @login_required
-def delete_feed(feed_id):
+def delete_feed(feed_id: uuid.UUID) -> werkzeug.wrappers.Response:
+    """
+    Delete an RSS feed from the database.
+
+    Args:
+        feed_id (uuid.UUID): The UUID of the feed to be deleted.
+
+    Returns:
+        werkzeug.wrappers.Response: A redirect response to the RSS manager page.
+    """
     feed = RSSFeed.query.get_or_404(feed_id)
     db.session.delete(feed)
     db.session.commit()
