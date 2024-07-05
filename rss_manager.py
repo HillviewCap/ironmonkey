@@ -174,8 +174,7 @@ def parsed_content():
 
 @rss_manager.route('/delete_feed/<uuid:feed_id>', methods=['POST'])
 @login_required
-@csrf.exempt
-def delete_feed(feed_id: uuid.UUID) -> Response:
+def delete_feed(feed_id: uuid.UUID):
     """
     Delete an RSS feed from the database.
 
@@ -183,7 +182,7 @@ def delete_feed(feed_id: uuid.UUID) -> Response:
         feed_id (uuid.UUID): The UUID of the feed to be deleted.
 
     Returns:
-        werkzeug.wrappers.Response: A redirect response to the RSS manager page.
+        flask.Response: A redirect response to the RSS manager page.
     """
     feed = RSSFeed.query.get_or_404(feed_id)
     db.session.delete(feed)
