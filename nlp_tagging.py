@@ -1,10 +1,10 @@
 import httpx
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from models import ParsedContent, Entity, Uris, Type, EntityType, Mention, Location, Category
+from models import db, ParsedContent, Entity, Uris, Type, EntityType, Mention, Location, Category
 from config import Config
 
-def tag_single_content(content):
+async def tag_single_content(content):
     url = "https://nl.diffbot.com/v1/?fields=entities,categories&token=5dc42cec418d6760f7b5b1743f61fa73"
     headers = {
         "accept": "application/json",
