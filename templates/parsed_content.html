@@ -34,7 +34,7 @@
                 {% for post in posts %}
                 <tr class="{% if loop.index % 2 == 0 %}bg-gray-100{% endif %}">
                     <td class="border px-4 py-2">{{ post.title[:300] }}</td>
-                    <td class="border px-4 py-2">{{ post.content[:300] }}</td>
+                    <td class="border px-4 py-2">{{ post.content[:200] }}</td>
                     <td class="border px-4 py-2">
                         <a href="{{ post.url }}" class="text-blue-500 hover:underline" target="_blank">
                             {{ post.url[:300] }}
