@@ -4,7 +4,7 @@ import logging_config
 from flask import Flask, render_template, request, jsonify
 from sqlalchemy import create_engine, text
 from models import SearchParams, SearchResult, User, db, RSSFeed, Threat
-from datetime import datetime
+from datetime import datetime, date
 from flask_login import login_required, current_user
 from auth import init_auth, login, logout, register
 import os
@@ -49,6 +49,10 @@ from auth import index
 
 app.route('/')(index)
 
+@app.route('/search', methods=['GET'])
+def search_page():
+    return render_template('search.html')
+
 @app.cli.command("parse-feeds")
 def parse_feeds_command():
     """Parse all RSS feeds and store new content."""
@@ -56,28 +60,29 @@ def parse_feeds_command():
         asyncio.run(rss_manager.parse_feeds())
     print("Feeds parsed successfully.")
 
-@app.route('/search', methods=['POST'])
+@app.route('/search', methods=['GET', 'POST'])
 @login_required
-def search() -> List[Dict[str, str | datetime]]:
-    """
-    Perform a search based on the provided search parameters.
-    
-    This function expects a JSON payload with search parameters, validates them,
-    and then queries the database for matching Threat entries. It applies filters
-    based on the search query, date range, source types, and keywords.
-    
-    Returns:
-        List[Dict[str, str | datetime]]: A list of search results as dictionaries,
-        where each dictionary represents a Threat object with its attributes.
-    
-    Raises:
-        BadRequest: If the provided search parameters are invalid.
-    """
-    try:
-        data = request.json
-        search_params = SearchParams(**data)
-    except ValueError as e:
-        raise BadRequest(str(e))
+def search():
+    if request.method == 'GET':
+        query = request.args.get('query', '')
+        start_date = request.args.get('start_date')
+        end_date = request.args.get('end_date')
+        source_types = request.args.getlist('source_types')
+        keywords = request.args.get('keywords', '').split(',') if request.args.get('keywords') else []
+
+        search_params = SearchParams(
+            query=query,
+            start_date=datetime.strptime(start_date, '%Y-%m-%d').date() if start_date else None,
+            end_date=datetime.strptime(end_date, '%Y-%m-%d').date() if end_date else None,
+            source_types=source_types,
+            keywords=keywords
+        )
+    else:  # POST
+        try:
+            data = request.json
+            search_params = SearchParams(**data)
+        except ValueError as e:
+            raise BadRequest(str(e))
 
     query = db.session.query(Threat)
     
@@ -107,14 +112,18 @@ def search() -> List[Dict[str, str | datetime]]:
             )
 
     results = query.all()
-    return jsonify([SearchResult(
-        id=str(threat.id),
-        title=threat.title,
-        description=threat.description,
-        source_type=threat.source_type,
-        date=threat.date,
-        url=threat.url
-    ).dict() for threat in results])
+    
+    if request.method == 'GET':
+        return render_template('search_results.html', results=results, search_params=search_params)
+    else:  # POST
+        return jsonify([SearchResult(
+            id=str(threat.id),
+            title=threat.title,
+            description=threat.description,
+            source_type=threat.source_type,
+            date=threat.date,
+            url=threat.url
+        ).dict() for threat in results])
 
 if __name__ == '__main__':
     init_db()
