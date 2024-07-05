@@ -18,6 +18,7 @@ from sqlalchemy.exc import IntegrityError
 import feedparser
 from jina_api import parse_content
 import asyncio
+from sqlalchemy import func
 
 rss_manager = Blueprint('rss_manager', __name__)
 csrf = CSRFProtect()
@@ -160,6 +161,13 @@ def manage_rss() -> str:
     feeds: List[RSSFeed] = RSSFeed.query.all()
     delete_form = FlaskForm()  # Create a new form for CSRF protection
     return render_template('rss_manager.html', form=form, csv_form=csv_form, feeds=feeds, delete_form=delete_form)
+
+@rss_manager.route('/parsed_content')
+@login_required
+def parsed_content():
+    """Display parsed content from the database."""
+    posts = ParsedContent.query.order_by(ParsedContent.created_at.desc()).all()
+    return render_template('parsed_content.html', posts=posts)
 
 @rss_manager.route('/delete_feed/<uuid:feed_id>', methods=['POST'])
 @login_required
