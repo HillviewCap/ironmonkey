@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import uuid
 from flask import Blueprint, render_template, redirect, url_for, flash, request, current_app
 from flask_login import login_required
 from nlp_tagging import DiffbotClient, DatabaseHandler
@@ -228,14 +229,16 @@ def parsed_content():
     )
 
 
-@rss_manager.route("/tag_content/<uuid:post_id>", methods=["POST"])
+@rss_manager.route("/tag_content/<string:post_id>", methods=["POST"])
 @login_required
 async def tag_content(post_id):
     """Tag a single piece of parsed content."""
-    post = db.session.get(ParsedContent, post_id)
-    if post is None:
-        flash("Content not found", "error")
-        return redirect(url_for("rss_manager.parsed_content"))
+    try:
+        uuid_post_id = uuid.UUID(post_id)
+        post = db.session.get(ParsedContent, uuid_post_id)
+        if post is None:
+            flash("Content not found", "error")
+            return redirect(url_for("rss_manager.parsed_content"))
     try:
         diffbot_api_key = os.getenv("DIFFBOT_API_KEY")
         if not diffbot_api_key:
