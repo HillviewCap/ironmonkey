@@ -39,27 +39,32 @@ def manage_rss():
     
     if csv_form.validate_on_submit():
         csv_file = csv_form.file.data
-        try:
-            csv_file = TextIOWrapper(csv_file, encoding='utf-8')
-            csv_reader = csv.reader(csv_file)
-            errors = []
-            for row in csv_reader:
-                if len(row) >= 2:
-                    url, category = row[0], row[1]
-                    try:
-                        title, description, last_build_date = RSSFeed.fetch_feed_info(url)
-                        new_feed: RSSFeed = RSSFeed(url=url, title=title, category=category, description=description, last_build_date=last_build_date)
-                        db.session.add(new_feed)
-                        db.session.commit()
-                    except Exception as e:
-                        errors.append(f'Error adding RSS Feed {url}: {str(e)}')
-            if errors:
-                for error in errors:
-                    flash(error, 'error')
-            db.session.commit()
-            flash('CSV file processed successfully!', 'success')
-        except Exception as e:
-            flash(f'Error processing CSV file: {str(e)}', 'error')
+        if csv_file.filename.endswith('.csv'):
+            try:
+                csv_file = TextIOWrapper(csv_file, encoding='utf-8')
+                csv_reader = csv.reader(csv_file)
+                errors = []
+                feeds_to_add = []
+                for row in csv_reader:
+                    if len(row) >= 2:
+                        url, category = row[0], row[1]
+                        try:
+                            title, description, last_build_date = RSSFeed.fetch_feed_info(url)
+                            new_feed: RSSFeed = RSSFeed(url=url, title=title, category=category, description=description, last_build_date=last_build_date)
+                            feeds_to_add.append(new_feed)
+                        except Exception as e:
+                            errors.append(f'Error fetching info for RSS Feed {url}: {str(e)}')
+                if errors:
+                    for error in errors:
+                        flash(error, 'error')
+                else:
+                    db.session.bulk_save_objects(feeds_to_add)
+                    db.session.commit()
+                    flash('CSV file processed successfully!', 'success')
+            except Exception as e:
+                flash(f'Error processing CSV file: {str(e)}', 'error')
+        else:
+            flash('Invalid file format. Please upload a CSV file.', 'error')
         return redirect(url_for('rss_manager.manage_rss'))
     
     feeds: List[RSSFeed] = RSSFeed.query.all()
