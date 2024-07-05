@@ -26,14 +26,16 @@ logger = logging.getLogger(__name__)
 
 load_dotenv()
 
-app = Flask(__name__, instance_relative_config=True)
+app = Flask(__name__)
 from config import Config
 
 app.config.from_object(Config)
 Config.init_app(app)
 
-# Log the database URI (make sure to remove any sensitive information)
+# Log the database URI and file path
 logger.info(f"Database URI: {app.config['SQLALCHEMY_DATABASE_URI']}")
+db_path = app.config['SQLALCHEMY_DATABASE_URI'].replace('sqlite:///', '')
+logger.info(f"Database file path: {db_path}")
 
 try:
     db.init_app(app)
@@ -45,8 +47,15 @@ csrf = CSRFProtect(app)
 init_auth(app)
 migrate = Migrate(app, db)
 
-# Ensure the app's instance folder exists
-os.makedirs(app.instance_path, exist_ok=True)
+# Check if the database file exists and is accessible
+if os.path.exists(db_path):
+    logger.info(f"Database file exists at {db_path}")
+    if os.access(db_path, os.R_OK | os.W_OK):
+        logger.info("Database file is readable and writable")
+    else:
+        logger.error("Database file exists but is not accessible (check permissions)")
+else:
+    logger.warning(f"Database file does not exist at {db_path}")
 
 app.route('/login', methods=['GET', 'POST'])(login)
 app.route('/logout')(logout)
