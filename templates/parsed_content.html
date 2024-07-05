@@ -24,23 +24,23 @@
         <table class="w-full table-auto">
             <thead>
                 <tr class="bg-gray-200">
-                    <th class="px-4 py-2">Title</th>
-                    <th class="px-4 py-2">Content</th>
-                    <th class="px-4 py-2">URL</th>
-                    <th class="px-4 py-2">Created At</th>
+                    <th class="px-2 py-2 w-1/4">Title</th>
+                    <th class="px-2 py-2 w-1/4">Content</th>
+                    <th class="px-2 py-2 w-1/4">URL</th>
+                    <th class="px-2 py-2 w-1/4">Created At</th>
                 </tr>
             </thead>
             <tbody>
                 {% for post in posts %}
                 <tr class="{% if loop.index % 2 == 0 %}bg-gray-100{% endif %}">
-                    <td class="border px-4 py-2">{{ post.title[:300] }}</td>
-                    <td class="border px-4 py-2">{{ post.content[:200] }}</td>
-                    <td class="border px-4 py-2">
+                    <td class="border px-2 py-2 truncate">{{ post.title[:50] }}</td>
+                    <td class="border px-2 py-2 truncate">{{ post.content[:50] }}</td>
+                    <td class="border px-2 py-2 truncate">
                         <a href="{{ post.url }}" class="text-blue-500 hover:underline" target="_blank">
-                            {{ post.url[:300] }}
+                            {{ post.url[:50] }}
                         </a>
                     </td>
-                    <td class="border px-4 py-2">{{ post.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                    <td class="border px-2 py-2">{{ post.created_at.strftime('%Y-%m-%d') }}</td>
                 </tr>
                 {% endfor %}
             </tbody>

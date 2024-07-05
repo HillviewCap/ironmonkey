@@ -11,9 +11,9 @@
         </div>
         <div class="mb-2">
             <label class="block">Source Types:</label>
-            <input type="checkbox" name="source_types" value="news" {% if search_params and search_params.source_types and 'news' in search_params.source_types %}checked{% endif %}> News
-            <input type="checkbox" name="source_types" value="blog" {% if search_params and search_params.source_types and 'blog' in search_params.source_types %}checked{% endif %}> Blog
-            <input type="checkbox" name="source_types" value="report" {% if search_params and search_params.source_types and 'report' in search_params.source_types %}checked{% endif %}> Report
+            <input type="checkbox" name="source_types" value="news" {% if 'news' in (search_params.source_types|default([])) %}checked{% endif %}> News
+            <input type="checkbox" name="source_types" value="blog" {% if 'blog' in (search_params.source_types|default([])) %}checked{% endif %}> Blog
+            <input type="checkbox" name="source_types" value="report" {% if 'report' in (search_params.source_types|default([])) %}checked{% endif %}> Report
         </div>
         <div class="mb-2">
             <label class="block">Keywords:</label>
