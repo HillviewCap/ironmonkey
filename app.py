@@ -18,8 +18,8 @@ from sqlalchemy.exc import SQLAlchemyError
 from werkzeug.exceptions import BadRequest
 
 import logging_config
-from models import SearchParams, User, db, RSSFeed, ParsedContent
-from flask_login import LoginManager
+from models import SearchParams, db, ParsedContent
+from flask_login import LoginManager, UserMixin
 from auth import init_auth, login, logout, register
 from config import Config
 from rss_manager import rss_manager
@@ -64,7 +64,7 @@ def create_app():
 
         @login_manager.user_loader
         def load_user(user_id):
-            return User.query.get(user_id)
+            return db.session.get(UserMixin, user_id)
 
         # Register blueprints
         app.register_blueprint(rss_manager)
