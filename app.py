@@ -46,40 +46,34 @@ def init_db():
     with app.app_context():
         logger.info("Starting database initialization")
         db.create_all()
-        # Create migrations directory if it doesn't exist
+        
+        # Check if migrations directory exists
         if not os.path.exists('migrations'):
-            logger.info("Creating migrations directory")
-            os.makedirs('migrations')
+            logger.info("Initializing Flask-Migrate")
             try:
-                logger.info("Initializing Flask-Migrate")
-                os.system('flask db init')
+                migrate.init()
             except Exception as e:
-                logger.error(f"Error initializing database: {e}")
+                logger.error(f"Error initializing Flask-Migrate: {e}")
                 return
-        
-        # Check if the versions directory exists
-        versions_dir = os.path.join('migrations', 'versions')
-        if not os.path.exists(versions_dir):
-            logger.info("Creating versions directory")
-            os.makedirs(versions_dir)
-        
+
         # Check if there are any existing migration scripts
-        if not os.listdir(versions_dir):
-            # If no migration scripts exist, create an initial migration
+        versions_dir = os.path.join('migrations', 'versions')
+        if not os.path.exists(versions_dir) or not os.listdir(versions_dir):
             logger.info("Creating initial migration")
             try:
-                os.system('flask db migrate -m "Initial migration"')
+                migrate.migrate(message="Initial migration")
             except Exception as e:
                 logger.error(f"Error creating initial migration: {e}")
                 return
-        
+
         # Apply all migrations
         logger.info("Applying migrations")
         try:
-            os.system('flask db upgrade')
+            migrate.upgrade()
         except Exception as e:
             logger.error(f"Error applying migrations: {e}")
-        
+            return
+
         logger.info("Database initialization completed")
 
 init_db()
