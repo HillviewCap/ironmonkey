@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import List, Optional
+from typing import List, Optional, Tuple
 from uuid import UUID as PyUUID, uuid4
 from pydantic import BaseModel, Field
 from flask_sqlalchemy import SQLAlchemy
@@ -11,26 +11,27 @@ import xml.etree.ElementTree as ET
 import httpx
 import feedparser
 from bs4 import BeautifulSoup
-import requests
 import logging_config
-from bs4 import BeautifulSoup
-import requests
 
 db = SQLAlchemy()
 from sqlalchemy.dialects.postgresql import UUID
 
 class User(UserMixin, db.Model):
+    """User model for authentication and authorization."""
     id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     email = db.Column(db.String(120), unique=True, nullable=False)
     password = db.Column(db.String(255), nullable=False)
 
-    def get_id(self):
+    def get_id(self) -> Optional[str]:
+        """Return the user ID as a string."""
         return str(self.id) if self.id else None
 
     def check_password(self, password: str) -> bool:
+        """Check if the provided password matches the user's password."""
         return check_password_hash(self.password, password)
 
 class RSSFeed(db.Model):
+    """Model for storing RSS feed information."""
     id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     url = db.Column(db.String(255), unique=True, nullable=False)
     title = db.Column(db.String(255), nullable=False)
@@ -39,7 +40,16 @@ class RSSFeed(db.Model):
     last_build_date = db.Column(db.String(100), nullable=True)
 
     @staticmethod
-    def fetch_feed_info(url: str) -> tuple[str, str, str]:
+    def fetch_feed_info(url: str) -> Tuple[str, str, Optional[str]]:
+        """
+        Fetch RSS feed information from the given URL.
+        
+        Args:
+            url (str): The URL of the RSS feed.
+        
+        Returns:
+            Tuple[str, str, Optional[str]]: A tuple containing the title, description, and last build date.
+        """
         try:
             feed = feedparser.parse(url)
             title = feed.feed.title if 'title' in feed.feed else 'Unknown Title'
@@ -51,7 +61,8 @@ class RSSFeed(db.Model):
 
         if title == 'Unknown Title' or description == 'No description available':
             try:
-                response = requests.get(url)
+                with httpx.Client() as client:
+                    response = client.get(url)
                 soup = BeautifulSoup(response.content, 'lxml')
                 if title == 'Unknown Title':
                     title_tag = soup.find('title')
