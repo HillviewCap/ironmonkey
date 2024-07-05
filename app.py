@@ -17,6 +17,7 @@ from typing import List, Dict
 import httpx
 import asyncio
 import logging
+from flask_migrate import Migrate
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -33,6 +34,7 @@ app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
 db.init_app(app)
 csrf = CSRFProtect(app)
 init_auth(app)
+migrate = Migrate(app, db)
 
 app.route('/login', methods=['GET', 'POST'])(login)
 app.route('/logout')(logout)
