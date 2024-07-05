@@ -50,14 +50,15 @@ class RSSFeed(db.Model):
         Returns:
             Tuple[str, str, Optional[str]]: A tuple containing the title, description, and last build date.
         """
+        title, description, last_build_date = 'Unknown Title', 'No description available', None
+        
         try:
             feed = feedparser.parse(url)
-            title = feed.feed.title if 'title' in feed.feed else 'Unknown Title'
-            description = feed.feed.description if 'description' in feed.feed else 'No description available'
-            last_build_date = feed.feed.updated if 'updated' in feed.feed else None
+            title = feed.feed.get('title', 'Unknown Title')
+            description = feed.feed.get('description', 'No description available')
+            last_build_date = feed.feed.get('updated')
         except Exception as e:
             logging_config.logger.error(f'Error parsing feed with feedparser: {str(e)}')
-            title, description, last_build_date = 'Unknown Title', 'No description available', None
 
         if title == 'Unknown Title' or description == 'No description available':
             try:
