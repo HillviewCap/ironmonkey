@@ -1,4 +1,4 @@
-import requests
+import httpx
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from models import ParsedContent, Entity, Uris, Type, EntityType, Mention, Location, Category
@@ -20,7 +20,8 @@ def tag_single_content(content):
         }
     ]
 
-    response = requests.post(url, json=payload, headers=headers)
+    async with httpx.AsyncClient() as client:
+        response = await client.post(url, json=payload, headers=headers)
     
     if response.status_code == 200:
         result = response.json()
@@ -57,7 +58,7 @@ def process_nlp_result(content, result):
 
     db.session.commit()
 
-def tag_content():
+async def tag_content():
     # Create database session
     engine = create_engine(Config.SQLALCHEMY_DATABASE_URI)
     Session = sessionmaker(bind=engine)
@@ -84,7 +85,8 @@ def tag_content():
             }
         ]
 
-        response = requests.post(url, json=payload, headers=headers)
+        async with httpx.AsyncClient() as client:
+            response = await client.post(url, json=payload, headers=headers)
         
         if response.status_code == 200:
             result = response.json()
