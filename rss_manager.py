@@ -239,7 +239,7 @@ async def tag_content(post_id):
         if post is None:
             flash("Content not found", "error")
             return redirect(url_for("rss_manager.parsed_content"))
-    try:
+
         diffbot_api_key = os.getenv("DIFFBOT_API_KEY")
         if not diffbot_api_key:
             raise ValueError("DIFFBOT_API_KEY not set")
@@ -252,6 +252,8 @@ async def tag_content(post_id):
         
         db.session.commit()
         flash("Content tagged successfully!", "success")
+    except ValueError as e:
+        flash(f"Error: {str(e)}", "error")
     except Exception as e:
         db.session.rollback()
         flash(f"Error tagging content: {str(e)}", "error")
