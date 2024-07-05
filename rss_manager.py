@@ -89,31 +89,6 @@ def edit_feed(feed_id: uuid.UUID) -> Union[str, Response]:
     return render_template("edit_rss_feed.html", form=form, feed=feed)
 
 
-async def parse_single_feed(feed: RSSFeed):
-    """Parse a single RSS feed and store new content."""
-    try:
-        async with httpx.AsyncClient() as client:
-            response = await client.get(feed.url)
-            feed_data = feedparser.parse(response.text)
-
-            for entry in feed_data.entries:
-                existing_content = ParsedContent.query.filter_by(url=entry.link).first()
-                if not existing_content:
-                    parsed_data = await parse_content(entry.link)
-                    new_content = ParsedContent(
-                        title=parsed_data["title"],
-                        url=parsed_data["url"],
-                        content=parsed_data["content"],
-                        links=parsed_data["links"],
-                        feed_id=feed.id,
-                    )
-                    db.session.add(new_content)
-            db.session.commit()
-    except Exception as e:
-        logging_config.logger.error(f"Error parsing feed {feed.url}: {str(e)}")
-        raise
-
-
 class RSSFeedForm(FlaskForm):
     url = StringField("RSS Feed URL", validators=[DataRequired(), URL()])
     category = SelectField(
