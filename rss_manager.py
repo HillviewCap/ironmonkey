@@ -227,6 +227,7 @@ def delete_feed(feed_id: uuid.UUID):
     flash('RSS Feed deleted successfully!', 'success')
     return redirect(url_for('rss_manager.manage_rss'))
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 @rss_manager.route('/edit_feed/<uuid:feed_id>', methods=['GET', 'POST'])
 @login_required
@@ -259,6 +260,8 @@ def edit_feed(feed_id: uuid.UUID) -> Union[str, Response]:
         return redirect(url_for('rss_manager.manage_rss'))
     return render_template('edit_rss_feed.html', form=form, feed=feed)
 =======
+=======
+>>>>>>> f1139af5eed672acf971eda0f45343acd1b5b621
 async def parse_single_feed(feed: RSSFeed):
     """Parse a single RSS feed and store new content."""
     try:
@@ -282,4 +285,7 @@ async def parse_single_feed(feed: RSSFeed):
     except Exception as e:
         logging_config.logger.error(f"Error parsing feed {feed.url}: {str(e)}")
         raise
+<<<<<<< HEAD
 >>>>>>> 1a7eb0a (Added new feed and parsed it immediately)
+=======
+>>>>>>> f1139af5eed672acf971eda0f45343acd1b5b621
