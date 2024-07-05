@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mx-auto px-4">
+    <h1 class="text-2xl font-bold mb-4">Parsed Content</h1>
+    <div class="overflow-x-auto">
+        <table class="w-full table-auto">
+            <thead>
+                <tr class="bg-gray-200">
+                    <th class="px-4 py-2">Title</th>
+                    <th class="px-4 py-2">Content</th>
+                    <th class="px-4 py-2">URL</th>
+                    <th class="px-4 py-2">Created At</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for post in posts %}
+                <tr class="{% if loop.index % 2 == 0 %}bg-gray-100{% endif %}">
+                    <td class="border px-4 py-2">{{ post.title[:300] }}</td>
+                    <td class="border px-4 py-2">{{ post.content[:300] }}</td>
+                    <td class="border px-4 py-2">
+                        <a href="{{ post.url }}" class="text-blue-500 hover:underline" target="_blank">
+                            {{ post.url[:300] }}
+                        </a>
+                    </td>
+                    <td class="border px-4 py-2">{{ post.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
