@@ -11,5 +11,5 @@ os.makedirs(instance_path, exist_ok=True)
 
 class Config:
     SECRET_KEY = os.getenv('SECRET_KEY')
-    SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URL', f'sqlite:///{os.path.join(instance_path, "app.db")}')
+    SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URL', f'sqlite:///{os.path.join(instance_path, "threats.db")}')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
