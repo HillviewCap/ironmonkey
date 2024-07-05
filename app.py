@@ -18,7 +18,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from werkzeug.exceptions import BadRequest
 
 import logging_config
-from models import SearchParams, SearchResult, User, db, RSSFeed, Threat, ParsedContent
+from models import SearchParams, User, db, RSSFeed, ParsedContent
 from auth import init_auth, login, logout, register
 from config import Config
 from rss_manager import rss_manager
