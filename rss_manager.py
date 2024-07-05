@@ -1,7 +1,9 @@
 from __future__ import annotations
 
-from flask import Blueprint, render_template, redirect, url_for, flash, request
+import os
+from flask import Blueprint, render_template, redirect, url_for, flash, request, current_app
 from flask_login import login_required
+from nlp_tagging import DiffbotClient, DatabaseHandler
 from flask_wtf import FlaskForm
 from flask_wtf.csrf import CSRFProtect
 from wtforms import StringField, SubmitField, FileField, SelectField
@@ -221,13 +223,24 @@ def parsed_content():
 
 @rss_manager.route("/tag_content/<uuid:post_id>", methods=["POST"])
 @login_required
-def tag_content(post_id):
+async def tag_content(post_id):
     """Tag a single piece of parsed content."""
     post = ParsedContent.query.get_or_404(post_id)
     try:
-        tag_single_content(post)
+        diffbot_api_key = os.getenv("DIFFBOT_API_KEY")
+        if not diffbot_api_key:
+            raise ValueError("DIFFBOT_API_KEY not set")
+
+        diffbot_client = DiffbotClient(diffbot_api_key)
+        db_handler = DatabaseHandler(current_app.config["SQLALCHEMY_DATABASE_URI"])
+
+        result = await diffbot_client.tag_content(post.content)
+        db_handler.process_nlp_result(post, result)
+        
+        db.session.commit()
         flash("Content tagged successfully!", "success")
     except Exception as e:
+        db.session.rollback()
         flash(f"Error tagging content: {str(e)}", "error")
     return redirect(url_for("rss_manager.parsed_content"))
 
