@@ -1,4 +1,5 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request
+import logging_config
 from flask_login import login_required
 from models import db, RSSFeed
 from flask_wtf import FlaskForm
@@ -35,7 +36,9 @@ def manage_rss():
             db.session.commit()
             flash('RSS Feed added successfully!', 'success')
             logging_config.logger.info(f'RSS Feed added: {url}')
+            logging_config.logger.info(f'RSS Feed added: {url}')
         except Exception as e:
+            logging_config.logger.error(f'Error adding RSS Feed: {str(e)}')
             logging_config.logger.error(f'Error adding RSS Feed: {str(e)}')
             flash(f'Error adding RSS Feed: {str(e)}', 'error')
         return redirect(url_for('rss_manager.manage_rss'))
@@ -60,9 +63,9 @@ def manage_rss():
                 if errors:
                     for error in errors:
                         flash(error, 'error')
-                    logging_config.logger.info(f'RSS Feed added from CSV: {url}')
+                    logging_config.logger.error(f'Error fetching info for RSS Feed {url}: {str(e)}')
                 else:
-                    logging_config.logger.info('CSV file processed successfully!')
+                    logging_config.logger.info(f'RSS Feed added from CSV: {url}')
                     db.session.bulk_save_objects(feeds_to_add)
                     db.session.commit()
                     flash('CSV file processed successfully!', 'success')
