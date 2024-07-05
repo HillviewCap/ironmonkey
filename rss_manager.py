@@ -232,7 +232,10 @@ def parsed_content():
 @login_required
 async def tag_content(post_id):
     """Tag a single piece of parsed content."""
-    post = ParsedContent.query.get_or_404(post_id)
+    post = db.session.get(ParsedContent, post_id)
+    if post is None:
+        flash("Content not found", "error")
+        return redirect(url_for("rss_manager.parsed_content"))
     try:
         diffbot_api_key = os.getenv("DIFFBOT_API_KEY")
         if not diffbot_api_key:
