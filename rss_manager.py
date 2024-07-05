@@ -34,7 +34,9 @@ def manage_rss():
             db.session.add(new_feed)
             db.session.commit()
             flash('RSS Feed added successfully!', 'success')
+            logging_config.logger.info(f'RSS Feed added: {url}')
         except Exception as e:
+            logging_config.logger.error(f'Error adding RSS Feed: {str(e)}')
             flash(f'Error adding RSS Feed: {str(e)}', 'error')
         return redirect(url_for('rss_manager.manage_rss'))
     
@@ -58,13 +60,17 @@ def manage_rss():
                 if errors:
                     for error in errors:
                         flash(error, 'error')
+                    logging_config.logger.info(f'RSS Feed added from CSV: {url}')
                 else:
+                    logging_config.logger.info('CSV file processed successfully!')
                     db.session.bulk_save_objects(feeds_to_add)
                     db.session.commit()
                     flash('CSV file processed successfully!', 'success')
             except Exception as e:
+                logging_config.logger.error(f'Error processing CSV file: {str(e)}')
                 flash(f'Error processing CSV file: {str(e)}', 'error')
         else:
+            logging_config.logger.warning('Invalid file format. Please upload a CSV file.')
             flash('Invalid file format. Please upload a CSV file.', 'error')
         return redirect(url_for('rss_manager.manage_rss'))
     
@@ -77,5 +83,6 @@ def delete_feed(feed_id):
     feed = RSSFeed.query.get_or_404(feed_id)
     db.session.delete(feed)
     db.session.commit()
+    logging_config.logger.info(f'RSS Feed deleted: {feed.url}')
     flash('RSS Feed deleted successfully!', 'success')
     return redirect(url_for('rss_manager.manage_rss'))

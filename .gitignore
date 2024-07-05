@@ -36,6 +36,7 @@ instance/
 .Trashes
 ehthumbs.db
 Thumbs.db
+*.log
 
 # Project specific
 .aider*
