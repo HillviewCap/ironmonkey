@@ -45,6 +45,7 @@ app.register_blueprint(rss_manager)
 def init_db():
     with app.app_context():
         logger.info("Starting database initialization")
+        db.drop_all()
         db.create_all()
         
         # Check if migrations directory exists and is not empty
