@@ -24,10 +24,11 @@
         <table class="w-full table-auto">
             <thead>
                 <tr class="bg-gray-200">
-                    <th class="px-2 py-2 w-1/4">Title</th>
-                    <th class="px-2 py-2 w-1/4">Content</th>
-                    <th class="px-2 py-2 w-1/4">URL</th>
-                    <th class="px-2 py-2 w-1/4">Created At</th>
+                    <th class="px-2 py-2 w-1/5">Title</th>
+                    <th class="px-2 py-2 w-1/5">Content</th>
+                    <th class="px-2 py-2 w-1/5">URL</th>
+                    <th class="px-2 py-2 w-1/5">Created At</th>
+                    <th class="px-2 py-2 w-1/5">Actions</th>
                 </tr>
             </thead>
             <tbody>
@@ -41,6 +42,14 @@
                         </a>
                     </td>
                     <td class="border px-2 py-2">{{ post.created_at.strftime('%Y-%m-%d') }}</td>
+                    <td class="border px-2 py-2">
+                        <form action="{{ url_for('rss_manager.tag_content', post_id=post.id) }}" method="POST">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                            <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-2 rounded">
+                                Tag Content
+                            </button>
+                        </form>
+                    </td>
                 </tr>
                 {% endfor %}
             </tbody>
