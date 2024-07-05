@@ -37,7 +37,7 @@
             </tr>
         </thead>
         <tbody>
-            {% for result in results %}
+            {% for result in results.items %}
             <tr>
                 <td class="border border-gray-300 p-2">{{ result.title }}</td>
                 <td class="border border-gray-300 p-2">{{ result.description }}</td>
@@ -48,6 +48,20 @@
             {% endfor %}
         </tbody>
     </table>
+    
+    <div class="mt-4 flex justify-between items-center">
+        <div>
+            Showing {{ results.items|length }} of {{ results.total }} results
+        </div>
+        <div>
+            {% if results.has_prev %}
+                <a href="{{ url_for('search', page=results.prev_num, **request.args) }}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Previous</a>
+            {% endif %}
+            {% if results.has_next %}
+                <a href="{{ url_for('search', page=results.next_num, **request.args) }}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Next</a>
+            {% endif %}
+        </div>
+    </div>
 </div>
 {% endif %}
 {% endblock %}
