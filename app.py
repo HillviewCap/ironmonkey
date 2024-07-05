@@ -65,6 +65,35 @@ def create_app():
     @app.route("/tag_content", methods=["POST"])
     @login_required
     async def tag_content():
+        # ... (keep the existing tag_content function)
+
+    @app.route("/batch_tag_content", methods=["POST"])
+    @login_required
+    async def batch_tag_content():
+        diffbot_api_key = os.getenv("DIFFBOT_API_KEY")
+        if not diffbot_api_key:
+            return jsonify({"error": "DIFFBOT_API_KEY not set"}), 500
+
+        diffbot_client = DiffbotClient(diffbot_api_key)
+        db_handler = DatabaseHandler(app.config["SQLALCHEMY_DATABASE_URI"])
+
+        untagged_content = ParsedContent.query.filter(
+            (ParsedContent.entities == None) & 
+            (ParsedContent.categories == None)
+        ).limit(10).all()
+
+        tagged_count = 0
+        for content in untagged_content:
+            try:
+                result = await diffbot_client.tag_content(content.content)
+                db_handler.process_nlp_result(content, result)
+                content.summary = result.get("summary", {}).get("text")
+                tagged_count += 1
+            except Exception as e:
+                current_app.logger.error(f"Error tagging content ID {content.id}: {str(e)}")
+
+        db.session.commit()
+        return jsonify({"message": f"Tagged {tagged_count} out of {len(untagged_content)} contents"}), 200
         diffbot_api_key = os.getenv("DIFFBOT_API_KEY")
         if not diffbot_api_key:
             return jsonify({"error": "DIFFBOT_API_KEY not set"}), 500
@@ -83,6 +112,11 @@ def create_app():
         try:
             result = await diffbot_client.tag_content(content.content)
             db_handler.process_nlp_result(content, result)
+            
+            # Update the summary field
+            content.summary = result.get("summary", {}).get("text")
+            db.session.commit()
+            
             return jsonify({"message": "Content tagged successfully"}), 200
         except Exception as e:
             current_app.logger.error(f"Error tagging content: {str(e)}")
