@@ -145,13 +145,18 @@ def create_app():
             return jsonify({"error": "Content not found"}), 404
 
         try:
+            # Detach the content object from its current session
+            db.session.expunge(content)
+            
             async with httpx.AsyncClient() as client:
                 result = await diffbot_client.tag_content(content.content, client)
-            db_handler.process_nlp_result(content, result)
-
-            # Update the summary field
-            content.summary = result.get("summary", {}).get("text")
-            db.session.commit()
+            
+            # Use a new session for processing the result
+            with db.session.begin():
+                db_handler.process_nlp_result(content, result)
+                # Update the summary field
+                content.summary = result.get("summary", {}).get("text")
+                db.session.merge(content)
 
             return jsonify({"message": "Content tagged successfully"}), 200
         except Exception as e:
