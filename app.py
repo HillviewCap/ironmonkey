@@ -140,7 +140,7 @@ def create_app():
         if not content_id:
             return jsonify({"error": "content_id is required"}), 400
 
-        content = ParsedContent.query.get(content_id)
+        content = ParsedContent.get_by_id(content_id)
         if not content:
             return jsonify({"error": "Content not found"}), 404
 
