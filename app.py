@@ -25,16 +25,18 @@ logger = logging.getLogger(__name__)
 
 load_dotenv()
 
-app = Flask(__name__)
+app = Flask(__name__, instance_relative_config=True)
 from config import Config
 
 app.config.from_object(Config)
-# Ensure the instance folder exists
-os.makedirs(app.instance_path, exist_ok=True)
+Config.init_app(app)
 db.init_app(app)
 csrf = CSRFProtect(app)
 init_auth(app)
 migrate = Migrate(app, db)
+
+# Ensure the app's instance folder exists
+os.makedirs(app.instance_path, exist_ok=True)
 
 app.route('/login', methods=['GET', 'POST'])(login)
 app.route('/logout')(logout)
