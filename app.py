@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 import logging
 import asyncio
+import uuid
 from datetime import datetime
 from typing import List
 
@@ -65,7 +66,10 @@ def create_app():
 
         @login_manager.user_loader
         def load_user(user_id):
-            return User.query.get(user_id)
+            try:
+                return User.query.get(uuid.UUID(user_id))
+            except ValueError:
+                return None
 
         # Register blueprints
         app.register_blueprint(rss_manager)
