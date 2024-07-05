@@ -52,8 +52,9 @@ def manage_rss():
                 errors = []
                 feeds_to_add = []
                 for row in csv_reader:
-                    if len(row) >= 2:
-                        url, category = row[0], row[1]
+                    if len(row) >= 1:
+                        url = row[0]
+                        category = row[1] if len(row) > 1 else 'Uncategorized'
                         try:
                             title, description, last_build_date = RSSFeed.fetch_feed_info(url)
                             new_feed: RSSFeed = RSSFeed(url=url, title=title, category=category, description=description, last_build_date=last_build_date)
@@ -63,8 +64,6 @@ def manage_rss():
                 if errors:
                     for error in errors:
                         flash(error, 'error')
-                    for error in errors:
-                        logging_config.logger.error(error)
                 else:
                     if feeds_to_add:
                         db.session.bulk_save_objects(feeds_to_add)
@@ -74,7 +73,6 @@ def manage_rss():
                         flash('CSV file processed successfully!', 'success')
                     else:
                         flash('No valid feeds found in CSV file.', 'warning')
-                    flash('CSV file processed successfully!', 'success')
             except Exception as e:
                 logging_config.logger.error(f'Error processing CSV file: {str(e)}')
                 flash(f'Error processing CSV file: {str(e)}', 'error')
