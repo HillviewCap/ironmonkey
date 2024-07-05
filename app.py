@@ -17,7 +17,8 @@ import httpx
 import asyncio
 import logging
 
-logging.basicConfig(level=logging.INFO)
+# Configure logging
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
 load_dotenv()
@@ -63,7 +64,10 @@ def parse_feeds_command():
 @app.route('/search', methods=['GET', 'POST'])
 @login_required
 def search():
+    logger.info(f"Search request received. Method: {request.method}")
+    
     if request.method == 'GET':
+        logger.info("Rendering search.html template")
         return render_template('search.html')
     
     page = request.args.get('page', 1, type=int)
@@ -74,6 +78,9 @@ def search():
     end_date = request.form.get('end_date')
     source_types = request.form.getlist('source_types')
     keywords = request.form.get('keywords', '').split(',') if request.form.get('keywords') else []
+
+    logger.debug(f"Search parameters: query={query}, start_date={start_date}, end_date={end_date}, "
+                 f"source_types={source_types}, keywords={keywords}")
 
     search_params = SearchParams(
         query=query,
@@ -110,8 +117,15 @@ def search():
                 )
             )
 
-    paginated_results = query.paginate(page=page, per_page=per_page)
-    
+    logger.debug(f"Final SQL query: {query}")
+
+    try:
+        paginated_results = query.paginate(page=page, per_page=per_page)
+        logger.info(f"Search completed. Total results: {paginated_results.total}")
+    except Exception as e:
+        logger.error(f"Error occurred during search: {str(e)}")
+        return render_template('search_results.html', error="An error occurred during the search. Please try again.")
+
     return render_template('search_results.html', results=paginated_results, search_params=search_params)
 
 if __name__ == '__main__':
