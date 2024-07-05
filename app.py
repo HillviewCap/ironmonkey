@@ -15,6 +15,7 @@ from flask_wtf.csrf import CSRFProtect
 from flask_migrate import Migrate
 from typing import List, Dict
 import httpx
+import asyncio
 
 load_dotenv()
 
