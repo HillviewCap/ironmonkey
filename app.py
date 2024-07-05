@@ -68,8 +68,6 @@ def init_db():
 
         logger.info("Database initialization completed")
 
-init_db()
-
 from auth import index
 
 app.route('/')(index)
@@ -142,4 +140,5 @@ def search() -> List[Dict[str, str | datetime]]:
     ).dict() for threat in results])
 
 if __name__ == '__main__':
+    init_db()
     app.run(debug=True)
