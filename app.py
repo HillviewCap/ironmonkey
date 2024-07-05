@@ -92,11 +92,15 @@ from flask import current_app
 
 @app.route('/')
 def root():
+    current_app.logger.info("Entering root route")
     try:
-        return index()
+        current_app.logger.debug("Calling index() function")
+        result = index()
+        current_app.logger.info("index() function called successfully")
+        return result
     except Exception as e:
         current_app.logger.error(f"Error in index route: {str(e)}", exc_info=True)
-        return "An error occurred", 500
+        return render_template('error.html', error="An error occurred. Please try again later."), 500
 
 @app.route('/search', methods=['GET'])
 def search_page():
