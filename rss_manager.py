@@ -66,7 +66,8 @@ def manage_rss():
                     for error in errors:
                         logging_config.logger.error(error)
                 else:
-                    logging_config.logger.info(f'RSS Feed added from CSV: {url}')
+                    for feed in feeds_to_add:
+                        logging_config.logger.info(f'RSS Feed added from CSV: {feed.url}')
                     db.session.bulk_save_objects(feeds_to_add)
                     db.session.commit()
                     flash('CSV file processed successfully!', 'success')
