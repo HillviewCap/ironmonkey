@@ -147,23 +147,16 @@ def create_app():
         try:
             # Detach the content object from its current session
             db.session.expunge(content)
-            
+        
             async with httpx.AsyncClient() as client:
                 result = await diffbot_client.tag_content(content.content, client)
-            
-            # Use a new session for processing the result
-            session = db.create_scoped_session()
-            try:
-                db_handler.process_nlp_result(content, result, session)
-                # Update the summary field
-                content.summary = result.get("summary", {}).get("text")
-                session.merge(content)
-                session.commit()
-            except Exception as e:
-                session.rollback()
-                raise
-            finally:
-                session.close()
+        
+            # Use the existing db.session for processing the result
+            db_handler.process_nlp_result(content, result, db.session)
+            # Update the summary field
+            content.summary = result.get("summary", {}).get("text")
+            db.session.merge(content)
+            db.session.commit()
 
             return jsonify({"message": "Content tagged successfully"}), 200
         except Exception as e:

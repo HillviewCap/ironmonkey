@@ -125,14 +125,7 @@ class DatabaseHandler:
             )
             session.add(category)
 
-    def process_nlp_result(self, content: ParsedContent, result: Dict[str, Any], session=None):
-        if session is None:
-            with self.Session() as session:
-                self._process_nlp_result(content, result, session)
-        else:
-            self._process_nlp_result(content, result, session)
-
-    def _process_nlp_result(self, content: ParsedContent, result: Dict[str, Any], session):
+    def process_nlp_result(self, content: ParsedContent, result: Dict[str, Any], session):
         for entity_data in result.get("entities", []):
             entity = self.add_entity(session, entity_data, content)
             self.add_uris(session, entity, entity_data.get("uris", []))
