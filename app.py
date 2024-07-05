@@ -77,12 +77,18 @@ def create_app():
             try:
                 if current_user.is_authenticated:
                     # Fetch the 6 most recent ParsedContent items
-                    recent_items = ParsedContent.query.order_by(ParsedContent.created_at.desc()).limit(6).all()
+                    recent_items = (
+                        ParsedContent.query.order_by(ParsedContent.created_at.desc())
+                        .limit(6)
+                        .all()
+                    )
                     return render_template("index.html", recent_items=recent_items)
                 else:
-                    return redirect(url_for('login'))
+                    return redirect(url_for("login"))
             except Exception as e:
-                current_app.logger.error(f"Error in index route: {str(e)}", exc_info=True)
+                current_app.logger.error(
+                    f"Error in index route: {str(e)}", exc_info=True
+                )
                 return render_error_page()
 
         # Route registrations
@@ -116,11 +122,11 @@ def create_app():
             async with httpx.AsyncClient() as client:
                 result = await diffbot_client.tag_content(content.content, client)
             db_handler.process_nlp_result(content, result)
-            
+
             # Update the summary field
             content.summary = result.get("summary", {}).get("text")
             db.session.commit()
-            
+
             return jsonify({"message": "Content tagged successfully"}), 200
         except Exception as e:
             current_app.logger.error(f"Error tagging content: {str(e)}")
@@ -136,10 +142,13 @@ def create_app():
         diffbot_client = DiffbotClient(diffbot_api_key)
         db_handler = DatabaseHandler(app.config["SQLALCHEMY_DATABASE_URI"])
 
-        untagged_content = ParsedContent.query.filter(
-            (ParsedContent.entities == None) & 
-            (ParsedContent.categories == None)
-        ).limit(10).all()
+        untagged_content = (
+            ParsedContent.query.filter(
+                (ParsedContent.entities == None) & (ParsedContent.categories == None)
+            )
+            .limit(10)
+            .all()
+        )
 
         tagged_count = 0
         async with httpx.AsyncClient() as client:
@@ -150,10 +159,19 @@ def create_app():
                     content.summary = result.get("summary", {}).get("text")
                     tagged_count += 1
                 except Exception as e:
-                    current_app.logger.error(f"Error tagging content ID {content.id}: {str(e)}")
+                    current_app.logger.error(
+                        f"Error tagging content ID {content.id}: {str(e)}"
+                    )
 
         db.session.commit()
-        return jsonify({"message": f"Tagged {tagged_count} out of {len(untagged_content)} contents"}), 200
+        return (
+            jsonify(
+                {
+                    "message": f"Tagged {tagged_count} out of {len(untagged_content)} contents"
+                }
+            ),
+            200,
+        )
         diffbot_api_key = os.getenv("DIFFBOT_API_KEY")
         if not diffbot_api_key:
             return jsonify({"error": "DIFFBOT_API_KEY not set"}), 500
@@ -172,11 +190,11 @@ def create_app():
         try:
             result = await diffbot_client.tag_content(content.content)
             db_handler.process_nlp_result(content, result)
-            
+
             # Update the summary field
             content.summary = result.get("summary", {}).get("text")
             db.session.commit()
-            
+
             return jsonify({"message": "Content tagged successfully"}), 200
         except Exception as e:
             current_app.logger.error(f"Error tagging content: {str(e)}")
@@ -314,5 +332,5 @@ def build_search_query(search_params):
 
 if __name__ == "__main__":
     app = create_app()
-    init_db(app)
+    #    init_db(app)
     app.run(debug=True)
