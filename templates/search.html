@@ -22,4 +22,32 @@
         <button type="submit" class="bg-blue-600 text-white p-2 rounded-lg">Search</button>
     </form>
 </div>
+
+{% if results %}
+<div class="mt-8">
+    <h2 class="text-2xl font-bold mb-4">Search Results</h2>
+    <table class="w-full border-collapse border border-gray-300">
+        <thead>
+            <tr class="bg-gray-100">
+                <th class="border border-gray-300 p-2">Title</th>
+                <th class="border border-gray-300 p-2">Description</th>
+                <th class="border border-gray-300 p-2">Source Type</th>
+                <th class="border border-gray-300 p-2">Date</th>
+                <th class="border border-gray-300 p-2">URL</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for result in results %}
+            <tr>
+                <td class="border border-gray-300 p-2">{{ result.title }}</td>
+                <td class="border border-gray-300 p-2">{{ result.description }}</td>
+                <td class="border border-gray-300 p-2">{{ result.source_type }}</td>
+                <td class="border border-gray-300 p-2">{{ result.date }}</td>
+                <td class="border border-gray-300 p-2"><a href="{{ result.url }}" target="_blank" class="text-blue-600 hover:underline">Link</a></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
 {% endblock %}
