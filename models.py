@@ -36,13 +36,18 @@ class RSSFeed(db.Model):
     def fetch_feed_info(url: str) -> tuple[str, str, str]:
         with httpx.Client() as client:
             response = client.get(url)
-        root = ET.fromstring(response.content)
-        channel = root.find('channel')
-        title = channel.find('title').text
-        description = channel.find('description').text
-        last_build_date = channel.find('lastBuildDate')
-        last_build_date = last_build_date.text if last_build_date is not None else None
-        return title, description, last_build_date
+        try:
+            root = ET.fromstring(response.content)
+            channel = root.find('channel')
+            title = channel.find('title').text
+            description = channel.find('description').text
+            last_build_date = channel.find('lastBuildDate')
+            last_build_date = last_build_date.text if last_build_date is not None else None
+            return title, description, last_build_date
+        except ET.ParseError as e:
+            raise ValueError(f"Error parsing XML: {str(e)}")
+        except Exception as e:
+            raise ValueError(f"Error fetching feed info: {str(e)}")
 
 class SearchParams(BaseModel):
     query: str
