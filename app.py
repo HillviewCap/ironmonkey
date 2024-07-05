@@ -67,6 +67,7 @@ def create_app():
     @login_required
     async def tag_content():
         # ... (keep the existing tag_content function)
+        pass  # Remove this line once you add the actual content of the tag_content function
 
     @app.route("/batch_tag_content", methods=["POST"])
     @login_required
