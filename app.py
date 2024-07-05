@@ -356,27 +356,6 @@ def build_search_query(search_params):
     return query
 
 
-@app.cli.command("reinit-db")
-def reinit_db():
-    """Reinitialize the database by removing existing migrations and creating new ones."""
-    migrations_dir = os.path.join(app.root_path, "migrations")
-    if os.path.exists(migrations_dir):
-        shutil.rmtree(migrations_dir)
-        print("Removed existing migrations directory.")
-
-    # Initialize migrations
-    Migrate(app, db)
-    with app.app_context():
-        db.create_all()
-
-    # Create a new migration
-    os.system("flask db init")
-    os.system('flask db migrate -m "Initial migration"')
-    os.system("flask db upgrade")
-
-    print("Database reinitialized successfully.")
-
-
 if __name__ == "__main__":
     app = create_app()
     init_db(app)
