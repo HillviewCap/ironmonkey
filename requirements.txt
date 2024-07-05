@@ -1,4 +1,4 @@
-Flask
+Flask[async]
 SQLAlchemy
 pydantic
 Flask-Login
