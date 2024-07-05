@@ -47,8 +47,6 @@ if not os.path.exists(db_dir):
         logger.error(f"Error creating directory for database file: {str(e)}")
 else:
     logger.info(f"Directory for database file already exists at {db_dir}")
-else:
-    logger.info(f"Directory for database file already exists at {db_dir}")
 
 try:
     db.init_app(app)
