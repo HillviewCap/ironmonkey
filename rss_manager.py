@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from flask import Blueprint, render_template, redirect, url_for, flash, request
+import httpx
 import logging_config
 from flask_login import login_required
 from models import db, RSSFeed, ParsedContent
@@ -68,7 +69,7 @@ class EditRSSFeedForm(FlaskForm):
 
 @rss_manager.route('/rss_manager', methods=['GET', 'POST'])
 @login_required
-def manage_rss() -> str:
+async def manage_rss() -> str:
     """
     Handle RSS feed management operations.
     
@@ -98,11 +99,13 @@ def manage_rss() -> str:
             db.session.commit()
             flash('RSS Feed added successfully!', 'success')
             logging_config.logger.info(f'RSS Feed added: {url}')
-            logging_config.logger.info(f'RSS Feed added: {url}')
+            
+            # Start parsing the new feed immediately
+            await parse_single_feed(new_feed)
+            flash('New feed parsed successfully!', 'success')
         except Exception as e:
-            logging_config.logger.error(f'Error adding RSS Feed: {str(e)}')
-            logging_config.logger.error(f'Error adding RSS Feed: {str(e)}')
-            flash(f'Error adding RSS Feed: {str(e)}', 'error')
+            logging_config.logger.error(f'Error adding or parsing RSS Feed: {str(e)}')
+            flash(f'Error adding or parsing RSS Feed: {str(e)}', 'error')
         return redirect(url_for('rss_manager.manage_rss'))
     
     if csv_form.validate_on_submit():
@@ -188,6 +191,7 @@ def delete_feed(feed_id: uuid.UUID) -> Response:
     logging_config.logger.info(f'RSS Feed deleted: {feed.url}')
     flash('RSS Feed deleted successfully!', 'success')
     return redirect(url_for('rss_manager.manage_rss'))
+<<<<<<< HEAD
 
 @rss_manager.route('/edit_feed/<uuid:feed_id>', methods=['GET', 'POST'])
 @login_required
@@ -219,3 +223,28 @@ def edit_feed(feed_id: uuid.UUID) -> Union[str, Response]:
             flash(f'Error updating RSS Feed: {str(e)}', 'error')
         return redirect(url_for('rss_manager.manage_rss'))
     return render_template('edit_rss_feed.html', form=form, feed=feed)
+=======
+async def parse_single_feed(feed: RSSFeed):
+    """Parse a single RSS feed and store new content."""
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.get(feed.url)
+            feed_data = feedparser.parse(response.text)
+            
+            for entry in feed_data.entries:
+                existing_content = ParsedContent.query.filter_by(url=entry.link).first()
+                if not existing_content:
+                    parsed_data = await parse_content(entry.link)
+                    new_content = ParsedContent(
+                        title=parsed_data['title'],
+                        url=parsed_data['url'],
+                        content=parsed_data['content'],
+                        links=parsed_data['links'],
+                        feed_id=feed.id
+                    )
+                    db.session.add(new_content)
+            db.session.commit()
+    except Exception as e:
+        logging_config.logger.error(f"Error parsing feed {feed.url}: {str(e)}")
+        raise
+>>>>>>> 1a7eb0a (Added new feed and parsed it immediately)
