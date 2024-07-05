@@ -4,6 +4,59 @@ from sqlalchemy.orm import sessionmaker
 from models import ParsedContent, Entity, Uris, Type, EntityType, Mention, Location, Category
 from config import Config
 
+def tag_single_content(content):
+    url = "https://nl.diffbot.com/v1/?fields=entities,categories&token=5dc42cec418d6760f7b5b1743f61fa73"
+    headers = {
+        "accept": "application/json",
+        "content-type": "application/json"
+    }
+    payload = [
+        {
+            "lang": "auto",
+            "format": "plain text",
+            "customSummary": {"maxNumberOfSentences": 3},
+            "content": content.content,
+            "documentType": "news article"
+        }
+    ]
+
+    response = requests.post(url, json=payload, headers=headers)
+    
+    if response.status_code == 200:
+        result = response.json()
+        process_nlp_result(content, result[0])
+    else:
+        raise Exception(f"Error processing content: {response.status_code}")
+
+def process_nlp_result(content, result):
+    # Process entities
+    for entity_data in result.get('entities', []):
+        entity = Entity(
+            name=entity_data['name'],
+            diffbot_uri=entity_data.get('diffbotUri'),
+            confidence=entity_data.get('confidence'),
+            salience=entity_data.get('salience'),
+            is_custom=entity_data.get('isCustom', False),
+            parsed_content=content
+        )
+        db.session.add(entity)
+
+        # Add URIs, types, mentions, and locations
+        # (Same as in the original tag_content function)
+
+    # Process categories
+    for category_data in result.get('categories', []):
+        category = Category(
+            type=category_data['type'],
+            id_category=category_data['id'],
+            name=category_data['name'],
+            path=category_data.get('path'),
+            parsed_content=content
+        )
+        db.session.add(category)
+
+    db.session.commit()
+
 def tag_content():
     # Create database session
     engine = create_engine(Config.SQLALCHEMY_DATABASE_URI)
