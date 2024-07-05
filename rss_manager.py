@@ -48,12 +48,14 @@ def manage_rss() -> str:
         url: str = form.url.data
         category: str = form.category.data
         try:
-            try:
-                title, description, last_build_date = RSSFeed.fetch_feed_info(url)
-            except Exception as e:
-                title, description, last_build_date = 'Unknown Title', 'No description available', None
-                logging_config.logger.error(f'Error fetching info for RSS Feed {url}: {str(e)}')
-            new_feed: RSSFeed = RSSFeed(url=url, title=title, category=category, description=description, last_build_date=last_build_date)
+            title, description, last_build_date = RSSFeed.fetch_feed_info(url)
+            new_feed: RSSFeed = RSSFeed(
+                url=url,
+                title=title if title else 'Not available',
+                category=category,
+                description=description if description else 'Not available',
+                last_build_date=last_build_date if last_build_date else None
+            )
             db.session.add(new_feed)
             db.session.commit()
             flash('RSS Feed added successfully!', 'success')
