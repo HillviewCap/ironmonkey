@@ -28,9 +28,9 @@ load_dotenv()
 app = Flask(__name__)
 # Ensure the instance folder exists
 os.makedirs(app.instance_path, exist_ok=True)
-app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{os.path.join(app.instance_path, "threats.db")}'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
+from config import Config
+
+app.config.from_object(Config)
 db.init_app(app)
 csrf = CSRFProtect(app)
 init_auth(app)
