@@ -1,172 +1,179 @@
 from __future__ import annotations
 
-import logging_config
-from flask import Flask, render_template, request, jsonify
-from sqlalchemy import create_engine, text
-from models import SearchParams, SearchResult, User, db, RSSFeed, Threat, ParsedContent
-from datetime import datetime, date
-from flask_login import login_required, current_user
-from auth import init_auth, login, logout, register
 import os
-from dotenv import load_dotenv
+import logging
+import asyncio
+from datetime import datetime
+from typing import List
+
+from flask import Flask, render_template, request, jsonify, current_app
+from flask_migrate import Migrate
+from flask_wtf import FlaskForm
+from flask_wtf.csrf import CSRFProtect
+from sqlalchemy.exc import SQLAlchemyError
 from werkzeug.exceptions import BadRequest
 import bleach
-from flask_wtf.csrf import CSRFProtect
-from flask_wtf import FlaskForm
-from typing import List, Dict
-import httpx
-import asyncio
-import logging
-from flask_migrate import Migrate
-from sqlalchemy.exc import SQLAlchemyError
+from dotenv import load_dotenv
+
+import logging_config
+from models import SearchParams, SearchResult, User, db, RSSFeed, Threat, ParsedContent
+from auth import init_auth, login, logout, register
+from config import Config
+from rss_manager import rss_manager
 
 # Configure logging
-logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logging.basicConfig(
+    level=logging.DEBUG, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
 logger = logging.getLogger(__name__)
 
 load_dotenv()
 
-app = Flask(__name__)
-from config import Config
 
-app.config.from_object(Config)
-Config.init_app(app)
+def create_app():
+    app = Flask(__name__, instance_relative_config=True)
+    app.config.from_object(Config)
+    Config.init_app(app)
 
-# Log the database URI and file path
-logger.info(f"Database URI: {app.config['SQLALCHEMY_DATABASE_URI']}")
-db_path = app.config['SQLALCHEMY_DATABASE_URI'].replace('sqlite:///', '')
-logger.info(f"Database file path: {db_path}")
+    # Ensure the instance folder exists
+    try:
+        os.makedirs(app.instance_path)
+    except OSError:
+        pass
 
-try:
+    # Database configuration
+    app.config["SQLALCHEMY_DATABASE_URI"] = (
+        f"sqlite:///{os.path.join(app.instance_path, 'threats.db')}"
+    )
+    logger.info(f"Database URI: {app.config['SQLALCHEMY_DATABASE_URI']}")
+
     db.init_app(app)
-    logger.info("SQLAlchemy initialized successfully")
-except Exception as e:
-    logger.error(f"Error initializing SQLAlchemy: {str(e)}")
+    csrf = CSRFProtect(app)
+    init_auth(app)
+    migrate = Migrate(app, db)
 
-csrf = CSRFProtect(app)
-init_auth(app)
-migrate = Migrate(app, db)
+    # Register blueprints
+    app.register_blueprint(rss_manager)
 
-# Check if the database file exists and is accessible
-if os.path.exists(db_path):
-    logger.info(f"Database file exists at {db_path}")
-    if os.access(db_path, os.R_OK | os.W_OK):
-        logger.info("Database file is readable and writable")
-    else:
-        logger.error("Database file exists but is not accessible (check permissions)")
-else:
-    logger.warning(f"Database file does not exist at {db_path}")
-    try:
-        with open(db_path, 'w'):
-            logger.info(f"Created an empty database file at {db_path}")
-    except Exception as e:
-        logger.error(f"Error creating an empty database file: {str(e)}")
-    try:
-        with open(db_path, 'w'):
-            logger.info(f"Created an empty database file at {db_path}")
-    except Exception as e:
-        logger.error(f"Error creating an empty database file: {str(e)}")
+    # Route registrations
+    app.add_url_rule("/login", "login", login, methods=["GET", "POST"])
+    app.add_url_rule("/logout", "logout", logout)
+    app.add_url_rule("/register", "register", register, methods=["GET", "POST"])
 
-app.route('/login', methods=['GET', 'POST'])(login)
-app.route('/logout')(logout)
-app.route('/register', methods=['GET', 'POST'])(register)
-
-from rss_manager import rss_manager
-app.register_blueprint(rss_manager)
-
-def init_db():
-    db_path = app.config['SQLALCHEMY_DATABASE_URI'].replace('sqlite:///', '')
-    logger.info(f"Database path: {db_path}")
-    if os.path.exists(db_path):
-        logger.info("Database already exists, skipping initialization")
-    else:
-        logger.info("Database does not exist, creating it")
+    @app.route("/")
+    def root():
+        current_app.logger.info("Entering root route")
         try:
-            with app.app_context():
-                logger.info("Starting database initialization")
-                db.create_all()
-                logger.info("Database initialization completed")
+            from auth import index
+
+            result = index()
+            current_app.logger.info("index() function called successfully")
+            return result
+        except Exception as e:
+            current_app.logger.error(f"Error in index route: {str(e)}", exc_info=True)
+            return render_error_page()
+
+    @app.route("/search", methods=["GET", "POST"])
+    def search():
+        form = FlaskForm()
+        if request.method == "GET":
+            return render_template("search.html", form=form)
+
+        if form.validate_on_submit():
+            return perform_search(form)
+
+        return render_template("search.html", form=form)
+
+    @app.cli.command("parse-feeds")
+    def parse_feeds_command():
+        """Parse all RSS feeds and store new content."""
+        with app.app_context():
+            asyncio.run(rss_manager.parse_feeds())
+        print("Feeds parsed successfully.")
+
+    return app
+
+
+def init_db(app):
+    with app.app_context():
+        try:
+            db.create_all()
+            logger.info("Database tables created successfully")
         except SQLAlchemyError as e:
             logger.error(f"SQLAlchemy error during database initialization: {str(e)}")
         except Exception as e:
             logger.error(f"Unexpected error during database initialization: {str(e)}")
 
-try:
-    init_db()  # Call init_db() to create tables if they don't exist
-    logger.info("Database initialization function completed")
-except Exception as e:
-    logger.error(f"Error during database initialization: {str(e)}")
 
-from auth import index
-from flask import current_app
-
-@app.route('/')
-def root():
-    current_app.logger.info("Entering root route")
+def render_error_page():
     try:
-        current_app.logger.debug("Calling index() function")
-        result = index()
-        current_app.logger.info("index() function called successfully")
-        return result
+        return (
+            render_template(
+                "error.html", error="An error occurred. Please try again later."
+            ),
+            500,
+        )
+    except Exception as template_error:
+        logger.error(
+            f"Error rendering error template: {str(template_error)}", exc_info=True
+        )
+        return (
+            "An error occurred, and we couldn't render the error page. Please try again later.",
+            500,
+        )
+
+
+def perform_search(form):
+    page = request.args.get("page", 1, type=int)
+    per_page = 10
+
+    search_params = get_search_params(form)
+    query = build_search_query(search_params)
+
+    try:
+        paginated_results = query.paginate(page=page, per_page=per_page)
+        logger.info(f"Search completed. Total results: {paginated_results.total}")
     except Exception as e:
-        current_app.logger.error(f"Error in index route: {str(e)}", exc_info=True)
-        try:
-            current_app.logger.debug("Attempting to render error.html")
-            return render_template('error.html', error="An error occurred, and we couldn't render the error page. Please try again later."), 500
-        except Exception as template_error:
-            current_app.logger.error(f"Error rendering error template: {str(template_error)}", exc_info=True)
-            return render_template('error.html', error="An error occurred, and we couldn't render the error page. Please try again later."), 500
+        logger.error(f"Error occurred during search: {str(e)}")
+        return render_template(
+            "search_results.html",
+            error="An error occurred during the search. Please try again.",
+        )
 
-@app.route('/search', methods=['GET'])
-def search_page():
-    form = FlaskForm()
-    return render_template('search.html', form=form)
-
-@app.cli.command("parse-feeds")
-def parse_feeds_command():
-    """Parse all RSS feeds and store new content."""
-    with app.app_context():
-        asyncio.run(rss_manager.parse_feeds())
-    print("Feeds parsed successfully.")
-
-@app.route('/search', methods=['GET', 'POST'])
-@login_required
-def search():
-    logger.info(f"Search request received. Method: {request.method}")
-    
-    form = FlaskForm()
-    
-    if request.method == 'GET':
-        logger.info("Rendering search.html template")
-        return render_template('search.html', form=form)
-    
-    if form.validate_on_submit():
-        page = request.args.get('page', 1, type=int)
-        per_page = 10  # Number of results per page
-
-        query = request.form.get('query', '')
-    start_date = request.form.get('start_date')
-    end_date = request.form.get('end_date')
-    source_types = request.form.getlist('source_types')
-    keywords = request.form.get('keywords', '').split(',') if request.form.get('keywords') else []
-
-    logger.debug(f"Search parameters: query={query}, start_date={start_date}, end_date={end_date}, "
-                 f"source_types={source_types}, keywords={keywords}")
-
-    search_params = SearchParams(
-        query=query,
-        start_date=datetime.strptime(start_date, '%Y-%m-%d').date() if start_date else None,
-        end_date=datetime.strptime(end_date, '%Y-%m-%d').date() if end_date else None,
-        source_types=source_types,
-        keywords=keywords
+    return render_template(
+        "search_results.html", results=paginated_results, search_params=search_params
     )
 
+
+def get_search_params(form):
+    return SearchParams(
+        query=form.data.get("query", ""),
+        start_date=(
+            datetime.strptime(form.data.get("start_date"), "%Y-%m-%d").date()
+            if form.data.get("start_date")
+            else None
+        ),
+        end_date=(
+            datetime.strptime(form.data.get("end_date"), "%Y-%m-%d").date()
+            if form.data.get("end_date")
+            else None
+        ),
+        source_types=form.data.get("source_types", []),
+        keywords=(
+            form.data.get("keywords", "").split(",")
+            if form.data.get("keywords")
+            else []
+        ),
+    )
+
+
+def build_search_query(search_params):
     query = db.session.query(ParsedContent)
-    
+
     query = query.filter(
         db.or_(
-            ParsedContent.title.ilike(f'%{bleach.clean(search_params.query)}%'),
-            ParsedContent.content.ilike(f'%{bleach.clean(search_params.query)}%')
+            ParsedContent.title.ilike(f"%{bleach.clean(search_params.query)}%"),
+            ParsedContent.content.ilike(f"%{bleach.clean(search_params.query)}%"),
         )
     )
 
@@ -177,28 +184,26 @@ def search():
         query = query.filter(ParsedContent.date <= search_params.end_date)
 
     if search_params.source_types:
-        query = query.filter(ParsedContent.source_type.in_([bleach.clean(st) for st in search_params.source_types]))
+        query = query.filter(
+            ParsedContent.source_type.in_(
+                [bleach.clean(st) for st in search_params.source_types]
+            )
+        )
 
     if search_params.keywords:
         for keyword in search_params.keywords:
             query = query.filter(
                 db.or_(
-                    ParsedContent.title.ilike(f'%{bleach.clean(keyword)}%'),
-                    ParsedContent.content.ilike(f'%{bleach.clean(keyword)}%')
+                    ParsedContent.title.ilike(f"%{bleach.clean(keyword)}%"),
+                    ParsedContent.content.ilike(f"%{bleach.clean(keyword)}%"),
                 )
             )
 
     logger.debug(f"Final SQL query: {query}")
+    return query
 
-    try:
-        paginated_results = query.paginate(page=page, per_page=per_page)
-        logger.info(f"Search completed. Total results: {paginated_results.total}")
-    except Exception as e:
-        logger.error(f"Error occurred during search: {str(e)}")
-        return render_template('search_results.html', error="An error occurred during the search. Please try again.")
 
-    return render_template('search_results.html', results=paginated_results, search_params=search_params)
-
-if __name__ == '__main__':
-    init_db()
+if __name__ == "__main__":
+    app = create_app()
+    init_db(app)
     app.run(debug=True)
