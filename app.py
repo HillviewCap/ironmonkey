@@ -182,20 +182,6 @@ def create_app():
             current_app.logger.error(f"Error tagging content: {str(e)}")
             return jsonify({"error": "Error tagging content"}), 500
 
-    @app.route("/")
-    def index():
-        current_app.logger.info("Entering index route")
-        try:
-            if current_user.is_authenticated:
-                # Fetch the 6 most recent ParsedContent items
-                recent_items = ParsedContent.query.order_by(ParsedContent.created_at.desc()).limit(6).all()
-                return render_template("index.html", recent_items=recent_items)
-            else:
-                return redirect(url_for('login'))
-        except Exception as e:
-            current_app.logger.error(f"Error in index route: {str(e)}", exc_info=True)
-            return render_error_page()
-
     @app.route("/search", methods=["GET", "POST"])
     def search():
         form = FlaskForm()
