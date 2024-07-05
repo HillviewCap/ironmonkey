@@ -13,6 +13,7 @@ from io import TextIOWrapper
 import httpx
 import uuid
 from werkzeug.wrappers import Response
+from sqlalchemy.exc import IntegrityError
 
 rss_manager = Blueprint('rss_manager', __name__)
 
@@ -70,6 +71,8 @@ def manage_rss() -> str:
                 csv_reader = csv.reader(csv_file)
                 errors = []
                 feeds_to_add = []
+                imported_count = 0
+                skipped_count = 0
                 for row in csv_reader:
                     if len(row) >= 1:
                         url = row[0]
@@ -87,11 +90,22 @@ def manage_rss() -> str:
                         flash(error, 'error')
                 else:
                     if feeds_to_add:
-                        db.session.bulk_save_objects(feeds_to_add)
-                        db.session.commit()
                         for feed in feeds_to_add:
-                            logging_config.logger.info(f'RSS Feed added from CSV: {feed.url}')
-                        flash('CSV file processed successfully!', 'success')
+                            try:
+                                db.session.add(feed)
+                                db.session.commit()
+                                imported_count += 1
+                                logging_config.logger.info(f'RSS Feed added from CSV: {feed.url}')
+                            except IntegrityError:
+                                db.session.rollback()
+                                skipped_count += 1
+                                logging_config.logger.info(f'Skipped duplicate RSS Feed: {feed.url}')
+                        if imported_count > 0:
+                            flash(f'Successfully imported {imported_count} RSS feeds.', 'success')
+                        if skipped_count > 0:
+                            flash(f'Skipped {skipped_count} duplicate RSS feeds.', 'info')
+                        if imported_count == 0 and skipped_count == 0:
+                            flash('No valid feeds found in CSV file.', 'warning')
                     else:
                         flash('No valid feeds found in CSV file.', 'warning')
             except Exception as e:
