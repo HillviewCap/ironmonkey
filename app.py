@@ -5,6 +5,7 @@ import logging
 import asyncio
 from datetime import datetime
 from typing import List
+from flask_login import login_required
 
 from flask import Flask, render_template, request, jsonify, current_app
 from flask_migrate import Migrate
@@ -20,6 +21,7 @@ from models import SearchParams, SearchResult, User, db, RSSFeed, Threat, Parsed
 from auth import init_auth, login, logout, register
 from config import Config
 from rss_manager import rss_manager
+from nlp_tagging import DiffbotClient, DatabaseHandler
 
 # Configure logging
 logging.basicConfig(
@@ -59,6 +61,32 @@ def create_app():
     app.add_url_rule("/login", "login", login, methods=["GET", "POST"])
     app.add_url_rule("/logout", "logout", logout)
     app.add_url_rule("/register", "register", register, methods=["GET", "POST"])
+
+    @app.route("/tag_content", methods=["POST"])
+    @login_required
+    async def tag_content():
+        diffbot_api_key = os.getenv("DIFFBOT_API_KEY")
+        if not diffbot_api_key:
+            return jsonify({"error": "DIFFBOT_API_KEY not set"}), 500
+
+        diffbot_client = DiffbotClient(diffbot_api_key)
+        db_handler = DatabaseHandler(app.config["SQLALCHEMY_DATABASE_URI"])
+
+        content_id = request.json.get("content_id")
+        if not content_id:
+            return jsonify({"error": "content_id is required"}), 400
+
+        content = ParsedContent.query.get(content_id)
+        if not content:
+            return jsonify({"error": "Content not found"}), 404
+
+        try:
+            result = await diffbot_client.tag_content(content.content)
+            db_handler.process_nlp_result(content, result)
+            return jsonify({"message": "Content tagged successfully"}), 200
+        except Exception as e:
+            current_app.logger.error(f"Error tagging content: {str(e)}")
+            return jsonify({"error": "Error tagging content"}), 500
 
     @app.route("/")
     def root():
