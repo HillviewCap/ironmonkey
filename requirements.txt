@@ -12,3 +12,4 @@ Flask-Migrate
 httpx
 beautifulsoup4
 lxml
+Flask-Migrate==4.0.4
