@@ -19,6 +19,7 @@ from werkzeug.exceptions import BadRequest
 
 import logging_config
 from models import SearchParams, User, db, RSSFeed, ParsedContent
+from flask_login import LoginManager
 from auth import init_auth, login, logout, register
 from config import Config
 from rss_manager import rss_manager
@@ -56,6 +57,14 @@ def create_app():
         CSRFProtect(app)
         init_auth(app)
         Migrate(app, db)
+
+        # Initialize LoginManager
+        login_manager = LoginManager()
+        login_manager.init_app(app)
+
+        @login_manager.user_loader
+        def load_user(user_id):
+            return User.query.get(user_id)
 
         # Register blueprints
         app.register_blueprint(rss_manager)
