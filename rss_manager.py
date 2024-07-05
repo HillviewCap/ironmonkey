@@ -229,13 +229,12 @@ def parsed_content():
     )
 
 
-@rss_manager.route("/tag_content/<string:post_id>", methods=["POST"])
+@rss_manager.route("/tag_content/<uuid:post_id>", methods=["POST"])
 @login_required
 async def tag_content(post_id):
     """Tag a single piece of parsed content."""
     try:
-        uuid_post_id = uuid.UUID(post_id)
-        post = db.session.get(ParsedContent, uuid_post_id)
+        post = db.session.get(ParsedContent, post_id)
         if post is None:
             flash("Content not found", "error")
             return redirect(url_for("rss_manager.parsed_content"))
