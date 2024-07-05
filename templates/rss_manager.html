@@ -66,18 +66,25 @@
                 </form>
             </div>
 =======
-        <div class="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
-            <h3 class="text-xl font-bold mb-2">{{ feed.title }}</h3>
-            <p class="text-gray-600 mb-2">Category: {{ feed.category }}</p>
-            <p class="text-sm text-gray-500 mb-2">{{ feed.description }}</p>
-            <a href="{{ feed.url }}" target="_blank" class="text-blue-500 hover:text-blue-700">{{ feed.url }}</a>
-            <p class="text-sm text-gray-500 mt-2">Last Build Date: {{ feed.last_build_date or 'Not available' }}</p>
-            <form action="{{ url_for('rss_manager.delete_feed', feed_id=feed.id) }}" method="POST" class="mt-4">
-                {{ delete_form.csrf_token }}
-                <button type="submit" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
-                    Delete Feed
-                </button>
-            </form>
+        <div class="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4 flex flex-col h-full">
+            <div class="flex-grow">
+                <h3 class="text-xl font-bold mb-2">{{ feed.title }}</h3>
+                <p class="text-gray-600 mb-2">Category: {{ feed.category }}</p>
+                <p class="text-sm text-gray-500 mb-2">{{ feed.description }}</p>
+                <a href="{{ feed.url }}" target="_blank" class="text-blue-500 hover:text-blue-700">{{ feed.url }}</a>
+                <p class="text-sm text-gray-500 mt-2">Last Build Date: {{ feed.last_build_date or 'Not available' }}</p>
+            </div>
+            <div class="mt-4 flex space-x-2">
+                <a href="{{ url_for('rss_manager.edit_feed', feed_id=feed.id) }}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+                    Edit Feed
+                </a>
+                <form action="{{ url_for('rss_manager.delete_feed', feed_id=feed.id) }}" method="POST" class="inline">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                    <button type="submit" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+                        Delete Feed
+                    </button>
+                </form>
+            </div>
 >>>>>>> 5f1296b (Removed the old SEARCH/REPLACE block and replaced it with the corrected version.)
         </div>
         {% endfor %}
