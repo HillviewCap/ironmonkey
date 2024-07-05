@@ -65,7 +65,7 @@ def create_app():
 
         @login_manager.user_loader
         def load_user(user_id):
-            return db.session.get(User, user_id)
+            return User.query.get(user_id)
 
         # Register blueprints
         app.register_blueprint(rss_manager)

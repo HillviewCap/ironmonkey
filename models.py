@@ -24,9 +24,9 @@ class User(UserMixin, db.Model):
     email = db.Column(db.String(120), unique=True, nullable=False)
     password = db.Column(db.String(255), nullable=False)
 
-    def get_id(self) -> Optional[str]:
+    def get_id(self) -> str:
         """Return the user ID as a string."""
-        return str(self.id) if self.id else None
+        return str(self.id)
 
     def check_password(self, password: str) -> bool:
         """Check if the provided password matches the user's password."""
