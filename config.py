@@ -14,7 +14,7 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 instance_path = os.path.join(basedir, 'instance')
 
 class Config:
-    SECRET_KEY = os.getenv('SECRET_KEY')
+    SECRET_KEY = os.getenv('SECRET_KEY') or 'fallback-secret-key'
     SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URL', f'sqlite:///{os.path.join(instance_path, "threats.db")}')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 

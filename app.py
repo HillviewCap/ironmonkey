@@ -15,6 +15,8 @@ from sqlalchemy.exc import SQLAlchemyError
 from werkzeug.exceptions import BadRequest
 import bleach
 from dotenv import load_dotenv
+
+load_dotenv()  # This line ensures that environment variables are loaded from .env file
 import httpx
 
 import logging_config
