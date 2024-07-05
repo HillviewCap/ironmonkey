@@ -125,6 +125,7 @@ class ParsedContent(db.Model):
     title = db.Column(db.String(255), nullable=False)
     url = db.Column(db.String(255), nullable=False)
     content = db.Column(db.Text, nullable=False)
+    summary = db.Column(db.Text, nullable=True)
     links = db.Column(db.JSON, nullable=True)
     feed_id = db.Column(
         UUID(as_uuid=True), db.ForeignKey("rss_feed.id"), nullable=False
@@ -133,9 +134,6 @@ class ParsedContent(db.Model):
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     entities = db.relationship("Entity", back_populates="parsed_content")
     categories = db.relationship("Category", back_populates="parsed_content")
-    summary = db.Column(db.Text, nullable=True)
-    summary = db.Column(db.Text, nullable=True)
-    summary = db.Column(db.Text, nullable=True)
 
 
 class Entity(db.Model):
