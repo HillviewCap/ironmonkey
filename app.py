@@ -49,6 +49,8 @@ def init_db():
         db.create_all()
         logger.info("Database initialization completed")
 
+init_db()  # Call init_db() to create tables if they don't exist
+
 from auth import index
 
 app.route('/')(index)
