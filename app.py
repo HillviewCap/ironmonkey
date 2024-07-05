@@ -15,6 +15,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from werkzeug.exceptions import BadRequest
 import bleach
 from dotenv import load_dotenv
+import httpx
 
 import logging_config
 from models import SearchParams, SearchResult, User, db, RSSFeed, Threat, ParsedContent
@@ -83,14 +84,15 @@ def create_app():
         ).limit(10).all()
 
         tagged_count = 0
-        for content in untagged_content:
-            try:
-                result = await diffbot_client.tag_content(content.content)
-                db_handler.process_nlp_result(content, result)
-                content.summary = result.get("summary", {}).get("text")
-                tagged_count += 1
-            except Exception as e:
-                current_app.logger.error(f"Error tagging content ID {content.id}: {str(e)}")
+        async with httpx.AsyncClient() as client:
+            for content in untagged_content:
+                try:
+                    result = await diffbot_client.tag_content(content.content, client)
+                    db_handler.process_nlp_result(content, result)
+                    content.summary = result.get("summary", {}).get("text")
+                    tagged_count += 1
+                except Exception as e:
+                    current_app.logger.error(f"Error tagging content ID {content.id}: {str(e)}")
 
         db.session.commit()
         return jsonify({"message": f"Tagged {tagged_count} out of {len(untagged_content)} contents"}), 200
