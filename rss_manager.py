@@ -4,7 +4,8 @@ from flask import Blueprint, render_template, redirect, url_for, flash, request
 import logging_config
 from flask_login import login_required
 from models import db, RSSFeed
-from flask_wtf import FlaskForm, CSRFProtect
+from flask_wtf import FlaskForm
+from flask_wtf.csrf import CSRFProtect
 from wtforms import StringField, SubmitField, FileField
 from wtforms.validators import DataRequired, URL
 from typing import List
@@ -16,6 +17,7 @@ from werkzeug.wrappers import Response
 from sqlalchemy.exc import IntegrityError
 
 rss_manager = Blueprint('rss_manager', __name__)
+csrf = CSRFProtect()
 
 class RSSFeedForm(FlaskForm):
     url = StringField('RSS Feed URL', validators=[DataRequired(), URL()])
@@ -122,6 +124,7 @@ def manage_rss() -> str:
 
 @rss_manager.route('/delete_feed/<uuid:feed_id>', methods=['POST'])
 @login_required
+@csrf.exempt
 def delete_feed(feed_id: uuid.UUID) -> Response:
     """
     Delete an RSS feed from the database.
