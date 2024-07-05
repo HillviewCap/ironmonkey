@@ -41,6 +41,13 @@ from auth import index
 
 app.route('/')(index)
 
+@app.cli.command("parse-feeds")
+def parse_feeds_command():
+    """Parse all RSS feeds and store new content."""
+    with app.app_context():
+        asyncio.run(rss_manager.parse_feeds())
+    print("Feeds parsed successfully.")
+
 @app.route('/search', methods=['POST'])
 @login_required
 def search() -> List[Dict[str, str | datetime]]:
