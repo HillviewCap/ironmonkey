@@ -28,7 +28,8 @@ db.init_app(app)
 csrf = CSRFProtect(app)
 init_auth(app)
 migrate = Migrate(app, db)
-app.cli.add_command(migrate.cli)
+from flask_migrate import cli as migrate_cli
+app.cli.add_command(migrate_cli.db)
 
 app.route('/login', methods=['GET', 'POST'])(login)
 app.route('/logout')(logout)
