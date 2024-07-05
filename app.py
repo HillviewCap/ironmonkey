@@ -166,14 +166,11 @@ def create_app():
             return jsonify({"error": "Error tagging content"}), 500
 
     @app.route("/")
-    def root():
-        current_app.logger.info("Entering root route")
+    @login_required
+    def index():
+        current_app.logger.info("Entering index route")
         try:
-            from auth import index
-
-            result = index()
-            current_app.logger.info("index() function called successfully")
-            return result
+            return render_template("index.html")
         except Exception as e:
             current_app.logger.error(f"Error in index route: {str(e)}", exc_info=True)
             return render_error_page()
