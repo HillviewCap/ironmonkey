@@ -45,6 +45,11 @@ app.register_blueprint(rss_manager)
 def init_db():
     with app.app_context():
         logger.info("Starting database initialization")
+        # Backup the database before dropping all tables
+        backup_file = f"backup_{datetime.now().strftime('%Y%m%d%H%M%S')}.sql"
+        os.system(f"sqlite3 {os.getenv('DATABASE_URL').split('///')[-1]} .dump > {backup_file}")
+        logger.info(f"Database backed up to {backup_file}")
+
         db.drop_all()
         db.create_all()
         
