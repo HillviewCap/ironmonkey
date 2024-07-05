@@ -21,7 +21,7 @@ from jina_api import parse_content
 import asyncio
 from sqlalchemy import func
 from flask import request
-from nlp_tagging import tag_single_content
+# Import tag_single_content function when needed
 
 rss_manager = Blueprint('rss_manager', __name__)
 csrf = CSRFProtect()
@@ -199,6 +199,7 @@ def parsed_content():
 @rss_manager.route('/tag_content/<uuid:post_id>', methods=['POST'])
 @login_required
 def tag_content(post_id):
+    from nlp_tagging import tag_single_content
     post = ParsedContent.query.get_or_404(post_id)
     try:
         tag_single_content(post)
