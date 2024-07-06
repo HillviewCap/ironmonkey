@@ -45,13 +45,17 @@ class OllamaAPI:
         if not await self.check_connection():
             raise Exception("Unable to connect to Ollama API")
 
+        # Ensure UTF-8 encoding for both prompts
+        system_prompt_utf8 = system_prompt.encode('utf-8', errors='ignore').decode('utf-8')
+        user_prompt_utf8 = user_prompt.encode('utf-8', errors='ignore').decode('utf-8')
+
         for attempt in range(self.max_retries):
             try:
                 response = await self.client.chat(
                     model=self.model,
                     messages=[
-                        {"role": "system", "content": system_prompt},
-                        {"role": "user", "content": user_prompt}
+                        {"role": "system", "content": system_prompt_utf8},
+                        {"role": "user", "content": user_prompt_utf8}
                     ]
                 )
                 return response
