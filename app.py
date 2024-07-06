@@ -6,7 +6,6 @@ import asyncio
 import uuid
 from datetime import datetime
 from typing import List
-import os
 
 import httpx
 import bleach
@@ -29,6 +28,7 @@ from auth import init_auth, login, logout, register
 from config import Config
 from rss_manager import rss_manager
 from nlp_tagging import DiffbotClient, DatabaseHandler
+from ollama_api import OllamaAPI
 from ollama_api import OllamaAPI
 import asyncio
 
