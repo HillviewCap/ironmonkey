@@ -293,6 +293,28 @@ def create_app():
             asyncio.run(enhance_summaries())
         print("Summaries enhanced successfully.")
 
+    @app.route("/summarize_content", methods=["POST"])
+    @login_required
+    async def summarize_content():
+        content_id = request.json.get("content_id")
+        if not content_id:
+            return jsonify({"error": "content_id is required"}), 400
+
+        content = ParsedContent.query.get(content_id)
+        if not content:
+            return jsonify({"error": "Content not found"}), 404
+
+        try:
+            enhancer = SummaryEnhancer(app.ollama_api)
+            success = await enhancer.process_single_record(content, db.session)
+            if success:
+                return jsonify({"summary": content.summary}), 200
+            else:
+                return jsonify({"error": "Failed to generate summary"}), 500
+        except Exception as e:
+            current_app.logger.error(f"Error summarizing content: {str(e)}")
+            return jsonify({"error": "Error summarizing content"}), 500
+
     return app
 
 
