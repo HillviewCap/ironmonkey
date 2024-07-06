@@ -64,6 +64,8 @@ async def enhance_summaries():
                 logger.info(f"Updated summary for record {record.id}")
             else:
                 logger.warning(f"Empty summary generated for record {record.id}")
+        except httpx.ReadTimeout:
+            logger.error(f"Timeout error generating summary for record {record.id}. Skipping.", exc_info=True)
         except Exception as e:
             logger.error(f"Error generating summary for record {record.id}: {str(e)}", exc_info=True)
 
