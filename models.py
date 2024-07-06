@@ -127,7 +127,6 @@ class ParsedContent(db.Model):
     url = db.Column(db.String(255), nullable=False)
     content = db.Column(db.Text, nullable=False)
     summary = db.Column(db.Text, nullable=True)
-    links = db.Column(db.JSON, nullable=True)
     feed_id = db.Column(
         UUID(as_uuid=True), db.ForeignKey("rss_feed.id"), nullable=False
     )
