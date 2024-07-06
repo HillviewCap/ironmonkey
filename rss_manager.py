@@ -67,14 +67,16 @@ async def fetch_and_parse_feed(feed: RSSFeed) -> None:
             for entry in feed_data.entries:
                 if not ParsedContent.query.filter_by(url=entry.link).first():
                     try:
-                        parsed_data = await parse_content(entry.link)
-                        new_content = ParsedContent(
-                            title=parsed_data["title"],
-                            url=parsed_data["url"],
-                            content=parsed_data["content"],
-                            links=parsed_data["links"],
-                            feed_id=feed.id,
-                        )
+                        parsed_content = await parse_content(entry.link)
+                        if parsed_content is not None:
+                            new_content = ParsedContent(
+                                content=parsed_content,
+                                feed_id=feed.id,
+                                url=entry.link,  # Use the original entry link as URL
+                            )
+                        else:
+                            logger.warning(f"Failed to parse content for {entry.link}")
+                            continue
                         db.session.add(new_content)
                         logger.info(f"Added new content: {new_content.url}")
                     except Exception as e:
@@ -223,8 +225,7 @@ def parsed_content():
 
     if search_query:
         query = query.filter(
-            (ParsedContent.title.ilike(f"%{search_query}%"))
-            | (ParsedContent.content.ilike(f"%{search_query}%"))
+            (ParsedContent.content.ilike(f"%{search_query}%"))
             | (ParsedContent.url.ilike(f"%{search_query}%"))
         )
 
