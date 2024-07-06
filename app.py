@@ -46,32 +46,42 @@ async def enhance_summaries():
 
     logger.info("Starting summary enhancement process")
 
-    # Query for records with missing summaries
-    records_to_update = ParsedContent.query.filter(ParsedContent.summary.is_(None)).all()
-    logger.info(f"Found {len(records_to_update)} records to update")
+    while True:
+        # Query for a single record with missing summary
+        record_to_update = ParsedContent.query.filter(ParsedContent.summary.is_(None)).first()
+        
+        if not record_to_update:
+            logger.info("No more records to update. Process completed.")
+            break
 
-    for record in records_to_update:
-        logger.debug(f"Processing record {record.id}")
-        prompt = f"Summarize the following content in exactly 3 sentences:\n\n{record.content}"
-        try:
-            response = await ollama_api.generate(prompt=prompt)
-            summary = response.get('response', '').strip()
+        logger.debug(f"Processing record {record_to_update.id}")
+        prompt = f"Summarize the following content in exactly 3 sentences:\n\n{record_to_update.content}"
+        
+        max_retries = 3
+        for attempt in range(max_retries):
+            try:
+                response = await ollama_api.generate(prompt=prompt)
+                summary = response.get('response', '').strip()
+                
+                if summary:
+                    # Update the summary field and commit immediately
+                    record_to_update.summary = summary
+                    db.session.commit()
+                    logger.info(f"Updated summary for record {record_to_update.id}")
+                    logger.info(f"Summary: {summary}")  # Output the summary to the log
+                    break
+                else:
+                    logger.warning(f"Empty summary generated for record {record_to_update.id}. Attempt {attempt + 1}/{max_retries}")
+            except httpx.ReadTimeout:
+                logger.error(f"Timeout error generating summary for record {record_to_update.id}. Attempt {attempt + 1}/{max_retries}", exc_info=True)
+            except Exception as e:
+                logger.error(f"Error generating summary for record {record_to_update.id}: {str(e)}. Attempt {attempt + 1}/{max_retries}", exc_info=True)
             
-            if summary:
-                # Update the summary field and commit immediately
-                record.summary = summary
-                db.session.commit()
-                logger.info(f"Updated summary for record {record.id}")
-                logger.info(f"Summary: {summary}")  # Output the summary to the log
-            else:
-                logger.warning(f"Empty summary generated for record {record.id}")
-        except httpx.ReadTimeout:
-            logger.error(f"Timeout error generating summary for record {record.id}. Skipping.", exc_info=True)
-        except Exception as e:
-            logger.error(f"Error generating summary for record {record.id}: {str(e)}", exc_info=True)
-        finally:
-            # Ensure the session is closed even if an exception occurs
-            db.session.close()
+            if attempt == max_retries - 1:
+                logger.error(f"Failed to generate summary for record {record_to_update.id} after {max_retries} attempts. Moving to next record.")
+        
+        # Ensure the session is closed after processing each record
+        db.session.close()
 
     logger.info("Summary enhancement process completed")
 
