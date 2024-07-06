@@ -12,15 +12,28 @@ def rotator(source, dest):
             df.writelines(sf)
     os.remove(source)
 
+# Ensure logs directory exists
+logs_dir = 'logs'
+os.makedirs(logs_dir, exist_ok=True)
+
 # Create a custom logger
 logger = logging.getLogger('rss_manager')
 logger.setLevel(logging.DEBUG)
 
 # Create handlers
 c_handler = logging.StreamHandler()
-f_handler = logging.FileHandler('rss_manager.log', mode='a')
+f_handler = RotatingFileHandler(
+    os.path.join(logs_dir, 'app.log'),
+    maxBytes=10*1024*1024,  # 10MB
+    backupCount=5,
+    mode='a'
+)
 c_handler.setLevel(logging.WARNING)
 f_handler.setLevel(logging.DEBUG)
+
+# Set up rotation
+f_handler.rotator = rotator
+f_handler.namer = namer
 
 # Create formatters and add them to handlers
 c_format = logging.Formatter('%(name)s - %(levelname)s - %(message)s')
