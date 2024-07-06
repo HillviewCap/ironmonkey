@@ -20,6 +20,8 @@ import uuid
 from config import Config
 from typing import List, Dict, Any
 import asyncio
+import time
+from ratelimit import limits, sleep_and_retry
 
 # Set up logging
 logging.basicConfig(
@@ -45,6 +47,8 @@ class DiffbotClient:
             "content-type": "application/json",
         }
 
+    @sleep_and_retry
+    @limits(calls=5, period=60)
     async def tag_content(
         self, content: str, client: httpx.AsyncClient
     ) -> Dict[str, Any]:
@@ -56,27 +60,41 @@ class DiffbotClient:
             "documentType": "news article",
         }
 
-        response = await client.post(self.url, json=payload, headers=self.headers)
+        max_retries = 3
+        retry_delay = 1
 
-        if response.status_code != 200:
-            error_message = f"Error processing content: {response.status_code}"
-            logging.error(error_message)
-            raise Exception(error_message)
+        for attempt in range(max_retries):
+            try:
+                response = await client.post(self.url, json=payload, headers=self.headers)
 
-        response_json = response.json()
+                if response.status_code != 200:
+                    error_message = f"Error processing content: {response.status_code}"
+                    logging.error(error_message)
+                    raise Exception(error_message)
 
-        # Log the full JSON response
-        json_logger.info(json.dumps(response_json, indent=2))
+                response_json = response.json()
 
-        logging.info("Diffbot response received and logged")
+                # Log the full JSON response
+                json_logger.info(json.dumps(response_json, indent=2))
 
-        # Check if the response is a dictionary and has the expected keys
-        if isinstance(response_json, dict) and "entities" in response_json:
-            return response_json
-        else:
-            error_message = "Unexpected response format from Diffbot API"
-            logging.error(error_message)
-            raise Exception(error_message)
+                logging.info("Diffbot response received and logged")
+
+                # Check if the response is a dictionary and has the expected keys
+                if isinstance(response_json, dict) and "entities" in response_json:
+                    return response_json
+                else:
+                    error_message = "Unexpected response format from Diffbot API"
+                    logging.error(error_message)
+                    raise Exception(error_message)
+
+            except Exception as e:
+                if attempt < max_retries - 1:
+                    logging.warning(f"Attempt {attempt + 1} failed. Retrying in {retry_delay} seconds...")
+                    await asyncio.sleep(retry_delay)
+                    retry_delay *= 2  # Exponential backoff
+                else:
+                    logging.error(f"All {max_retries} attempts failed. Last error: {str(e)}")
+                    raise
 
 
 class DatabaseHandler:
