@@ -58,8 +58,8 @@ async def enhance_summaries():
             summary = response.get('response', '').strip()
             
             if summary:
-                # Concatenate the original content with the generated summary
-                record.summary = f"{record.content}\n\nSummary:\n{summary}"
+                # Update only the summary field
+                record.summary = summary
                 db.session.commit()
                 logger.info(f"Updated summary for record {record.id}")
             else:
