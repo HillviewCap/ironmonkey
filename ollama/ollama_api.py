@@ -1,12 +1,16 @@
 import httpx
+import os
 from typing import Dict, Any
+from dotenv import load_dotenv
 
+load_dotenv()
 
 class OllamaAPI:
-    def __init__(self, base_url: str = "http://localhost:11435"):
-        self.base_url = base_url
+    def __init__(self):
+        self.base_url = os.getenv('OLLAMA_BASE_URL', 'http://localhost:11435')
+        self.default_model = os.getenv('OLLAMA_MODEL', 'gpt-3.5-turbo')
 
-    async def generate(self, model: str, prompt: str, **kwargs) -> Dict[str, Any]:
+    async def generate(self, prompt: str, model: str = None, **kwargs) -> Dict[str, Any]:
         """
         Generate a response using the specified Ollama model.
 
