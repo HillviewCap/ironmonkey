@@ -298,22 +298,26 @@ def create_app():
     async def summarize_content():
         content_id = request.json.get("content_id")
         if not content_id:
+            current_app.logger.error("content_id is missing in the request")
             return jsonify({"error": "content_id is required"}), 400
 
         content = ParsedContent.query.get(content_id)
         if not content:
+            current_app.logger.error(f"Content not found for id: {content_id}")
             return jsonify({"error": "Content not found"}), 404
 
         try:
             enhancer = SummaryEnhancer(app.ollama_api)
             success = await enhancer.process_single_record(content, db.session)
             if success:
+                current_app.logger.info(f"Summary generated successfully for content id: {content_id}")
                 return jsonify({"summary": content.summary}), 200
             else:
+                current_app.logger.error(f"Failed to generate summary for content id: {content_id}")
                 return jsonify({"error": "Failed to generate summary"}), 500
         except Exception as e:
-            current_app.logger.error(f"Error summarizing content: {str(e)}")
-            return jsonify({"error": "Error summarizing content"}), 500
+            current_app.logger.exception(f"Error summarizing content: {str(e)}")
+            return jsonify({"error": f"Error summarizing content: {str(e)}"}), 500
 
     return app
 
