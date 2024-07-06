@@ -66,16 +66,25 @@ async def fetch_and_parse_feed(feed: RSSFeed) -> None:
 
             for entry in feed_data.entries:
                 if not ParsedContent.query.filter_by(url=entry.link).first():
-                    parsed_data = await parse_content(entry.link)
-                    new_content = ParsedContent(
-                        title=parsed_data["title"],
-                        url=parsed_data["url"],
-                        content=parsed_data["content"],
-                        links=parsed_data["links"],
-                        feed_id=feed.id,
-                    )
-                    db.session.add(new_content)
-            db.session.commit()
+                    try:
+                        parsed_data = await parse_content(entry.link)
+                        new_content = ParsedContent(
+                            title=parsed_data["title"],
+                            url=parsed_data["url"],
+                            content=parsed_data["content"],
+                            links=parsed_data["links"],
+                            feed_id=feed.id,
+                        )
+                        db.session.add(new_content)
+                        logging_config.logger.info(f"Added new content: {new_content.url}")
+                    except Exception as e:
+                        logging_config.logger.error(f"Error parsing entry {entry.link}: {str(e)}")
+            try:
+                db.session.commit()
+                logging_config.logger.info(f"Committed {len(feed_data.entries)} new entries to database")
+            except Exception as e:
+                db.session.rollback()
+                logging_config.logger.error(f"Error committing to database: {str(e)}")
     except httpx.HTTPStatusError as e:
         logging_config.logger.error(f"HTTP error occurred while fetching feed {feed.url}: {e}")
         raise ValueError(f"HTTP error: {e.response.status_code} - {e.response.reason_phrase}")
