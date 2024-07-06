@@ -1,6 +1,7 @@
 import httpx
 import os
 import logging
+import json
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from models import (
@@ -23,6 +24,13 @@ import asyncio
 # Set up logging
 logging.basicConfig(filename='diffbot_responses.log', level=logging.INFO,
                     format='%(asctime)s - %(levelname)s - %(message)s')
+
+# Set up a separate logger for JSON responses
+json_logger = logging.getLogger('json_logger')
+json_logger.setLevel(logging.INFO)
+json_handler = logging.FileHandler('diffbot_json_responses.log')
+json_handler.setFormatter(logging.Formatter('%(asctime)s - %(message)s'))
+json_logger.addHandler(json_handler)
 
 
 class DiffbotClient:
@@ -53,7 +61,11 @@ class DiffbotClient:
             raise Exception(error_message)
 
         response_json = response.json()
-        logging.info(f"Diffbot response: {response_json}")
+        
+        # Log the full JSON response
+        json_logger.info(json.dumps(response_json, indent=2))
+        
+        logging.info("Diffbot response received and logged")
         
         # Check if the response is a list and has at least one item
         if isinstance(response_json, list) and len(response_json) > 0:
