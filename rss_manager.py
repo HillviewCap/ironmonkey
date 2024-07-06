@@ -60,7 +60,7 @@ async def fetch_and_parse_feed(feed: RSSFeed) -> None:
     """Fetch and parse a single RSS feed."""
     try:
         async with httpx.AsyncClient() as client:
-            response = await client.get(feed.url)
+            response = await client.get(feed.url, timeout=30.0)  # Set a timeout
             response.raise_for_status()  # Raise an exception for bad status codes
             feed_data = feedparser.parse(response.text)
 
@@ -78,13 +78,16 @@ async def fetch_and_parse_feed(feed: RSSFeed) -> None:
             db.session.commit()
     except httpx.HTTPStatusError as e:
         logging_config.logger.error(f"HTTP error occurred while fetching feed {feed.url}: {e}")
-        raise
+        raise ValueError(f"HTTP error: {e.response.status_code} - {e.response.reason_phrase}")
     except httpx.RequestError as e:
         logging_config.logger.error(f"An error occurred while requesting {feed.url}: {e}")
-        raise
+        raise ValueError(f"Request error: {str(e)}")
+    except httpx.TimeoutException as e:
+        logging_config.logger.error(f"Timeout occurred while fetching feed {feed.url}: {e}")
+        raise ValueError(f"Timeout error: The request to {feed.url} timed out")
     except Exception as e:
         logging_config.logger.error(f"Unexpected error occurred while parsing feed {feed.url}: {e}", exc_info=True)
-        raise
+        raise ValueError(f"Unexpected error: {str(e)}")
 
 
 def process_csv_file(csv_file) -> Tuple[int, int, List[str]]:
