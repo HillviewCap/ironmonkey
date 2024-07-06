@@ -29,21 +29,6 @@ class OllamaAPI:
         except (httpx.RequestError, httpx.HTTPStatusError):
             return False
 
-    async def check_model(self) -> bool:
-        """
-        Check if the specified model is available and loaded.
-
-        Returns:
-            bool: True if the model is available and loaded, False otherwise.
-        """
-        try:
-            async with httpx.AsyncClient(timeout=self.timeout) as client:
-                response = await client.get(f"{self.base_url}/api/ps")
-                response.raise_for_status()
-                data = response.json()
-                return any(model['model'] == self.model for model in data.get('models', []))
-        except (httpx.RequestError, httpx.HTTPStatusError):
-            return False
 
     async def generate(self, prompt: str) -> dict:
         """
@@ -57,9 +42,6 @@ class OllamaAPI:
         """
         if not await self.check_connection():
             raise Exception("Unable to connect to Ollama API")
-
-        if not await self.check_model():
-            raise Exception(f"Model '{self.model}' is not available or loaded")
 
         url = f"{self.base_url}/api/generate"
         payload = {
