@@ -2,6 +2,7 @@ import httpx
 import os
 import logging
 import json
+import os
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from models import (
@@ -27,8 +28,12 @@ from ratelimit import limits, sleep_and_retry
 logger = logging.getLogger('nlp_tagging')
 logger.setLevel(logging.INFO)
 
+# Ensure logs directory exists
+logs_dir = 'logs'
+os.makedirs(logs_dir, exist_ok=True)
+
 # Create a file handler
-file_handler = logging.FileHandler('nlp_tagging.log')
+file_handler = logging.FileHandler(os.path.join(logs_dir, 'nlp_tagging.log'))
 file_handler.setLevel(logging.INFO)
 
 # Create a formatting for the logs
