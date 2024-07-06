@@ -4,6 +4,7 @@ import os
 import logging
 import asyncio
 import uuid
+import uuid
 from datetime import datetime
 from typing import List
 
@@ -301,12 +302,13 @@ def create_app():
             current_app.logger.error("content_id is missing in the request")
             return jsonify({"error": "content_id is required"}), 400
 
-        content = ParsedContent.query.get(content_id)
-        if not content:
-            current_app.logger.error(f"Content not found for id: {content_id}")
-            return jsonify({"error": "Content not found"}), 404
-
         try:
+            content_uuid = uuid.UUID(content_id)
+            content = ParsedContent.query.get(content_uuid)
+            if not content:
+                current_app.logger.error(f"Content not found for id: {content_id}")
+                return jsonify({"error": "Content not found"}), 404
+
             enhancer = SummaryEnhancer(app.ollama_api)
             success = await enhancer.process_single_record(content, db.session)
             if success:
@@ -315,6 +317,9 @@ def create_app():
             else:
                 current_app.logger.error(f"Failed to generate summary for content id: {content_id}")
                 return jsonify({"error": "Failed to generate summary"}), 500
+        except ValueError:
+            current_app.logger.error(f"Invalid UUID format for content_id: {content_id}")
+            return jsonify({"error": "Invalid content_id format"}), 400
         except Exception as e:
             current_app.logger.exception(f"Error summarizing content: {str(e)}")
             return jsonify({"error": f"Error summarizing content: {str(e)}"}), 500
