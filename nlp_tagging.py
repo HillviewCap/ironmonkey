@@ -98,68 +98,107 @@ class DatabaseHandler:
         return entity
 
     def add_uris(self, session, entity: Entity, uris_data: List[Dict[str, str]]):
-        for uri_data in uris_data:
-            uri = Uris(uri=uri_data["uri"], type=uri_data["type"], entity=entity)
-            session.add(uri)
+        if isinstance(uris_data, list):
+            for uri_data in uris_data:
+                if isinstance(uri_data, dict):
+                    uri = Uris(uri=uri_data.get("uri"), type=uri_data.get("type"), entity=entity)
+                    session.add(uri)
+                else:
+                    logging.warning(f"Unexpected URI data type: {type(uri_data)}")
+        else:
+            logging.warning(f"Unexpected URIs data type: {type(uris_data)}")
 
     def add_types(self, session, entity: Entity, types_data: List[Dict[str, str]]):
-        for type_data in types_data:
-            type_obj = Type(
-                name=type_data["name"],
-                diffbot_uri=type_data.get("diffbotUri"),
-                dbpedia_uri=type_data.get("dbpediaUri"),
-            )
-            session.add(type_obj)
-            entity_type = EntityType(entity=entity, type=type_obj)
-            session.add(entity_type)
+        if isinstance(types_data, list):
+            for type_data in types_data:
+                if isinstance(type_data, dict):
+                    type_obj = Type(
+                        name=type_data.get("name"),
+                        diffbot_uri=type_data.get("diffbotUri"),
+                        dbpedia_uri=type_data.get("dbpediaUri"),
+                    )
+                    session.add(type_obj)
+                    entity_type = EntityType(entity=entity, type=type_obj)
+                    session.add(entity_type)
+                else:
+                    logging.warning(f"Unexpected type data type: {type(type_data)}")
+        else:
+            logging.warning(f"Unexpected types data type: {type(types_data)}")
 
     def add_mentions(
         self, session, entity: Entity, mentions_data: List[Dict[str, Any]]
     ):
-        for mention_data in mentions_data:
-            mention = Mention(
-                text=mention_data["text"],
-                begin_offset=mention_data["beginOffset"],
-                end_offset=mention_data["endOffset"],
-                confidence=mention_data.get("confidence"),
-                entity=entity,
-            )
-            session.add(mention)
+        if isinstance(mentions_data, list):
+            for mention_data in mentions_data:
+                if isinstance(mention_data, dict):
+                    mention = Mention(
+                        text=mention_data.get("text"),
+                        begin_offset=mention_data.get("beginOffset"),
+                        end_offset=mention_data.get("endOffset"),
+                        confidence=mention_data.get("confidence"),
+                        entity=entity,
+                    )
+                    session.add(mention)
+                else:
+                    logging.warning(f"Unexpected mention data type: {type(mention_data)}")
+        else:
+            logging.warning(f"Unexpected mentions data type: {type(mentions_data)}")
 
     def add_locations(
         self, session, entity: Entity, locations_data: List[Dict[str, Any]]
     ):
-        for location_data in locations_data:
-            location = Location(
-                latitude=location_data["latitude"],
-                longitude=location_data["longitude"],
-                precision=location_data.get("precision"),
-                entity=entity,
-            )
-            session.add(location)
+        if isinstance(locations_data, list):
+            for location_data in locations_data:
+                if isinstance(location_data, dict):
+                    location = Location(
+                        latitude=location_data.get("latitude"),
+                        longitude=location_data.get("longitude"),
+                        precision=location_data.get("precision"),
+                        entity=entity,
+                    )
+                    session.add(location)
+                else:
+                    logging.warning(f"Unexpected location data type: {type(location_data)}")
+        else:
+            logging.warning(f"Unexpected locations data type: {type(locations_data)}")
 
     def add_categories(
         self, session, categories_data: List[Dict[str, Any]], content: ParsedContent
     ):
-        for category_data in categories_data:
-            category = Category(
-                type=category_data["type"],
-                id_category=category_data["id"],
-                name=category_data["name"],
-                path=category_data.get("path"),
-                parsed_content=content,
-            )
-            session.add(category)
+        if isinstance(categories_data, list):
+            for category_data in categories_data:
+                if isinstance(category_data, dict):
+                    category = Category(
+                        type=category_data.get("type"),
+                        id_category=category_data.get("id"),
+                        name=category_data.get("name"),
+                        path=category_data.get("path"),
+                        parsed_content=content,
+                    )
+                    session.add(category)
+                else:
+                    logging.warning(f"Unexpected category data type: {type(category_data)}")
+        else:
+            logging.warning(f"Unexpected categories data type: {type(categories_data)}")
 
     def process_nlp_result(self, content: ParsedContent, result: Dict[str, Any], session):
-        for entity_data in result.get("entities", []):
-            entity = self.add_entity(session, entity_data, content)
-            self.add_uris(session, entity, entity_data.get("uris", []))
-            self.add_types(session, entity, entity_data.get("types", []))
-            self.add_mentions(session, entity, entity_data.get("mentions", []))
-            self.add_locations(session, entity, entity_data.get("locations", []))
+        entities = result.get("entities", [])
+        if isinstance(entities, list):
+            for entity_data in entities:
+                if isinstance(entity_data, dict):
+                    entity = self.add_entity(session, entity_data, content)
+                    self.add_uris(session, entity, entity_data.get("uris", []))
+                    self.add_types(session, entity, entity_data.get("types", []))
+                    self.add_mentions(session, entity, entity_data.get("mentions", []))
+                    self.add_locations(session, entity, entity_data.get("locations", []))
+                else:
+                    logging.warning(f"Unexpected entity data type: {type(entity_data)}")
 
-        self.add_categories(session, result.get("categories", []), content)
+        categories = result.get("categories", [])
+        if isinstance(categories, list):
+            self.add_categories(session, categories, content)
+        else:
+            logging.warning(f"Unexpected categories data type: {type(categories)}")
 
 
 async def process_single_content(
