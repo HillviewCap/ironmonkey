@@ -6,6 +6,7 @@ import asyncio
 import uuid
 from datetime import datetime
 from typing import List
+import os
 
 import httpx
 import bleach
@@ -21,6 +22,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from werkzeug.exceptions import BadRequest
 
 import logging_config
+from logging.handlers import RotatingFileHandler
 from models import SearchParams, db, ParsedContent, User
 from flask_login import LoginManager, UserMixin
 from auth import init_auth, login, logout, register
@@ -40,11 +42,16 @@ async def enhance_summaries():
     """
     app = current_app._get_current_object()
     ollama_api = app.ollama_api
+    logger = app.logger.getChild('enhance_summaries')
+
+    logger.info("Starting summary enhancement process")
 
     # Query for records with missing summaries
     records_to_update = ParsedContent.query.filter(ParsedContent.summary.is_(None)).all()
+    logger.info(f"Found {len(records_to_update)} records to update")
 
     for record in records_to_update:
+        logger.debug(f"Processing record {record.id}")
         prompt = f"Summarize this content:\n\n{record.content}"
         try:
             response = await ollama_api.generate(prompt=prompt)
@@ -53,13 +60,13 @@ async def enhance_summaries():
             if summary:
                 record.summary = summary
                 db.session.commit()
-                current_app.logger.info(f"Updated summary for record {record.id}")
+                logger.info(f"Updated summary for record {record.id}")
             else:
-                current_app.logger.warning(f"Empty summary generated for record {record.id}")
+                logger.warning(f"Empty summary generated for record {record.id}")
         except Exception as e:
-            current_app.logger.error(f"Error generating summary for record {record.id}: {str(e)}")
+            logger.error(f"Error generating summary for record {record.id}: {str(e)}", exc_info=True)
 
-    current_app.logger.info("Summary enhancement process completed")
+    logger.info("Summary enhancement process completed")
 
 # Configure logging
 logging.basicConfig(
@@ -85,6 +92,17 @@ def create_app():
         f"sqlite:///{os.path.join(app.instance_path, 'threats.db')}"
     )
     logger.info(f"Database URI: {app.config['SQLALCHEMY_DATABASE_URI']}")
+
+    # Set up logging
+    log_file = os.path.join(app.instance_path, 'enhance_summaries.log')
+    file_handler = RotatingFileHandler(log_file, maxBytes=10240, backupCount=10)
+    file_handler.setFormatter(logging.Formatter(
+        '%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]'
+    ))
+    file_handler.setLevel(logging.INFO)
+    app.logger.addHandler(file_handler)
+    app.logger.setLevel(logging.INFO)
+    app.logger.info('Enhance summaries startup')
 
     try:
         db.init_app(app)
