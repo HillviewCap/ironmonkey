@@ -31,6 +31,7 @@ from ollama_api import OllamaAPI
 import asyncio
 from ollama_api import OllamaAPI
 import asyncio
+import httpx
 
 # Load environment variables
 load_dotenv()
