@@ -29,7 +29,8 @@
                     <th class="px-2 py-2 w-1/6">URL</th>
                     <th class="px-2 py-2 w-1/6">Created At</th>
                     <th class="px-2 py-2 w-1/6">Summary</th>
-                    <th class="px-2 py-2 w-1/6">Actions</th>
+                    <th class="px-2 py-2 w-1/6">Tag Actions</th>
+                    <th class="px-2 py-2 w-1/6">Summarize Actions</th>
                 </tr>
             </thead>
             <tbody>
@@ -43,10 +44,17 @@
                         </a>
                     </td>
                     <td class="border px-2 py-2">{{ post.created_at.strftime('%Y-%m-%d') }}</td>
-                    <td class="border px-2 py-2 truncate">{{ post.summary[:50] if post.summary else 'No summary' }}</td>
+                    <td class="border px-2 py-2 truncate">
+                        <span class="summary-content">{{ post.summary[:50] if post.summary else 'No summary' }}</span>
+                    </td>
                     <td class="border px-2 py-2">
                         <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-2 rounded tag-content-btn" data-post-id="{{ post.id }}">
                             Tag Content
+                        </button>
+                    </td>
+                    <td class="border px-2 py-2">
+                        <button class="bg-green-500 hover:bg-green-700 text-white font-bold py-1 px-2 rounded summarize-btn" data-post-id="{{ post.id }}">
+                            Summarize
                         </button>
                     </td>
                 </tr>
@@ -100,6 +108,43 @@ document.addEventListener('DOMContentLoaded', function() {
             .catch(error => {
                 console.error('Error:', error);
                 alert('An error occurred while tagging the content.');
+            });
+        });
+    });
+
+    const summarizeButtons = document.querySelectorAll('.summarize-btn');
+    summarizeButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const postId = this.getAttribute('data-post-id');
+            const summaryElement = this.closest('tr').querySelector('.summary-content');
+            const existingSummary = summaryElement.textContent.trim();
+
+            if (existingSummary !== 'No summary') {
+                if (!confirm('An existing summary is present. Do you want to overwrite it?')) {
+                    return;
+                }
+            }
+
+            fetch('/summarize_content', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify({ content_id: postId })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.summary) {
+                    summaryElement.textContent = data.summary.substring(0, 50) + (data.summary.length > 50 ? '...' : '');
+                    alert('Summary generated successfully.');
+                } else {
+                    alert('Failed to generate summary.');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while generating the summary.');
             });
         });
     });
