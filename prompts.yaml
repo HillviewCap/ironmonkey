@@ -1,0 +1,2 @@
+summarize:
+  prompt: "Summarize the following content in exactly 3 sentences:\n\n{content}"

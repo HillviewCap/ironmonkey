@@ -31,6 +31,7 @@ from nlp_tagging import DiffbotClient, DatabaseHandler
 from ollama_api import OllamaAPI
 from ollama_api import OllamaAPI
 import asyncio
+import yaml
 
 # Load environment variables
 load_dotenv()
@@ -46,6 +47,10 @@ async def enhance_summaries():
 
     logger.info("Starting summary enhancement process")
 
+    # Load prompts from YAML file
+    with open('prompts.yaml', 'r') as file:
+        prompts = yaml.safe_load(file)
+
     while True:
         try:
             # Start a new session for each iteration
@@ -58,7 +63,7 @@ async def enhance_summaries():
                     break
 
                 logger.debug(f"Processing record {record_to_update.id}")
-                prompt = f"Summarize the following content in exactly 3 sentences:\n\n{record_to_update.content}"
+                prompt = prompts['summarize']['prompt'].format(content=record_to_update.content)
                 
                 max_retries = 3
                 for attempt in range(max_retries):
