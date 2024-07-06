@@ -29,7 +29,7 @@ from auth import init_auth, login, logout, register
 from config import Config
 from rss_manager import rss_manager
 from nlp_tagging import DiffbotClient, DatabaseHandler
-from ollama.ollama_api import OllamaAPI
+from ollama_api import OllamaAPI
 import asyncio
 
 # Load environment variables
@@ -41,7 +41,7 @@ async def enhance_summaries():
     generate summaries using Ollama, and update the database.
     """
     app = current_app._get_current_object()
-    ollama_api = app.ollama_api
+    ollama_api = OllamaAPI()
     logger = app.logger.getChild('enhance_summaries')
 
     logger.info("Starting summary enhancement process")
