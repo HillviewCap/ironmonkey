@@ -304,7 +304,7 @@ def create_app():
 
         try:
             content_uuid = uuid.UUID(content_id)
-            content = ParsedContent.query.get(content_uuid)
+            content = db.session.get(ParsedContent, content_uuid)
             if not content:
                 current_app.logger.error(f"Content not found for id: {content_id}")
                 return jsonify({"error": "Content not found"}), 404
