@@ -47,41 +47,46 @@ async def enhance_summaries():
     logger.info("Starting summary enhancement process")
 
     while True:
-        # Query for a single record with missing summary
-        record_to_update = ParsedContent.query.filter(ParsedContent.summary.is_(None)).first()
-        
-        if not record_to_update:
-            logger.info("No more records to update. Process completed.")
-            break
-
-        logger.debug(f"Processing record {record_to_update.id}")
-        prompt = f"Summarize the following content in exactly 3 sentences:\n\n{record_to_update.content}"
-        
-        max_retries = 3
-        for attempt in range(max_retries):
-            try:
-                response = await ollama_api.generate(prompt=prompt)
-                summary = response.get('response', '').strip()
+        try:
+            # Start a new session for each iteration
+            with db.session.begin():
+                # Query for a single record with missing summary
+                record_to_update = db.session.query(ParsedContent).filter(ParsedContent.summary.is_(None)).with_for_update().first()
                 
-                if summary:
-                    # Update the summary field and commit immediately
-                    record_to_update.summary = summary
-                    db.session.commit()
-                    logger.info(f"Updated summary for record {record_to_update.id}")
-                    logger.info(f"Summary: {summary}")  # Output the summary to the log
+                if not record_to_update:
+                    logger.info("No more records to update. Process completed.")
                     break
-                else:
-                    logger.warning(f"Empty summary generated for record {record_to_update.id}. Attempt {attempt + 1}/{max_retries}")
-            except httpx.ReadTimeout:
-                logger.error(f"Timeout error generating summary for record {record_to_update.id}. Attempt {attempt + 1}/{max_retries}", exc_info=True)
-            except Exception as e:
-                logger.error(f"Error generating summary for record {record_to_update.id}: {str(e)}. Attempt {attempt + 1}/{max_retries}", exc_info=True)
-            
-            if attempt == max_retries - 1:
-                logger.error(f"Failed to generate summary for record {record_to_update.id} after {max_retries} attempts. Moving to next record.")
-        
-        # Ensure the session is closed after processing each record
-        db.session.close()
+
+                logger.debug(f"Processing record {record_to_update.id}")
+                prompt = f"Summarize the following content in exactly 3 sentences:\n\n{record_to_update.content}"
+                
+                max_retries = 3
+                for attempt in range(max_retries):
+                    try:
+                        response = await ollama_api.generate(prompt=prompt)
+                        summary = response.get('response', '').strip()
+                        
+                        if summary:
+                            # Update the summary field
+                            record_to_update.summary = summary
+                            logger.info(f"Updated summary for record {record_to_update.id}")
+                            logger.info(f"Summary: {summary}")  # Output the summary to the log
+                            break
+                        else:
+                            logger.warning(f"Empty summary generated for record {record_to_update.id}. Attempt {attempt + 1}/{max_retries}")
+                    except httpx.ReadTimeout:
+                        logger.error(f"Timeout error generating summary for record {record_to_update.id}. Attempt {attempt + 1}/{max_retries}", exc_info=True)
+                    except Exception as e:
+                        logger.error(f"Error generating summary for record {record_to_update.id}: {str(e)}. Attempt {attempt + 1}/{max_retries}", exc_info=True)
+                    
+                    if attempt == max_retries - 1:
+                        logger.error(f"Failed to generate summary for record {record_to_update.id} after {max_retries} attempts. Moving to next record.")
+
+                # The session will be committed here if no exception occurred
+
+        except SQLAlchemyError as e:
+            logger.error(f"Database error: {str(e)}")
+            # The session will be rolled back here
 
     logger.info("Summary enhancement process completed")
 
