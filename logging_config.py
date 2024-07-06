@@ -1,5 +1,16 @@
 import logging
 from logging.handlers import RotatingFileHandler
+import os
+import gzip
+
+def namer(name):
+    return name + ".gz"
+
+def rotator(source, dest):
+    with open(source, "rb") as sf:
+        with gzip.open(dest, "wb") as df:
+            df.writelines(sf)
+    os.remove(source)
 
 # Create a custom logger
 logger = logging.getLogger('rss_manager')
@@ -7,7 +18,7 @@ logger.setLevel(logging.DEBUG)
 
 # Create handlers
 c_handler = logging.StreamHandler()
-f_handler = RotatingFileHandler('rss_manager.log', maxBytes=2000, backupCount=5)
+f_handler = logging.FileHandler('rss_manager.log', mode='a')
 c_handler.setLevel(logging.WARNING)
 f_handler.setLevel(logging.DEBUG)
 

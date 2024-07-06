@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="text-center">
+    <h1 class="text-4xl font-bold mb-8">IronMonkey Threat Research Search</h1>
+    <form action="{{ url_for('search') }}" method="post" class="mb-8">
+        {% if form %}
+            {{ form.csrf_token }}
+        {% endif %}
+        <input type="text" name="query" placeholder="Search threats..." class="p-2 border rounded-lg w-64 mb-2">
+        <div class="flex justify-center space-x-4 mb-2">
+            <input type="date" name="start_date" placeholder="Start Date (optional)" class="p-2 border rounded-lg">
+            <input type="date" name="end_date" placeholder="End Date (optional)" class="p-2 border rounded-lg">
+        </div>
+        <div class="mb-2">
+            <label class="block">Source Types (optional):</label>
+            <input type="checkbox" name="source_types" value="news"> News
+            <input type="checkbox" name="source_types" value="blog"> Blog
+            <input type="checkbox" name="source_types" value="report"> Report
+        </div>
+        <div class="mb-2">
+            <input type="text" name="keywords" placeholder="Enter optional keywords (comma-separated)" class="p-2 border rounded-lg w-64">
+        </div>
+        <p class="text-sm text-gray-600 mb-2">All fields are optional. Leave blank to search all dates, sources, and keywords.</p>
+        <button type="submit" class="bg-blue-600 text-white p-2 rounded-lg">Search</button>
+    </form>
+</div>
+
+{% if results and results.items %}
+<div class="mt-8">
+    <h2 class="text-2xl font-bold mb-4">Search Results</h2>
+    <div class="overflow-x-auto">
+        <table class="w-full border-collapse border border-gray-300">
+            <thead>
+                <tr class="bg-gray-100">
+                    <th class="border border-gray-300 p-2">Title</th>
+                    <th class="border border-gray-300 p-2">Description</th>
+                    <th class="border border-gray-300 p-2">Source Type</th>
+                    <th class="border border-gray-300 p-2">Date</th>
+                    <th class="border border-gray-300 p-2">URL</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for result in results.items %}
+                <tr>
+                    <td class="border border-gray-300 p-2">{{ result.title }}</td>
+                    <td class="border border-gray-300 p-2">{{ result.content[:200] }}...</td>
+                    <td class="border border-gray-300 p-2">{{ result.source_type }}</td>
+                    <td class="border border-gray-300 p-2">{{ result.date }}</td>
+                    <td class="border border-gray-300 p-2"><a href="{{ result.url }}" target="_blank" class="text-blue-600 hover:underline">Link</a></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+    <div class="mt-4 flex justify-between items-center">
+        <div>
+            Showing {{ results.items|length }} of {{ results.total }} results
+        </div>
+        <div>
+            {% if results.has_prev %}
+                <a href="{{ url_for('search', page=results.prev_num, **request.args) }}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Previous</a>
+            {% endif %}
+            {% if results.has_next %}
+                <a href="{{ url_for('search', page=results.next_num, **request.args) }}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Next</a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% elif results %}
+<div class="mt-8">
+    <p>No results found for your search.</p>
+</div>
+{% endif %}
+{% endblock %}

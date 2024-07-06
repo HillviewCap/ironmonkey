@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mx-auto px-4">
+    <h1 class="text-2xl font-bold mb-4">Parsed Content</h1>
+    
+    <div class="mb-4 flex justify-between items-center">
+        <form action="{{ url_for('rss_manager.parsed_content') }}" method="get" class="flex items-center">
+            <input type="text" name="search" value="{{ search_query }}" placeholder="Search..." class="border rounded-l px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded-r hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500">Search</button>
+        </form>
+        
+        <form method="get" action="{{ url_for('rss_manager.parsed_content') }}" class="flex items-center">
+            <input type="hidden" name="search" value="{{ search_query }}">
+            <label for="per_page" class="mr-2">Items per page:</label>
+            <select id="per_page" name="per_page" onchange="this.form.submit()" class="border rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                {% for option in per_page_options %}
+                    <option value="{{ option }}" {% if option == per_page %}selected{% endif %}>{{ option }}</option>
+                {% endfor %}
+            </select>
+        </form>
+    </div>
+
+    <div class="overflow-x-auto">
+        <table class="w-full table-auto">
+            <thead>
+                <tr class="bg-gray-200">
+                    <th class="px-2 py-2 w-1/6">Title</th>
+                    <th class="px-2 py-2 w-1/6">Content</th>
+                    <th class="px-2 py-2 w-1/6">URL</th>
+                    <th class="px-2 py-2 w-1/6">Created At</th>
+                    <th class="px-2 py-2 w-1/6">Summary</th>
+                    <th class="px-2 py-2 w-1/6">Tag Actions</th>
+                    <th class="px-2 py-2 w-1/6">Summarize Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for post in posts %}
+                <tr class="{% if loop.index % 2 == 0 %}bg-gray-100{% endif %}">
+                    <td class="border px-2 py-2 truncate">{{ post.title[:50] }}</td>
+                    <td class="border px-2 py-2 truncate">{{ post.content[:50] }}</td>
+                    <td class="border px-2 py-2 truncate">
+                        <a href="{{ post.url }}" class="text-blue-500 hover:underline" target="_blank">
+                            {{ post.url[:50] }}
+                        </a>
+                    </td>
+                    <td class="border px-2 py-2">{{ post.created_at.strftime('%Y-%m-%d') }}</td>
+                    <td class="border px-2 py-2 truncate">
+                        <span class="summary-content">{{ post.summary[:50] if post.summary else 'No summary' }}</span>
+                    </td>
+                    <td class="border px-2 py-2">
+                        <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-2 rounded tag-content-btn" data-post-id="{{ post.id }}">
+                            Tag Content
+                        </button>
+                    </td>
+                    <td class="border px-2 py-2">
+                        <button class="bg-green-500 hover:bg-green-700 text-white font-bold py-1 px-2 rounded summarize-btn" data-post-id="{{ post.id }}">
+                            Summarize
+                        </button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="mt-4 flex justify-center">
+        {% if pagination.has_prev %}
+            <a href="{{ url_for('rss_manager.parsed_content', page=pagination.prev_num, per_page=per_page, search=search_query) }}" class="px-3 py-2 bg-blue-500 text-white rounded mr-2 hover:bg-blue-600">&laquo; Previous</a>
+        {% endif %}
+        
+        {% for page_num in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+            {% if page_num %}
+                {% if page_num != pagination.page %}
+                    <a href="{{ url_for('rss_manager.parsed_content', page=page_num, per_page=per_page, search=search_query) }}" class="px-3 py-2 bg-gray-200 text-gray-700 rounded mr-2 hover:bg-gray-300">{{ page_num }}</a>
+                {% else %}
+                    <span class="px-3 py-2 bg-blue-500 text-white rounded mr-2">{{ page_num }}</span>
+                {% endif %}
+            {% else %}
+                <span class="px-3 py-2">...</span>
+            {% endif %}
+        {% endfor %}
+        
+        {% if pagination.has_next %}
+            <a href="{{ url_for('rss_manager.parsed_content', page=pagination.next_num, per_page=per_page, search=search_query) }}" class="px-3 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">Next &raquo;</a>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const tagButtons = document.querySelectorAll('.tag-content-btn');
+    tagButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const postId = this.getAttribute('data-post-id');
+            fetch('/tag_content', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify({ content_id: postId })
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.message);
+                location.reload();
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while tagging the content.');
+            });
+        });
+    });
+
+    const summarizeButtons = document.querySelectorAll('.summarize-btn');
+    summarizeButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const postId = this.getAttribute('data-post-id');
+            const summaryElement = this.closest('tr').querySelector('.summary-content');
+            const existingSummary = summaryElement.textContent.trim();
+
+            if (existingSummary !== 'No summary') {
+                if (!confirm('An existing summary is present. Do you want to overwrite it?')) {
+                    return;
+                }
+            }
+
+            fetch('/summarize_content', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify({ content_id: postId })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.summary) {
+                    summaryElement.textContent = data.summary.substring(0, 50) + (data.summary.length > 50 ? '...' : '');
+                    alert('Summary generated successfully.');
+                } else {
+                    alert('Failed to generate summary.');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while generating the summary.');
+            });
+        });
+    });
+});
+</script>
+{% endblock %}

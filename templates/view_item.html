@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mx-auto mt-8">
+    <h1 class="text-3xl font-bold mb-4">{{ item.title }}</h1>
+    <p class="text-gray-600 mb-4">{{ item.date.strftime('%Y-%m-%d') }}</p>
+    <div class="bg-white shadow-md rounded-lg p-6">
+        <p class="mb-4">{{ item.content }}</p>
+        {% if item.summary %}
+            <h2 class="text-xl font-semibold mb-2">Summary</h2>
+            <p class="mb-4">{{ item.summary }}</p>
+        {% endif %}
+        {% if item.entities %}
+            <h2 class="text-xl font-semibold mb-2">Entities</h2>
+            <ul class="list-disc list-inside mb-4">
+                {% for entity in item.entities %}
+                    <li>{{ entity.name }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+        {% if item.categories %}
+            <h2 class="text-xl font-semibold mb-2">Categories</h2>
+            <ul class="list-disc list-inside mb-4">
+                {% for category in item.categories %}
+                    <li>{{ category.name }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

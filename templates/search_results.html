@@ -11,9 +11,9 @@
         </div>
         <div class="mb-2">
             <label class="block">Source Types:</label>
-            <input type="checkbox" name="source_types" value="news" {% if search_params.source_types and 'news' in search_params.source_types %}checked{% endif %}> News
-            <input type="checkbox" name="source_types" value="blog" {% if search_params.source_types and 'blog' in search_params.source_types %}checked{% endif %}> Blog
-            <input type="checkbox" name="source_types" value="report" {% if search_params.source_types and 'report' in search_params.source_types %}checked{% endif %}> Report
+            <input type="checkbox" name="source_types" value="news" {% if 'news' in (search_params.source_types|default([])) %}checked{% endif %}> News
+            <input type="checkbox" name="source_types" value="blog" {% if 'blog' in (search_params.source_types|default([])) %}checked{% endif %}> Blog
+            <input type="checkbox" name="source_types" value="report" {% if 'report' in (search_params.source_types|default([])) %}checked{% endif %}> Report
         </div>
         <div class="mb-2">
             <label class="block">Keywords:</label>
@@ -22,16 +22,32 @@
         <button type="submit" class="bg-blue-600 text-white p-2 rounded-lg">Search</button>
     </form>
     {% if results %}
-        <ul class="space-y-4">
-        {% for result in results %}
-            <li class="border p-4 rounded-lg">
-                <h3 class="text-xl font-bold">{{ result.title }}</h3>
-                <p class="text-gray-600">{{ result.description }}</p>
-                <p class="text-sm text-gray-500">Source: {{ result.source_type }} | Date: {{ result.date.strftime('%Y-%m-%d') }}</p>
-                <a href="{{ result.url }}" target="_blank" class="text-blue-600 hover:underline">Read more</a>
-            </li>
-        {% endfor %}
-        </ul>
+        <div class="overflow-x-auto">
+            <table class="w-full table-auto">
+                <thead>
+                    <tr class="bg-gray-200">
+                        <th class="px-2 py-2 w-1/4">Title</th>
+                        <th class="px-2 py-2 w-1/4">Description</th>
+                        <th class="px-2 py-2 w-1/4">Source &amp; Date</th>
+                        <th class="px-2 py-2 w-1/4">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for result in results.items %}
+                    <tr class="{% if loop.index % 2 == 0 %}bg-gray-100{% endif %}">
+                        <td class="border px-2 py-2 truncate">{{ result.title[:50] }}</td>
+                        <td class="border px-2 py-2 truncate">{{ result.content[:50] }}</td>
+                        <td class="border px-2 py-2 text-sm text-gray-500">
+                            {{ result.source_type }} | {{ result.date.strftime('%Y-%m-%d') if result.date else 'N/A' }}
+                        </td>
+                        <td class="border px-2 py-2">
+                            <a href="{{ result.url }}" target="_blank" class="text-blue-600 hover:underline">Read more</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     {% else %}
         <p>No results found.</p>
     {% endif %}

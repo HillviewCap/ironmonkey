@@ -1,4 +1,4 @@
-Flask
+Flask[async]
 SQLAlchemy
 pydantic
 Flask-Login
@@ -12,3 +12,6 @@ Flask-Migrate
 httpx
 beautifulsoup4
 lxml
+Flask-Migrate
+PyYAML
+ollama

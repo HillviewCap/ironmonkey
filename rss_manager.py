@@ -1,169 +1,295 @@
 from __future__ import annotations
 
-from flask import Blueprint, render_template, redirect, url_for, flash, request
-import logging_config
+import os
+import uuid
+from flask import Blueprint, render_template, redirect, url_for, flash, request, current_app
 from flask_login import login_required
-from models import db, RSSFeed
+from nlp_tagging import DiffbotClient, DatabaseHandler
 from flask_wtf import FlaskForm
 from flask_wtf.csrf import CSRFProtect
-from wtforms import StringField, SubmitField, FileField
+from wtforms import StringField, SubmitField, FileField, SelectField
 from wtforms.validators import DataRequired, URL
-from typing import List, Union
+from typing import List, Union, Tuple
 import csv
 from io import TextIOWrapper
-import httpx
 import uuid
 from werkzeug.wrappers import Response
 from sqlalchemy.exc import IntegrityError
+import feedparser
+import httpx
+import asyncio
 
-rss_manager = Blueprint('rss_manager', __name__)
+from models import db, RSSFeed, ParsedContent
+from jina_api import parse_content
+import logging_config
+from nlp_tagging import DiffbotClient, DatabaseHandler
+
+rss_manager = Blueprint("rss_manager", __name__)
 csrf = CSRFProtect()
 
+PER_PAGE_OPTIONS = [10, 25, 50, 100]
+
+
+# Form classes
 class RSSFeedForm(FlaskForm):
-    url = StringField('RSS Feed URL', validators=[DataRequired(), URL()])
-    category = StringField('Category', validators=[DataRequired()])
-    submit = SubmitField('Add RSS Feed')
+    url = StringField("RSS Feed URL", validators=[DataRequired(), URL()])
+    category = SelectField(
+        "Category",
+        choices=[("News", "News"), ("Blog", "Blog"), ("Research", "Research")],
+        validators=[DataRequired()],
+    )
+    submit = SubmitField("Add RSS Feed")
+
 
 class CSVUploadForm(FlaskForm):
-    file = FileField('CSV File', validators=[DataRequired()])
-    submit = SubmitField('Import Feeds')
+    file = FileField("CSV File", validators=[DataRequired()])
+    submit = SubmitField("Import Feeds")
+
 
 class EditRSSFeedForm(FlaskForm):
-    url = StringField('RSS Feed URL', validators=[DataRequired(), URL()])
-    title = StringField('Title', validators=[DataRequired()])
-    category = StringField('Category', validators=[DataRequired()])
-    description = StringField('Description')
-    last_build_date = StringField('Last Build Date')
-    submit = SubmitField('Update Feed')
+    url = StringField("RSS Feed URL", validators=[DataRequired(), URL()])
+    title = StringField("Title", validators=[DataRequired()])
+    category = StringField("Category", validators=[DataRequired()])
+    description = StringField("Description")
+    last_build_date = StringField("Last Build Date")
+    submit = SubmitField("Update Feed")
 
-@rss_manager.route('/rss_manager', methods=['GET', 'POST'])
+
+# Helper functions
+async def fetch_and_parse_feed(feed: RSSFeed) -> None:
+    """Fetch and parse a single RSS feed."""
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.get(feed.url, timeout=30.0)  # Set a timeout
+            response.raise_for_status()  # Raise an exception for bad status codes
+            feed_data = feedparser.parse(response.text)
+
+            for entry in feed_data.entries:
+                if not ParsedContent.query.filter_by(url=entry.link).first():
+                    try:
+                        parsed_data = await parse_content(entry.link)
+                        new_content = ParsedContent(
+                            title=parsed_data["title"],
+                            url=parsed_data["url"],
+                            content=parsed_data["content"],
+                            links=parsed_data["links"],
+                            feed_id=feed.id,
+                        )
+                        db.session.add(new_content)
+                        logging_config.logger.info(f"Added new content: {new_content.url}")
+                    except Exception as e:
+                        logging_config.logger.error(f"Error parsing entry {entry.link}: {str(e)}")
+            try:
+                db.session.commit()
+                logging_config.logger.info(f"Committed {len(feed_data.entries)} new entries to database")
+            except Exception as e:
+                db.session.rollback()
+                logging_config.logger.error(f"Error committing to database: {str(e)}")
+    except httpx.HTTPStatusError as e:
+        logging_config.logger.error(f"HTTP error occurred while fetching feed {feed.url}: {e}")
+        raise ValueError(f"HTTP error: {e.response.status_code} - {e.response.reason_phrase}")
+    except httpx.RequestError as e:
+        logging_config.logger.error(f"An error occurred while requesting {feed.url}: {e}")
+        raise ValueError(f"Request error: {str(e)}")
+    except httpx.TimeoutException as e:
+        logging_config.logger.error(f"Timeout occurred while fetching feed {feed.url}: {e}")
+        raise ValueError(f"Timeout error: The request to {feed.url} timed out")
+    except Exception as e:
+        logging_config.logger.error(f"Unexpected error occurred while parsing feed {feed.url}: {e}", exc_info=True)
+        raise ValueError(f"Unexpected error: {str(e)}")
+
+
+def process_csv_file(csv_file) -> Tuple[int, int, List[str]]:
+    """Process the uploaded CSV file and return import statistics."""
+    imported_count, skipped_count = 0, 0
+    errors = []
+    csv_file = TextIOWrapper(csv_file, encoding="utf-8")
+    csv_reader = csv.reader(csv_file)
+
+    for row in csv_reader:
+        if len(row) >= 1:
+            url = row[0]
+            category = row[1] if len(row) > 1 else "Uncategorized"
+            try:
+                title, description, last_build_date = RSSFeed.fetch_feed_info(url)
+                new_feed = RSSFeed(
+                    url=url,
+                    title=title,
+                    category=category,
+                    description=description,
+                    last_build_date=last_build_date,
+                )
+                db.session.add(new_feed)
+                db.session.commit()
+                imported_count += 1
+                logging_config.logger.info(f"RSS Feed added from CSV: {url}")
+            except IntegrityError:
+                db.session.rollback()
+                skipped_count += 1
+                logging_config.logger.info(f"Skipped duplicate RSS Feed: {url}")
+            except Exception as e:
+                errors.append(f"Error processing RSS Feed {url}: {str(e)}")
+                logging_config.logger.error(
+                    f"Error processing RSS Feed {url}: {str(e)}"
+                )
+
+    return imported_count, skipped_count, errors
+
+
+# Route handlers
+@rss_manager.route("/parse_feeds", methods=["POST"])
 @login_required
-def manage_rss() -> str:
-    """
-    Handle RSS feed management operations.
-    
-    This function handles both GET and POST requests for the RSS manager page.
-    It processes form submissions for adding individual RSS feeds and importing
-    feeds from CSV files.
+async def parse_feeds():
+    """Parse all RSS feeds in the database."""
+    feeds = RSSFeed.query.all()
+    for feed in feeds:
+        try:
+            await fetch_and_parse_feed(feed)
+        except Exception as e:
+            flash(f"Error parsing feed {feed.url}: {str(e)}", "error")
 
-    Returns:
-        str: Rendered HTML template for the RSS manager page.
-    """
-    form: RSSFeedForm = RSSFeedForm()
-    csv_form: CSVUploadForm = CSVUploadForm()
-    
+    flash("Feed parsing completed", "success")
+    return redirect(url_for("rss_manager.manage_rss"))
+
+
+@rss_manager.route("/rss_manager", methods=["GET", "POST"])
+@login_required
+async def manage_rss() -> str:
+    """Handle RSS feed management operations."""
+    form = RSSFeedForm()
+    csv_form = CSVUploadForm()
+
     if form.validate_on_submit():
-        url: str = form.url.data
-        category: str = form.category.data
+        url = form.url.data
+        category = form.category.data
         try:
             title, description, last_build_date = RSSFeed.fetch_feed_info(url)
-            new_feed: RSSFeed = RSSFeed(
+            new_feed = RSSFeed(
                 url=url,
-                title=title if title else 'Not available',
+                title=title if title else "Not available",
                 category=category,
-                description=description if description else 'Not available',
-                last_build_date=last_build_date if last_build_date else None
+                description=description if description else "Not available",
+                last_build_date=last_build_date if last_build_date else None,
             )
             db.session.add(new_feed)
             db.session.commit()
-            flash('RSS Feed added successfully!', 'success')
-            logging_config.logger.info(f'RSS Feed added: {url}')
-            logging_config.logger.info(f'RSS Feed added: {url}')
+            flash("RSS Feed added successfully!", "success")
+            logging_config.logger.info(f"RSS Feed added: {url}")
+
+            await fetch_and_parse_feed(new_feed)
+            flash("New feed parsed successfully!", "success")
         except Exception as e:
-            logging_config.logger.error(f'Error adding RSS Feed: {str(e)}')
-            logging_config.logger.error(f'Error adding RSS Feed: {str(e)}')
-            flash(f'Error adding RSS Feed: {str(e)}', 'error')
-        return redirect(url_for('rss_manager.manage_rss'))
-    
+            logging_config.logger.error(f"Error adding or parsing RSS Feed: {str(e)}")
+            flash(f"Error adding or parsing RSS Feed: {str(e)}", "error")
+        return redirect(url_for("rss_manager.manage_rss"))
+
     if csv_form.validate_on_submit():
         csv_file = csv_form.file.data
-        if csv_file.filename.endswith('.csv'):
-            try:
-                csv_file = TextIOWrapper(csv_file, encoding='utf-8')
-                csv_reader = csv.reader(csv_file)
-                errors = []
-                feeds_to_add = []
-                imported_count = 0
-                skipped_count = 0
-                for row in csv_reader:
-                    if len(row) >= 1:
-                        url = row[0]
-                        category = row[1] if len(row) > 1 else 'Uncategorized'
-                        title, description, last_build_date = 'Unknown Title', 'No description available', None
-                        try:
-                            title, description, last_build_date = RSSFeed.fetch_feed_info(url)
-                        except Exception as e:
-                            errors.append(f'Error fetching info for RSS Feed {url}: {str(e)}')
-                            logging_config.logger.error(f'Error fetching info for RSS Feed {url}: {str(e)}')
-                        new_feed: RSSFeed = RSSFeed(url=url, title=title, category=category, description=description, last_build_date=last_build_date)
-                        feeds_to_add.append(new_feed)
-                if errors:
-                    for error in errors:
-                        flash(error, 'error')
-                else:
-                    if feeds_to_add:
-                        for feed in feeds_to_add:
-                            try:
-                                db.session.add(feed)
-                                db.session.commit()
-                                imported_count += 1
-                                logging_config.logger.info(f'RSS Feed added from CSV: {feed.url}')
-                            except IntegrityError:
-                                db.session.rollback()
-                                skipped_count += 1
-                                logging_config.logger.info(f'Skipped duplicate RSS Feed: {feed.url}')
-                        if imported_count > 0:
-                            flash(f'Successfully imported {imported_count} RSS feeds.', 'success')
-                        if skipped_count > 0:
-                            flash(f'Skipped {skipped_count} duplicate RSS feeds.', 'info')
-                        if imported_count == 0 and skipped_count == 0:
-                            flash('No valid feeds found in CSV file.', 'warning')
-                    else:
-                        flash('No valid feeds found in CSV file.', 'warning')
-            except Exception as e:
-                logging_config.logger.error(f'Error processing CSV file: {str(e)}')
-                flash(f'Error processing CSV file: {str(e)}', 'error')
+        if csv_file.filename.endswith(".csv"):
+            imported_count, skipped_count, errors = process_csv_file(csv_file)
+
+            for error in errors:
+                flash(error, "error")
+            if imported_count > 0:
+                flash(f"Successfully imported {imported_count} RSS feeds.", "success")
+            if skipped_count > 0:
+                flash(f"Skipped {skipped_count} duplicate RSS feeds.", "info")
+            if imported_count == 0 and skipped_count == 0:
+                flash("No valid feeds found in CSV file.", "warning")
         else:
-            logging_config.logger.warning('Invalid file format. Please upload a CSV file.')
-            flash('Invalid file format. Please upload a CSV file.', 'error')
-        return redirect(url_for('rss_manager.manage_rss'))
-    
-    feeds: List[RSSFeed] = RSSFeed.query.all()
-    delete_form = FlaskForm()  # Create a new form for CSRF protection
-    return render_template('rss_manager.html', form=form, csv_form=csv_form, feeds=feeds, delete_form=delete_form)
+            flash("Invalid file format. Please upload a CSV file.", "error")
+        return redirect(url_for("rss_manager.manage_rss"))
 
-@rss_manager.route('/delete_feed/<uuid:feed_id>', methods=['POST'])
+    feeds = RSSFeed.query.all()
+    delete_form = FlaskForm()
+    return render_template(
+        "rss_manager.html",
+        form=form,
+        csv_form=csv_form,
+        feeds=feeds,
+        delete_form=delete_form,
+    )
+
+
+@rss_manager.route("/parsed_content")
 @login_required
-@csrf.exempt
-def delete_feed(feed_id: uuid.UUID) -> Response:
-    """
-    Delete an RSS feed from the database.
+def parsed_content():
+    """Display parsed content from the database with pagination and search."""
+    page = request.args.get("page", 1, type=int)
+    per_page = request.args.get("per_page", 10, type=int)
+    search_query = request.args.get("search", "")
 
-    Args:
-        feed_id (uuid.UUID): The UUID of the feed to be deleted.
+    query = ParsedContent.query.order_by(ParsedContent.created_at.desc())
 
-    Returns:
-        werkzeug.wrappers.Response: A redirect response to the RSS manager page.
-    """
+    if search_query:
+        query = query.filter(
+            (ParsedContent.title.ilike(f"%{search_query}%"))
+            | (ParsedContent.content.ilike(f"%{search_query}%"))
+            | (ParsedContent.url.ilike(f"%{search_query}%"))
+        )
+
+    pagination = query.paginate(page=page, per_page=per_page, error_out=False)
+    posts = pagination.items
+
+    return render_template(
+        "parsed_content.html",
+        posts=posts,
+        pagination=pagination,
+        search_query=search_query,
+        per_page=per_page,
+        per_page_options=PER_PAGE_OPTIONS,
+    )
+
+
+@rss_manager.route("/tag_content/<uuid:post_id>", methods=["POST"])
+@login_required
+async def tag_content(post_id):
+    """Tag a single piece of parsed content."""
+    try:
+        post = db.session.get(ParsedContent, post_id)
+        if post is None:
+            flash("Content not found", "error")
+            return redirect(url_for("rss_manager.parsed_content"))
+
+        diffbot_api_key = os.getenv("DIFFBOT_API_KEY")
+        if not diffbot_api_key:
+            raise ValueError("DIFFBOT_API_KEY not set")
+
+        diffbot_client = DiffbotClient(diffbot_api_key)
+        db_handler = DatabaseHandler(current_app.config["SQLALCHEMY_DATABASE_URI"])
+
+        result = await diffbot_client.tag_content(post.content)
+        db_handler.process_nlp_result(post, result)
+        
+        db.session.commit()
+        flash("Content tagged successfully!", "success")
+    except ValueError as e:
+        flash(f"Error: {str(e)}", "error")
+    except Exception as e:
+        db.session.rollback()
+        flash(f"Error tagging content: {str(e)}", "error")
+    except ValueError as e:
+        flash(f"Error: {str(e)}", "error")
+    except Exception as e:
+        db.session.rollback()
+        flash(f"Error tagging content: {str(e)}", "error")
+    return redirect(url_for("rss_manager.parsed_content"))
+
+
+@rss_manager.route("/delete_feed/<uuid:feed_id>", methods=["POST"])
+@login_required
+def delete_feed(feed_id: uuid.UUID):
+    """Delete an RSS feed from the database."""
     feed = RSSFeed.query.get_or_404(feed_id)
     db.session.delete(feed)
     db.session.commit()
-    logging_config.logger.info(f'RSS Feed deleted: {feed.url}')
-    flash('RSS Feed deleted successfully!', 'success')
-    return redirect(url_for('rss_manager.manage_rss'))
+    return redirect(url_for("rss_manager.manage_rss"))
 
-@rss_manager.route('/edit_feed/<uuid:feed_id>', methods=['GET', 'POST'])
+
+@rss_manager.route("/edit_feed/<uuid:feed_id>", methods=["GET", "POST"])
 @login_required
 def edit_feed(feed_id: uuid.UUID) -> Union[str, Response]:
-    """
-    Edit an existing RSS feed.
-
-    Args:
-        feed_id (uuid.UUID): The UUID of the feed to be edited.
-
-    Returns:
-        Union[str, Response]: Rendered HTML template or redirect response.
-    """
+    """Edit an existing RSS feed."""
     feed = RSSFeed.query.get_or_404(feed_id)
     form = EditRSSFeedForm(obj=feed)
     if form.validate_on_submit():
@@ -174,11 +300,11 @@ def edit_feed(feed_id: uuid.UUID) -> Union[str, Response]:
         feed.last_build_date = form.last_build_date.data
         try:
             db.session.commit()
-            flash('RSS Feed updated successfully!', 'success')
-            logging_config.logger.info(f'RSS Feed updated: {feed.url}')
+            flash("RSS Feed updated successfully!", "success")
+            logging_config.logger.info(f"RSS Feed updated: {feed.url}")
         except Exception as e:
             db.session.rollback()
-            logging_config.logger.error(f'Error updating RSS Feed: {str(e)}')
-            flash(f'Error updating RSS Feed: {str(e)}', 'error')
-        return redirect(url_for('rss_manager.manage_rss'))
-    return render_template('edit_rss_feed.html', form=form, feed=feed)
+            logging_config.logger.error(f"Error updating RSS Feed: {str(e)}")
+            flash(f"Error updating RSS Feed: {str(e)}", "error")
+        return redirect(url_for("rss_manager.manage_rss"))
+    return render_template("edit_rss_feed.html", form=form, feed=feed)
