@@ -1,5 +1,6 @@
 import httpx
 import os
+import logging
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from models import (
@@ -18,6 +19,10 @@ import uuid
 from config import Config
 from typing import List, Dict, Any
 import asyncio
+
+# Set up logging
+logging.basicConfig(filename='diffbot_responses.log', level=logging.INFO,
+                    format='%(asctime)s - %(levelname)s - %(message)s')
 
 
 class DiffbotClient:
@@ -43,9 +48,13 @@ class DiffbotClient:
         response = await client.post(self.url, json=payload, headers=self.headers)
 
         if response.status_code != 200:
-            raise Exception(f"Error processing content: {response.status_code}")
+            error_message = f"Error processing content: {response.status_code}"
+            logging.error(error_message)
+            raise Exception(error_message)
 
-        return response.json()[0]
+        response_json = response.json()[0]
+        logging.info(f"Diffbot response: {response_json}")
+        return response_json
 
 
 class DatabaseHandler:
