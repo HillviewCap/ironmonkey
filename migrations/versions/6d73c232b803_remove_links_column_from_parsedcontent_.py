@@ -1,7 +1,7 @@
 """Remove links column from ParsedContent model
 
 Revision ID: 6d73c232b803
-Revises: previous_revision_id
+Revises: None
 Create Date: 2023-05-24 10:00:00.000000
 
 """
@@ -11,7 +11,7 @@ from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision = '6d73c232b803'
-down_revision = 'previous_revision_id'  # Replace with the actual previous revision ID
+down_revision = None  # Set to None if this is the first migration
 branch_labels = None
 depends_on = None
 
