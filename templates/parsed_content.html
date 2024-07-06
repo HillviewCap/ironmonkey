@@ -10,14 +10,15 @@
             <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded-r hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500">Search</button>
         </form>
         
-        <div class="flex items-center">
+        <form method="get" action="{{ url_for('rss_manager.parsed_content') }}" class="flex items-center">
+            <input type="hidden" name="search" value="{{ search_query }}">
             <label for="per_page" class="mr-2">Items per page:</label>
             <select id="per_page" name="per_page" onchange="this.form.submit()" class="border rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500">
                 {% for option in per_page_options %}
                     <option value="{{ option }}" {% if option == per_page %}selected{% endif %}>{{ option }}</option>
                 {% endfor %}
             </select>
-        </div>
+        </form>
     </div>
 
     <div class="overflow-x-auto">
