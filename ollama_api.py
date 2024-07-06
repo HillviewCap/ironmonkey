@@ -31,13 +31,13 @@ class OllamaAPI:
         except Exception:
             return False
 
-    async def generate(self, prompt: str, content: str = "") -> dict:
+    async def generate(self, system_prompt: str, user_prompt: str) -> dict:
         """
         Generate a response using the Ollama API.
 
         Args:
-            prompt (str): The input prompt for the model.
-            content (str): The content to be appended to the prompt.
+            system_prompt (str): The system prompt for the model.
+            user_prompt (str): The user prompt for the model.
 
         Returns:
             dict: The API response containing the generated text.
@@ -45,12 +45,14 @@ class OllamaAPI:
         if not await self.check_connection():
             raise Exception("Unable to connect to Ollama API")
 
-        full_prompt = f"{prompt}\n{content}" if content else prompt
-
         for attempt in range(self.max_retries):
             try:
-                response = await self.client.generate(
-                    model=self.model, prompt=full_prompt
+                response = await self.client.chat(
+                    model=self.model,
+                    messages=[
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": user_prompt}
+                    ]
                 )
                 return response
             except asyncio.TimeoutError:
@@ -73,11 +75,8 @@ class OllamaAPI:
         Returns:
             str: The response from the model.
         """
-        if not await self.check_connection():
-            raise Exception("Unable to connect to Ollama API")
-
         response = await self.generate(system_prompt, user_prompt)
-        return response["choices"]["text"]
+        return response["message"]["content"]
 
 
 # Example usage
