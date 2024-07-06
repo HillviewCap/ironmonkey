@@ -43,15 +43,13 @@ class DiffbotClient:
         }
 
     async def tag_content(self, content: str, client: httpx.AsyncClient) -> Dict[str, Any]:
-        payload = [
-            {
-                "lang": "auto",
-                "format": "plain text",
-                "customSummary": {"maxNumberOfSentences": 3},
-                "content": content,
-                "documentType": "news article",
-            }
-        ]
+        payload = {
+            "lang": "auto",
+            "format": "plain text",
+            "customSummary": {"maxNumberOfSentences": 3},
+            "content": content,
+            "documentType": "news article",
+        }
 
         response = await client.post(self.url, json=payload, headers=self.headers)
 
@@ -67,9 +65,9 @@ class DiffbotClient:
         
         logging.info("Diffbot response received and logged")
         
-        # Check if the response is a list and has at least one item
-        if isinstance(response_json, list) and len(response_json) > 0:
-            return response_json[0]
+        # Check if the response is a dictionary and has the expected keys
+        if isinstance(response_json, dict) and "entities" in response_json:
+            return response_json
         else:
             error_message = "Unexpected response format from Diffbot API"
             logging.error(error_message)
