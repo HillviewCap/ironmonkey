@@ -7,8 +7,10 @@ load_dotenv()
 
 class OllamaAPI:
     def __init__(self):
-        self.base_url = os.getenv('OLLAMA_BASE_URL', 'http://localhost:11434')
-        self.model = os.getenv('OLLAMA_MODEL', 'gemma2')
+        self.base_url = os.getenv('OLLAMA_BASE_URL')
+        self.model = os.getenv('OLLAMA_MODEL')
+        if not self.base_url or not self.model:
+            raise ValueError("OLLAMA_BASE_URL and OLLAMA_MODEL must be set in the .env file")
         self.max_retries = 3
         self.timeout = 30.0  # 30 seconds timeout
 
