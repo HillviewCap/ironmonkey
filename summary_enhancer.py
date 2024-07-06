@@ -1,11 +1,10 @@
-import logging
+from logging_config import logger
 from sqlalchemy.orm import Session
 from models import ParsedContent, db
 from ollama_api import OllamaAPI
 import yaml
 import httpx
 
-logger = logging.getLogger(__name__)
 
 class SummaryEnhancer:
     def __init__(self, ollama_api: OllamaAPI):
