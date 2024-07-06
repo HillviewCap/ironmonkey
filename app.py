@@ -28,9 +28,38 @@ from config import Config
 from rss_manager import rss_manager
 from nlp_tagging import DiffbotClient, DatabaseHandler
 from ollama.ollama_api import OllamaAPI
+import asyncio
 
 # Load environment variables
 load_dotenv()
+
+async def enhance_summaries():
+    """
+    Check the parsed_content table for missing summaries,
+    generate summaries using Ollama, and update the database.
+    """
+    app = current_app._get_current_object()
+    ollama_api = app.ollama_api
+
+    # Query for records with missing summaries
+    records_to_update = ParsedContent.query.filter(ParsedContent.summary.is_(None)).all()
+
+    for record in records_to_update:
+        prompt = f"Summarize this content:\n\n{record.content}"
+        try:
+            response = await ollama_api.generate(prompt=prompt)
+            summary = response.get('response', '').strip()
+            
+            if summary:
+                record.summary = summary
+                db.session.commit()
+                current_app.logger.info(f"Updated summary for record {record.id}")
+            else:
+                current_app.logger.warning(f"Empty summary generated for record {record.id}")
+        except Exception as e:
+            current_app.logger.error(f"Error generating summary for record {record.id}: {str(e)}")
+
+    current_app.logger.info("Summary enhancement process completed")
 
 # Configure logging
 logging.basicConfig(
@@ -257,6 +286,13 @@ def create_app():
         with app.app_context():
             asyncio.run(rss_manager.parse_feeds())
         print("Feeds parsed successfully.")
+
+    @app.cli.command("enhance-summaries")
+    def enhance_summaries_command():
+        """Enhance summaries for parsed content using Ollama."""
+        with app.app_context():
+            asyncio.run(enhance_summaries())
+        print("Summaries enhanced successfully.")
 
     return app
 
