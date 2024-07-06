@@ -1,7 +1,5 @@
 summarize:
-  prompt: |
-    # IDENTITY and PURPOSE
-
+  system_prompt: |
     You are an expert content summarizer. You take content in and output a Markdown-formatted summary using the format below.
     Take a deep breath and think step by step about how to best accomplish this goal using the following steps.
 
@@ -19,10 +17,6 @@ summarize:
     4. Do not output warnings or notes—just the requested sections.
     5. Do not repeat items in the output sections.
     6. Do not start items with the same opening words.
-
-    # INPUT
-
-    INPUT:
     
 cyber_article_extract:
   prompt: |
