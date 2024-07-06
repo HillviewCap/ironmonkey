@@ -52,9 +52,16 @@ class DiffbotClient:
             logging.error(error_message)
             raise Exception(error_message)
 
-        response_json = response.json()[0]
+        response_json = response.json()
         logging.info(f"Diffbot response: {response_json}")
-        return response_json
+        
+        # Check if the response is a list and has at least one item
+        if isinstance(response_json, list) and len(response_json) > 0:
+            return response_json[0]
+        else:
+            error_message = "Unexpected response format from Diffbot API"
+            logging.error(error_message)
+            raise Exception(error_message)
 
 
 class DatabaseHandler:
