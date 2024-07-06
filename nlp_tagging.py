@@ -22,27 +22,32 @@ from typing import List, Dict, Any
 import asyncio
 
 # Set up logging
-logging.basicConfig(filename='diffbot_responses.log', level=logging.INFO,
-                    format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(
+    filename="diffbot_responses.log",
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s",
+)
 
 # Set up a separate logger for JSON responses
-json_logger = logging.getLogger('json_logger')
+json_logger = logging.getLogger("json_logger")
 json_logger.setLevel(logging.INFO)
-json_handler = logging.FileHandler('diffbot_json_responses.log')
-json_handler.setFormatter(logging.Formatter('%(asctime)s - %(message)s'))
+json_handler = logging.FileHandler("diffbot_json_responses.log")
+json_handler.setFormatter(logging.Formatter("%(asctime)s - %(message)s"))
 json_logger.addHandler(json_handler)
 
 
 class DiffbotClient:
     def __init__(self, api_key: str):
         self.api_key = api_key
-        self.url = f"https://nl.diffbot.com/v1/?fields=entities,categories&token={self.api_key}"
+        self.url = f"https://nl.diffbot.com/v1/?fields=entities,sentiment,categories,summary&token={self.api_key}"
         self.headers = {
             "accept": "application/json",
             "content-type": "application/json",
         }
 
-    async def tag_content(self, content: str, client: httpx.AsyncClient) -> Dict[str, Any]:
+    async def tag_content(
+        self, content: str, client: httpx.AsyncClient
+    ) -> Dict[str, Any]:
         payload = {
             "lang": "auto",
             "format": "plain text",
@@ -59,12 +64,12 @@ class DiffbotClient:
             raise Exception(error_message)
 
         response_json = response.json()
-        
+
         # Log the full JSON response
         json_logger.info(json.dumps(response_json, indent=2))
-        
+
         logging.info("Diffbot response received and logged")
-        
+
         # Check if the response is a dictionary and has the expected keys
         if isinstance(response_json, dict) and "entities" in response_json:
             return response_json
@@ -101,7 +106,11 @@ class DatabaseHandler:
         if isinstance(uris_data, list):
             for uri_data in uris_data:
                 if isinstance(uri_data, dict):
-                    uri = Uris(uri=uri_data.get("uri"), type=uri_data.get("type"), entity=entity)
+                    uri = Uris(
+                        uri=uri_data.get("uri"),
+                        type=uri_data.get("type"),
+                        entity=entity,
+                    )
                     session.add(uri)
                 else:
                     logging.warning(f"Unexpected URI data type: {type(uri_data)}")
@@ -140,7 +149,9 @@ class DatabaseHandler:
                     )
                     session.add(mention)
                 else:
-                    logging.warning(f"Unexpected mention data type: {type(mention_data)}")
+                    logging.warning(
+                        f"Unexpected mention data type: {type(mention_data)}"
+                    )
         else:
             logging.warning(f"Unexpected mentions data type: {type(mentions_data)}")
 
@@ -158,7 +169,9 @@ class DatabaseHandler:
                     )
                     session.add(location)
                 else:
-                    logging.warning(f"Unexpected location data type: {type(location_data)}")
+                    logging.warning(
+                        f"Unexpected location data type: {type(location_data)}"
+                    )
         else:
             logging.warning(f"Unexpected locations data type: {type(locations_data)}")
 
@@ -177,11 +190,15 @@ class DatabaseHandler:
                     )
                     session.add(category)
                 else:
-                    logging.warning(f"Unexpected category data type: {type(category_data)}")
+                    logging.warning(
+                        f"Unexpected category data type: {type(category_data)}"
+                    )
         else:
             logging.warning(f"Unexpected categories data type: {type(categories_data)}")
 
-    def process_nlp_result(self, content: ParsedContent, result: Dict[str, Any], session):
+    def process_nlp_result(
+        self, content: ParsedContent, result: Dict[str, Any], session
+    ):
         entities = result.get("entities", [])
         if isinstance(entities, list):
             for entity_data in entities:
@@ -190,7 +207,9 @@ class DatabaseHandler:
                     self.add_uris(session, entity, entity_data.get("uris", []))
                     self.add_types(session, entity, entity_data.get("types", []))
                     self.add_mentions(session, entity, entity_data.get("mentions", []))
-                    self.add_locations(session, entity, entity_data.get("locations", []))
+                    self.add_locations(
+                        session, entity, entity_data.get("locations", [])
+                    )
                 else:
                     logging.warning(f"Unexpected entity data type: {type(entity_data)}")
 
