@@ -81,9 +81,11 @@ def create_app():
             current_app.logger.info("Entering index route")
             try:
                 if current_user.is_authenticated:
-                    # Fetch the 6 most recent ParsedContent items
+                    # Fetch the 6 most recent ParsedContent items with non-null title and content
                     recent_items = (
-                        ParsedContent.query.order_by(ParsedContent.created_at.desc())
+                        ParsedContent.query
+                        .filter(ParsedContent.title.isnot(None), ParsedContent.content.isnot(None))
+                        .order_by(ParsedContent.created_at.desc())
                         .limit(6)
                         .all()
                     )
