@@ -40,6 +40,7 @@ logger = logging.getLogger(__name__)
 
 def create_app():
     app = Flask(__name__, instance_relative_config=True)
+    app.ollama_api = OllamaAPI()
     app.config.from_object(Config)
     Config.init_app(app)
 
