@@ -29,6 +29,7 @@ from config import Config
 from rss_manager import rss_manager
 from nlp_tagging import DiffbotClient, DatabaseHandler
 from ollama_api import OllamaAPI
+import asyncio
 from ollama_api import OllamaAPI
 import asyncio
 import yaml
@@ -105,6 +106,7 @@ logger = logging.getLogger(__name__)
 def create_app():
     app = Flask(__name__, instance_relative_config=True)
     app.ollama_api = OllamaAPI()
+    asyncio.run(app.ollama_api.check_connection())  # Ensure connection on startup
     app.config.from_object(Config)
     Config.init_app(app)
 
