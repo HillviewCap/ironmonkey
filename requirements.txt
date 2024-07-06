@@ -12,5 +12,5 @@ Flask-Migrate
 httpx
 beautifulsoup4
 lxml
-Flask-Migrate==4.0.4
-PyYAML==6.0
+Flask-Migrate
+PyYAML
