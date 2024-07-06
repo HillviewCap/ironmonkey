@@ -21,7 +21,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from werkzeug.exceptions import BadRequest
 
 import logging_config
-from logging.handlers import RotatingFileHandler
+from logging.handlers import TimedRotatingFileHandler
 from models import SearchParams, db, ParsedContent, User
 from flask_login import LoginManager, UserMixin
 from auth import init_auth, login, logout, register
@@ -96,7 +96,7 @@ def create_app():
 
     # Set up logging
     log_file = os.path.join(app.instance_path, 'enhance_summaries.log')
-    file_handler = RotatingFileHandler(log_file, maxBytes=10240, backupCount=10)
+    file_handler = TimedRotatingFileHandler(log_file, when='midnight', interval=1, backupCount=10)
     file_handler.setFormatter(logging.Formatter(
         '%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]'
     ))
