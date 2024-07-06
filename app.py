@@ -68,6 +68,9 @@ async def enhance_summaries():
             logger.error(f"Timeout error generating summary for record {record.id}. Skipping.", exc_info=True)
         except Exception as e:
             logger.error(f"Error generating summary for record {record.id}: {str(e)}", exc_info=True)
+        finally:
+            # Ensure the session is closed even if an exception occurs
+            db.session.close()
 
     logger.info("Summary enhancement process completed")
 

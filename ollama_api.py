@@ -11,8 +11,8 @@ class OllamaAPI:
         self.model = os.getenv('OLLAMA_MODEL')
         if not self.base_url or not self.model:
             raise ValueError("OLLAMA_BASE_URL and OLLAMA_MODEL must be set in the .env file")
-        self.max_retries = 3
-        self.timeout = 30.0  # 30 seconds timeout
+        self.max_retries = 5
+        self.timeout = 60.0  # 60 seconds timeout
 
     async def check_connection(self) -> bool:
         """
@@ -28,7 +28,6 @@ class OllamaAPI:
                 return True
         except (httpx.RequestError, httpx.HTTPStatusError):
             return False
-
 
     async def generate(self, prompt: str) -> dict:
         """
@@ -61,4 +60,6 @@ class OllamaAPI:
                     raise
                 await asyncio.sleep(2 ** attempt)  # Exponential backoff
             except httpx.HTTPStatusError as exc:
-                raise Exception(f"HTTP error occurred: {exc}")
+                if attempt == self.max_retries - 1:
+                    raise Exception(f"HTTP error occurred: {exc}")
+                await asyncio.sleep(2 ** attempt)  # Exponential backoff
