@@ -27,6 +27,7 @@ from auth import init_auth, login, logout, register
 from config import Config
 from rss_manager import rss_manager
 from nlp_tagging import DiffbotClient, DatabaseHandler
+from ollama.ollama_api import OllamaAPI
 
 # Load environment variables
 load_dotenv()
