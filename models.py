@@ -135,6 +135,9 @@ class ParsedContent(db.Model):
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     entities = db.relationship("Entity", back_populates="parsed_content")
     categories = db.relationship("Category", back_populates="parsed_content")
+    description = db.Column(db.Text, nullable=True)
+    pub_date = db.Column(db.String(100), nullable=True)
+    creator = db.Column(db.String(255), nullable=True)
 
     @classmethod
     def get_by_id(cls, content_id):
