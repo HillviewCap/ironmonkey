@@ -29,12 +29,13 @@ class OllamaAPI:
         except (httpx.RequestError, httpx.HTTPStatusError):
             return False
 
-    async def generate(self, prompt: str) -> dict:
+    async def generate(self, prompt: str, content: str = "") -> dict:
         """
         Generate a response using the Ollama API.
 
         Args:
             prompt (str): The input prompt for the model.
+            content (str): The content to be appended to the prompt.
 
         Returns:
             dict: The API response containing the generated text.
@@ -43,9 +44,10 @@ class OllamaAPI:
             raise Exception("Unable to connect to Ollama API")
 
         url = f"{self.base_url}/api/generate"
+        full_prompt = f"{prompt}\n{content}" if content else prompt
         payload = {
             "model": self.model,
-            "prompt": prompt,
+            "prompt": full_prompt,
             "stream": False
         }
 

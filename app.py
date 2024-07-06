@@ -63,12 +63,12 @@ async def enhance_summaries():
                     break
 
                 logger.debug(f"Processing record {record_to_update.id}")
-                prompt = prompts['summarize']['prompt'].format(content=record_to_update.content)
+                prompt = prompts['summarize']['prompt']
                 
                 max_retries = 3
                 for attempt in range(max_retries):
                     try:
-                        response = await ollama_api.generate(prompt=prompt)
+                        response = await ollama_api.generate(prompt=prompt, content=record_to_update.content)
                         summary = response.get('response', '').strip()
                         
                         if summary:
