@@ -12,18 +12,18 @@ class OllamaAPI:
 
     async def generate(self, prompt: str, model: str = None, **kwargs) -> Dict[str, Any]:
         """
-        Generate a response using the specified Ollama model.
+        Generate a response using the specified Ollama model or the default model.
 
         Args:
-            model (str): The name of the Ollama model to use.
             prompt (str): The input prompt for the model.
+            model (str, optional): The name of the Ollama model to use. If not provided, uses the default model.
             **kwargs: Additional parameters to pass to the Ollama API.
 
         Returns:
             Dict[str, Any]: The response from the Ollama API.
         """
         url = f"{self.base_url}/api/generate"
-        payload = {"model": model, "prompt": prompt, **kwargs}
+        payload = {"model": model or self.default_model, "prompt": prompt, **kwargs}
 
         async with httpx.AsyncClient() as client:
             response = await client.post(url, json=payload)
