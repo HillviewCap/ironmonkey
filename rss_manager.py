@@ -21,7 +21,7 @@ import asyncio
 
 from models import db, RSSFeed, ParsedContent
 from jina_api import parse_content
-import logging_config
+from logging_config import logger
 from nlp_tagging import DiffbotClient, DatabaseHandler
 
 rss_manager = Blueprint("rss_manager", __name__)
@@ -76,26 +76,26 @@ async def fetch_and_parse_feed(feed: RSSFeed) -> None:
                             feed_id=feed.id,
                         )
                         db.session.add(new_content)
-                        logging_config.logger.info(f"Added new content: {new_content.url}")
+                        logger.info(f"Added new content: {new_content.url}")
                     except Exception as e:
-                        logging_config.logger.error(f"Error parsing entry {entry.link}: {str(e)}")
+                        logger.error(f"Error parsing entry {entry.link}: {str(e)}")
             try:
                 db.session.commit()
-                logging_config.logger.info(f"Committed {len(feed_data.entries)} new entries to database")
+                logger.info(f"Committed {len(feed_data.entries)} new entries to database")
             except Exception as e:
                 db.session.rollback()
-                logging_config.logger.error(f"Error committing to database: {str(e)}")
+                logger.error(f"Error committing to database: {str(e)}")
     except httpx.HTTPStatusError as e:
-        logging_config.logger.error(f"HTTP error occurred while fetching feed {feed.url}: {e}")
+        logger.error(f"HTTP error occurred while fetching feed {feed.url}: {e}")
         raise ValueError(f"HTTP error: {e.response.status_code} - {e.response.reason_phrase}")
     except httpx.RequestError as e:
-        logging_config.logger.error(f"An error occurred while requesting {feed.url}: {e}")
+        logger.error(f"An error occurred while requesting {feed.url}: {e}")
         raise ValueError(f"Request error: {str(e)}")
     except httpx.TimeoutException as e:
-        logging_config.logger.error(f"Timeout occurred while fetching feed {feed.url}: {e}")
+        logger.error(f"Timeout occurred while fetching feed {feed.url}: {e}")
         raise ValueError(f"Timeout error: The request to {feed.url} timed out")
     except Exception as e:
-        logging_config.logger.error(f"Unexpected error occurred while parsing feed {feed.url}: {e}", exc_info=True)
+        logger.error(f"Unexpected error occurred while parsing feed {feed.url}: {e}", exc_info=True)
         raise ValueError(f"Unexpected error: {str(e)}")
 
 
@@ -122,14 +122,14 @@ def process_csv_file(csv_file) -> Tuple[int, int, List[str]]:
                 db.session.add(new_feed)
                 db.session.commit()
                 imported_count += 1
-                logging_config.logger.info(f"RSS Feed added from CSV: {url}")
+                logger.info(f"RSS Feed added from CSV: {url}")
             except IntegrityError:
                 db.session.rollback()
                 skipped_count += 1
-                logging_config.logger.info(f"Skipped duplicate RSS Feed: {url}")
+                logger.info(f"Skipped duplicate RSS Feed: {url}")
             except Exception as e:
                 errors.append(f"Error processing RSS Feed {url}: {str(e)}")
-                logging_config.logger.error(
+                logger.error(
                     f"Error processing RSS Feed {url}: {str(e)}"
                 )
 
@@ -174,12 +174,12 @@ async def manage_rss() -> str:
             db.session.add(new_feed)
             db.session.commit()
             flash("RSS Feed added successfully!", "success")
-            logging_config.logger.info(f"RSS Feed added: {url}")
+            logger.info(f"RSS Feed added: {url}")
 
             await fetch_and_parse_feed(new_feed)
             flash("New feed parsed successfully!", "success")
         except Exception as e:
-            logging_config.logger.error(f"Error adding or parsing RSS Feed: {str(e)}")
+            logger.error(f"Error adding or parsing RSS Feed: {str(e)}")
             flash(f"Error adding or parsing RSS Feed: {str(e)}", "error")
         return redirect(url_for("rss_manager.manage_rss"))
 
@@ -301,10 +301,10 @@ def edit_feed(feed_id: uuid.UUID) -> Union[str, Response]:
         try:
             db.session.commit()
             flash("RSS Feed updated successfully!", "success")
-            logging_config.logger.info(f"RSS Feed updated: {feed.url}")
+            logger.info(f"RSS Feed updated: {feed.url}")
         except Exception as e:
             db.session.rollback()
-            logging_config.logger.error(f"Error updating RSS Feed: {str(e)}")
+            logger.error(f"Error updating RSS Feed: {str(e)}")
             flash(f"Error updating RSS Feed: {str(e)}", "error")
         return redirect(url_for("rss_manager.manage_rss"))
     return render_template("edit_rss_feed.html", form=form, feed=feed)
