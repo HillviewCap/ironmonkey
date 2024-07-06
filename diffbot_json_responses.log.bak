@@ -1,0 +1,2228 @@
+2024-07-05 20:16:30,251 - [
+  {
+    "entities": [
+      {
+        "name": "vulnerability",
+        "diffbotUri": "https://diffbot.com/entity/EYWrBTWBbPTytlxhHz0p_kQ",
+        "confidence": 0.93479747,
+        "salience": 0.96310335,
+        "isCustom": false,
+        "allUris": [
+          "http://www.wikidata.org/entity/Q631425"
+        ],
+        "allTypes": [],
+        "mentions": [
+          {
+            "text": "Vulnerability",
+            "beginOffset": 1868,
+            "endOffset": 1881,
+            "confidence": 0.93479747
+          }
+        ]
+      },
+      {
+        "name": "lurker",
+        "diffbotUri": "https://diffbot.com/entity/EseZDke2wNBymIStECH7OVA",
+        "confidence": 0.639554,
+        "salience": 0.9513982,
+        "isCustom": false,
+        "allUris": [
+          "http://www.wikidata.org/entity/Q432335"
+        ],
+        "allTypes": [],
+        "mentions": [
+          {
+            "text": "Lurking",
+            "beginOffset": 1437,
+            "endOffset": 1444,
+            "confidence": 0.639554
+          },
+          {
+            "text": "Lurking",
+            "beginOffset": 1517,
+            "endOffset": 1524,
+            "confidence": 0.639554
+          }
+        ]
+      },
+      {
+        "name": "Common Vulnerabilities and Exposures",
+        "diffbotUri": "https://diffbot.com/entity/EN2SUg3-gPf-nEC3vRuB1bw",
+        "confidence": 0.84225816,
+        "salience": 0.94676244,
+        "isCustom": false,
+        "allUris": [
+          "http://www.wikidata.org/entity/Q94950995"
+        ],
+        "allTypes": [],
+        "mentions": [
+          {
+            "text": "CVE",
+            "beginOffset": 52,
+            "endOffset": 55,
+            "confidence": 0.84225816
+          },
+          {
+            "text": "CVE",
+            "beginOffset": 4693,
+            "endOffset": 4696,
+            "confidence": 0.84225816
+          },
+          {
+            "text": "CVE",
+            "beginOffset": 9202,
+            "endOffset": 9205,
+            "confidence": 0.84225816
+          },
+          {
+            "text": "CVE",
+            "beginOffset": 9495,
+            "endOffset": 9498,
+            "confidence": 0.84225816
+          }
+        ]
+      },
+      {
+        "name": "Google Chrome",
+        "diffbotUri": "https://diffbot.com/entity/EkdmqYfS8NcSyiBzCzShL2Q",
+        "confidence": 0.83302695,
+        "salience": 0.9428471,
+        "isCustom": false,
+        "allUris": [
+          "http://www.wikidata.org/entity/Q777"
+        ],
+        "allTypes": [
+          {
+            "name": "skill",
+            "diffbotUri": "https://diffbot.com/entity/EvfbHngnSNVOh7ZBM5XTywQ"
+          },
+          {
+            "name": "product",
+            "diffbotUri": "https://diffbot.com/entity/EgSPUye7QPcyQoPylO8biMQ"
+          },
+          {
+            "name": "creative work",
+            "diffbotUri": "https://diffbot.com/entity/EnuIck9oSO_2b9wNK6CD3Vw",
+            "dbpediaUri": "http://dbpedia.org/ontology/Work"
+          }
+        ],
+        "mentions": [
+          {
+            "text": "Chrome",
+            "beginOffset": 1460,
+            "endOffset": 1466,
+            "confidence": 0.83302695
+          },
+          {
+            "text": "Chrome",
+            "beginOffset": 1540,
+            "endOffset": 1546,
+            "confidence": 0.83302695
+          }
+        ]
+      },
+      {
+        "name": "image",
+        "diffbotUri": "https://diffbot.com/entity/E2V8LSG4TPRCd8plE4naeTw",
+        "confidence": 0.78672934,
+        "salience": 0.911887,
+        "isCustom": false,
+        "allUris": [
+          "http://www.wikidata.org/entity/Q478798"
+        ],
+        "allTypes": [],
+        "mentions": [
+          {
+            "text": "Image",
+            "beginOffset": 1243,
+            "endOffset": 1248,
+            "confidence": 0.78672934
+          },
+          {
+            "text": "Image",
+            "beginOffset": 1679,
+            "endOffset": 1684,
+            "confidence": 0.78672934
+          }
+        ]
+      },
+      {
+        "name": "cyberwarfare",
+        "diffbotUri": "https://diffbot.com/entity/EJspjJIHCPZSmYI8AuYAp4w",
+        "confidence": 0.61786956,
+        "salience": 0.87889874,
+        "isCustom": false,
+        "allUris": [
+          "http://www.wikidata.org/entity/Q849340"
+        ],
+        "allTypes": [],
+        "mentions": [
+          {
+            "text": "Cyber",
+            "beginOffset": 1473,
+            "endOffset": 1478,
+            "confidence": 0.61786956
+          },
+          {
+            "text": "Cyber",
+            "beginOffset": 1553,
+            "endOffset": 1558,
+            "confidence": 0.61786956
+          }
+        ]
+      },
+      {
+        "name": "HTTP/2",
+        "diffbotUri": "https://diffbot.com/entity/EL4dhnr_9PcO1F6WqN7Ew4g",
+        "confidence": 0.920339,
+        "salience": 0.85148054,
+        "isCustom": false,
+        "allUris": [
+          "http://www.wikidata.org/entity/Q739120"
+        ],
+        "allTypes": [
+          {
+            "name": "skill",
+            "diffbotUri": "https://diffbot.com/entity/EvfbHngnSNVOh7ZBM5XTywQ"
+          },
+          {
+            "name": "product",
+            "diffbotUri": "https://diffbot.com/entity/EgSPUye7QPcyQoPylO8biMQ"
+          },
+          {
+            "name": "creative work",
+            "diffbotUri": "https://diffbot.com/entity/EnuIck9oSO_2b9wNK6CD3Vw",
+            "dbpediaUri": "http://dbpedia.org/ontology/Work"
+          }
+        ],
+        "mentions": [
+          {
+            "text": "HTTP/2",
+            "beginOffset": 1861,
+            "endOffset": 1867,
+            "confidence": 0.920339
+          }
+        ]
+      },
+      {
+        "name": "Silent News",
+        "diffbotUri": "https://diffbot.com/entity/EY8_njTGNOcyCVpNKFacw6g",
+        "confidence": 0.6511495,
+        "salience": 0.8494813,
+        "isCustom": false,
+        "allUris": [
+          "http://www.wikidata.org/entity/Q7514611"
+        ],
+        "allTypes": [
+          {
+            "name": "organization",
+            "diffbotUri": "https://diffbot.com/entity/EN1ClYEdMMQCxB6AWTkT3mA",
+            "dbpediaUri": "http://dbpedia.org/ontology/Organisation"
+          }
+        ],
+        "mentions": [
+          {
+            "text": "The Silent",
+            "beginOffset": 1419,
+            "endOffset": 1429,
+            "confidence": 0.6511495
+          },
+          {
+            "text": "The Silent",
+            "beginOffset": 1499,
+            "endOffset": 1509,
+            "confidence": 0.6511495
+          }
+        ],
+        "location": {
+          "latitude": 43.160275,
+          "longitude": -77.626816,
+          "precision": 9.803509
+        }
+      },
+      {
+        "name": "risk",
+        "diffbotUri": "https://diffbot.com/entity/EJgoxEwliM96RGfBdZ6RU7g",
+        "confidence": 0.69129866,
+        "salience": 0.8266409,
+        "isCustom": false,
+        "allUris": [
+          "http://www.wikidata.org/entity/Q104493"
+        ],
+        "allTypes": [],
+        "mentions": [
+          {
+            "text": "Danger",
+            "beginOffset": 1430,
+            "endOffset": 1436,
+            "confidence": 0.69129866
+          },
+          {
+            "text": "Danger",
+            "beginOffset": 1510,
+            "endOffset": 1516,
+            "confidence": 0.69129866
+          }
+        ]
+      },
+      {
+        "name": "Image 4",
+        "diffbotUri": "https://diffbot.com/entity/EBywuqAAaOVSxLNbIV5f9dg",
+        "confidence": 0.76015544,
+        "salience": 0.82128555,
+        "isCustom": false,
+        "allUris": [
+          "http://www.crunchbase.com/organization/image-4"
+        ],
+        "allTypes": [
+          {
+            "name": "organization",
+            "diffbotUri": "https://diffbot.com/entity/EN1ClYEdMMQCxB6AWTkT3mA",
+            "dbpediaUri": "http://dbpedia.org/ontology/Organisation"
+          }
+        ],
+        "mentions": [
+          {
+            "text": "Image 4",
+            "beginOffset": 725,
+            "endOffset": 732,
+            "confidence": 0.76015544
+          }
+        ],
+        "location": {
+          "latitude": 42.974808,
+          "longitude": -71.4286,
+          "precision": 9.504352
+        }
+      },
+      {
+        "name": "threat",
+        "diffbotUri": "https://diffbot.com/entity/EaYcz0ApgPxCP_wWR2c0gFg",
+        "confidence": 0.56200695,
+        "salience": 0.76421225,
+        "isCustom": false,
+        "allUris": [
+          "http://www.wikidata.org/entity/Q7797190"
+        ],
+        "allTypes": [],
+        "mentions": [
+          {
+            "text": "Threats",
+            "beginOffset": 1479,
+            "endOffset": 1486,
+            "confidence": 0.56200695
+          },
+          {
+            "text": "Threats",
+            "beginOffset": 1559,
+            "endOffset": 1566,
+            "confidence": 0.56200695
+          }
+        ]
+      },
+      {
+        "name": "minute",
+        "diffbotUri": "https://diffbot.com/entity/E-blMvoJYNkunZTnDA8iscg",
+        "confidence": 0.58709997,
+        "salience": 0.5973519,
+        "isCustom": false,
+        "allUris": [
+          "http://www.wikidata.org/entity/Q7727"
+        ],
+        "allTypes": [],
+        "mentions": [
+          {
+            "text": "Min",
+            "beginOffset": 1222,
+            "endOffset": 1225,
+            "confidence": 0.58709997
+          }
+        ]
+      },
+      {
+        "name": "DOS",
+        "diffbotUri": "https://diffbot.com/entity/EzpGNaBCLOyiex1i1eqYrGw",
+        "confidence": 0.7243414,
+        "salience": 0.40492067,
+        "isCustom": false,
+        "allUris": [
+          "http://www.wikidata.org/entity/Q170434"
+        ],
+        "allTypes": [
+          {
+            "name": "skill",
+            "diffbotUri": "https://diffbot.com/entity/EvfbHngnSNVOh7ZBM5XTywQ"
+          },
+          {
+            "name": "product",
+            "diffbotUri": "https://diffbot.com/entity/EgSPUye7QPcyQoPylO8biMQ"
+          }
+        ],
+        "mentions": [
+          {
+            "text": "DoS",
+            "beginOffset": 1905,
+            "endOffset": 1908,
+            "confidence": 0.7243414
+          }
+        ]
+      },
+      {
+        "name": "home",
+        "diffbotUri": "https://diffbot.com/entity/EyeteFqVdO2y3_Ju-X4hHAA",
+        "confidence": 0.68568736,
+        "salience": 0.35727164,
+        "isCustom": false,
+        "allUris": [
+          "http://www.wikidata.org/entity/Q7743"
+        ],
+        "allTypes": [],
+        "mentions": [
+          {
+            "text": "Home",
+            "beginOffset": 542,
+            "endOffset": 546,
+            "confidence": 0.68568736
+          }
+        ]
+      },
+      {
+        "name": "Min Chinese",
+        "diffbotUri": "https://diffbot.com/entity/EjjWNodm3OYqabjsdzoYu6A",
+        "confidence": 0.64333844,
+        "salience": 0.2961153,
+        "isCustom": false,
+        "allUris": [
+          "http://www.wikidata.org/entity/Q56504"
+        ],
+        "allTypes": [
+          {
+            "name": "skill",
+            "diffbotUri": "https://diffbot.com/entity/EvfbHngnSNVOh7ZBM5XTywQ"
+          },
+          {
+            "name": "product",
+            "diffbotUri": "https://diffbot.com/entity/EgSPUye7QPcyQoPylO8biMQ"
+          },
+          {
+            "name": "human language",
+            "diffbotUri": "https://diffbot.com/entity/Es1wbGCl4NWSPTGYmIEhJLw",
+            "dbpediaUri": "http://dbpedia.org/ontology/Language"
+          }
+        ],
+        "mentions": [
+          {
+            "text": "Min",
+            "beginOffset": 1658,
+            "endOffset": 1661,
+            "confidence": 0.64333844
+          }
+        ]
+      },
+      {
+        "name": "Meta",
+        "diffbotUri": "https://diffbot.com/entity/Ebm4UJoSuP1esww1rsLvu9g",
+        "confidence": 1.055,
+        "salience": 0.0,
+        "isCustom": false,
+        "allUris": [],
+        "allTypes": [
+          {
+            "name": "organization",
+            "diffbotUri": "https://diffbot.com/entity/EN1ClYEdMMQCxB6AWTkT3mA",
+            "dbpediaUri": "http://dbpedia.org/ontology/Organisation"
+          }
+        ],
+        "mentions": [
+          {
+            "text": "Facebook",
+            "beginOffset": 17346,
+            "endOffset": 17354,
+            "confidence": 1.055
+          }
+        ]
+      },
+      {
+        "name": "Roundcube Email Software Exploited",
+        "confidence": 0.85,
+        "salience": 0.9878127,
+        "isCustom": false,
+        "allUris": [],
+        "allTypes": [
+          {
+            "name": "organization",
+            "diffbotUri": "https://diffbot.com/entity/EN1ClYEdMMQCxB6AWTkT3mA",
+            "dbpediaUri": "http://dbpedia.org/ontology/Organisation"
+          }
+        ],
+        "mentions": [
+          {
+            "text": "Roundcube Email Software Exploited",
+            "beginOffset": 0,
+            "endOffset": 34,
+            "confidence": 0.85
+          },
+          {
+            "text": "Roundcube Email Software Exploited",
+            "beginOffset": 4641,
+            "endOffset": 4675,
+            "confidence": 0.85
+          },
+          {
+            "text": "Roundcube Email Software Exploited",
+            "beginOffset": 9150,
+            "endOffset": 9184,
+            "confidence": 0.85
+          },
+          {
+            "text": "Roundcube Email Software Exploited",
+            "beginOffset": 9443,
+            "endOffset": 9477,
+            "confidence": 0.85
+          }
+        ]
+      },
+      {
+        "name": "Image 1",
+        "confidence": 0.85,
+        "salience": 0.76954377,
+        "isCustom": false,
+        "allUris": [],
+        "allTypes": [
+          {
+            "name": "organization",
+            "diffbotUri": "https://diffbot.com/entity/EN1ClYEdMMQCxB6AWTkT3mA",
+            "dbpediaUri": "http://dbpedia.org/ontology/Organisation"
+          }
+        ],
+        "mentions": [
+          {
+            "text": "Image 1",
+            "beginOffset": 176,
+            "endOffset": 183,
+            "confidence": 0.85
+          }
+        ]
+      },
+      {
+        "name": "Image 2",
+        "confidence": 0.85,
+        "salience": 0.52765226,
+        "isCustom": false,
+        "allUris": [],
+        "allTypes": [
+          {
+            "name": "organization",
+            "diffbotUri": "https://diffbot.com/entity/EN1ClYEdMMQCxB6AWTkT3mA",
+            "dbpediaUri": "http://dbpedia.org/ontology/Organisation"
+          }
+        ],
+        "mentions": [
+          {
+            "text": "Image 2",
+            "beginOffset": 282,
+            "endOffset": 289,
+            "confidence": 0.85
+          }
+        ]
+      },
+      {
+        "name": "Adapts",
+        "confidence": 0.85,
+        "salience": 0.65933627,
+        "isCustom": false,
+        "allUris": [],
+        "allTypes": [
+          {
+            "name": "organization",
+            "diffbotUri": "https://diffbot.com/entity/EN1ClYEdMMQCxB6AWTkT3mA",
+            "dbpediaUri": "http://dbpedia.org/ontology/Organisation"
+          }
+        ],
+        "mentions": [
+          {
+            "text": "Adapts",
+            "beginOffset": 2711,
+            "endOffset": 2717,
+            "confidence": 0.85
+          },
+          {
+            "text": "Adapts",
+            "beginOffset": 2772,
+            "endOffset": 2778,
+            "confidence": 0.85
+          }
+        ]
+      },
+      {
+        "name": "Follow US",
+        "confidence": 0.85,
+        "salience": 0.20600896,
+        "isCustom": false,
+        "allUris": [],
+        "allTypes": [
+          {
+            "name": "organization",
+            "diffbotUri": "https://diffbot.com/entity/EN1ClYEdMMQCxB6AWTkT3mA",
+            "dbpediaUri": "http://dbpedia.org/ontology/Organisation"
+          }
+        ],
+        "mentions": [
+          {
+            "text": "Follow US",
+            "beginOffset": 8480,
+            "endOffset": 8489,
+            "confidence": 0.85
+          }
+        ]
+      },
+      {
+        "name": "Foxiz News Network",
+        "confidence": 0.85,
+        "salience": 0.33944196,
+        "isCustom": false,
+        "allUris": [],
+        "allTypes": [
+          {
+            "name": "organization",
+            "diffbotUri": "https://diffbot.com/entity/EN1ClYEdMMQCxB6AWTkT3mA",
+            "dbpediaUri": "http://dbpedia.org/ontology/Organisation"
+          }
+        ],
+        "mentions": [
+          {
+            "text": "Foxiz News Network",
+            "beginOffset": 8730,
+            "endOffset": 8748,
+            "confidence": 0.85
+          }
+        ]
+      },
+      {
+        "name": "Ruby Design Company",
+        "confidence": 0.85,
+        "salience": 0.3535991,
+        "isCustom": false,
+        "allUris": [],
+        "allTypes": [
+          {
+            "name": "organization",
+            "diffbotUri": "https://diffbot.com/entity/EN1ClYEdMMQCxB6AWTkT3mA",
+            "dbpediaUri": "http://dbpedia.org/ontology/Organisation"
+          }
+        ],
+        "mentions": [
+          {
+            "text": "Ruby Design Company",
+            "beginOffset": 8750,
+            "endOffset": 8769,
+            "confidence": 0.85
+          }
+        ]
+      },
+      {
+        "name": "Tech",
+        "confidence": 0.85,
+        "salience": 0.68788904,
+        "isCustom": false,
+        "allUris": [],
+        "allTypes": [
+          {
+            "name": "organization",
+            "diffbotUri": "https://diffbot.com/entity/EN1ClYEdMMQCxB6AWTkT3mA",
+            "dbpediaUri": "http://dbpedia.org/ontology/Organisation"
+          }
+        ],
+        "mentions": [
+          {
+            "text": "Tech",
+            "beginOffset": 9386,
+            "endOffset": 9390,
+            "confidence": 0.85
+          }
+        ]
+      }
+    ],
+    "categories": {
+      "iabv1": [
+        {
+          "id": "IAB19",
+          "name": "Technology & Computing",
+          "path": "/Technology & Computing",
+          "confidence": 0.5082776,
+          "isPrimary": true
+        }
+      ],
+      "iabv2": [
+        {
+          "id": "599",
+          "name": "Computing",
+          "path": "/Technology & Computing/Computing",
+          "confidence": 0.5082776,
+          "isPrimary": true
+        },
+        {
+          "id": "596",
+          "name": "Technology & Computing",
+          "path": "/Technology & Computing",
+          "confidence": 0.5082776,
+          "isPrimary": false
+        }
+      ]
+    }
+  }
+]
+2024-07-05 20:21:10,388 - {
+  "entities": [
+    {
+      "name": "lurker",
+      "diffbotUri": "https://diffbot.com/entity/EseZDke2wNBymIStECH7OVA",
+      "confidence": 0.6256042,
+      "salience": 0.9377686,
+      "isCustom": false,
+      "allUris": [
+        "http://www.wikidata.org/entity/Q432335"
+      ],
+      "allTypes": [],
+      "mentions": [
+        {
+          "text": "Lurking",
+          "beginOffset": 1421,
+          "endOffset": 1428,
+          "confidence": 0.6256042
+        },
+        {
+          "text": "Lurking",
+          "beginOffset": 1501,
+          "endOffset": 1508,
+          "confidence": 0.6256042
+        }
+      ]
+    },
+    {
+      "name": "image",
+      "diffbotUri": "https://diffbot.com/entity/E2V8LSG4TPRCd8plE4naeTw",
+      "confidence": 0.7914693,
+      "salience": 0.93529046,
+      "isCustom": false,
+      "allUris": [
+        "http://www.wikidata.org/entity/Q478798"
+      ],
+      "allTypes": [],
+      "mentions": [
+        {
+          "text": "Image",
+          "beginOffset": 1227,
+          "endOffset": 1232,
+          "confidence": 0.7914693
+        },
+        {
+          "text": "Image",
+          "beginOffset": 1663,
+          "endOffset": 1668,
+          "confidence": 0.7914693
+        }
+      ]
+    },
+    {
+      "name": "Google Chrome",
+      "diffbotUri": "https://diffbot.com/entity/EkdmqYfS8NcSyiBzCzShL2Q",
+      "confidence": 0.8687138,
+      "salience": 0.91779375,
+      "isCustom": false,
+      "allUris": [
+        "http://www.wikidata.org/entity/Q777"
+      ],
+      "allTypes": [
+        {
+          "name": "skill",
+          "diffbotUri": "https://diffbot.com/entity/EvfbHngnSNVOh7ZBM5XTywQ"
+        },
+        {
+          "name": "product",
+          "diffbotUri": "https://diffbot.com/entity/EgSPUye7QPcyQoPylO8biMQ"
+        },
+        {
+          "name": "creative work",
+          "diffbotUri": "https://diffbot.com/entity/EnuIck9oSO_2b9wNK6CD3Vw",
+          "dbpediaUri": "http://dbpedia.org/ontology/Work"
+        }
+      ],
+      "mentions": [
+        {
+          "text": "Chrome",
+          "beginOffset": 1444,
+          "endOffset": 1450,
+          "confidence": 0.8687138
+        },
+        {
+          "text": "Chrome",
+          "beginOffset": 1524,
+          "endOffset": 1530,
+          "confidence": 0.8687138
+        }
+      ]
+    },
+    {
+      "name": "Bifrost",
+      "diffbotUri": "https://diffbot.com/entity/EWj6ynD4kPgizVrRyxoCL7Q",
+      "confidence": 0.5827904,
+      "salience": 0.91560245,
+      "isCustom": false,
+      "allUris": [
+        "http://www.wikidata.org/entity/Q113624909"
+      ],
+      "allTypes": [],
+      "mentions": [
+        {
+          "text": "Bifrost",
+          "beginOffset": 0,
+          "endOffset": 7,
+          "confidence": 0.5827904
+        }
+      ]
+    },
+    {
+      "name": "Linux",
+      "diffbotUri": "https://diffbot.com/entity/EztZqecieOfW3TBvMTdz3sA",
+      "confidence": 0.85691375,
+      "salience": 0.9124681,
+      "isCustom": false,
+      "allUris": [
+        "http://www.wikidata.org/entity/Q388"
+      ],
+      "allTypes": [
+        {
+          "name": "skill",
+          "diffbotUri": "https://diffbot.com/entity/EvfbHngnSNVOh7ZBM5XTywQ"
+        },
+        {
+          "name": "product",
+          "diffbotUri": "https://diffbot.com/entity/EgSPUye7QPcyQoPylO8biMQ"
+        }
+      ],
+      "mentions": [
+        {
+          "text": "Linux",
+          "beginOffset": 35,
+          "endOffset": 40,
+          "confidence": 0.85691375
+        }
+      ]
+    },
+    {
+      "name": "risk",
+      "diffbotUri": "https://diffbot.com/entity/EJgoxEwliM96RGfBdZ6RU7g",
+      "confidence": 0.6796466,
+      "salience": 0.89812106,
+      "isCustom": false,
+      "allUris": [
+        "http://www.wikidata.org/entity/Q104493"
+      ],
+      "allTypes": [],
+      "mentions": [
+        {
+          "text": "Danger",
+          "beginOffset": 1414,
+          "endOffset": 1420,
+          "confidence": 0.6796466
+        },
+        {
+          "text": "Danger",
+          "beginOffset": 1494,
+          "endOffset": 1500,
+          "confidence": 0.6796466
+        }
+      ]
+    },
+    {
+      "name": "rat",
+      "diffbotUri": "https://diffbot.com/entity/E3uVUhFw1PrWWhD29Cyv0Hw",
+      "confidence": 0.65371895,
+      "salience": 0.8804493,
+      "isCustom": false,
+      "allUris": [
+        "http://www.wikidata.org/entity/Q26018"
+      ],
+      "allTypes": [],
+      "mentions": [
+        {
+          "text": "RAT",
+          "beginOffset": 8,
+          "endOffset": 11,
+          "confidence": 0.65371895
+        }
+      ]
+    },
+    {
+      "name": "cyberwarfare",
+      "diffbotUri": "https://diffbot.com/entity/EJspjJIHCPZSmYI8AuYAp4w",
+      "confidence": 0.62772024,
+      "salience": 0.8799267,
+      "isCustom": false,
+      "allUris": [
+        "http://www.wikidata.org/entity/Q849340"
+      ],
+      "allTypes": [],
+      "mentions": [
+        {
+          "text": "Cyber",
+          "beginOffset": 1457,
+          "endOffset": 1462,
+          "confidence": 0.62772024
+        },
+        {
+          "text": "Cyber",
+          "beginOffset": 1537,
+          "endOffset": 1542,
+          "confidence": 0.62772024
+        }
+      ]
+    },
+    {
+      "name": "Image 4",
+      "diffbotUri": "https://diffbot.com/entity/EBywuqAAaOVSxLNbIV5f9dg",
+      "confidence": 0.76015544,
+      "salience": 0.8221935,
+      "isCustom": false,
+      "allUris": [
+        "http://www.crunchbase.com/organization/image-4"
+      ],
+      "allTypes": [
+        {
+          "name": "organization",
+          "diffbotUri": "https://diffbot.com/entity/EN1ClYEdMMQCxB6AWTkT3mA",
+          "dbpediaUri": "http://dbpedia.org/ontology/Organisation"
+        }
+      ],
+      "mentions": [
+        {
+          "text": "Image 4",
+          "beginOffset": 709,
+          "endOffset": 716,
+          "confidence": 0.76015544
+        }
+      ],
+      "location": {
+        "latitude": 42.974808,
+        "longitude": -71.4286,
+        "precision": 9.504352
+      }
+    },
+    {
+      "name": "Silent News",
+      "diffbotUri": "https://diffbot.com/entity/EY8_njTGNOcyCVpNKFacw6g",
+      "confidence": 0.6511495,
+      "salience": 0.8113098,
+      "isCustom": false,
+      "allUris": [
+        "http://www.wikidata.org/entity/Q7514611"
+      ],
+      "allTypes": [
+        {
+          "name": "organization",
+          "diffbotUri": "https://diffbot.com/entity/EN1ClYEdMMQCxB6AWTkT3mA",
+          "dbpediaUri": "http://dbpedia.org/ontology/Organisation"
+        }
+      ],
+      "mentions": [
+        {
+          "text": "The Silent",
+          "beginOffset": 1403,
+          "endOffset": 1413,
+          "confidence": 0.6511495
+        },
+        {
+          "text": "The Silent",
+          "beginOffset": 1483,
+          "endOffset": 1493,
+          "confidence": 0.6511495
+        }
+      ],
+      "location": {
+        "latitude": 43.160275,
+        "longitude": -77.626816,
+        "precision": 9.803509
+      }
+    },
+    {
+      "name": "stealth technology",
+      "diffbotUri": "https://diffbot.com/entity/E8BW2RX-XMxqvIXtqbnJ5Eg",
+      "confidence": 0.60638726,
+      "salience": 0.7511858,
+      "isCustom": false,
+      "allUris": [
+        "http://www.wikidata.org/entity/Q339042"
+      ],
+      "allTypes": [
+        {
+          "name": "skill",
+          "diffbotUri": "https://diffbot.com/entity/EvfbHngnSNVOh7ZBM5XTywQ"
+        },
+        {
+          "name": "field of work",
+          "diffbotUri": "https://diffbot.com/entity/EjGOLMsQZOGSg549SwYfFyQ"
+        },
+        {
+          "name": "technology",
+          "diffbotUri": "https://diffbot.com/entity/E-5jnlQEGOt2x8rdkkht1NQ"
+        }
+      ],
+      "mentions": [
+        {
+          "text": "Stealthy",
+          "beginOffset": 26,
+          "endOffset": 34,
+          "confidence": 0.60638726
+        }
+      ]
+    },
+    {
+      "name": "threat",
+      "diffbotUri": "https://diffbot.com/entity/EaYcz0ApgPxCP_wWR2c0gFg",
+      "confidence": 0.58103615,
+      "salience": 0.72746915,
+      "isCustom": false,
+      "allUris": [
+        "http://www.wikidata.org/entity/Q7797190"
+      ],
+      "allTypes": [],
+      "mentions": [
+        {
+          "text": "Threats",
+          "beginOffset": 1463,
+          "endOffset": 1470,
+          "confidence": 0.58103615
+        },
+        {
+          "text": "Threats",
+          "beginOffset": 1543,
+          "endOffset": 1550,
+          "confidence": 0.58103615
+        }
+      ]
+    },
+    {
+      "name": "HTTP/2",
+      "diffbotUri": "https://diffbot.com/entity/EL4dhnr_9PcO1F6WqN7Ew4g",
+      "confidence": 0.920339,
+      "salience": 0.61183375,
+      "isCustom": false,
+      "allUris": [
+        "http://www.wikidata.org/entity/Q739120"
+      ],
+      "allTypes": [
+        {
+          "name": "skill",
+          "diffbotUri": "https://diffbot.com/entity/EvfbHngnSNVOh7ZBM5XTywQ"
+        },
+        {
+          "name": "product",
+          "diffbotUri": "https://diffbot.com/entity/EgSPUye7QPcyQoPylO8biMQ"
+        },
+        {
+          "name": "creative work",
+          "diffbotUri": "https://diffbot.com/entity/EnuIck9oSO_2b9wNK6CD3Vw",
+          "dbpediaUri": "http://dbpedia.org/ontology/Work"
+        }
+      ],
+      "mentions": [
+        {
+          "text": "HTTP/2",
+          "beginOffset": 1845,
+          "endOffset": 1851,
+          "confidence": 0.920339
+        }
+      ]
+    },
+    {
+      "name": "minute",
+      "diffbotUri": "https://diffbot.com/entity/E-blMvoJYNkunZTnDA8iscg",
+      "confidence": 0.59746826,
+      "salience": 0.5435691,
+      "isCustom": false,
+      "allUris": [
+        "http://www.wikidata.org/entity/Q7727"
+      ],
+      "allTypes": [],
+      "mentions": [
+        {
+          "text": "Min",
+          "beginOffset": 1206,
+          "endOffset": 1209,
+          "confidence": 0.59746826
+        }
+      ]
+    },
+    {
+      "name": "home",
+      "diffbotUri": "https://diffbot.com/entity/EyeteFqVdO2y3_Ju-X4hHAA",
+      "confidence": 0.7176853,
+      "salience": 0.3559873,
+      "isCustom": false,
+      "allUris": [
+        "http://www.wikidata.org/entity/Q7743"
+      ],
+      "allTypes": [],
+      "mentions": [
+        {
+          "text": "Home",
+          "beginOffset": 526,
+          "endOffset": 530,
+          "confidence": 0.7176853
+        }
+      ]
+    },
+    {
+      "name": "Min Chinese",
+      "diffbotUri": "https://diffbot.com/entity/EjjWNodm3OYqabjsdzoYu6A",
+      "confidence": 0.6379092,
+      "salience": 0.32955676,
+      "isCustom": false,
+      "allUris": [
+        "http://www.wikidata.org/entity/Q56504"
+      ],
+      "allTypes": [
+        {
+          "name": "skill",
+          "diffbotUri": "https://diffbot.com/entity/EvfbHngnSNVOh7ZBM5XTywQ"
+        },
+        {
+          "name": "product",
+          "diffbotUri": "https://diffbot.com/entity/EgSPUye7QPcyQoPylO8biMQ"
+        },
+        {
+          "name": "human language",
+          "diffbotUri": "https://diffbot.com/entity/Es1wbGCl4NWSPTGYmIEhJLw",
+          "dbpediaUri": "http://dbpedia.org/ontology/Language"
+        }
+      ],
+      "mentions": [
+        {
+          "text": "Min",
+          "beginOffset": 1642,
+          "endOffset": 1645,
+          "confidence": 0.6379092
+        }
+      ]
+    },
+    {
+      "name": "Meta",
+      "diffbotUri": "https://diffbot.com/entity/Ebm4UJoSuP1esww1rsLvu9g",
+      "confidence": 1.055,
+      "salience": 0.0,
+      "isCustom": false,
+      "allUris": [],
+      "allTypes": [
+        {
+          "name": "organization",
+          "diffbotUri": "https://diffbot.com/entity/EN1ClYEdMMQCxB6AWTkT3mA",
+          "dbpediaUri": "http://dbpedia.org/ontology/Organisation"
+        }
+      ],
+      "mentions": [
+        {
+          "text": "Facebook",
+          "beginOffset": 18403,
+          "endOffset": 18411,
+          "confidence": 1.055
+        }
+      ]
+    },
+    {
+      "name": "Adapts",
+      "confidence": 0.85,
+      "salience": 0.97684896,
+      "isCustom": false,
+      "allUris": [],
+      "allTypes": [
+        {
+          "name": "organization",
+          "diffbotUri": "https://diffbot.com/entity/EN1ClYEdMMQCxB6AWTkT3mA",
+          "dbpediaUri": "http://dbpedia.org/ontology/Organisation"
+        }
+      ],
+      "mentions": [
+        {
+          "text": "Adapts",
+          "beginOffset": 12,
+          "endOffset": 18,
+          "confidence": 0.85
+        },
+        {
+          "text": "Adapts",
+          "beginOffset": 2695,
+          "endOffset": 2701,
+          "confidence": 0.85
+        },
+        {
+          "text": "Adapts",
+          "beginOffset": 2756,
+          "endOffset": 2762,
+          "confidence": 0.85
+        },
+        {
+          "text": "Adapts",
+          "beginOffset": 4624,
+          "endOffset": 4630,
+          "confidence": 0.85
+        },
+        {
+          "text": "Adapts",
+          "beginOffset": 8908,
+          "endOffset": 8914,
+          "confidence": 0.85
+        },
+        {
+          "text": "Adapts",
+          "beginOffset": 9248,
+          "endOffset": 9254,
+          "confidence": 0.85
+        }
+      ]
+    },
+    {
+      "name": "Image 1",
+      "confidence": 0.85,
+      "salience": 0.7608144,
+      "isCustom": false,
+      "allUris": [],
+      "allTypes": [
+        {
+          "name": "organization",
+          "diffbotUri": "https://diffbot.com/entity/EN1ClYEdMMQCxB6AWTkT3mA",
+          "dbpediaUri": "http://dbpedia.org/ontology/Organisation"
+        }
+      ],
+      "mentions": [
+        {
+          "text": "Image 1",
+          "beginOffset": 160,
+          "endOffset": 167,
+          "confidence": 0.85
+        }
+      ]
+    },
+    {
+      "name": "Image 2",
+      "confidence": 0.85,
+      "salience": 0.5117385,
+      "isCustom": false,
+      "allUris": [],
+      "allTypes": [
+        {
+          "name": "organization",
+          "diffbotUri": "https://diffbot.com/entity/EN1ClYEdMMQCxB6AWTkT3mA",
+          "dbpediaUri": "http://dbpedia.org/ontology/Organisation"
+        }
+      ],
+      "mentions": [
+        {
+          "text": "Image 2",
+          "beginOffset": 266,
+          "endOffset": 273,
+          "confidence": 0.85
+        }
+      ]
+    },
+    {
+      "name": "Follow US",
+      "confidence": 0.85,
+      "salience": 0.22181599,
+      "isCustom": false,
+      "allUris": [],
+      "allTypes": [
+        {
+          "name": "organization",
+          "diffbotUri": "https://diffbot.com/entity/EN1ClYEdMMQCxB6AWTkT3mA",
+          "dbpediaUri": "http://dbpedia.org/ontology/Organisation"
+        }
+      ],
+      "mentions": [
+        {
+          "text": "Follow US",
+          "beginOffset": 8226,
+          "endOffset": 8235,
+          "confidence": 0.85
+        }
+      ]
+    },
+    {
+      "name": "Foxiz News Network",
+      "confidence": 0.85,
+      "salience": 0.361261,
+      "isCustom": false,
+      "allUris": [],
+      "allTypes": [
+        {
+          "name": "organization",
+          "diffbotUri": "https://diffbot.com/entity/EN1ClYEdMMQCxB6AWTkT3mA",
+          "dbpediaUri": "http://dbpedia.org/ontology/Organisation"
+        }
+      ],
+      "mentions": [
+        {
+          "text": "Foxiz News Network",
+          "beginOffset": 8476,
+          "endOffset": 8494,
+          "confidence": 0.85
+        }
+      ]
+    },
+    {
+      "name": "Ruby Design Company",
+      "confidence": 0.85,
+      "salience": 0.34156996,
+      "isCustom": false,
+      "allUris": [],
+      "allTypes": [
+        {
+          "name": "organization",
+          "diffbotUri": "https://diffbot.com/entity/EN1ClYEdMMQCxB6AWTkT3mA",
+          "dbpediaUri": "http://dbpedia.org/ontology/Organisation"
+        }
+      ],
+      "mentions": [
+        {
+          "text": "Ruby Design Company",
+          "beginOffset": 8496,
+          "endOffset": 8515,
+          "confidence": 0.85
+        }
+      ]
+    },
+    {
+      "name": "Tech",
+      "confidence": 0.85,
+      "salience": 0.6017131,
+      "isCustom": false,
+      "allUris": [],
+      "allTypes": [
+        {
+          "name": "organization",
+          "diffbotUri": "https://diffbot.com/entity/EN1ClYEdMMQCxB6AWTkT3mA",
+          "dbpediaUri": "http://dbpedia.org/ontology/Organisation"
+        }
+      ],
+      "mentions": [
+        {
+          "text": "Tech",
+          "beginOffset": 9113,
+          "endOffset": 9117,
+          "confidence": 0.85
+        }
+      ]
+    }
+  ],
+  "categories": {
+    "iabv1": [
+      {
+        "id": "IAB19",
+        "name": "Technology & Computing",
+        "path": "/Technology & Computing",
+        "confidence": 0.43946746,
+        "isPrimary": true
+      }
+    ],
+    "iabv2": [
+      {
+        "id": "596",
+        "name": "Technology & Computing",
+        "path": "/Technology & Computing",
+        "confidence": 0.43946746,
+        "isPrimary": true
+      }
+    ]
+  }
+}
+2024-07-05 20:28:35,331 - {
+  "entities": [
+    {
+      "name": "cross-site request forgery",
+      "diffbotUri": "https://diffbot.com/entity/Ea6xonnVoMKSq9aRvvdxW-A",
+      "confidence": 0.8749242,
+      "salience": 0.96866953,
+      "isCustom": false,
+      "allUris": [
+        "http://www.wikidata.org/entity/Q15401472"
+      ],
+      "allTypes": [
+        {
+          "name": "skill",
+          "diffbotUri": "https://diffbot.com/entity/EvfbHngnSNVOh7ZBM5XTywQ"
+        },
+        {
+          "name": "product",
+          "diffbotUri": "https://diffbot.com/entity/EgSPUye7QPcyQoPylO8biMQ"
+        }
+      ],
+      "mentions": [
+        {
+          "text": "Cross-Site Request Forgery",
+          "beginOffset": 1948,
+          "endOffset": 1974,
+          "confidence": 0.8749242
+        }
+      ]
+    },
+    {
+      "name": "CookieYes",
+      "diffbotUri": "https://diffbot.com/entity/Ez98-fpbgMSi8cmj6ogsZZg",
+      "confidence": 0.850623,
+      "salience": 0.9085118,
+      "isCustom": false,
+      "allUris": [
+        "http://www.crunchbase.com/organization/cookieyes"
+      ],
+      "allTypes": [
+        {
+          "name": "organization",
+          "diffbotUri": "https://diffbot.com/entity/EN1ClYEdMMQCxB6AWTkT3mA",
+          "dbpediaUri": "http://dbpedia.org/ontology/Organisation"
+        }
+      ],
+      "mentions": [
+        {
+          "text": "CookieYes",
+          "beginOffset": 1305,
+          "endOffset": 1314,
+          "confidence": 0.850623
+        }
+      ],
+      "location": {
+        "latitude": 52.04698,
+        "longitude": -0.705743,
+        "precision": 1.8623533
+      }
+    },
+    {
+      "name": "WordPress",
+      "diffbotUri": "https://diffbot.com/entity/ESgr2l9ktNXa3XyZDeiA2kg",
+      "confidence": 0.946878,
+      "salience": 0.8957318,
+      "isCustom": false,
+      "allUris": [
+        "http://www.wikidata.org/entity/Q13166"
+      ],
+      "allTypes": [
+        {
+          "name": "skill",
+          "diffbotUri": "https://diffbot.com/entity/EvfbHngnSNVOh7ZBM5XTywQ"
+        },
+        {
+          "name": "product",
+          "diffbotUri": "https://diffbot.com/entity/EgSPUye7QPcyQoPylO8biMQ"
+        },
+        {
+          "name": "creative work",
+          "diffbotUri": "https://diffbot.com/entity/EnuIck9oSO_2b9wNK6CD3Vw",
+          "dbpediaUri": "http://dbpedia.org/ontology/Work"
+        }
+      ],
+      "mentions": [
+        {
+          "text": "WordPress",
+          "beginOffset": 1640,
+          "endOffset": 1649,
+          "confidence": 0.946878
+        }
+      ]
+    },
+    {
+      "name": "HTTP cookie",
+      "diffbotUri": "https://diffbot.com/entity/EDRcA4HUYMemBE8jJlS1kQg",
+      "confidence": 0.684532,
+      "salience": 0.87786096,
+      "isCustom": false,
+      "allUris": [
+        "http://www.wikidata.org/entity/Q178995"
+      ],
+      "allTypes": [],
+      "mentions": [
+        {
+          "text": "Cookie",
+          "beginOffset": 1207,
+          "endOffset": 1213,
+          "confidence": 0.684532
+        },
+        {
+          "text": "cookie",
+          "beginOffset": 1325,
+          "endOffset": 1331,
+          "confidence": 0.684532
+        },
+        {
+          "text": "Cookie",
+          "beginOffset": 1535,
+          "endOffset": 1541,
+          "confidence": 0.684532
+        },
+        {
+          "text": "Cookie",
+          "beginOffset": 1742,
+          "endOffset": 1748,
+          "confidence": 0.684532
+        },
+        {
+          "text": "Cookie",
+          "beginOffset": 2182,
+          "endOffset": 2188,
+          "confidence": 0.684532
+        },
+        {
+          "text": "Cookie",
+          "beginOffset": 2368,
+          "endOffset": 2374,
+          "confidence": 0.684532
+        },
+        {
+          "text": "Cookie",
+          "beginOffset": 2641,
+          "endOffset": 2647,
+          "confidence": 0.684532
+        },
+        {
+          "text": "Cookie",
+          "beginOffset": 3109,
+          "endOffset": 3115,
+          "confidence": 0.684532
+        },
+        {
+          "text": "Cookie",
+          "beginOffset": 3702,
+          "endOffset": 3708,
+          "confidence": 0.684532
+        },
+        {
+          "text": "Cookie",
+          "beginOffset": 3878,
+          "endOffset": 3884,
+          "confidence": 0.684532
+        },
+        {
+          "text": "Cookie",
+          "beginOffset": 4113,
+          "endOffset": 4119,
+          "confidence": 0.684532
+        },
+        {
+          "text": "Cookie",
+          "beginOffset": 4306,
+          "endOffset": 4312,
+          "confidence": 0.684532
+        },
+        {
+          "text": "Cookie",
+          "beginOffset": 4509,
+          "endOffset": 4515,
+          "confidence": 0.684532
+        },
+        {
+          "text": "Cookie",
+          "beginOffset": 4720,
+          "endOffset": 4726,
+          "confidence": 0.684532
+        },
+        {
+          "text": "Cookie",
+          "beginOffset": 4940,
+          "endOffset": 4946,
+          "confidence": 0.684532
+        },
+        {
+          "text": "Cookie",
+          "beginOffset": 5293,
+          "endOffset": 5299,
+          "confidence": 0.684532
+        },
+        {
+          "text": "Cookie",
+          "beginOffset": 5432,
+          "endOffset": 5438,
+          "confidence": 0.684532
+        },
+        {
+          "text": "Cookie",
+          "beginOffset": 5581,
+          "endOffset": 5587,
+          "confidence": 0.684532
+        }
+      ]
+    },
+    {
+      "name": "cyberwarfare",
+      "diffbotUri": "https://diffbot.com/entity/EJspjJIHCPZSmYI8AuYAp4w",
+      "confidence": 0.62151545,
+      "salience": 0.84232146,
+      "isCustom": false,
+      "allUris": [
+        "http://www.wikidata.org/entity/Q849340"
+      ],
+      "allTypes": [],
+      "mentions": [
+        {
+          "text": "Cyber",
+          "beginOffset": 54,
+          "endOffset": 59,
+          "confidence": 0.62151545
+        }
+      ]
+    },
+    {
+      "name": "Mixcloud",
+      "diffbotUri": "https://diffbot.com/entity/E7ar33DnvMgOrJzheT-QIyw",
+      "confidence": 0.93408906,
+      "salience": 0.84228903,
+      "isCustom": false,
+      "allUris": [
+        "http://www.wikidata.org/entity/Q6883832"
+      ],
+      "allTypes": [
+        {
+          "name": "organization",
+          "diffbotUri": "https://diffbot.com/entity/EN1ClYEdMMQCxB6AWTkT3mA",
+          "dbpediaUri": "http://dbpedia.org/ontology/Organisation"
+        },
+        {
+          "name": "skill",
+          "diffbotUri": "https://diffbot.com/entity/EvfbHngnSNVOh7ZBM5XTywQ"
+        },
+        {
+          "name": "product",
+          "diffbotUri": "https://diffbot.com/entity/EgSPUye7QPcyQoPylO8biMQ"
+        },
+        {
+          "name": "creative work",
+          "diffbotUri": "https://diffbot.com/entity/EnuIck9oSO_2b9wNK6CD3Vw",
+          "dbpediaUri": "http://dbpedia.org/ontology/Work"
+        }
+      ],
+      "mentions": [
+        {
+          "text": "Mixcloud",
+          "beginOffset": 2504,
+          "endOffset": 2512,
+          "confidence": 0.93408906
+        },
+        {
+          "text": "Mixcloud",
+          "beginOffset": 2762,
+          "endOffset": 2770,
+          "confidence": 0.93408906
+        }
+      ],
+      "location": {
+        "latitude": 51.509647,
+        "longitude": -0.099076,
+        "precision": 39.86554
+      }
+    },
+    {
+      "name": "risk",
+      "diffbotUri": "https://diffbot.com/entity/EJgoxEwliM96RGfBdZ6RU7g",
+      "confidence": 0.62079495,
+      "salience": 0.7856334,
+      "isCustom": false,
+      "allUris": [
+        "http://www.wikidata.org/entity/Q104493"
+      ],
+      "allTypes": [],
+      "mentions": [
+        {
+          "text": "Danger",
+          "beginOffset": 11,
+          "endOffset": 17,
+          "confidence": 0.62079495
+        }
+      ]
+    },
+    {
+      "name": "Google Chrome",
+      "diffbotUri": "https://diffbot.com/entity/EkdmqYfS8NcSyiBzCzShL2Q",
+      "confidence": 0.622991,
+      "salience": 0.77938825,
+      "isCustom": false,
+      "allUris": [
+        "http://www.wikidata.org/entity/Q777"
+      ],
+      "allTypes": [
+        {
+          "name": "skill",
+          "diffbotUri": "https://diffbot.com/entity/EvfbHngnSNVOh7ZBM5XTywQ"
+        },
+        {
+          "name": "product",
+          "diffbotUri": "https://diffbot.com/entity/EgSPUye7QPcyQoPylO8biMQ"
+        },
+        {
+          "name": "creative work",
+          "diffbotUri": "https://diffbot.com/entity/EnuIck9oSO_2b9wNK6CD3Vw",
+          "dbpediaUri": "http://dbpedia.org/ontology/Work"
+        }
+      ],
+      "mentions": [
+        {
+          "text": "Chrome",
+          "beginOffset": 41,
+          "endOffset": 47,
+          "confidence": 0.622991
+        }
+      ]
+    },
+    {
+      "name": "Django",
+      "diffbotUri": "https://diffbot.com/entity/EIrbNMZlsPw60xmY7NwKfIQ",
+      "confidence": 0.83799917,
+      "salience": 0.7366909,
+      "isCustom": false,
+      "allUris": [
+        "http://www.wikidata.org/entity/Q842014"
+      ],
+      "allTypes": [
+        {
+          "name": "skill",
+          "diffbotUri": "https://diffbot.com/entity/EvfbHngnSNVOh7ZBM5XTywQ"
+        },
+        {
+          "name": "product",
+          "diffbotUri": "https://diffbot.com/entity/EgSPUye7QPcyQoPylO8biMQ"
+        },
+        {
+          "name": "creative work",
+          "diffbotUri": "https://diffbot.com/entity/EnuIck9oSO_2b9wNK6CD3Vw",
+          "dbpediaUri": "http://dbpedia.org/ontology/Work"
+        }
+      ],
+      "mentions": [
+        {
+          "text": "Django",
+          "beginOffset": 1863,
+          "endOffset": 1869,
+          "confidence": 0.83799917
+        }
+      ]
+    },
+    {
+      "name": "YouTube",
+      "diffbotUri": "https://diffbot.com/entity/E5x1WxQnpMlqaCftDuOlg7g",
+      "confidence": 0.9311755,
+      "salience": 0.72894543,
+      "isCustom": false,
+      "allUris": [
+        "http://www.wikidata.org/entity/Q866"
+      ],
+      "allTypes": [
+        {
+          "name": "organization",
+          "diffbotUri": "https://diffbot.com/entity/EN1ClYEdMMQCxB6AWTkT3mA",
+          "dbpediaUri": "http://dbpedia.org/ontology/Organisation"
+        },
+        {
+          "name": "skill",
+          "diffbotUri": "https://diffbot.com/entity/EvfbHngnSNVOh7ZBM5XTywQ"
+        },
+        {
+          "name": "product",
+          "diffbotUri": "https://diffbot.com/entity/EgSPUye7QPcyQoPylO8biMQ"
+        },
+        {
+          "name": "creative work",
+          "diffbotUri": "https://diffbot.com/entity/EnuIck9oSO_2b9wNK6CD3Vw",
+          "dbpediaUri": "http://dbpedia.org/ontology/Work"
+        }
+      ],
+      "mentions": [
+        {
+          "text": "YouTube",
+          "beginOffset": 3198,
+          "endOffset": 3205,
+          "confidence": 0.9311755
+        },
+        {
+          "text": "YouTube",
+          "beginOffset": 3236,
+          "endOffset": 3243,
+          "confidence": 0.9311755
+        },
+        {
+          "text": "Youtube",
+          "beginOffset": 3787,
+          "endOffset": 3794,
+          "confidence": 0.9311755
+        },
+        {
+          "text": "Youtube",
+          "beginOffset": 3853,
+          "endOffset": 3860,
+          "confidence": 0.9311755
+        },
+        {
+          "text": "YouTube",
+          "beginOffset": 3989,
+          "endOffset": 3996,
+          "confidence": 0.9311755
+        },
+        {
+          "text": "YouTube",
+          "beginOffset": 4405,
+          "endOffset": 4412,
+          "confidence": 0.9311755
+        },
+        {
+          "text": "YouTube",
+          "beginOffset": 4483,
+          "endOffset": 4490,
+          "confidence": 0.9311755
+        },
+        {
+          "text": "YouTube",
+          "beginOffset": 4616,
+          "endOffset": 4623,
+          "confidence": 0.9311755
+        },
+        {
+          "text": "YouTube",
+          "beginOffset": 4694,
+          "endOffset": 4701,
+          "confidence": 0.9311755
+        },
+        {
+          "text": "YouTube",
+          "beginOffset": 4820,
+          "endOffset": 4827,
+          "confidence": 0.9311755
+        },
+        {
+          "text": "YouTube",
+          "beginOffset": 4903,
+          "endOffset": 4910,
+          "confidence": 0.9311755
+        },
+        {
+          "text": "YouTube",
+          "beginOffset": 5042,
+          "endOffset": 5049,
+          "confidence": 0.9311755
+        },
+        {
+          "text": "YouTube",
+          "beginOffset": 5125,
+          "endOffset": 5132,
+          "confidence": 0.9311755
+        }
+      ],
+      "location": {
+        "latitude": 37.62258,
+        "longitude": -122.42529,
+        "precision": 3.761972
+      }
+    },
+    {
+      "name": "Image 4",
+      "diffbotUri": "https://diffbot.com/entity/EBywuqAAaOVSxLNbIV5f9dg",
+      "confidence": 0.6454667,
+      "salience": 0.7011602,
+      "isCustom": false,
+      "allUris": [
+        "http://www.crunchbase.com/organization/image-4"
+      ],
+      "allTypes": [
+        {
+          "name": "organization",
+          "diffbotUri": "https://diffbot.com/entity/EN1ClYEdMMQCxB6AWTkT3mA",
+          "dbpediaUri": "http://dbpedia.org/ontology/Organisation"
+        }
+      ],
+      "mentions": [
+        {
+          "text": "Image 4",
+          "beginOffset": 5939,
+          "endOffset": 5946,
+          "confidence": 0.6454667
+        }
+      ],
+      "location": {
+        "latitude": 42.974808,
+        "longitude": -71.4286,
+        "precision": 9.504352
+      }
+    },
+    {
+      "name": "consent",
+      "diffbotUri": "https://diffbot.com/entity/EgZmCAvy6P3STJXi27FDRGA",
+      "confidence": 0.72659254,
+      "salience": 0.60331213,
+      "isCustom": false,
+      "allUris": [
+        "http://www.wikidata.org/entity/Q231043"
+      ],
+      "allTypes": [
+        {
+          "name": "skill",
+          "diffbotUri": "https://diffbot.com/entity/EvfbHngnSNVOh7ZBM5XTywQ"
+        },
+        {
+          "name": "field of work",
+          "diffbotUri": "https://diffbot.com/entity/EjGOLMsQZOGSg549SwYfFyQ"
+        }
+      ],
+      "mentions": [
+        {
+          "text": "consent",
+          "beginOffset": 240,
+          "endOffset": 247,
+          "confidence": 0.72659254
+        },
+        {
+          "text": "Consent",
+          "beginOffset": 550,
+          "endOffset": 557,
+          "confidence": 0.72659254
+        },
+        {
+          "text": "CONSENT",
+          "beginOffset": 3125,
+          "endOffset": 3132,
+          "confidence": 0.72659254
+        }
+      ]
+    },
+    {
+      "name": "silent film",
+      "diffbotUri": "https://diffbot.com/entity/E--bmuz-dM42bKXVMBmXFxg",
+      "confidence": 0.6237364,
+      "salience": 0.52936035,
+      "isCustom": false,
+      "allUris": [
+        "http://www.wikidata.org/entity/Q226730"
+      ],
+      "allTypes": [
+        {
+          "name": "skill",
+          "diffbotUri": "https://diffbot.com/entity/EvfbHngnSNVOh7ZBM5XTywQ"
+        },
+        {
+          "name": "product",
+          "diffbotUri": "https://diffbot.com/entity/EgSPUye7QPcyQoPylO8biMQ"
+        },
+        {
+          "name": "creative work",
+          "diffbotUri": "https://diffbot.com/entity/EnuIck9oSO_2b9wNK6CD3Vw",
+          "dbpediaUri": "http://dbpedia.org/ontology/Work"
+        },
+        {
+          "name": "field of work",
+          "diffbotUri": "https://diffbot.com/entity/EjGOLMsQZOGSg549SwYfFyQ"
+        },
+        {
+          "name": "audiovisual work",
+          "diffbotUri": "https://diffbot.com/entity/EXLWLJXi5PeqBkmK1EIblvA"
+        },
+        {
+          "name": "film",
+          "diffbotUri": "https://diffbot.com/entity/EkG2zqpPlPm2cOrDuBX15ZQ",
+          "dbpediaUri": "http://dbpedia.org/ontology/Film"
+        },
+        {
+          "name": "technology",
+          "diffbotUri": "https://diffbot.com/entity/E-5jnlQEGOt2x8rdkkht1NQ"
+        }
+      ],
+      "mentions": [
+        {
+          "text": "Silent",
+          "beginOffset": 4,
+          "endOffset": 10,
+          "confidence": 0.6237364
+        }
+      ]
+    },
+    {
+      "name": "INFO 1",
+      "diffbotUri": "https://diffbot.com/entity/EV-ybXHFlPE6hZGHbdlmuuA",
+      "confidence": 0.5758346,
+      "salience": 0.4940906,
+      "isCustom": false,
+      "allUris": [
+        "http://www.crunchbase.com/organization/info-1"
+      ],
+      "allTypes": [
+        {
+          "name": "organization",
+          "diffbotUri": "https://diffbot.com/entity/EN1ClYEdMMQCxB6AWTkT3mA",
+          "dbpediaUri": "http://dbpedia.org/ontology/Organisation"
+        }
+      ],
+      "mentions": [
+        {
+          "text": "INFO1",
+          "beginOffset": 3903,
+          "endOffset": 3908,
+          "confidence": 0.5758346
+        }
+      ],
+      "location": {
+        "latitude": 36.539246,
+        "longitude": -82.534065,
+        "precision": 11.651397
+      }
+    },
+    {
+      "name": "Meta",
+      "diffbotUri": "https://diffbot.com/entity/Ebm4UJoSuP1esww1rsLvu9g",
+      "confidence": 1.055,
+      "salience": 0.0,
+      "isCustom": false,
+      "allUris": [],
+      "allTypes": [
+        {
+          "name": "organization",
+          "diffbotUri": "https://diffbot.com/entity/EN1ClYEdMMQCxB6AWTkT3mA",
+          "dbpediaUri": "http://dbpedia.org/ontology/Organisation"
+        }
+      ],
+      "mentions": [
+        {
+          "text": "Facebook",
+          "beginOffset": 72306,
+          "endOffset": 72314,
+          "confidence": 1.055
+        }
+      ]
+    },
+    {
+      "name": "Image 1",
+      "confidence": 0.85,
+      "salience": 0.8387677,
+      "isCustom": false,
+      "allUris": [],
+      "allTypes": [
+        {
+          "name": "organization",
+          "diffbotUri": "https://diffbot.com/entity/EN1ClYEdMMQCxB6AWTkT3mA",
+          "dbpediaUri": "http://dbpedia.org/ontology/Organisation"
+        }
+      ],
+      "mentions": [
+        {
+          "text": "Image 1",
+          "beginOffset": 223,
+          "endOffset": 230,
+          "confidence": 0.85
+        }
+      ]
+    },
+    {
+      "name": "Revisit",
+      "confidence": 0.85,
+      "salience": 0.8244112,
+      "isCustom": false,
+      "allUris": [],
+      "allTypes": [
+        {
+          "name": "organization",
+          "diffbotUri": "https://diffbot.com/entity/EN1ClYEdMMQCxB6AWTkT3mA",
+          "dbpediaUri": "http://dbpedia.org/ontology/Organisation"
+        }
+      ],
+      "mentions": [
+        {
+          "text": "Revisit",
+          "beginOffset": 232,
+          "endOffset": 239,
+          "confidence": 0.85
+        }
+      ]
+    },
+    {
+      "name": "Customize",
+      "confidence": 0.85,
+      "salience": 0.4334398,
+      "isCustom": false,
+      "allUris": [],
+      "allTypes": [
+        {
+          "name": "organization",
+          "diffbotUri": "https://diffbot.com/entity/EN1ClYEdMMQCxB6AWTkT3mA",
+          "dbpediaUri": "http://dbpedia.org/ontology/Organisation"
+        }
+      ],
+      "mentions": [
+        {
+          "text": "Customize",
+          "beginOffset": 507,
+          "endOffset": 516,
+          "confidence": 0.85
+        }
+      ]
+    },
+    {
+      "name": "Image 2",
+      "confidence": 0.85,
+      "salience": 0.85774565,
+      "isCustom": false,
+      "allUris": [],
+      "allTypes": [
+        {
+          "name": "organization",
+          "diffbotUri": "https://diffbot.com/entity/EN1ClYEdMMQCxB6AWTkT3mA",
+          "dbpediaUri": "http://dbpedia.org/ontology/Organisation"
+        }
+      ],
+      "mentions": [
+        {
+          "text": "Image 2",
+          "beginOffset": 572,
+          "endOffset": 579,
+          "confidence": 0.85
+        }
+      ]
+    },
+    {
+      "name": "Mix Cloud",
+      "confidence": 0.85,
+      "salience": 0.84900385,
+      "isCustom": false,
+      "allUris": [],
+      "allTypes": [
+        {
+          "name": "organization",
+          "diffbotUri": "https://diffbot.com/entity/EN1ClYEdMMQCxB6AWTkT3mA",
+          "dbpediaUri": "http://dbpedia.org/ontology/Organisation"
+        }
+      ],
+      "mentions": [
+        {
+          "text": "Mix Cloud",
+          "beginOffset": 2607,
+          "endOffset": 2616,
+          "confidence": 0.85
+        },
+        {
+          "text": "Mix Cloud",
+          "beginOffset": 2865,
+          "endOffset": 2874,
+          "confidence": 0.85
+        }
+      ]
+    },
+    {
+      "name": "nextId",
+      "confidence": 0.85,
+      "salience": 0.34926337,
+      "isCustom": false,
+      "allUris": [],
+      "allTypes": [
+        {
+          "name": "organization",
+          "diffbotUri": "https://diffbot.com/entity/EN1ClYEdMMQCxB6AWTkT3mA",
+          "dbpediaUri": "http://dbpedia.org/ontology/Organisation"
+        }
+      ],
+      "mentions": [
+        {
+          "text": "nextId",
+          "beginOffset": 4750,
+          "endOffset": 4756,
+          "confidence": 0.85
+        }
+      ]
+    },
+    {
+      "name": "Adapts",
+      "confidence": 0.85,
+      "salience": 0.5535447,
+      "isCustom": false,
+      "allUris": [],
+      "allTypes": [
+        {
+          "name": "organization",
+          "diffbotUri": "https://diffbot.com/entity/EN1ClYEdMMQCxB6AWTkT3mA",
+          "dbpediaUri": "http://dbpedia.org/ontology/Organisation"
+        }
+      ],
+      "mentions": [
+        {
+          "text": "Adapts",
+          "beginOffset": 8476,
+          "endOffset": 8482,
+          "confidence": 0.85
+        },
+        {
+          "text": "Adapts",
+          "beginOffset": 8537,
+          "endOffset": 8543,
+          "confidence": 0.85
+        }
+      ]
+    },
+    {
+      "name": "user@website.com",
+      "confidence": 0.9,
+      "salience": 0.0,
+      "isCustom": false,
+      "allUris": [],
+      "allTypes": [
+        {
+          "name": "email address",
+          "diffbotUri": "https://diffbot.com/entity/EEc9SZU7ZNVeoHgojpFF6kA"
+        }
+      ],
+      "mentions": [
+        {
+          "text": "user@website.com",
+          "beginOffset": 71958,
+          "endOffset": 71974,
+          "confidence": 0.9
+        },
+        {
+          "text": "user@website.com",
+          "beginOffset": 78175,
+          "endOffset": 78191,
+          "confidence": 0.9
+        }
+      ]
+    }
+  ],
+  "categories": {
+    "iabv1": [
+      {
+        "id": "IAB19",
+        "name": "Technology & Computing",
+        "path": "/Technology & Computing",
+        "confidence": 0.9944258,
+        "isPrimary": true
+      }
+    ],
+    "iabv2": [
+      {
+        "id": "609",
+        "name": "Browsers",
+        "path": "/Technology & Computing/Computing/Computer Software and Applications/Browsers",
+        "confidence": 0.9944258,
+        "isPrimary": true
+      },
+      {
+        "id": "596",
+        "name": "Technology & Computing",
+        "path": "/Technology & Computing",
+        "confidence": 0.9944258,
+        "isPrimary": false
+      },
+      {
+        "id": "599",
+        "name": "Computing",
+        "path": "/Technology & Computing/Computing",
+        "confidence": 0.9944258,
+        "isPrimary": false
+      },
+      {
+        "id": "602",
+        "name": "Computer Software and Applications",
+        "path": "/Technology & Computing/Computing/Computer Software and Applications",
+        "confidence": 0.9944258,
+        "isPrimary": false
+      }
+    ]
+  }
+}
