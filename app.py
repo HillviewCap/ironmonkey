@@ -7,7 +7,6 @@ import uuid
 from datetime import datetime
 from typing import List
 
-import httpx
 import bleach
 from dotenv import load_dotenv
 from flask import Flask, render_template, request, jsonify, current_app
@@ -32,10 +31,11 @@ from ollama_api import OllamaAPI
 import asyncio
 from ollama_api import OllamaAPI
 import asyncio
-import yaml
 
 # Load environment variables
 load_dotenv()
+
+from summary_enhancer import SummaryEnhancer
 
 async def enhance_summaries():
     """
@@ -44,58 +44,8 @@ async def enhance_summaries():
     """
     app = current_app._get_current_object()
     ollama_api = OllamaAPI()
-    logger = app.logger.getChild('enhance_summaries')
-
-    logger.info("Starting summary enhancement process")
-
-    # Load prompts from YAML file
-    with open('prompts.yaml', 'r') as file:
-        prompts = yaml.safe_load(file)
-
-    while True:
-        try:
-            # Start a new session for each iteration
-            with db.session.begin():
-                # Query for a single record with missing summary
-                record_to_update = db.session.query(ParsedContent).filter(ParsedContent.summary.is_(None)).with_for_update().first()
-                
-                if not record_to_update:
-                    logger.info("No more records to update. Process completed.")
-                    break
-
-                logger.debug(f"Processing record {record_to_update.id}")
-                system_prompt = prompts['summarize']['system_prompt']
-                user_prompt = record_to_update.content
-                
-                max_retries = 3
-                for attempt in range(max_retries):
-                    try:
-                        response = await ollama_api.ask(system_prompt=system_prompt, user_prompt=user_prompt)
-                        summary = response.strip()
-                        
-                        if summary:
-                            # Update the summary field
-                            record_to_update.summary = summary
-                            logger.info(f"Updated summary for record {record_to_update.id}")
-                            logger.info(f"Summary: {summary}")  # Output the summary to the log
-                            break
-                        else:
-                            logger.warning(f"Empty summary generated for record {record_to_update.id}. Attempt {attempt + 1}/{max_retries}")
-                    except httpx.ReadTimeout:
-                        logger.error(f"Timeout error generating summary for record {record_to_update.id}. Attempt {attempt + 1}/{max_retries}", exc_info=True)
-                    except Exception as e:
-                        logger.error(f"Error generating summary for record {record_to_update.id}: {str(e)}. Attempt {attempt + 1}/{max_retries}", exc_info=True)
-                    
-                    if attempt == max_retries - 1:
-                        logger.error(f"Failed to generate summary for record {record_to_update.id} after {max_retries} attempts. Moving to next record.")
-
-                # The session will be committed here if no exception occurred
-
-        except SQLAlchemyError as e:
-            logger.error(f"Database error: {str(e)}")
-            # The session will be rolled back here
-
-    logger.info("Summary enhancement process completed")
+    enhancer = SummaryEnhancer(ollama_api)
+    await enhancer.enhance_summaries()
 
 # Configure logging
 logging.basicConfig(
