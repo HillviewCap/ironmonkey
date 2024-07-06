@@ -23,19 +23,20 @@ import asyncio
 import time
 from ratelimit import limits, sleep_and_retry
 
-# Set up logging
-logging.basicConfig(
-    filename="diffbot_responses.log",
-    level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s",
-)
+# Set up logging for nlp_tagging
+logger = logging.getLogger('nlp_tagging')
+logger.setLevel(logging.INFO)
 
-# Set up a separate logger for JSON responses
-json_logger = logging.getLogger("json_logger")
-json_logger.setLevel(logging.INFO)
-json_handler = logging.FileHandler("diffbot_json_responses.log")
-json_handler.setFormatter(logging.Formatter("%(asctime)s - %(message)s"))
-json_logger.addHandler(json_handler)
+# Create a file handler
+file_handler = logging.FileHandler('nlp_tagging.log')
+file_handler.setLevel(logging.INFO)
+
+# Create a formatting for the logs
+formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+file_handler.setFormatter(formatter)
+
+# Add the file handler to the logger
+logger.addHandler(file_handler)
 
 
 class DiffbotClient:
@@ -69,31 +70,31 @@ class DiffbotClient:
 
                 if response.status_code != 200:
                     error_message = f"Error processing content: {response.status_code}"
-                    logging.error(error_message)
+                    logger.error(error_message)
                     raise Exception(error_message)
 
                 response_json = response.json()
 
                 # Log the full JSON response
-                json_logger.info(json.dumps(response_json, indent=2))
+                logger.info(f"Diffbot response: {json.dumps(response_json, indent=2)}")
 
-                logging.info("Diffbot response received and logged")
+                logger.info("Diffbot response received and logged")
 
                 # Check if the response is a dictionary and has the expected keys
                 if isinstance(response_json, dict) and "entities" in response_json:
                     return response_json
                 else:
                     error_message = "Unexpected response format from Diffbot API"
-                    logging.error(error_message)
+                    logger.error(error_message)
                     raise Exception(error_message)
 
             except Exception as e:
                 if attempt < max_retries - 1:
-                    logging.warning(f"Attempt {attempt + 1} failed. Retrying in {retry_delay} seconds...")
+                    logger.warning(f"Attempt {attempt + 1} failed. Retrying in {retry_delay} seconds...")
                     await asyncio.sleep(retry_delay)
                     retry_delay *= 2  # Exponential backoff
                 else:
-                    logging.error(f"All {max_retries} attempts failed. Last error: {str(e)}")
+                    logger.error(f"All {max_retries} attempts failed. Last error: {str(e)}")
                     raise
 
 
@@ -131,9 +132,9 @@ class DatabaseHandler:
                     )
                     session.add(uri)
                 else:
-                    logging.warning(f"Unexpected URI data type: {type(uri_data)}")
+                    logger.warning(f"Unexpected URI data type: {type(uri_data)}")
         else:
-            logging.warning(f"Unexpected URIs data type: {type(uris_data)}")
+            logger.warning(f"Unexpected URIs data type: {type(uris_data)}")
 
     def add_types(self, session, entity: Entity, types_data: List[Dict[str, str]]):
         if isinstance(types_data, list):
@@ -148,9 +149,9 @@ class DatabaseHandler:
                     entity_type = EntityType(entity=entity, type=type_obj)
                     session.add(entity_type)
                 else:
-                    logging.warning(f"Unexpected type data type: {type(type_data)}")
+                    logger.warning(f"Unexpected type data type: {type(type_data)}")
         else:
-            logging.warning(f"Unexpected types data type: {type(types_data)}")
+            logger.warning(f"Unexpected types data type: {type(types_data)}")
 
     def add_mentions(
         self, session, entity: Entity, mentions_data: List[Dict[str, Any]]
@@ -167,11 +168,11 @@ class DatabaseHandler:
                     )
                     session.add(mention)
                 else:
-                    logging.warning(
+                    logger.warning(
                         f"Unexpected mention data type: {type(mention_data)}"
                     )
         else:
-            logging.warning(f"Unexpected mentions data type: {type(mentions_data)}")
+            logger.warning(f"Unexpected mentions data type: {type(mentions_data)}")
 
     def add_locations(
         self, session, entity: Entity, locations_data: List[Dict[str, Any]]
@@ -187,11 +188,11 @@ class DatabaseHandler:
                     )
                     session.add(location)
                 else:
-                    logging.warning(
+                    logger.warning(
                         f"Unexpected location data type: {type(location_data)}"
                     )
         else:
-            logging.warning(f"Unexpected locations data type: {type(locations_data)}")
+            logger.warning(f"Unexpected locations data type: {type(locations_data)}")
 
     def add_categories(
         self, session, categories_data: List[Dict[str, Any]], content: ParsedContent
@@ -208,11 +209,11 @@ class DatabaseHandler:
                     )
                     session.add(category)
                 else:
-                    logging.warning(
+                    logger.warning(
                         f"Unexpected category data type: {type(category_data)}"
                     )
         else:
-            logging.warning(f"Unexpected categories data type: {type(categories_data)}")
+            logger.warning(f"Unexpected categories data type: {type(categories_data)}")
 
     def process_nlp_result(
         self, content: ParsedContent, result: Dict[str, Any], session
