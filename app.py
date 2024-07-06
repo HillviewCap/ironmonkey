@@ -52,13 +52,14 @@ async def enhance_summaries():
 
     for record in records_to_update:
         logger.debug(f"Processing record {record.id}")
-        prompt = f"Summarize this content:\n\n{record.content}"
+        prompt = f"Summarize the following content in exactly 3 sentences:\n\n{record.content}"
         try:
             response = await ollama_api.generate(prompt=prompt)
             summary = response.get('response', '').strip()
             
             if summary:
-                record.summary = summary
+                # Concatenate the original content with the generated summary
+                record.summary = f"{record.content}\n\nSummary:\n{summary}"
                 db.session.commit()
                 logger.info(f"Updated summary for record {record.id}")
             else:
