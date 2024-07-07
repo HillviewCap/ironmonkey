@@ -27,8 +27,10 @@ class OllamaAPI:
         """
         try:
             await self.client.list()
+            logger.info(f"Successfully connected to Ollama API at {self.base_url}")
             return True
-        except Exception:
+        except Exception as e:
+            logger.error(f"Failed to connect to Ollama API at {self.base_url}: {str(e)}")
             return False
 
     async def generate(self, system_prompt: str, user_prompt: str) -> dict:
@@ -43,7 +45,7 @@ class OllamaAPI:
             dict: The API response containing the generated text.
         """
         if not await self.check_connection():
-            raise Exception("Unable to connect to Ollama API")
+            raise Exception(f"Unable to connect to Ollama API at {self.base_url}")
 
         # Ensure UTF-8 encoding for both prompts
         system_prompt_utf8 = system_prompt.encode('utf-8', errors='ignore').decode('utf-8')
@@ -60,10 +62,12 @@ class OllamaAPI:
                 )
                 return response
             except asyncio.TimeoutError:
+                logger.error(f"Timeout error occurred (attempt {attempt + 1}/{self.max_retries})")
                 if attempt == self.max_retries - 1:
                     raise Exception(f"Timeout error occurred after {self.max_retries} attempts")
                 await asyncio.sleep(2**attempt)  # Exponential backoff
             except Exception as exc:
+                logger.error(f"Error occurred (attempt {attempt + 1}/{self.max_retries}): {exc}")
                 if attempt == self.max_retries - 1:
                     raise Exception(f"Error occurred after {self.max_retries} attempts: {exc}")
                 await asyncio.sleep(2**attempt)  # Exponential backoff
