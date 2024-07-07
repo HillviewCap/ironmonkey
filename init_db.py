@@ -2,7 +2,7 @@ from flask import Flask
 from models import db, User, RSSFeed, ParsedContent, Category, Threat, SearchParams
 from models.diffbot_model import Base as DiffbotBase, Document, Entity, EntityMention, EntityType, EntityUri, Category as DiffbotCategory
 from config import Config
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 
 def create_app():
     app = Flask(__name__)
