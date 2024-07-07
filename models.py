@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, date
 from typing import List, Optional, Tuple
 from uuid import UUID as PyUUID, uuid4
 import uuid
@@ -16,6 +16,21 @@ import logging_config
 
 db = SQLAlchemy()
 from sqlalchemy.dialects.postgresql import UUID
+
+class SearchParams:
+    def __init__(
+        self,
+        query: str = "",
+        start_date: date = None,
+        end_date: date = None,
+        source_types: List[str] = None,
+        keywords: List[str] = None,
+    ):
+        self.query = query
+        self.start_date = start_date
+        self.end_date = end_date
+        self.source_types = source_types or []
+        self.keywords = keywords or []
 
 
 class User(UserMixin, db.Model):
