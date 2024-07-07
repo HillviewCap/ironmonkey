@@ -15,7 +15,7 @@
             <label for="per_page" class="mr-2">Items per page:</label>
             <select id="per_page" name="per_page" onchange="this.form.submit()" class="border rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500">
                 {% for option in per_page_options %}
-                    <option value="{{ option }}" {% if option == (per_page|default(10)) %}selected{% endif %}>{{ option }}</option>
+                    <option value="{{ option }}" {% if option == per_page|default(10) %}selected{% endif %}>{{ option }}</option>
                 {% endfor %}
             </select>
         </form>
