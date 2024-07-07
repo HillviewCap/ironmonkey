@@ -22,12 +22,13 @@ from werkzeug.exceptions import BadRequest
 
 import logging_config
 from logging.handlers import TimedRotatingFileHandler
-from models import SearchParams, db, ParsedContent, User
+from models import SearchParams, db, User
+from models.diffbot_model import Document, Entity, EntityMention, EntityType, EntityUri, Category
 from flask_login import LoginManager, UserMixin
 from auth import init_auth, login, logout, register
 from config import Config
 from rss_manager import rss_manager
-from nlp_tagging import DiffbotClient, DatabaseHandler
+from nlp_tagging import DiffbotClient, DatabaseHandler, Document
 from ollama_api import OllamaAPI
 import asyncio
 from ollama_api import OllamaAPI
@@ -173,22 +174,18 @@ def create_app():
         if not content_id:
             return jsonify({"error": "content_id is required"}), 400
 
-        content = ParsedContent.get_by_id(content_id)
-        if not content:
-            return jsonify({"error": "Content not found"}), 404
+        document = db.session.query(Document).get(content_id)
+        if not document:
+            return jsonify({"error": "Document not found"}), 404
 
         try:
-            # Detach the content object from its current session
-            db.session.expunge(content)
-        
             async with httpx.AsyncClient() as client:
-                result = await diffbot_client.tag_content(content.content, client)
+                result = await diffbot_client.tag_content(document.content, client)
         
             # Use the existing db.session for processing the result
-            db_handler.process_nlp_result(content, result, db.session)
+            db_handler.process_nlp_result(document, result, db.session)
             # Update the summary field
-            content.summary = result.get("summary", {}).get("text")
-            db.session.merge(content)
+            document.summary = result.get("summary", {}).get("text")
             db.session.commit()
 
             return jsonify({"message": "Content tagged successfully"}), 200
@@ -206,9 +203,9 @@ def create_app():
         diffbot_client = DiffbotClient(diffbot_api_key)
         db_handler = DatabaseHandler(app.config["SQLALCHEMY_DATABASE_URI"])
 
-        untagged_content = (
-            ParsedContent.query.filter(
-                (ParsedContent.entities == None) & (ParsedContent.categories == None)
+        untagged_documents = (
+            Document.query.filter(
+                (Document.entities == None) & (Document.categories == None)
             )
             .limit(10)
             .all()
@@ -216,22 +213,22 @@ def create_app():
 
         tagged_count = 0
         async with httpx.AsyncClient() as client:
-            for content in untagged_content:
+            for document in untagged_documents:
                 try:
-                    result = await diffbot_client.tag_content(content.content, client)
-                    db_handler.process_nlp_result(content, result)
-                    content.summary = result.get("summary", {}).get("text")
+                    result = await diffbot_client.tag_content(document.content, client)
+                    db_handler.process_nlp_result(document, result)
+                    document.summary = result.get("summary", {}).get("text")
                     tagged_count += 1
                 except Exception as e:
                     current_app.logger.error(
-                        f"Error tagging content ID {content.id}: {str(e)}"
+                        f"Error tagging document ID {document.id}: {str(e)}"
                     )
 
         db.session.commit()
         return (
             jsonify(
                 {
-                    "message": f"Tagged {tagged_count} out of {len(untagged_content)} contents"
+                    "message": f"Tagged {tagged_count} out of {len(untagged_documents)} documents"
                 }
             ),
             200,
@@ -275,9 +272,9 @@ def create_app():
 
         return render_template("search.html", form=form)
 
-    @app.route("/view/<uuid:item_id>")
+    @app.route("/view/<int:item_id>")
     def view_item(item_id):
-        item = ParsedContent.query.get_or_404(item_id)
+        item = Document.query.get_or_404(item_id)
         return render_template("view_item.html", item=item)
 
     @app.cli.command("parse-feeds")
