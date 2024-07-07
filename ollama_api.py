@@ -30,7 +30,7 @@ class OllamaAPI:
             logger.error(f"Failed to connect to Ollama API at {self.base_url}: {str(e)}")
             return False
 
-    def generate(self, system_prompt: str, content_to_summarize: str) -> dict:
+    def generate(self, system_prompt: str, content_to_summarize: str) -> str:
         """
         Generate a response using the Ollama API.
 
@@ -39,7 +39,7 @@ class OllamaAPI:
             content_to_summarize (str): The content to be summarized.
 
         Returns:
-            dict: The API response containing the generated text.
+            str: The generated text response from the model.
         """
         if not self.check_connection():
             raise Exception(f"Unable to connect to Ollama API at {self.base_url}")
@@ -67,21 +67,7 @@ class OllamaAPI:
                 ],
                 stream=False
             )
-            return response
+            return response['message']['content']
         except Exception as exc:
             logger.error(f"Error occurred: {exc}")
             raise Exception(f"Error occurred: {exc}")
-
-    def ask(self, system_prompt: str, content_to_summarize: str) -> str:
-        """
-        Ask a question to the Ollama model.
-
-        Args:
-            system_prompt (str): The system prompt for the model.
-            content_to_summarize (str): The content to be summarized.
-
-        Returns:
-            str: The response from the model.
-        """
-        response = self.generate(system_prompt, content_to_summarize)
-        return response['message']['content']
