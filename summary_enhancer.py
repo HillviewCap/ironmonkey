@@ -15,11 +15,11 @@ from __future__ import annotations
 
 from logging_config import logger
 from sqlalchemy.orm import Session
-from models import ParsedContent, db
+from models import ParsedContent, db, RSSFeed
 from ollama_api import OllamaAPI
 import yaml
 import httpx
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 
 
 class SummaryEnhancer:
@@ -72,15 +72,18 @@ class SummaryEnhancer:
         logger.error(f"Failed to generate summary for record {content_id} after {self.max_retries} attempts.")
         return False
 
-    async def enhance_summaries(self) -> None:
+    async def enhance_summaries(self, feed_id: Optional[str] = None) -> None:
         logger.info("Starting summary enhancement process")
+
+        query = db.session.query(ParsedContent).filter(ParsedContent.summary.is_(None))
+        if feed_id:
+            query = query.filter(ParsedContent.feed_id == feed_id)
 
         while True:
             try:
                 with db.session.begin():
                     record_to_update = (
-                        db.session.query(ParsedContent)
-                        .filter(ParsedContent.summary.is_(None))
+                        query
                         .with_for_update(skip_locked=True)
                         .first()
                     )
@@ -97,3 +100,15 @@ class SummaryEnhancer:
                 logger.error(f"Error during summary enhancement: {str(e)}", exc_info=True)
 
         logger.info("Summary enhancement process completed")
+
+    async def summarize_feed(self, feed_id: str) -> None:
+        logger.info(f"Starting summary enhancement for feed {feed_id}")
+
+        feed = RSSFeed.query.get(feed_id)
+        if not feed:
+            logger.error(f"Feed with id {feed_id} not found")
+            return
+
+        await self.enhance_summaries(feed_id)
+
+        logger.info(f"Summary enhancement for feed {feed_id} completed")
