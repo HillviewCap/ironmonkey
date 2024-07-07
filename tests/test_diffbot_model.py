@@ -1,7 +1,7 @@
 import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from ..models.diffbot_model import Base, Document, Entity, EntityMention, EntityType, EntityUri, Category
+from models.diffbot_model import Base, Document, Entity, EntityMention, EntityType, EntityUri, Category
 import uuid
 
 @pytest.fixture(scope="module")
