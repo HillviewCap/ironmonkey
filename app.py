@@ -397,6 +397,6 @@ def build_search_query(search_params):
 if __name__ == "__main__":
     app = create_app()
     if app is not None:
-        app.run(debug=True)
+        app.run(debug=True, use_reloader=False)
     else:
         print("Failed to create the application. Please check the logs for more information.")
