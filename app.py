@@ -22,7 +22,7 @@ from werkzeug.exceptions import BadRequest
 
 import logging_config
 from logging.handlers import TimedRotatingFileHandler
-from models import SearchParams, db, User
+from models import db, User, SearchParams
 from models.diffbot_model import Document, Entity, EntityMention, EntityType, EntityUri, Category
 from flask_login import LoginManager, UserMixin
 from auth import init_auth, login, logout, register
