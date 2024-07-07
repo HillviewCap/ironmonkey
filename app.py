@@ -1,9 +1,7 @@
 from __future__ import annotations
 
 import os
-import logging
 import asyncio
-import uuid
 import uuid
 from datetime import datetime
 from typing import List
@@ -20,8 +18,7 @@ from flask_login import login_required, current_user
 from sqlalchemy.exc import SQLAlchemyError
 from werkzeug.exceptions import BadRequest
 
-import logging_config
-from logging.handlers import TimedRotatingFileHandler
+from logging_config import setup_logger
 from models import db, User, SearchParams
 from models.diffbot_model import Document, Entity, EntityMention, EntityType, EntityUri, Category
 from flask_login import LoginManager, UserMixin
