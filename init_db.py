@@ -23,7 +23,7 @@ def init_db():
         # Add the summary column to ParsedContent if it doesn't exist
         with engine.connect() as connection:
             result = connection.execute(
-                "PRAGMA table_info(parsed_content)"
+                text("PRAGMA table_info(parsed_content)")
             ).fetchall()
             columns = [row["name"] for row in result]
             if "summary" not in columns:
