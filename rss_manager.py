@@ -19,7 +19,7 @@ import feedparser
 import httpx
 import asyncio
 
-from models import db, RSSFeed, ParsedContent
+from models import db, RSSFeed, ParsedContent, Category
 from jina_api import parse_content
 from logging_config import logger
 from nlp_tagging import DiffbotClient, DatabaseHandler
