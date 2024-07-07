@@ -152,14 +152,16 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(response => response.json())
             .then(data => {
                 if (data.summary) {
-                    summaryElement.textContent = data.summary;
+                    summaryElement.textContent = data.summary.substring(0, 50) + (data.summary.length > 50 ? '...' : '');
                 } else {
                     console.error('Failed to generate summary.');
+                    alert('Failed to generate summary. Please try again.');
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
-                alert('An error occurred while generating the summary.');
+                alert('An error occurred while generating the summary. Please try again.');
+                summaryElement.textContent = 'Error generating summary';
             })
             .finally(() => {
                 // Re-enable the button and remove the spinner
