@@ -1,3 +1,16 @@
+# Workflow:
+# 1. Initialize SummaryEnhancer with OllamaAPI
+# 2. Load prompts from prompts.yaml
+# 3. Call enhance_summaries() method
+#    a. Query database for ParsedContent with null summary
+#    b. For each record:
+#       i. Generate summary using OllamaAPI
+#       ii. Update ParsedContent with new summary
+#       iii. Commit changes to database
+#    c. Repeat until no more records to update
+# 4. Handle errors and retries
+# 5. Log process status and completion
+
 from __future__ import annotations
 
 from logging_config import logger
