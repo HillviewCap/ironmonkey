@@ -52,6 +52,10 @@ class OllamaAPI:
         system_prompt_utf8 = system_prompt.encode('utf-8', errors='ignore').decode('utf-8')
         user_prompt_utf8 = user_prompt.encode('utf-8', errors='ignore').decode('utf-8')
 
+        # Log the prompts
+        logger.debug(f"System Prompt: {system_prompt_utf8}")
+        logger.debug(f"User Prompt: {user_prompt_utf8}")
+
         for attempt in range(self.max_retries):
             try:
                 response = await self.client.chat(
