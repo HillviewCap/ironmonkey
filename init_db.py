@@ -22,8 +22,12 @@ def init_db():
         
         # Add the summary column to ParsedContent if it doesn't exist
         with engine.connect() as connection:
-            if not connection.dialect.has_column(connection, "parsed_content", "summary"):
-                connection.execute('ALTER TABLE parsed_content ADD COLUMN summary TEXT')
+            result = connection.execute(
+                "PRAGMA table_info(parsed_content)"
+            ).fetchall()
+            columns = [row["name"] for row in result]
+            if "summary" not in columns:
+                connection.execute("ALTER TABLE parsed_content ADD COLUMN summary TEXT")
         
         print("All database tables created and updated successfully.")
 
