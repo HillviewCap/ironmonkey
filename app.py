@@ -113,11 +113,11 @@ def create_app():
             current_app.logger.info("Entering index route")
             try:
                 if current_user.is_authenticated:
-                    # Fetch the 6 most recent ParsedContent items with non-null title and content
+                    # Fetch the 6 most recent Document items with non-null title and content
                     recent_items = (
-                        ParsedContent.query
-                        .filter(ParsedContent.title.isnot(None), ParsedContent.content.isnot(None))
-                        .order_by(ParsedContent.created_at.desc())
+                        Document.query
+                        .filter(Document.title.isnot(None), Document.content.isnot(None))
+                        .order_by(Document.created_at.desc())
                         .limit(6)
                         .all()
                     )
@@ -244,9 +244,9 @@ def create_app():
         if not content_id:
             return jsonify({"error": "content_id is required"}), 400
 
-        content = ParsedContent.query.get(content_id)
-        if not content:
-            return jsonify({"error": "Content not found"}), 404
+        document = Document.query.get(content_id)
+        if not document:
+            return jsonify({"error": "Document not found"}), 404
 
         try:
             result = await diffbot_client.tag_content(content.content)
@@ -397,24 +397,24 @@ def get_search_params(form):
 
 
 def build_search_query(search_params):
-    query = db.session.query(ParsedContent)
+    query = db.session.query(Document)
 
     query = query.filter(
         db.or_(
-            ParsedContent.title.ilike(f"%{bleach.clean(search_params.query)}%"),
-            ParsedContent.content.ilike(f"%{bleach.clean(search_params.query)}%"),
+            Document.title.ilike(f"%{bleach.clean(search_params.query)}%"),
+            Document.content.ilike(f"%{bleach.clean(search_params.query)}%"),
         )
     )
 
     if search_params.start_date:
-        query = query.filter(ParsedContent.date >= search_params.start_date)
+        query = query.filter(Document.date >= search_params.start_date)
 
     if search_params.end_date:
-        query = query.filter(ParsedContent.date <= search_params.end_date)
+        query = query.filter(Document.date <= search_params.end_date)
 
     if search_params.source_types:
         query = query.filter(
-            ParsedContent.source_type.in_(
+            Document.source_type.in_(
                 [bleach.clean(st) for st in search_params.source_types]
             )
         )
@@ -423,8 +423,8 @@ def build_search_query(search_params):
         for keyword in search_params.keywords:
             query = query.filter(
                 db.or_(
-                    ParsedContent.title.ilike(f"%{bleach.clean(keyword)}%"),
-                    ParsedContent.content.ilike(f"%{bleach.clean(keyword)}%"),
+                    Document.title.ilike(f"%{bleach.clean(keyword)}%"),
+                    Document.content.ilike(f"%{bleach.clean(keyword)}%"),
                 )
             )
 
