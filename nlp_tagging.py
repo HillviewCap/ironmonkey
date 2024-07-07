@@ -2,26 +2,12 @@ import httpx
 import os
 import logging
 import json
-import os
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from models import (
-    db,
-    ParsedContent,
-    Entity,
-    Uris,
-    Type,
-    EntityType,
-    Mention,
-    Location,
-    Category,
-)
-from sqlalchemy.dialects.postgresql import UUID
-import uuid
+from models.diffbot_model import Base, Document, Entity, EntityMention, EntityType, EntityUri, Category
 from config import Config
 from typing import List, Dict, Any
 import asyncio
-import time
 from ratelimit import limits, sleep_and_retry
 
 # Set up logging for nlp_tagging
@@ -111,22 +97,24 @@ class DiffbotClient:
 class DatabaseHandler:
     def __init__(self, db_uri: str):
         engine = create_engine(db_uri)
+        Base.metadata.create_all(engine)
         self.Session = sessionmaker(bind=engine)
 
-    def get_all_parsed_content(self) -> List[ParsedContent]:
+    def get_all_documents(self) -> List[Document]:
         with self.Session() as session:
-            return session.query(ParsedContent).filter(ParsedContent.id != None).all()
+            return session.query(Document).all()
 
     def add_entity(
-        self, session, entity_data: Dict[str, Any], content: ParsedContent
+        self, session, entity_data: Dict[str, Any], document: Document
     ) -> Entity:
         entity = Entity(
+            document_id=document.id,
             name=entity_data["name"],
-            diffbot_uri=entity_data.get("diffbotUri"),
+            diffbotUri=entity_data.get("diffbotUri"),
             confidence=entity_data.get("confidence"),
             salience=entity_data.get("salience"),
-            is_custom=entity_data.get("isCustom", False),
-            parsed_content=content,
+            sentiment=entity_data.get("sentiment"),
+            isCustom=entity_data.get("isCustom", False),
         )
         session.add(entity)
         return entity
@@ -135,10 +123,9 @@ class DatabaseHandler:
         if isinstance(uris_data, list):
             for uri_data in uris_data:
                 if isinstance(uri_data, dict):
-                    uri = Uris(
+                    uri = EntityUri(
+                        entity_id=entity.id,
                         uri=uri_data.get("uri"),
-                        type=uri_data.get("type"),
-                        entity=entity,
                     )
                     session.add(uri)
                 else:
@@ -150,13 +137,12 @@ class DatabaseHandler:
         if isinstance(types_data, list):
             for type_data in types_data:
                 if isinstance(type_data, dict):
-                    type_obj = Type(
+                    entity_type = EntityType(
+                        entity_id=entity.id,
                         name=type_data.get("name"),
-                        diffbot_uri=type_data.get("diffbotUri"),
-                        dbpedia_uri=type_data.get("dbpediaUri"),
+                        diffbotUri=type_data.get("diffbotUri"),
+                        dbpediaUri=type_data.get("dbpediaUri"),
                     )
-                    session.add(type_obj)
-                    entity_type = EntityType(entity=entity, type=type_obj)
                     session.add(entity_type)
                 else:
                     logger.warning(f"Unexpected type data type: {type(type_data)}")
@@ -169,12 +155,12 @@ class DatabaseHandler:
         if isinstance(mentions_data, list):
             for mention_data in mentions_data:
                 if isinstance(mention_data, dict):
-                    mention = Mention(
+                    mention = EntityMention(
+                        entity_id=entity.id,
                         text=mention_data.get("text"),
-                        begin_offset=mention_data.get("beginOffset"),
-                        end_offset=mention_data.get("endOffset"),
+                        beginOffset=mention_data.get("beginOffset"),
+                        endOffset=mention_data.get("endOffset"),
                         confidence=mention_data.get("confidence"),
-                        entity=entity,
                     )
                     session.add(mention)
                 else:
@@ -184,38 +170,19 @@ class DatabaseHandler:
         else:
             logger.warning(f"Unexpected mentions data type: {type(mentions_data)}")
 
-    def add_locations(
-        self, session, entity: Entity, locations_data: List[Dict[str, Any]]
-    ):
-        if isinstance(locations_data, list):
-            for location_data in locations_data:
-                if isinstance(location_data, dict):
-                    location = Location(
-                        latitude=location_data.get("latitude"),
-                        longitude=location_data.get("longitude"),
-                        precision=location_data.get("precision"),
-                        entity=entity,
-                    )
-                    session.add(location)
-                else:
-                    logger.warning(
-                        f"Unexpected location data type: {type(location_data)}"
-                    )
-        else:
-            logger.warning(f"Unexpected locations data type: {type(locations_data)}")
-
     def add_categories(
-        self, session, categories_data: List[Dict[str, Any]], content: ParsedContent
+        self, session, categories_data: List[Dict[str, Any]], document: Document
     ):
         if isinstance(categories_data, list):
             for category_data in categories_data:
                 if isinstance(category_data, dict):
                     category = Category(
-                        type=category_data.get("type"),
-                        id_category=category_data.get("id"),
+                        document_id=document.id,
+                        categoryId=category_data.get("id"),
                         name=category_data.get("name"),
                         path=category_data.get("path"),
-                        parsed_content=content,
+                        confidence=category_data.get("confidence"),
+                        isPrimary=category_data.get("isPrimary", False),
                     )
                     session.add(category)
                 else:
@@ -226,37 +193,39 @@ class DatabaseHandler:
             logger.warning(f"Unexpected categories data type: {type(categories_data)}")
 
     def process_nlp_result(
-        self, content: ParsedContent, result: Dict[str, Any], session
+        self, document: Document, result: Dict[str, Any], session
     ):
+        document.sentiment = result.get("sentiment", {}).get("score")
+        session.add(document)
+
         entities = result.get("entities", [])
         if isinstance(entities, list):
             for entity_data in entities:
                 if isinstance(entity_data, dict):
-                    entity = self.add_entity(session, entity_data, content)
+                    entity = self.add_entity(session, entity_data, document)
                     self.add_uris(session, entity, entity_data.get("uris", []))
                     self.add_types(session, entity, entity_data.get("types", []))
                     self.add_mentions(session, entity, entity_data.get("mentions", []))
-                    self.add_locations(
-                        session, entity, entity_data.get("locations", [])
-                    )
                 else:
                     logging.warning(f"Unexpected entity data type: {type(entity_data)}")
 
         categories = result.get("categories", [])
         if isinstance(categories, list):
-            self.add_categories(session, categories, content)
+            self.add_categories(session, categories, document)
         else:
             logging.warning(f"Unexpected categories data type: {type(categories)}")
 
 
-async def process_single_content(
-    diffbot_client: DiffbotClient, db_handler: DatabaseHandler, content: ParsedContent
+async def process_single_document(
+    diffbot_client: DiffbotClient, db_handler: DatabaseHandler, document: Document
 ):
     try:
-        result = await diffbot_client.tag_content(content.content)
-        db_handler.process_nlp_result(content, result)
+        result = await diffbot_client.tag_content(document.content)
+        with db_handler.Session() as session:
+            db_handler.process_nlp_result(document, result, session)
+            session.commit()
     except Exception as e:
-        print(f"Error processing content ID {content.id}: {str(e)}")
+        logger.error(f"Error processing document ID {document.id}: {str(e)}")
 
 
 async def main():
@@ -267,13 +236,14 @@ async def main():
     diffbot_client = DiffbotClient(diffbot_api_key)
     db_handler = DatabaseHandler(Config.SQLALCHEMY_DATABASE_URI)
 
-    parsed_contents = db_handler.get_all_parsed_content()
+    documents = db_handler.get_all_documents()
 
-    tasks = [
-        process_single_content(diffbot_client, db_handler, content)
-        for content in parsed_contents
-    ]
-    await asyncio.gather(*tasks)
+    async with httpx.AsyncClient() as client:
+        tasks = [
+            process_single_document(diffbot_client, db_handler, document)
+            for document in documents
+        ]
+        await asyncio.gather(*tasks)
 
 
 if __name__ == "__main__":
