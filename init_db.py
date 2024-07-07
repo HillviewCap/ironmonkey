@@ -24,8 +24,8 @@ def init_db():
         with engine.connect() as connection:
             result = connection.execute(
                 text("PRAGMA table_info(parsed_content)")
-            ).fetchall()
-            columns = [row["name"] for row in result]
+            )
+            columns = [row[1] for row in result.fetchall()]
             if "summary" not in columns:
                 connection.execute("ALTER TABLE parsed_content ADD COLUMN summary TEXT")
         
