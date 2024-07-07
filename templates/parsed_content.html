@@ -162,7 +162,7 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(response => response.json())
             .then(data => {
                 if (data.summary) {
-                    summaryElement.textContent = data.summary.substring(0, 50) + (data.summary.length > 50 ? '...' : '');
+                    summaryElement.textContent = data.summary;
                     alert('Summary generated successfully.');
                 } else {
                     alert('Failed to generate summary.');
