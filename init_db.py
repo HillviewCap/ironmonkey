@@ -20,7 +20,12 @@ def init_db():
         engine = create_engine(app.config['SQLALCHEMY_DATABASE_URI'])
         DiffbotBase.metadata.create_all(engine)
         
-        print("All database tables created successfully.")
+        # Add the summary column to ParsedContent if it doesn't exist
+        with engine.connect() as connection:
+            if not connection.dialect.has_column(connection, "parsed_content", "summary"):
+                connection.execute('ALTER TABLE parsed_content ADD COLUMN summary TEXT')
+        
+        print("All database tables created and updated successfully.")
 
 if __name__ == "__main__":
     init_db()

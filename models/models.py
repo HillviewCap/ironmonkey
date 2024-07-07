@@ -144,6 +144,7 @@ class ParsedContent(db.Model):
     url = db.Column(db.String(255), nullable=False)
     description = db.Column(db.Text, nullable=True)
     content = db.Column(db.Text, nullable=False)  # This will store the Jina summary from Ollama
+    summary = db.Column(db.Text, nullable=True)  # This will store the generated summary
     feed_id = db.Column(
         UUID(as_uuid=True), db.ForeignKey("rss_feed.id"), nullable=False
     )
