@@ -300,19 +300,18 @@ def create_app():
             return jsonify({"error": "content_id is required"}), 400
 
         try:
-            content_uuid = uuid.UUID(content_id)
-            content = db.session.get(ParsedContent, content_uuid)
-            if not content:
-                current_app.logger.error(f"Content not found for id: {content_id}")
-                return jsonify({"error": "Content not found"}), 404
+            document = db.session.get(Document, content_id)
+            if not document:
+                current_app.logger.error(f"Document not found for id: {content_id}")
+                return jsonify({"error": "Document not found"}), 404
 
             enhancer = SummaryEnhancer(app.ollama_api)
-            success = await enhancer.process_single_record(content, db.session)
+            success = await enhancer.process_single_record(document, db.session)
             if success:
-                current_app.logger.info(f"Summary generated successfully for content id: {content_id}")
-                return jsonify({"summary": content.summary}), 200
+                current_app.logger.info(f"Summary generated successfully for document id: {content_id}")
+                return jsonify({"summary": document.summary}), 200
             else:
-                current_app.logger.error(f"Failed to generate summary for content id: {content_id}")
+                current_app.logger.error(f"Failed to generate summary for document id: {content_id}")
                 return jsonify({"error": "Failed to generate summary"}), 500
         except ValueError:
             current_app.logger.error(f"Invalid UUID format for content_id: {content_id}")
