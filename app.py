@@ -20,7 +20,8 @@ from werkzeug.exceptions import BadRequest
 
 from logging_config import setup_logger
 from models import db, User, SearchParams
-from models.diffbot_model import Document, Entity, EntityMention, EntityType, EntityUri, Category
+from models import ParsedContent
+from models.diffbot_model import Entity, EntityMention, EntityType, EntityUri, Category
 from flask_login import LoginManager, UserMixin
 from auth import init_auth, login, logout, register
 from config import Config
@@ -94,11 +95,11 @@ def create_app():
             current_app.logger.info("Entering index route")
             try:
                 if current_user.is_authenticated:
-                    # Fetch the 6 most recent Document items with non-null title and content
+                    # Fetch the 6 most recent ParsedContent items with non-null title and description
                     recent_items = (
-                        db.session.query(Document)
-                        .filter(Document.title.isnot(None), Document.content.isnot(None))
-                        .order_by(Document.created_at.desc())
+                        db.session.query(ParsedContent)
+                        .filter(ParsedContent.title.isnot(None), ParsedContent.description.isnot(None))
+                        .order_by(ParsedContent.created_at.desc())
                         .limit(6)
                         .all()
                     )
