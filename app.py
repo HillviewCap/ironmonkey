@@ -96,7 +96,7 @@ def create_app():
                 if current_user.is_authenticated:
                     # Fetch the 6 most recent Document items with non-null title and content
                     recent_items = (
-                        Document.query
+                        db.session.query(Document)
                         .filter(Document.title.isnot(None), Document.content.isnot(None))
                         .order_by(Document.created_at.desc())
                         .limit(6)
