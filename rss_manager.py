@@ -72,13 +72,17 @@ async def fetch_and_parse_feed(feed: RSSFeed) -> None:
                             new_content = ParsedContent(
                                 content=parsed_content,
                                 feed_id=feed.id,
-                                url=entry.link,  # Use the original entry link as URL
+                                url=entry.link,
+                                title=entry.get('title', ''),
+                                description=entry.get('description', ''),
+                                pub_date=entry.get('published', ''),
+                                creator=entry.get('author', ''),
+                                categories=', '.join(entry.get('tags', []))
                             )
+                            db.session.add(new_content)
+                            logger.info(f"Added new content: {new_content.url}")
                         else:
                             logger.warning(f"Failed to parse content for {entry.link}")
-                            continue
-                        db.session.add(new_content)
-                        logger.info(f"Added new content: {new_content.url}")
                     except Exception as e:
                         logger.error(f"Error parsing entry {entry.link}: {str(e)}")
             try:
