@@ -8,10 +8,11 @@ from logging_config import setup_logger
 
 load_dotenv()
 
-JINA_API_KEY = os.getenv('JINA_API_KEY')
+JINA_API_KEY = os.getenv("JINA_API_KEY")
 
 # Set up logger
-logger = setup_logger('jina_api', 'logs/jina_api.log')
+logger = setup_logger("jina_api", "jina_api.log")
+
 
 # Rate limit: 200 requests per minute
 @sleep_and_retry
@@ -30,28 +31,31 @@ async def parse_content(url: str) -> str:
     headers = {
         "Authorization": f"Bearer {JINA_API_KEY}",
         "X-Return-Format": "text",
-        "Accept": "application/json"
+        "Accept": "application/json",
     }
-    
+
     logger.info(f"Parsing content from URL: {url}")
-    
+
     async with httpx.AsyncClient() as client:
         try:
-            response = await client.get(f'https://r.jina.ai/{url}', headers=headers)
+            response = await client.get(f"https://r.jina.ai/{url}", headers=headers)
             response.raise_for_status()
             data = response.json()
-            
-            if data['code'] != 200 or data['status'] != 20000:
-                logger.error(f"API returned unexpected status. Code: {data['code']}, Status: {data['status']}")
+
+            if data["code"] != 200 or data["status"] != 20000:
+                logger.error(
+                    f"API returned unexpected status. Code: {data['code']}, Status: {data['status']}"
+                )
                 return None
-            
-            return data['data']['text']
+
+            return data["data"]["text"]
         except httpx.HTTPStatusError as e:
             logger.error(f"HTTP error occurred: {e}")
             return None
         except Exception as e:
             logger.error(f"An unexpected error occurred: {e}")
             return None
+
 
 async def update_content_in_database(post_id: str, content: str):
     """
@@ -65,6 +69,7 @@ async def update_content_in_database(post_id: str, content: str):
     logger.info(f"Updating content for post ID: {post_id}")
     # Your database update code here
     pass
+
 
 async def process_url(url: str, post_id: str):
     """
