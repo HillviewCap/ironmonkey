@@ -88,10 +88,10 @@ class SummaryEnhancer:
 
         logger.info(f"Summary enhancement for feed {feed_id} completed")
 
-    def process_single_record(self, document: ParsedContent, session: Session) -> bool:
+    async def process_single_record(self, document: ParsedContent, session: Session) -> bool:
         logger.debug(f"Processing single record {document.id}")
         try:
-            summary = self.generate_summary(str(document.id))
+            summary = await self.generate_summary(str(document.id))
             if summary:
                 document.summary = summary.strip()
                 session.commit()
@@ -103,3 +103,10 @@ class SummaryEnhancer:
         except Exception as e:
             logger.error(f"Error processing record {document.id}: {str(e)}", exc_info=True)
             return False
+
+    async def generate_summary(self, content_id: str) -> str:
+        system_prompt = self.prompts['summarize']['system_prompt']
+        parsed_content = ParsedContent.get_by_id(content_id)
+        if not parsed_content:
+            raise ValueError(f"No ParsedContent found with id {content_id}")
+        return await self.ollama_api.generate(system_prompt=system_prompt, content_to_summarize=parsed_content.content)

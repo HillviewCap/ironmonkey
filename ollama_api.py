@@ -19,9 +19,10 @@ class OllamaAPI:
     def check_connection(self) -> bool:
         try:
             models = self.client.list()
-            if self.model not in [model["name"] for model in models["models"]]:
+            available_models = [model["name"] for model in models["models"]]
+            if self.model not in available_models:
                 logger.error(
-                    f"Model {self.model} is not available. Available models: {[model['name'] for model in models['models']]}"
+                    f"Model {self.model} is not available. Available models: {available_models}"
                 )
                 return False
             logger.info(
@@ -34,7 +35,7 @@ class OllamaAPI:
             )
             return False
 
-    def generate(
+    async def generate(
         self, system_prompt: str, content_to_summarize: str, temperature: float = 0.7
     ) -> str:
         if not self.check_connection():
@@ -53,7 +54,7 @@ class OllamaAPI:
         logger.debug(f"Content to Summarize: {content_to_summarize_utf8}")
 
         try:
-            response = self.client.chat(
+            response = await self.client.chat(
                 model=self.model,
                 messages=[
                     {"role": "system", "content": system_prompt_utf8},
