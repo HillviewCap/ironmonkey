@@ -23,6 +23,8 @@ from models import db, RSSFeed, ParsedContent, Category
 from jina_api import parse_content
 from logging_config import logger
 from nlp_tagging import DiffbotClient, DatabaseHandler
+from summary_enhancer import SummaryEnhancer
+from ollama_api import OllamaAPI
 
 rss_manager = Blueprint("rss_manager", __name__)
 csrf = CSRFProtect()
@@ -282,6 +284,31 @@ async def tag_content(post_id):
     except Exception as e:
         db.session.rollback()
         flash(f"Error tagging content: {str(e)}", "error")
+    return redirect(url_for("rss_manager.parsed_content"))
+
+
+@rss_manager.route("/summarize_content/<uuid:post_id>", methods=["POST"])
+@login_required
+async def summarize_content(post_id):
+    """Summarize a single piece of parsed content."""
+    try:
+        post = db.session.get(ParsedContent, post_id)
+        if post is None:
+            flash("Content not found", "error")
+            return redirect(url_for("rss_manager.parsed_content"))
+
+        ollama_api = OllamaAPI()
+        enhancer = SummaryEnhancer(ollama_api)
+        
+        success = await enhancer.process_single_record(post, db.session)
+        
+        if success:
+            flash("Content summarized successfully!", "success")
+        else:
+            flash("Failed to summarize content", "error")
+    except Exception as e:
+        flash(f"Error summarizing content: {str(e)}", "error")
+    
     return redirect(url_for("rss_manager.parsed_content"))
 
 
