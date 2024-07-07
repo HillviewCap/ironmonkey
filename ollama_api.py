@@ -61,11 +61,11 @@ class OllamaAPI:
                 return response
             except asyncio.TimeoutError:
                 if attempt == self.max_retries - 1:
-                    raise
+                    raise Exception(f"Timeout error occurred after {self.max_retries} attempts")
                 await asyncio.sleep(2**attempt)  # Exponential backoff
             except Exception as exc:
                 if attempt == self.max_retries - 1:
-                    raise Exception(f"Error occurred: {exc}")
+                    raise Exception(f"Error occurred after {self.max_retries} attempts: {exc}")
                 await asyncio.sleep(2**attempt)  # Exponential backoff
 
     async def ask(self, system_prompt: str, user_prompt: str) -> str:
