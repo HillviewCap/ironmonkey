@@ -132,8 +132,6 @@ class ParsedContent(db.Model):
     )
     feed = db.relationship("RSSFeed", backref=db.backref("parsed_contents", lazy=True))
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-    entities = db.relationship("Entity", back_populates="parsed_content")
-    categories = db.relationship("Category", back_populates="parsed_content")
     pub_date = db.Column(db.String(100), nullable=True)
     creator = db.Column(db.String(255), nullable=True)
 
@@ -147,66 +145,6 @@ class ParsedContent(db.Model):
         return cls.query.get(content_id)
 
 
-class Entity(db.Model):
-    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    name = db.Column(db.String(200), nullable=False)
-    diffbot_uri = db.Column(db.String(500))
-    confidence = db.Column(db.Float)
-    salience = db.Column(db.Float)
-    is_custom = db.Column(db.Boolean, default=False)
-    parsed_content_id = db.Column(
-        UUID(as_uuid=True), db.ForeignKey("parsed_content.id")
-    )
-    parsed_content = db.relationship("ParsedContent", back_populates="entities")
-    uris = db.relationship("Uris", back_populates="entity")
-    types = db.relationship("EntityType", back_populates="entity")
-    mentions = db.relationship("Mention", back_populates="entity")
-    locations = db.relationship("Location", back_populates="entity")
-
-
-class Uris(db.Model):
-    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    entity_id = db.Column(UUID(as_uuid=True), db.ForeignKey("entity.id"))
-    uri = db.Column(db.String(500), nullable=False)
-    type = db.Column(db.String(100))
-    entity = db.relationship("Entity", back_populates="uris")
-
-
-class Type(db.Model):
-    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    name = db.Column(db.String(200), nullable=False)
-    diffbot_uri = db.Column(db.String(500))
-    dbpedia_uri = db.Column(db.String(500))
-    entities = db.relationship("EntityType", back_populates="type")
-
-
-class EntityType(db.Model):
-    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    entity_id = db.Column(UUID(as_uuid=True), db.ForeignKey("entity.id"))
-    type_id = db.Column(UUID(as_uuid=True), db.ForeignKey("type.id"))
-    entity = db.relationship("Entity", back_populates="types")
-    type = db.relationship("Type", back_populates="entities")
-
-
-class Mention(db.Model):
-    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    entity_id = db.Column(UUID(as_uuid=True), db.ForeignKey("entity.id"))
-    text = db.Column(db.Text, nullable=False)
-    begin_offset = db.Column(db.Integer)
-    end_offset = db.Column(db.Integer)
-    confidence = db.Column(db.Float)
-    entity = db.relationship("Entity", back_populates="mentions")
-
-
-class Location(db.Model):
-    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    entity_id = db.Column(UUID(as_uuid=True), db.ForeignKey("entity.id"))
-    latitude = db.Column(db.Float)
-    longitude = db.Column(db.Float)
-    precision = db.Column(db.Float)
-    entity = db.relationship("Entity", back_populates="locations")
-
-
 class Category(db.Model):
     id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     name = db.Column(db.String(200), nullable=False)
@@ -215,7 +153,7 @@ class Category(db.Model):
     parsed_content_id = db.Column(
         UUID(as_uuid=True), db.ForeignKey("parsed_content.id")
     )
-    parsed_content = db.relationship("ParsedContent", back_populates="categories")
+    parsed_content = db.relationship("ParsedContent", backref=db.backref("categories", lazy=True))
 
     @classmethod
     def create_from_feedparser(cls, category, parsed_content_id):
@@ -230,27 +168,3 @@ class Category(db.Model):
             )
         else:
             raise ValueError("Unsupported category format")
-
-
-class Sentiment(db.Model):
-    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    parsed_content_id = db.Column(
-        UUID(as_uuid=True), db.ForeignKey("parsed_content.id")
-    )
-    parsed_content = db.relationship(
-        "ParsedContent", backref=db.backref("sentiment", uselist=False)
-    )
-    type = db.Column(db.String(50))  # positive, negative, or neutral
-    score = db.Column(db.Float)
-
-
-class Topic(db.Model):
-    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    parsed_content_id = db.Column(
-        UUID(as_uuid=True), db.ForeignKey("parsed_content.id")
-    )
-    parsed_content = db.relationship(
-        "ParsedContent", backref=db.backref("topics", lazy=True)
-    )
-    name = db.Column(db.String(200))
-    score = db.Column(db.Float)
