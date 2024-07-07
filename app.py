@@ -58,12 +58,6 @@ def create_app():
     app.config.from_object(Config)
     Config.init_app(app)
 
-    # Ensure the instance folder exists
-    try:
-        os.makedirs(app.instance_path)
-    except OSError:
-        logger.warning(f"Could not create instance folder at {app.instance_path}")
-
     # Database configuration
     app.config["SQLALCHEMY_DATABASE_URI"] = (
         f"sqlite:///{os.path.join(app.instance_path, 'threats.db')}"
