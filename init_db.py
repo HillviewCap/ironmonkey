@@ -1,5 +1,6 @@
 from flask import Flask
-from models import db
+from models import db, User, RSSFeed, ParsedContent, Category, Threat
+from models.diffbot_model import Document, Entity, EntityMention, EntityType, EntityUri, Category as DiffbotCategory
 from config import Config
 
 def create_app():

@@ -13,14 +13,11 @@ import httpx
 import feedparser
 from bs4 import BeautifulSoup
 import logging_config
-
-db = SQLAlchemy()
 from sqlalchemy.dialects.postgresql import UUID
 
-__all__ = ['db', 'User', 'SearchParams', 'RSSFeed', 'Threat', 'ParsedContent', 'Category']
+db = SQLAlchemy()
 
-# Ensure db is explicitly exported
-db = db
+__all__ = ['db', 'User', 'SearchParams', 'RSSFeed', 'Threat', 'ParsedContent', 'Category']
 
 class SearchParams:
     def __init__(
