@@ -297,7 +297,7 @@ async def summarize_content(post_id):
             flash("Content not found", "error")
             return redirect(url_for("rss_manager.parsed_content"))
 
-        ollama_api = OllamaAPI()
+        ollama_api = current_app.ollama_api
         enhancer = SummaryEnhancer(ollama_api)
         
         success = await enhancer.process_single_record(post, db.session)
@@ -307,6 +307,7 @@ async def summarize_content(post_id):
         else:
             flash("Failed to summarize content", "error")
     except Exception as e:
+        logger.error(f"Error summarizing content: {str(e)}", exc_info=True)
         flash(f"Error summarizing content: {str(e)}", "error")
     
     return redirect(url_for("rss_manager.parsed_content"))
