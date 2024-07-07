@@ -3,6 +3,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 from summary_enhancer import SummaryEnhancer
 from models import ParsedContent
 import yaml
+import asyncio
 
 @pytest.fixture
 def mock_ollama_api():
@@ -28,7 +29,7 @@ async def test_generate_summary(enhancer, mock_ollama_api):
     expected_summary = "Test summary"
     mock_ollama_api.ask.return_value = expected_summary
 
-    summary = await enhancer.generate_summary(content)
+    summary = await asyncio.wait_for(enhancer.generate_summary(content), timeout=5.0)
 
     assert summary == expected_summary
     mock_ollama_api.ask.assert_called_once_with(
@@ -41,7 +42,7 @@ async def test_process_single_record_success(enhancer, mock_db_session):
     record = ParsedContent(id=1, content="Test content")
     enhancer.generate_summary = AsyncMock(return_value="Test summary")
 
-    result = await enhancer.process_single_record(record, mock_db_session)
+    result = await asyncio.wait_for(enhancer.process_single_record(record, mock_db_session), timeout=5.0)
 
     assert result is True
     assert record.summary == "Test summary"
@@ -52,7 +53,7 @@ async def test_process_single_record_failure(enhancer, mock_db_session):
     record = ParsedContent(id=1, content="Test content")
     enhancer.generate_summary = AsyncMock(side_effect=Exception("Test error"))
 
-    result = await enhancer.process_single_record(record, mock_db_session)
+    result = await asyncio.wait_for(enhancer.process_single_record(record, mock_db_session), timeout=5.0)
 
     assert result is False
     assert record.summary is None
@@ -70,7 +71,7 @@ async def test_enhance_summaries(enhancer, mock_db_session):
     enhancer.process_single_record = AsyncMock(side_effect=[True, False])
 
     with patch('summary_enhancer.db.session', mock_db_session):
-        await enhancer.enhance_summaries()
+        await asyncio.wait_for(enhancer.enhance_summaries(), timeout=10.0)
 
     assert enhancer.process_single_record.call_count == 2
 
@@ -79,7 +80,7 @@ async def test_enhance_summaries_exception(enhancer, mock_db_session):
     mock_db_session.query.return_value.filter.return_value.with_for_update.return_value.first.side_effect = Exception("Test error")
 
     with patch('summary_enhancer.db.session', mock_db_session):
-        await enhancer.enhance_summaries()
+        await asyncio.wait_for(enhancer.enhance_summaries(), timeout=10.0)
 
     # The method should complete without raising an exception
     assert True
