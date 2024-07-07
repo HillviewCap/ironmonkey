@@ -42,7 +42,7 @@ class SummaryEnhancer:
         parsed_content = ParsedContent.get_by_id(content_id)
         if not parsed_content:
             raise ValueError(f"No ParsedContent found with id {content_id}")
-        return await self.ollama_api.ask(system_prompt=system_prompt, user_prompt=parsed_content.content)
+        return await self.ollama_api.ask(system_prompt=system_prompt, content_to_summarize=parsed_content.content)
 
     async def enhance_summary(self, content_id: str) -> bool:
         logger.debug(f"Processing record {content_id}")
