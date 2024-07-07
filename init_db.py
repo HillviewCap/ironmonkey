@@ -1,7 +1,8 @@
 from flask import Flask
 from models import db, User, RSSFeed, ParsedContent, Category, Threat, SearchParams
-from models.diffbot_model import Document, Entity, EntityMention, EntityType, EntityUri, Category as DiffbotCategory
+from models.diffbot_model import Base as DiffbotBase, Document, Entity, EntityMention, EntityType, EntityUri, Category as DiffbotCategory
 from config import Config
+from sqlalchemy import create_engine
 
 def create_app():
     app = Flask(__name__)
@@ -12,9 +13,14 @@ def create_app():
 def init_db():
     app = create_app()
     with app.app_context():
-        # Create all tables
+        # Create tables for models defined with Flask-SQLAlchemy
         db.create_all()
-        print("Database tables created successfully.")
+        
+        # Create tables for models defined with SQLAlchemy (diffbot_model)
+        engine = create_engine(app.config['SQLALCHEMY_DATABASE_URI'])
+        DiffbotBase.metadata.create_all(engine)
+        
+        print("All database tables created successfully.")
 
 if __name__ == "__main__":
     init_db()
