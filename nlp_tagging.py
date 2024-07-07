@@ -25,19 +25,19 @@ import time
 from ratelimit import limits, sleep_and_retry
 
 # Set up logging for nlp_tagging
-logger = logging.getLogger('nlp_tagging')
+logger = logging.getLogger("nlp_tagging")
 logger.setLevel(logging.INFO)
 
 # Ensure logs directory exists
-logs_dir = 'logs'
+logs_dir = "logs"
 os.makedirs(logs_dir, exist_ok=True)
 
 # Create a file handler
-file_handler = logging.FileHandler(os.path.join(logs_dir, 'nlp_tagging.log'))
+file_handler = logging.FileHandler(os.path.join(logs_dir, "nlp_tagging.log"))
 file_handler.setLevel(logging.INFO)
 
 # Create a formatting for the logs
-formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
 file_handler.setFormatter(formatter)
 
 # Add the file handler to the logger
@@ -61,7 +61,6 @@ class DiffbotClient:
         payload = {
             "lang": "auto",
             "format": "plain text",
-            "customSummary": {"maxNumberOfSentences": 3},
             "content": content,
             "documentType": "news article",
         }
@@ -71,7 +70,9 @@ class DiffbotClient:
 
         for attempt in range(max_retries):
             try:
-                response = await client.post(self.url, json=payload, headers=self.headers)
+                response = await client.post(
+                    self.url, json=payload, headers=self.headers
+                )
 
                 if response.status_code != 200:
                     error_message = f"Error processing content: {response.status_code}"
@@ -95,11 +96,15 @@ class DiffbotClient:
 
             except Exception as e:
                 if attempt < max_retries - 1:
-                    logger.warning(f"Attempt {attempt + 1} failed. Retrying in {retry_delay} seconds...")
+                    logger.warning(
+                        f"Attempt {attempt + 1} failed. Retrying in {retry_delay} seconds..."
+                    )
                     await asyncio.sleep(retry_delay)
                     retry_delay *= 2  # Exponential backoff
                 else:
-                    logger.error(f"All {max_retries} attempts failed. Last error: {str(e)}")
+                    logger.error(
+                        f"All {max_retries} attempts failed. Last error: {str(e)}"
+                    )
                     raise
 
 
