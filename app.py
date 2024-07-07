@@ -38,16 +38,6 @@ load_dotenv()
 
 from summary_enhancer import SummaryEnhancer
 
-async def enhance_summaries():
-    """
-    Check the parsed_content table for missing summaries,
-    generate summaries using Ollama, and update the database.
-    """
-    app = current_app._get_current_object()
-    ollama_api = OllamaAPI()
-    enhancer = SummaryEnhancer(ollama_api)
-    await enhancer.enhance_summaries()
-
 # Configure logging
 logger = setup_logger('app', 'app.log')
 
@@ -64,10 +54,6 @@ def create_app():
         f"sqlite:///{os.path.join(app.instance_path, 'threats.db')}"
     )
     logger.info(f"Database URI: {app.config['SQLALCHEMY_DATABASE_URI']}")
-
-    # Set up logging
-    app.logger = setup_logger('enhance_summaries', 'enhance_summaries.log')
-    app.logger.info('Enhance summaries startup')
 
     try:
         db.init_app(app)
@@ -246,12 +232,6 @@ def create_app():
             asyncio.run(rss_manager.parse_feeds())
         print("Feeds parsed successfully.")
 
-    @app.cli.command("enhance-summaries")
-    def enhance_summaries_command():
-        """Enhance summaries for parsed content using Ollama."""
-        with app.app_context():
-            asyncio.run(enhance_summaries())
-        print("Summaries enhanced successfully.")
 
     @app.route("/summarize_content", methods=["POST"])
     @login_required

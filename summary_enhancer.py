@@ -72,35 +72,6 @@ class SummaryEnhancer:
         logger.error(f"Failed to generate summary for record {content_id} after {self.max_retries} attempts.")
         return False
 
-    async def enhance_summaries(self, feed_id: Optional[str] = None) -> None:
-        logger.info("Starting summary enhancement process")
-
-        query = db.session.query(ParsedContent).filter(ParsedContent.summary.is_(None))
-        if feed_id:
-            query = query.filter(ParsedContent.feed_id == feed_id)
-
-        while True:
-            try:
-                with db.session.begin():
-                    record_to_update = (
-                        query
-                        .with_for_update(skip_locked=True)
-                        .first()
-                    )
-
-                    if not record_to_update:
-                        logger.info("No more records to update. Process completed.")
-                        break
-
-                    success = await self.enhance_summary(str(record_to_update.id))
-                    if not success:
-                        logger.warning(f"Moving to next record after failed attempts for record {record_to_update.id}")
-
-            except Exception as e:
-                logger.error(f"Error during summary enhancement: {str(e)}", exc_info=True)
-
-        logger.info("Summary enhancement process completed")
-
     async def summarize_feed(self, feed_id: str) -> None:
         logger.info(f"Starting summary enhancement for feed {feed_id}")
 
@@ -109,7 +80,11 @@ class SummaryEnhancer:
             logger.error(f"Feed with id {feed_id} not found")
             return
 
-        await self.enhance_summaries(feed_id)
+        parsed_contents = ParsedContent.query.filter_by(feed_id=feed_id, summary=None).all()
+        for content in parsed_contents:
+            success = await self.process_single_record(content, db.session)
+            if not success:
+                logger.warning(f"Failed to generate summary for content {content.id}")
 
         logger.info(f"Summary enhancement for feed {feed_id} completed")
 
