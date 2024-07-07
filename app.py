@@ -45,7 +45,9 @@ logger = setup_logger('app', 'app.log')
 def create_app():
     app = Flask(__name__, instance_relative_config=True)
     app.ollama_api = OllamaAPI()
-    app.ollama_api.check_connection()  # Ensure connection on startup
+    if not app.ollama_api.check_connection():  # Ensure connection on startup
+        logger.error("Failed to connect to Ollama API. Exiting.")
+        return None
     app.config.from_object(Config)
     Config.init_app(app)
 
@@ -249,10 +251,10 @@ def create_app():
                 return jsonify({"error": "Document not found"}), 404
 
             enhancer = SummaryEnhancer(app.ollama_api)
-            success = await enhancer.process_single_record(document, db.session)
-            if success:
+            summary = await enhancer.process_single_record(document, db.session)
+            if summary:
                 current_app.logger.info(f"Summary generated successfully for document id: {content_id}")
-                return jsonify({"summary": document.summary}), 200
+                return jsonify({"summary": summary}), 200
             else:
                 current_app.logger.error(f"Failed to generate summary for document id: {content_id}")
                 return jsonify({"error": "Failed to generate summary"}), 500
