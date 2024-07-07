@@ -45,7 +45,7 @@ logger = setup_logger('app', 'app.log')
 def create_app():
     app = Flask(__name__, instance_relative_config=True)
     app.ollama_api = OllamaAPI()
-    asyncio.run(app.ollama_api.check_connection())  # Ensure connection on startup
+    app.ollama_api.check_connection()  # Ensure connection on startup
     app.config.from_object(Config)
     Config.init_app(app)
 
