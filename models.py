@@ -19,6 +19,9 @@ from sqlalchemy.dialects.postgresql import UUID
 
 __all__ = ['db', 'User', 'SearchParams', 'RSSFeed', 'Threat', 'ParsedContent', 'Category']
 
+# Ensure db is explicitly exported
+db = db
+
 class SearchParams:
     def __init__(
         self,
