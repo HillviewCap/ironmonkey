@@ -37,12 +37,12 @@ class SummaryEnhancer:
             logger.error(f"Error loading prompts: {str(e)}", exc_info=True)
             raise
 
-    async def generate_summary(self, content_id: str) -> str:
+    def generate_summary(self, content_id: str) -> str:
         system_prompt = self.prompts['summarize']['system_prompt']
         parsed_content = ParsedContent.get_by_id(content_id)
         if not parsed_content:
             raise ValueError(f"No ParsedContent found with id {content_id}")
-        return await self.ollama_api.ask(system_prompt=system_prompt, content_to_summarize=parsed_content.content)
+        return self.ollama_api.ask(system_prompt=system_prompt, content_to_summarize=parsed_content.content)
 
     async def enhance_summary(self, content_id: str) -> bool:
         logger.debug(f"Processing record {content_id}")
