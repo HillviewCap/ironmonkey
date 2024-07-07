@@ -276,6 +276,11 @@ def create_app():
             current_app.logger.exception(f"Error summarizing content: {str(e)}")
             return jsonify({"error": f"Error summarizing content: {str(e)}"}), 500
 
+    # Initialize the scheduler
+    scheduler = BackgroundScheduler()
+    scheduler.add_job(func=check_empty_summaries, trigger="interval", minutes=10)
+    scheduler.start()
+
     return app
 
 
