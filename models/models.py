@@ -163,6 +163,15 @@ class ParsedContent(db.Model):
                 return None
         return cls.query.filter(cls.id == content_id).first()
 
+    @classmethod
+    def get_document_by_id(cls, document_id):
+        if isinstance(document_id, str):
+            try:
+                document_id = uuid.UUID(document_id)
+            except ValueError:
+                return None
+        return cls.query.filter(cls.id == document_id).first()
+
 
 class Category(db.Model):
     id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid4)

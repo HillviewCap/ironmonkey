@@ -136,7 +136,7 @@ def create_app():
         if not content_id:
             return jsonify({"error": "content_id is required"}), 400
 
-        document = db.session.query(Document).get(content_id)
+        document = ParsedContent.get_document_by_id(content_id)
         if not document:
             return jsonify({"error": "Document not found"}), 404
 
