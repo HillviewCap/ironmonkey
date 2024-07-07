@@ -17,6 +17,7 @@ from flask import redirect, url_for
 from flask_login import login_required, current_user
 from sqlalchemy.exc import SQLAlchemyError
 from werkzeug.exceptions import BadRequest
+from apscheduler.schedulers.background import BackgroundScheduler
 
 from logging_config import setup_logger
 from models import db, User, SearchParams
@@ -41,6 +42,16 @@ from summary_enhancer import SummaryEnhancer
 # Configure logging
 logger = setup_logger('app', 'app.log')
 
+def check_empty_summaries():
+    with app.app_context():
+        try:
+            empty_summaries = ParsedContent.query.filter(ParsedContent.summary == None).limit(10).all()
+            enhancer = SummaryEnhancer(app.ollama_api)
+            for content in empty_summaries:
+                asyncio.run(enhancer.process_single_record(content, db.session))
+            logger.info(f"Processed {len(empty_summaries)} empty summaries")
+        except Exception as e:
+            logger.error(f"Error in check_empty_summaries: {str(e)}")
 
 def create_app():
     app = Flask(__name__, instance_relative_config=True)
