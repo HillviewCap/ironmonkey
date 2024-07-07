@@ -249,14 +249,14 @@ def create_app():
             return jsonify({"error": "Document not found"}), 404
 
         try:
-            result = await diffbot_client.tag_content(content.content)
-            db_handler.process_nlp_result(content, result)
+            result = await diffbot_client.tag_content(document.content)
+            db_handler.process_nlp_result(document, result)
 
             # Update the summary field
-            content.summary = result.get("summary", {}).get("text")
+            document.summary = result.get("summary", {}).get("text")
             db.session.commit()
 
-            return jsonify({"message": "Content tagged successfully"}), 200
+            return jsonify({"message": "Document tagged successfully"}), 200
         except Exception as e:
             current_app.logger.error(f"Error tagging content: {str(e)}")
             return jsonify({"error": "Error tagging content"}), 500
