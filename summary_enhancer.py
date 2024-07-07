@@ -24,30 +24,39 @@ class SummaryEnhancer:
             logger.error(f"Error loading prompts: {str(e)}", exc_info=True)
             raise
 
-    async def generate_summary(self, content: str) -> str:
+    async def generate_summary(self, content_id: str) -> str:
         system_prompt = self.prompts['summarize']['system_prompt']
-        return await self.ollama_api.ask(system_prompt=system_prompt, user_prompt=content)
+        parsed_content = ParsedContent.get_by_id(content_id)
+        if not parsed_content:
+            raise ValueError(f"No ParsedContent found with id {content_id}")
+        return await self.ollama_api.ask(system_prompt=system_prompt, user_prompt=parsed_content.content)
 
-    async def process_single_record(self, record: ParsedContent, session: Session) -> bool:
-        logger.debug(f"Processing record {record.id}")
+    async def enhance_summary(self, content_id: str) -> bool:
+        logger.debug(f"Processing record {content_id}")
 
         for attempt in range(self.max_retries):
             try:
-                summary = await self.generate_summary(record.content)
+                summary = await self.generate_summary(content_id)
                 if summary:
-                    record.summary = summary.strip()
-                    session.commit()
-                    logger.info(f"Updated summary for record {record.id}")
-                    logger.debug(f"Summary: {summary}")
-                    return True
+                    with db.session.begin():
+                        parsed_content = ParsedContent.get_by_id(content_id)
+                        if parsed_content:
+                            parsed_content.summary = summary.strip()
+                            db.session.commit()
+                            logger.info(f"Updated summary for record {content_id}")
+                            logger.debug(f"Summary: {summary}")
+                            return True
+                        else:
+                            logger.warning(f"ParsedContent not found for id {content_id}")
+                            return False
                 else:
-                    logger.warning(f"Empty summary generated for record {record.id}. Attempt {attempt + 1}/{self.max_retries}")
+                    logger.warning(f"Empty summary generated for record {content_id}. Attempt {attempt + 1}/{self.max_retries}")
             except httpx.ReadTimeout:
-                logger.error(f"Timeout error generating summary for record {record.id}. Attempt {attempt + 1}/{self.max_retries}", exc_info=True)
+                logger.error(f"Timeout error generating summary for record {content_id}. Attempt {attempt + 1}/{self.max_retries}", exc_info=True)
             except Exception as e:
-                logger.error(f"Error generating summary for record {record.id}: {str(e)}. Attempt {attempt + 1}/{self.max_retries}", exc_info=True)
+                logger.error(f"Error generating summary for record {content_id}: {str(e)}. Attempt {attempt + 1}/{self.max_retries}", exc_info=True)
 
-        logger.error(f"Failed to generate summary for record {record.id} after {self.max_retries} attempts.")
+        logger.error(f"Failed to generate summary for record {content_id} after {self.max_retries} attempts.")
         return False
 
     async def enhance_summaries(self) -> None:
@@ -67,7 +76,7 @@ class SummaryEnhancer:
                         logger.info("No more records to update. Process completed.")
                         break
 
-                    success = await self.process_single_record(record_to_update, db.session)
+                    success = await self.enhance_summary(str(record_to_update.id))
                     if not success:
                         logger.warning(f"Moving to next record after failed attempts for record {record_to_update.id}")
 
