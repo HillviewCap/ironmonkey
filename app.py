@@ -51,10 +51,7 @@ async def enhance_summaries():
     await enhancer.enhance_summaries()
 
 # Configure logging
-logging.basicConfig(
-    level=logging.DEBUG, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-)
-logger = logging.getLogger(__name__)
+logger = setup_logger('app', 'app.log')
 
 
 def create_app():
@@ -77,14 +74,7 @@ def create_app():
     logger.info(f"Database URI: {app.config['SQLALCHEMY_DATABASE_URI']}")
 
     # Set up logging
-    log_file = os.path.join(app.instance_path, 'enhance_summaries.log')
-    file_handler = TimedRotatingFileHandler(log_file, when='midnight', interval=1, backupCount=10)
-    file_handler.setFormatter(logging.Formatter(
-        '%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]'
-    ))
-    file_handler.setLevel(logging.INFO)
-    app.logger.addHandler(file_handler)
-    app.logger.setLevel(logging.INFO)
+    app.logger = setup_logger('enhance_summaries', 'enhance_summaries.log')
     app.logger.info('Enhance summaries startup')
 
     try:
