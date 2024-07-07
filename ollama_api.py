@@ -2,6 +2,7 @@ import os
 import asyncio
 from dotenv import load_dotenv
 from ollama import AsyncClient
+from logging_config import logger
 
 load_dotenv()
 
