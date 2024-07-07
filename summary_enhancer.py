@@ -88,7 +88,7 @@ class SummaryEnhancer:
 
         logger.info(f"Summary enhancement for feed {feed_id} completed")
 
-    async def process_single_record(self, document: ParsedContent, session: Session) -> bool:
+    async def process_single_record(self, document: ParsedContent, session: Session) -> Optional[str]:
         logger.debug(f"Processing single record {document.id}")
         try:
             summary = await self.generate_summary(str(document.id))
@@ -96,10 +96,10 @@ class SummaryEnhancer:
                 document.summary = summary.strip()
                 session.commit()
                 logger.info(f"Updated summary for record {document.id}")
-                return True
+                return summary
             else:
                 logger.warning(f"Empty summary generated for record {document.id}")
-                return False
+                return None
         except Exception as e:
             logger.error(f"Error processing record {document.id}: {str(e)}", exc_info=True)
-            return False
+            return None

@@ -163,9 +163,8 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(data => {
                 if (data.summary) {
                     summaryElement.textContent = data.summary;
-                    alert('Summary generated successfully.');
                 } else {
-                    alert('Failed to generate summary.');
+                    console.error('Failed to generate summary.');
                 }
             })
             .catch(error => {
