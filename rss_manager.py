@@ -300,9 +300,14 @@ async def summarize_content(post_id):
         ollama_api = current_app.ollama_api
         enhancer = SummaryEnhancer(ollama_api)
         
-        success = await enhancer.process_single_record(post, db.session)
+        system_prompt = enhancer.prompts["summarize"]
+        content_to_summarize = post.content
+
+        summary = await ollama_api.generate(system_prompt, content_to_summarize)
         
-        if success:
+        if summary:
+            post.summary = summary
+            db.session.commit()
             flash("Content summarized successfully!", "success")
         else:
             flash("Failed to summarize content", "error")

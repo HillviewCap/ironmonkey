@@ -1,4 +1,4 @@
-import ollama
+from ollama import Client
 
 post = """
 SECURITYWEEK NETWORK:
@@ -264,8 +264,9 @@ Key Points:
 [Conclusion]
 Aim for clarity, accuracy, and conciseness in your summaries. Do not preface your summary with any statements about the query or article content.
 """
+client = Client(host="10.0.10.9:11435")
+model="gemma2"
+keep_alive = 60
+output = client.generate(model=model, prompt=post, system=template, keep_alive=keep_alive)
 
-msgs = [{"role": "system", "content": template}, {"role": "user", "content": post}]
-output = ollama.chat(model="llama3", messages=msgs)
-
-print(output["message"]["content"])
+print(output["response"])

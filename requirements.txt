@@ -16,3 +16,6 @@ Flask-Migrate
 PyYAML
 ollama
 pytest
+ratelimit
+tenacity
+apscheduler
