@@ -262,7 +262,8 @@ def create_app():
             return jsonify({"error": "content_id is required"}), 400
 
         try:
-            document = db.session.get(Document, content_id)
+            content_id = uuid.UUID(content_id)
+            document = db.session.get(ParsedContent, content_id)
             if not document:
                 current_app.logger.error(f"Document not found for id: {content_id}")
                 return jsonify({"error": "Document not found"}), 404
