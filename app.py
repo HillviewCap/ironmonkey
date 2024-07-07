@@ -20,7 +20,7 @@ from werkzeug.exceptions import BadRequest
 from apscheduler.schedulers.background import BackgroundScheduler
 
 from logging_config import setup_logger
-from models import db, User, SearchParams
+from models import db, User, SearchParams, RSSFeed
 from models import ParsedContent
 from models.diffbot_model import Entity, EntityMention, EntityType, EntityUri, Category
 from flask_login import LoginManager, UserMixin
