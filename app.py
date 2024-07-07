@@ -53,6 +53,16 @@ def check_empty_summaries():
         except Exception as e:
             logger.error(f"Error in check_empty_summaries: {str(e)}")
 
+def check_and_process_rss_feeds():
+    with app.app_context():
+        try:
+            feeds = RSSFeed.query.all()
+            for feed in feeds:
+                asyncio.run(rss_manager.parse_feed(feed))
+            logger.info(f"Checked and processed {len(feeds)} RSS feeds")
+        except Exception as e:
+            logger.error(f"Error in check_and_process_rss_feeds: {str(e)}")
+
 def create_app():
     app = Flask(__name__, instance_relative_config=True)
     app.ollama_api = OllamaAPI()
@@ -279,6 +289,7 @@ def create_app():
     # Initialize the scheduler
     scheduler = BackgroundScheduler()
     scheduler.add_job(func=check_empty_summaries, trigger="interval", minutes=10)
+    scheduler.add_job(func=check_and_process_rss_feeds, trigger="interval", minutes=30)
     scheduler.start()
 
     return app
