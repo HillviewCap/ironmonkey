@@ -275,16 +275,16 @@ def create_app():
             summary = await enhancer.process_single_record(document, db.session)
             if summary:
                 current_app.logger.info(f"Summary generated successfully for document id: {content_id}")
-                return jsonify({"summary": summary}), 200
+                return jsonify({"summary": document.summary}), 200
             else:
                 current_app.logger.error(f"Failed to generate summary for document id: {content_id}")
-                return jsonify({"error": "Failed to generate summary"}), 500
+                return jsonify({"error": "Failed to generate summary"}), 200
         except ValueError:
             current_app.logger.error(f"Invalid UUID format for content_id: {content_id}")
             return jsonify({"error": "Invalid content_id format"}), 400
         except Exception as e:
             current_app.logger.exception(f"Error summarizing content: {str(e)}")
-            return jsonify({"error": f"Error summarizing content: {str(e)}"}), 500
+            return jsonify({"error": f"Error summarizing content: {str(e)}"}), 200
 
     # Initialize the scheduler
     scheduler = BackgroundScheduler()
