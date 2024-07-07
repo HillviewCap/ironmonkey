@@ -125,8 +125,8 @@ class ParsedContent(db.Model):
     id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     title = db.Column(db.String(255), nullable=False)
     url = db.Column(db.String(255), nullable=False)
-    content = db.Column(db.Text, nullable=False)
-    summary = db.Column(db.Text, nullable=True)
+    description = db.Column(db.Text, nullable=True)
+    content = db.Column(db.Text, nullable=False)  # This will store the Jina summary from Ollama
     feed_id = db.Column(
         UUID(as_uuid=True), db.ForeignKey("rss_feed.id"), nullable=False
     )
@@ -134,7 +134,6 @@ class ParsedContent(db.Model):
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     entities = db.relationship("Entity", back_populates="parsed_content")
     categories = db.relationship("Category", back_populates="parsed_content")
-    description = db.Column(db.Text, nullable=True)
     pub_date = db.Column(db.String(100), nullable=True)
     creator = db.Column(db.String(255), nullable=True)
 
@@ -210,15 +209,27 @@ class Location(db.Model):
 
 class Category(db.Model):
     id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    type = db.Column(db.String(100))
-    id_category = db.Column(db.String(100))
-    name = db.Column(db.String(200))
-    path = db.Column(db.String(500))
-    score = db.Column(db.Float)  # Add this field for Diffbot's category score
+    name = db.Column(db.String(200), nullable=False)
+    scheme = db.Column(db.String(200), nullable=True)  # For feedparser category scheme
+    term = db.Column(db.String(200), nullable=True)  # For feedparser category term
     parsed_content_id = db.Column(
         UUID(as_uuid=True), db.ForeignKey("parsed_content.id")
     )
     parsed_content = db.relationship("ParsedContent", back_populates="categories")
+
+    @classmethod
+    def create_from_feedparser(cls, category, parsed_content_id):
+        if isinstance(category, str):
+            return cls(name=category, parsed_content_id=parsed_content_id)
+        elif isinstance(category, dict):
+            return cls(
+                name=category.get('term', ''),
+                scheme=category.get('scheme'),
+                term=category.get('term'),
+                parsed_content_id=parsed_content_id
+            )
+        else:
+            raise ValueError("Unsupported category format")
 
 
 class Sentiment(db.Model):
