@@ -4,6 +4,7 @@ from datetime import datetime, date
 from typing import List, Optional, Tuple
 from uuid import UUID as PyUUID, uuid4
 import uuid
+import uuid
 from pydantic import BaseModel, Field
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin
@@ -160,7 +161,7 @@ class ParsedContent(db.Model):
                 content_id = uuid.UUID(content_id)
             except ValueError:
                 return None
-        return cls.query.get(content_id)
+        return cls.query.filter(cls.id == content_id).first()
 
 
 class Category(db.Model):
