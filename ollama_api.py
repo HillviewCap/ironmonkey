@@ -5,6 +5,7 @@ from logging_config import logger
 
 load_dotenv()
 
+
 class OllamaAPI:
     def __init__(self):
         self.base_url = os.getenv("OLLAMA_BASE_URL")
@@ -16,39 +17,38 @@ class OllamaAPI:
         self.client = Client(host=self.base_url)
 
     def check_connection(self) -> bool:
-        """
-        Check if the Ollama API is accessible.
-
-        Returns:
-            bool: True if the connection is successful, False otherwise.
-        """
         try:
-            self.client.list()
-            logger.info(f"Successfully connected to Ollama API at {self.base_url}")
+            models = self.client.list()
+            if self.model not in [model["name"] for model in models["models"]]:
+                logger.error(
+                    f"Model {self.model} is not available. Available models: {[model['name'] for model in models['models']]}"
+                )
+                return False
+            logger.info(
+                f"Successfully connected to Ollama API at {self.base_url} and verified model {self.model}"
+            )
             return True
         except Exception as e:
-            logger.error(f"Failed to connect to Ollama API at {self.base_url}: {str(e)}")
+            logger.error(
+                f"Failed to connect to Ollama API at {self.base_url}: {str(e)}"
+            )
             return False
 
-    def generate(self, system_prompt: str, content_to_summarize: str) -> str:
-        """
-        Generate a response using the Ollama API.
-
-        Args:
-            system_prompt (str): The system prompt for the model.
-            content_to_summarize (str): The content to be summarized.
-
-        Returns:
-            str: The generated text response from the model.
-        """
+    def generate(
+        self, system_prompt: str, content_to_summarize: str, temperature: float = 0.7
+    ) -> str:
         if not self.check_connection():
-            raise Exception(f"Unable to connect to Ollama API at {self.base_url}")
+            raise Exception(
+                f"Unable to connect to Ollama API at {self.base_url} or model {self.model} is not available"
+            )
 
-        # Ensure UTF-8 encoding for both prompts
-        system_prompt_utf8 = system_prompt.encode('utf-8', errors='ignore').decode('utf-8')
-        content_to_summarize_utf8 = content_to_summarize.encode('utf-8', errors='ignore').decode('utf-8')
+        system_prompt_utf8 = system_prompt.encode("utf-8", errors="ignore").decode(
+            "utf-8"
+        )
+        content_to_summarize_utf8 = content_to_summarize.encode(
+            "utf-8", errors="ignore"
+        ).decode("utf-8")
 
-        # Log the prompts
         logger.debug(f"System Prompt: {system_prompt_utf8}")
         logger.debug(f"Content to Summarize: {content_to_summarize_utf8}")
 
@@ -56,18 +56,21 @@ class OllamaAPI:
             response = self.client.chat(
                 model=self.model,
                 messages=[
-                    {
-                        "role": "system",
-                        "content": system_prompt_utf8
-                    },
+                    {"role": "system", "content": system_prompt_utf8},
                     {
                         "role": "user",
-                        "content": f"Please summarize the following content:\n\n{content_to_summarize_utf8}"
-                    }
+                        "content": f"Please summarize the following content:\n\n{content_to_summarize_utf8}",
+                    },
                 ],
-                stream=False
+                stream=False,
+                options={
+                    "temperature": temperature,
+                    "num_predict": 4000,  # Adjust this based on your model's capabilities
+                },
             )
-            return response['message']['content']
+            generated_text = response["message"]["content"]
+            logger.debug(f"Generated response: {generated_text}")
+            return generated_text
         except Exception as exc:
             logger.error(f"Error occurred: {exc}")
             raise Exception(f"Error occurred: {exc}")
