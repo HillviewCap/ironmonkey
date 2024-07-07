@@ -26,7 +26,7 @@ from models.diffbot_model import Entity, EntityMention, EntityType, EntityUri, C
 from flask_login import LoginManager, UserMixin
 from auth import init_auth, login, logout, register
 from config import Config
-from rss_manager import rss_manager
+from rss_manager import rss_manager, fetch_and_parse_feed
 from nlp_tagging import DiffbotClient, DatabaseHandler, Document
 from ollama_api import OllamaAPI
 import asyncio
@@ -58,7 +58,7 @@ def check_and_process_rss_feeds():
         try:
             feeds = RSSFeed.query.all()
             for feed in feeds:
-                asyncio.run(rss_manager.parse_feed(feed))
+                asyncio.run(fetch_and_parse_feed(feed))
             logger.info(f"Checked and processed {len(feeds)} RSS feeds")
         except Exception as e:
             logger.error(f"Error in check_and_process_rss_feeds: {str(e)}")
