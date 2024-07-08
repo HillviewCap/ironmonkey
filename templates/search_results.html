@@ -15,15 +15,15 @@
             <label class="block mb-2">Source Types:</label>
             <div class="flex space-x-4">
                 <label class="inline-flex items-center">
-                    <input type="checkbox" name="source_types" value="news" {% if 'news' in (search_params.source_types|default([])) %}checked{% endif %} class="form-checkbox">
+                    <input type="checkbox" name="source_types[]" value="news" {% if 'news' in (search_params.source_types|default([])) %}checked{% endif %} class="form-checkbox">
                     <span class="ml-2">News</span>
                 </label>
                 <label class="inline-flex items-center">
-                    <input type="checkbox" name="source_types" value="blog" {% if 'blog' in (search_params.source_types|default([])) %}checked{% endif %} class="form-checkbox">
+                    <input type="checkbox" name="source_types[]" value="blog" {% if 'blog' in (search_params.source_types|default([])) %}checked{% endif %} class="form-checkbox">
                     <span class="ml-2">Blog</span>
                 </label>
                 <label class="inline-flex items-center">
-                    <input type="checkbox" name="source_types" value="report" {% if 'report' in (search_params.source_types|default([])) %}checked{% endif %} class="form-checkbox">
+                    <input type="checkbox" name="source_types[]" value="report" {% if 'report' in (search_params.source_types|default([])) %}checked{% endif %} class="form-checkbox">
                     <span class="ml-2">Report</span>
                 </label>
             </div>
@@ -48,8 +48,8 @@
                 <tbody>
                     {% for result in results.items %}
                     <tr class="{% if loop.index % 2 == 0 %}bg-gray-100{% endif %}">
-                        <td class="border px-4 py-2">{{ result.title[:50] }}{% if result.title|length > 50 %}...{% endif %}</td>
-                        <td class="border px-4 py-2">{{ result.content[:100] }}{% if result.content|length > 100 %}...{% endif %}</td>
+                        <td class="border px-4 py-2">{{ result.title|truncate(50, true, '...') }}</td>
+                        <td class="border px-4 py-2">{{ result.content|truncate(100, true, '...') }}</td>
                         <td class="border px-4 py-2 text-sm text-gray-500">
                             {{ result.source_type }} | {{ result.date.strftime('%Y-%m-%d') if result.date else 'N/A' }}
                         </td>

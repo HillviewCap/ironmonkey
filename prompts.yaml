@@ -7,12 +7,12 @@ summarize:
 
     # OUTPUT SECTIONS
 
-    1. Combine all of your understanding of the content into a five sentense summary, each being 20-word sentence in a section called `FIVE SENTENCE SUMMARY`..
+    1. Combine all of your understanding of the content into a five sentense summary, each being 20-word sentence.
 
     # OUTPUT INSTRUCTIONS
-    Do not preface your summary with any statements about the query or article content.
+    Do not preface your summary with Here is the five-sentence summary.
     1. Create the output using the formatting above.
-    2. You only output your answer in the requested format.
+    2. Always define acronyms to the best of your ability
     3. Output numbered lists, not bullets.
     4. Do not output warnings or notes—just the requested sections.
     5. Do not repeat items in the output sections.
