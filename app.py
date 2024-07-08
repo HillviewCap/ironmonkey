@@ -1,16 +1,14 @@
 from __future__ import annotations
 
 import os
-import logging
 import asyncio
-import uuid
 import uuid
 from datetime import datetime
 from typing import List
 
 import bleach
 from dotenv import load_dotenv
-from flask import Flask, render_template, request, jsonify, current_app
+from flask import Flask, render_template, request, jsonify, current_app, abort
 from flask_migrate import Migrate
 import shutil
 from flask_wtf import FlaskForm
@@ -19,15 +17,16 @@ from flask import redirect, url_for
 from flask_login import login_required, current_user
 from sqlalchemy.exc import SQLAlchemyError
 from werkzeug.exceptions import BadRequest
+from apscheduler.schedulers.background import BackgroundScheduler
 
-import logging_config
-from logging.handlers import TimedRotatingFileHandler
-from models import SearchParams, db, ParsedContent, User
+from logging_config import setup_logger
+from models import db, User, SearchParams, RSSFeed, ParsedContent
+from models.diffbot_model import Entity, EntityMention, EntityType, EntityUri, Category
 from flask_login import LoginManager, UserMixin
 from auth import init_auth, login, logout, register
 from config import Config
-from rss_manager import rss_manager
-from nlp_tagging import DiffbotClient, DatabaseHandler
+from rss_manager import rss_manager, fetch_and_parse_feed
+from nlp_tagging import DiffbotClient, DatabaseHandler, Document
 from ollama_api import OllamaAPI
 import asyncio
 from ollama_api import OllamaAPI
@@ -39,52 +38,44 @@ load_dotenv()
 
 from summary_enhancer import SummaryEnhancer
 
-async def enhance_summaries():
-    """
-    Check the parsed_content table for missing summaries,
-    generate summaries using Ollama, and update the database.
-    """
-    app = current_app._get_current_object()
-    ollama_api = OllamaAPI()
-    enhancer = SummaryEnhancer(ollama_api)
-    await enhancer.enhance_summaries()
-
 # Configure logging
-logging.basicConfig(
-    level=logging.DEBUG, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-)
-logger = logging.getLogger(__name__)
+logger = setup_logger('app', 'app.log')
 
+def check_empty_summaries():
+    with app.app_context():
+        try:
+            empty_summaries = ParsedContent.query.filter(ParsedContent.summary == None).limit(10).all()
+            enhancer = SummaryEnhancer(app.ollama_api)
+            for content in empty_summaries:
+                asyncio.run(enhancer.process_single_record(content, db.session))
+            logger.info(f"Processed {len(empty_summaries)} empty summaries")
+        except Exception as e:
+            logger.error(f"Error in check_empty_summaries: {str(e)}")
+
+def check_and_process_rss_feeds():
+    with app.app_context():
+        try:
+            feeds = RSSFeed.query.all()
+            for feed in feeds:
+                asyncio.run(fetch_and_parse_feed(feed))
+            logger.info(f"Checked and processed {len(feeds)} RSS feeds")
+        except Exception as e:
+            logger.error(f"Error in check_and_process_rss_feeds: {str(e)}")
 
 def create_app():
     app = Flask(__name__, instance_relative_config=True)
     app.ollama_api = OllamaAPI()
-    asyncio.run(app.ollama_api.check_connection())  # Ensure connection on startup
+    if not app.ollama_api.check_connection():  # Ensure connection on startup
+        logger.error("Failed to connect to Ollama API. Exiting.")
+        return None
     app.config.from_object(Config)
     Config.init_app(app)
-
-    # Ensure the instance folder exists
-    try:
-        os.makedirs(app.instance_path)
-    except OSError:
-        logger.warning(f"Could not create instance folder at {app.instance_path}")
 
     # Database configuration
     app.config["SQLALCHEMY_DATABASE_URI"] = (
         f"sqlite:///{os.path.join(app.instance_path, 'threats.db')}"
     )
     logger.info(f"Database URI: {app.config['SQLALCHEMY_DATABASE_URI']}")
-
-    # Set up logging
-    log_file = os.path.join(app.instance_path, 'enhance_summaries.log')
-    file_handler = TimedRotatingFileHandler(log_file, when='midnight', interval=1, backupCount=10)
-    file_handler.setFormatter(logging.Formatter(
-        '%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]'
-    ))
-    file_handler.setLevel(logging.INFO)
-    app.logger.addHandler(file_handler)
-    app.logger.setLevel(logging.INFO)
-    app.logger.info('Enhance summaries startup')
 
     try:
         db.init_app(app)
@@ -112,10 +103,10 @@ def create_app():
             current_app.logger.info("Entering index route")
             try:
                 if current_user.is_authenticated:
-                    # Fetch the 6 most recent ParsedContent items with non-null title and content
+                    # Fetch the 6 most recent ParsedContent items with non-null title and description
                     recent_items = (
-                        ParsedContent.query
-                        .filter(ParsedContent.title.isnot(None), ParsedContent.content.isnot(None))
+                        db.session.query(ParsedContent)
+                        .filter(ParsedContent.title.isnot(None), ParsedContent.description.isnot(None))
                         .order_by(ParsedContent.created_at.desc())
                         .limit(6)
                         .all()
@@ -135,26 +126,6 @@ def create_app():
         app.add_url_rule("/logout", "logout", logout)
         app.add_url_rule("/register", "register", register, methods=["GET", "POST"])
 
-        @app.cli.command("reinit-db")
-        def reinit_db():
-            """Reinitialize the database by removing existing migrations and creating new ones."""
-            migrations_dir = os.path.join(app.root_path, 'migrations')
-            if os.path.exists(migrations_dir):
-                shutil.rmtree(migrations_dir)
-                print("Removed existing migrations directory.")
-            
-            # Initialize migrations
-            Migrate(app, db)
-            with app.app_context():
-                db.create_all()
-            
-            # Create a new migration
-            os.system('flask db init')
-            os.system('flask db migrate -m "Initial migration"')
-            os.system('flask db upgrade')
-            
-            print("Database reinitialized successfully.")
-
     except Exception as e:
         logger.error(f"Error during app initialization: {str(e)}")
         raise
@@ -173,22 +144,18 @@ def create_app():
         if not content_id:
             return jsonify({"error": "content_id is required"}), 400
 
-        content = ParsedContent.get_by_id(content_id)
-        if not content:
-            return jsonify({"error": "Content not found"}), 404
+        document = ParsedContent.get_document_by_id(content_id)
+        if not document:
+            return jsonify({"error": "Document not found"}), 404
 
         try:
-            # Detach the content object from its current session
-            db.session.expunge(content)
-        
             async with httpx.AsyncClient() as client:
-                result = await diffbot_client.tag_content(content.content, client)
+                result = await diffbot_client.tag_content(document.content, client)
         
             # Use the existing db.session for processing the result
-            db_handler.process_nlp_result(content, result, db.session)
+            db_handler.process_nlp_result(document, result, db.session)
             # Update the summary field
-            content.summary = result.get("summary", {}).get("text")
-            db.session.merge(content)
+            document.summary = result.get("summary", {}).get("text")
             db.session.commit()
 
             return jsonify({"message": "Content tagged successfully"}), 200
@@ -206,9 +173,9 @@ def create_app():
         diffbot_client = DiffbotClient(diffbot_api_key)
         db_handler = DatabaseHandler(app.config["SQLALCHEMY_DATABASE_URI"])
 
-        untagged_content = (
-            ParsedContent.query.filter(
-                (ParsedContent.entities == None) & (ParsedContent.categories == None)
+        untagged_documents = (
+            Document.query.filter(
+                (Document.entities == None) & (Document.categories == None)
             )
             .limit(10)
             .all()
@@ -216,22 +183,22 @@ def create_app():
 
         tagged_count = 0
         async with httpx.AsyncClient() as client:
-            for content in untagged_content:
+            for document in untagged_documents:
                 try:
-                    result = await diffbot_client.tag_content(content.content, client)
-                    db_handler.process_nlp_result(content, result)
-                    content.summary = result.get("summary", {}).get("text")
+                    result = await diffbot_client.tag_content(document.content, client)
+                    db_handler.process_nlp_result(document, result)
+                    document.summary = result.get("summary", {}).get("text")
                     tagged_count += 1
                 except Exception as e:
                     current_app.logger.error(
-                        f"Error tagging content ID {content.id}: {str(e)}"
+                        f"Error tagging document ID {document.id}: {str(e)}"
                     )
 
         db.session.commit()
         return (
             jsonify(
                 {
-                    "message": f"Tagged {tagged_count} out of {len(untagged_content)} contents"
+                    "message": f"Tagged {tagged_count} out of {len(untagged_documents)} documents"
                 }
             ),
             200,
@@ -247,19 +214,19 @@ def create_app():
         if not content_id:
             return jsonify({"error": "content_id is required"}), 400
 
-        content = ParsedContent.query.get(content_id)
-        if not content:
-            return jsonify({"error": "Content not found"}), 404
+        document = Document.query.get(content_id)
+        if not document:
+            return jsonify({"error": "Document not found"}), 404
 
         try:
-            result = await diffbot_client.tag_content(content.content)
-            db_handler.process_nlp_result(content, result)
+            result = await diffbot_client.tag_content(document.content)
+            db_handler.process_nlp_result(document, result)
 
             # Update the summary field
-            content.summary = result.get("summary", {}).get("text")
+            document.summary = result.get("summary", {}).get("text")
             db.session.commit()
 
-            return jsonify({"message": "Content tagged successfully"}), 200
+            return jsonify({"message": "Document tagged successfully"}), 200
         except Exception as e:
             current_app.logger.error(f"Error tagging content: {str(e)}")
             return jsonify({"error": "Error tagging content"}), 500
@@ -277,7 +244,9 @@ def create_app():
 
     @app.route("/view/<uuid:item_id>")
     def view_item(item_id):
-        item = ParsedContent.query.get_or_404(item_id)
+        item = db.session.get(ParsedContent, item_id)
+        if item is None:
+            abort(404)
         return render_template("view_item.html", item=item)
 
     @app.cli.command("parse-feeds")
@@ -287,12 +256,6 @@ def create_app():
             asyncio.run(rss_manager.parse_feeds())
         print("Feeds parsed successfully.")
 
-    @app.cli.command("enhance-summaries")
-    def enhance_summaries_command():
-        """Enhance summaries for parsed content using Ollama."""
-        with app.app_context():
-            asyncio.run(enhance_summaries())
-        print("Summaries enhanced successfully.")
 
     @app.route("/summarize_content", methods=["POST"])
     @login_required
@@ -303,39 +266,35 @@ def create_app():
             return jsonify({"error": "content_id is required"}), 400
 
         try:
-            content_uuid = uuid.UUID(content_id)
-            content = db.session.get(ParsedContent, content_uuid)
-            if not content:
-                current_app.logger.error(f"Content not found for id: {content_id}")
-                return jsonify({"error": "Content not found"}), 404
+            content_id = uuid.UUID(content_id)
+            document = db.session.get(ParsedContent, content_id)
+            if not document:
+                current_app.logger.error(f"Document not found for id: {content_id}")
+                return jsonify({"error": "Document not found"}), 404
 
             enhancer = SummaryEnhancer(app.ollama_api)
-            success = await enhancer.process_single_record(content, db.session)
+            success = await enhancer.process_single_record(document, db.session)
             if success:
-                current_app.logger.info(f"Summary generated successfully for content id: {content_id}")
-                return jsonify({"summary": content.summary}), 200
+                current_app.logger.info(f"Summary generated successfully for document id: {content_id}")
+                return jsonify({"summary": document.summary}), 200
             else:
-                current_app.logger.error(f"Failed to generate summary for content id: {content_id}")
+                current_app.logger.error(f"Failed to generate summary for document id: {content_id}")
                 return jsonify({"error": "Failed to generate summary"}), 500
         except ValueError:
             current_app.logger.error(f"Invalid UUID format for content_id: {content_id}")
             return jsonify({"error": "Invalid content_id format"}), 400
         except Exception as e:
             current_app.logger.exception(f"Error summarizing content: {str(e)}")
-            return jsonify({"error": f"Error summarizing content: {str(e)}"}), 500
+            return jsonify({"error": f"Error summarizing content: {str(e)}"}), 200
+
+    # Initialize the scheduler
+    scheduler = BackgroundScheduler()
+    scheduler.add_job(func=check_empty_summaries, trigger="interval", minutes=10)
+    scheduler.add_job(func=check_and_process_rss_feeds, trigger="interval", minutes=30)
+    scheduler.start()
 
     return app
 
-
-def init_db(app):
-    with app.app_context():
-        try:
-            db.create_all()
-            logger.info("Database tables created successfully")
-        except SQLAlchemyError as e:
-            logger.error(f"SQLAlchemy error during database initialization: {str(e)}")
-        except Exception as e:
-            logger.error(f"Unexpected error during database initialization: {str(e)}")
 
 
 def render_error_page():
@@ -438,5 +397,7 @@ def build_search_query(search_params):
 
 if __name__ == "__main__":
     app = create_app()
-    init_db(app)
-    app.run(debug=True)
+    if app is not None:
+        app.run(debug=True, use_reloader=False)
+    else:
+        print("Failed to create the application. Please check the logs for more information.")

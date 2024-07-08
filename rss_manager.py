@@ -19,10 +19,12 @@ import feedparser
 import httpx
 import asyncio
 
-from models import db, RSSFeed, ParsedContent
+from models import db, RSSFeed, ParsedContent, Category
 from jina_api import parse_content
 from logging_config import logger
 from nlp_tagging import DiffbotClient, DatabaseHandler
+from summary_enhancer import SummaryEnhancer
+from ollama_api import OllamaAPI
 
 rss_manager = Blueprint("rss_manager", __name__)
 csrf = CSRFProtect()
@@ -67,16 +69,26 @@ async def fetch_and_parse_feed(feed: RSSFeed) -> None:
             for entry in feed_data.entries:
                 if not ParsedContent.query.filter_by(url=entry.link).first():
                     try:
-                        parsed_data = await parse_content(entry.link)
-                        new_content = ParsedContent(
-                            title=parsed_data["title"],
-                            url=parsed_data["url"],
-                            content=parsed_data["content"],
-                            links=parsed_data["links"],
-                            feed_id=feed.id,
-                        )
-                        db.session.add(new_content)
-                        logger.info(f"Added new content: {new_content.url}")
+                        parsed_content = await parse_content(entry.link)
+                        if parsed_content is not None:
+                            new_content = ParsedContent(
+                                content=parsed_content,
+                                feed_id=feed.id,
+                                url=entry.link,
+                                title=entry.get('title', ''),
+                                description=entry.get('description', ''),
+                                pub_date=entry.get('published', ''),
+                                creator=entry.get('author', '')
+                            )
+                            db.session.add(new_content)
+                        
+                            # Add categories using the new method
+                            for category in entry.get('tags', []):
+                                db_category = Category.create_from_feedparser(category, new_content.id)
+                                db.session.add(db_category)
+                            logger.info(f"Added new content: {new_content.url}")
+                        else:
+                            logger.warning(f"Failed to parse content for {entry.link}")
                     except Exception as e:
                         logger.error(f"Error parsing entry {entry.link}: {str(e)}")
             try:
@@ -223,8 +235,7 @@ def parsed_content():
 
     if search_query:
         query = query.filter(
-            (ParsedContent.title.ilike(f"%{search_query}%"))
-            | (ParsedContent.content.ilike(f"%{search_query}%"))
+            (ParsedContent.content.ilike(f"%{search_query}%"))
             | (ParsedContent.url.ilike(f"%{search_query}%"))
         )
 
@@ -273,6 +284,37 @@ async def tag_content(post_id):
     except Exception as e:
         db.session.rollback()
         flash(f"Error tagging content: {str(e)}", "error")
+    return redirect(url_for("rss_manager.parsed_content"))
+
+
+@rss_manager.route("/summarize_content/<uuid:post_id>", methods=["POST"])
+@login_required
+async def summarize_content(post_id):
+    """Summarize a single piece of parsed content."""
+    try:
+        post = db.session.get(ParsedContent, post_id)
+        if post is None:
+            flash("Content not found", "error")
+            return redirect(url_for("rss_manager.parsed_content"))
+
+        ollama_api = current_app.ollama_api
+        enhancer = SummaryEnhancer(ollama_api)
+        
+        system_prompt = enhancer.prompts["summarize"]
+        content_to_summarize = post.content
+
+        summary = await ollama_api.generate(system_prompt, content_to_summarize)
+        
+        if summary:
+            post.summary = summary
+            db.session.commit()
+            flash("Content summarized successfully!", "success")
+        else:
+            flash("Failed to summarize content", "error")
+    except Exception as e:
+        logger.error(f"Error summarizing content: {str(e)}", exc_info=True)
+        flash(f"Error summarizing content: {str(e)}", "error")
+    
     return redirect(url_for("rss_manager.parsed_content"))
 
 
