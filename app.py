@@ -8,7 +8,7 @@ from typing import List
 
 import bleach
 from dotenv import load_dotenv
-from flask import Flask, render_template, request, jsonify, current_app
+from flask import Flask, render_template, request, jsonify, current_app, abort
 from flask_migrate import Migrate
 import shutil
 from flask_wtf import FlaskForm
@@ -20,8 +20,7 @@ from werkzeug.exceptions import BadRequest
 from apscheduler.schedulers.background import BackgroundScheduler
 
 from logging_config import setup_logger
-from models import db, User, SearchParams, RSSFeed
-from models import ParsedContent
+from models import db, User, SearchParams, RSSFeed, ParsedContent
 from models.diffbot_model import Entity, EntityMention, EntityType, EntityUri, Category
 from flask_login import LoginManager, UserMixin
 from auth import init_auth, login, logout, register
@@ -245,7 +244,9 @@ def create_app():
 
     @app.route("/view/<uuid:item_id>")
     def view_item(item_id):
-        item = ParsedContent.query.get_or_404(item_id)
+        item = db.session.get(ParsedContent, item_id)
+        if item is None:
+            abort(404)
         return render_template("view_item.html", item=item)
 
     @app.cli.command("parse-feeds")
