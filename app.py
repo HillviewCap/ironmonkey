@@ -37,6 +37,7 @@ import httpx
 load_dotenv()
 
 from summary_enhancer import SummaryEnhancer
+from init_db import init_db
 
 # Configure logging
 logger = setup_logger('app', 'app.log')
@@ -96,6 +97,10 @@ def create_app(config_name='default'):
 
         # Register blueprints
         app.register_blueprint(rss_manager)
+
+        # Initialize the database
+        with app.app_context():
+            init_db(app)
 
         # Route registrations
         @app.route("/")
