@@ -1,56 +1,79 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="mb-8">
+<div class="container mx-auto mt-8">
     <h2 class="text-2xl font-bold mb-4">Search Results</h2>
     <form action="{{ url_for('search') }}" method="get" class="mb-4">
-        <input type="text" name="query" value="{{ search_params.query }}" placeholder="Search threats..." class="p-2 border rounded-lg w-64 mb-2">
-        <div class="flex space-x-4 mb-2">
-            <input type="date" name="start_date" value="{{ search_params.start_date }}" class="p-2 border rounded-lg">
-            <input type="date" name="end_date" value="{{ search_params.end_date }}" class="p-2 border rounded-lg">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <input type="text" name="query" value="{{ search_params.query }}" placeholder="Search threats..." class="p-2 border rounded-lg w-full">
+            <div class="flex space-x-4">
+                <input type="date" name="start_date" value="{{ search_params.start_date }}" class="p-2 border rounded-lg flex-grow">
+                <input type="date" name="end_date" value="{{ search_params.end_date }}" class="p-2 border rounded-lg flex-grow">
+            </div>
         </div>
-        <div class="mb-2">
-            <label class="block">Source Types:</label>
-            <input type="checkbox" name="source_types" value="news" {% if 'news' in (search_params.source_types|default([])) %}checked{% endif %}> News
-            <input type="checkbox" name="source_types" value="blog" {% if 'blog' in (search_params.source_types|default([])) %}checked{% endif %}> Blog
-            <input type="checkbox" name="source_types" value="report" {% if 'report' in (search_params.source_types|default([])) %}checked{% endif %}> Report
+        <div class="mt-4">
+            <label class="block mb-2">Source Types:</label>
+            <div class="flex space-x-4">
+                <label class="inline-flex items-center">
+                    <input type="checkbox" name="source_types" value="news" {% if 'news' in (search_params.source_types|default([])) %}checked{% endif %} class="form-checkbox">
+                    <span class="ml-2">News</span>
+                </label>
+                <label class="inline-flex items-center">
+                    <input type="checkbox" name="source_types" value="blog" {% if 'blog' in (search_params.source_types|default([])) %}checked{% endif %} class="form-checkbox">
+                    <span class="ml-2">Blog</span>
+                </label>
+                <label class="inline-flex items-center">
+                    <input type="checkbox" name="source_types" value="report" {% if 'report' in (search_params.source_types|default([])) %}checked{% endif %} class="form-checkbox">
+                    <span class="ml-2">Report</span>
+                </label>
+            </div>
         </div>
-        <div class="mb-2">
-            <label class="block">Keywords:</label>
-            <input type="text" name="keywords" value="{{ search_params.keywords|join(', ') }}" placeholder="Enter keywords" class="p-2 border rounded-lg w-64">
+        <div class="mt-4">
+            <label class="block mb-2">Keywords:</label>
+            <input type="text" name="keywords" value="{{ search_params.keywords|join(', ') }}" placeholder="Enter keywords" class="p-2 border rounded-lg w-full">
         </div>
-        <button type="submit" class="bg-blue-600 text-white p-2 rounded-lg">Search</button>
+        <button type="submit" class="mt-4 bg-blue-600 text-white p-2 rounded-lg hover:bg-blue-700 transition duration-300">Search</button>
     </form>
     {% if results %}
         <div class="overflow-x-auto">
             <table class="w-full table-auto">
                 <thead>
                     <tr class="bg-gray-200">
-                        <th class="px-2 py-2 w-1/4">Title</th>
-                        <th class="px-2 py-2 w-1/4">Description</th>
-                        <th class="px-2 py-2 w-1/4">Source &amp; Date</th>
-                        <th class="px-2 py-2 w-1/4">Action</th>
+                        <th class="px-4 py-2">Title</th>
+                        <th class="px-4 py-2">Description</th>
+                        <th class="px-4 py-2">Source &amp; Date</th>
+                        <th class="px-4 py-2">Action</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for result in results.items %}
                     <tr class="{% if loop.index % 2 == 0 %}bg-gray-100{% endif %}">
-                        <td class="border px-2 py-2 truncate">{{ result.title[:50] }}</td>
-                        <td class="border px-2 py-2 truncate">{{ result.content[:50] }}</td>
-                        <td class="border px-2 py-2 text-sm text-gray-500">
+                        <td class="border px-4 py-2">{{ result.title[:50] }}{% if result.title|length > 50 %}...{% endif %}</td>
+                        <td class="border px-4 py-2">{{ result.content[:100] }}{% if result.content|length > 100 %}...{% endif %}</td>
+                        <td class="border px-4 py-2 text-sm text-gray-500">
                             {{ result.source_type }} | {{ result.date.strftime('%Y-%m-%d') if result.date else 'N/A' }}
                         </td>
-                        <td class="border px-2 py-2">
-                            <a href="{{ result.url }}" target="_blank" class="text-blue-600 hover:underline">Read more</a>
+                        <td class="border px-4 py-2">
+                            <a href="{{ url_for('view_item', item_id=result.id) }}" class="text-blue-600 hover:underline">View Details</a>
                         </td>
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
+        <div class="mt-4">
+            {% if results.has_prev %}
+                <a href="{{ url_for('search', page=results.prev_num, **request.args) }}" class="bg-blue-600 text-white p-2 rounded-lg hover:bg-blue-700 transition duration-300">Previous</a>
+            {% endif %}
+            {% if results.has_next %}
+                <a href="{{ url_for('search', page=results.next_num, **request.args) }}" class="bg-blue-600 text-white p-2 rounded-lg hover:bg-blue-700 transition duration-300">Next</a>
+            {% endif %}
+        </div>
     {% else %}
-        <p>No results found.</p>
+        <p class="mt-4">No results found.</p>
     {% endif %}
 </div>
-<a href="/" class="bg-blue-600 text-white p-2 rounded">Back to Home</a>
+<div class="mt-8 text-center">
+    <a href="{{ url_for('index') }}" class="bg-blue-600 text-white p-2 rounded-lg hover:bg-blue-700 transition duration-300">Back to Home</a>
+</div>
 {% endblock %}
