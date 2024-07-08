@@ -5,7 +5,13 @@
     <h1 class="text-3xl font-bold mb-4">{{ item.title }}</h1>
     <p class="text-gray-600 mb-4">{{ item.date.strftime('%Y-%m-%d') }}</p>
     <div class="bg-white shadow-md rounded-lg p-6">
-        <p class="mb-4">{{ item.content }}</p>
+        <div class="mb-4">
+            <p class="content-preview">{{ item.content[:500] }}...</p>
+            <p class="full-content hidden">{{ item.content }}</p>
+            <button class="read-more-btn bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mt-2">
+                Read More
+            </button>
+        </div>
         {% if item.summary %}
             <h2 class="text-xl font-semibold mb-2">Summary</h2>
             <p class="mb-4">{{ item.summary }}</p>
@@ -28,4 +34,18 @@
         {% endif %}
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const readMoreBtn = document.querySelector('.read-more-btn');
+    const contentPreview = document.querySelector('.content-preview');
+    const fullContent = document.querySelector('.full-content');
+
+    readMoreBtn.addEventListener('click', function() {
+        contentPreview.classList.add('hidden');
+        fullContent.classList.remove('hidden');
+        readMoreBtn.classList.add('hidden');
+    });
+});
+</script>
 {% endblock %}
