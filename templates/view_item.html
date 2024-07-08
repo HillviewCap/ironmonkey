@@ -4,18 +4,14 @@
 <div class="container mx-auto mt-8">
     <h1 class="text-3xl font-bold mb-4">{{ item.title }}</h1>
     
-    {% if item.author %}
-    <p class="text-gray-700 mb-2">Author(s): {{ item.author }}</p>
+    {% if item.creator %}
+    <p class="text-gray-700 mb-2">Author(s): {{ item.creator }}</p>
     {% endif %}
     
     <p class="text-gray-600 mb-4">
         Date Published: 
         {% if item.pub_date %}
-            {% if item.pub_date is string %}
-                {{ item.pub_date }}
-            {% else %}
-                {{ item.pub_date.strftime('%Y-%m-%d') }}
-            {% endif %}
+            {{ item.pub_date.strftime('%Y-%m-%d') if item.pub_date is not string else item.pub_date }}
         {% else %}
             N/A
         {% endif %}
@@ -29,6 +25,13 @@
                 <li>{{ category.name }}</li>
             {% endfor %}
         </ul>
+    </div>
+    {% endif %}
+    
+    {% if item.description %}
+    <div class="mb-6">
+        <h2 class="text-xl font-semibold mb-2">Description</h2>
+        <p>{{ item.description }}</p>
     </div>
     {% endif %}
     
