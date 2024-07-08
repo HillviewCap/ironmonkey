@@ -27,7 +27,11 @@
             <tbody>
                 {% for post in posts %}
                 <tr class="{% if loop.index % 2 == 0 %}bg-gray-100{% endif %}">
-                    <td class="border px-2 py-2 break-words">{{ post.title[:50] }}</td>
+                    <td class="border px-2 py-2 break-words">
+                        <a href="{{ url_for('view_item', item_id=post.id) }}" class="text-blue-600 hover:underline">
+                            {{ post.title[:50] }}
+                        </a>
+                    </td>
                     <td class="border px-2 py-2 break-words">{{ post.content[:50] }}</td>
                     <td class="border px-2 py-2 break-words">
                         <a href="{{ post.url }}" class="text-blue-500 hover:underline" target="_blank">
