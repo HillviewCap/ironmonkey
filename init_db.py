@@ -21,8 +21,10 @@ def create_app():
     db.init_app(app)
     return app
 
-def init_db():
-    app = create_app()
+def init_db(app=None):
+    if app is None:
+        app = create_app()
+    
     with app.app_context():
         # Create tables for models defined with Flask-SQLAlchemy
         db.create_all()
