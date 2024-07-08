@@ -4,12 +4,6 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-import os
-import logging
-from dotenv import load_dotenv
-
-load_dotenv()
-
 basedir = os.path.abspath(os.path.dirname(__file__))
 instance_path = os.path.join(basedir, 'instance')
 
@@ -31,3 +25,23 @@ class Config:
                 logging.getLogger(__name__).error(f"Error creating directory for database file: {str(e)}")
         else:
             logging.getLogger(__name__).info(f"Directory for database file already exists at {db_dir}")
+
+class ProductionConfig(Config):
+    DEBUG = False
+    # Add any production-specific configurations here
+    # For example:
+    # SQLALCHEMY_DATABASE_URI = os.getenv('PRODUCTION_DATABASE_URL')
+
+class DevelopmentConfig(Config):
+    DEBUG = True
+
+class TestingConfig(Config):
+    TESTING = True
+    SQLALCHEMY_DATABASE_URI = 'sqlite:///:memory:'
+
+config = {
+    'development': DevelopmentConfig,
+    'testing': TestingConfig,
+    'production': ProductionConfig,
+    'default': DevelopmentConfig
+}

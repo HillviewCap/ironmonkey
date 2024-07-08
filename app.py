@@ -24,7 +24,7 @@ from models import db, User, SearchParams, RSSFeed, ParsedContent
 from models.diffbot_model import Entity, EntityMention, EntityType, EntityUri, Category
 from flask_login import LoginManager, UserMixin
 from auth import init_auth, login, logout, register
-from config import Config
+from config import config
 from rss_manager import rss_manager, fetch_and_parse_feed
 from nlp_tagging import DiffbotClient, DatabaseHandler, Document
 from ollama_api import OllamaAPI
@@ -62,14 +62,14 @@ def check_and_process_rss_feeds():
         except Exception as e:
             logger.error(f"Error in check_and_process_rss_feeds: {str(e)}")
 
-def create_app():
+def create_app(config_name='default'):
     app = Flask(__name__, instance_relative_config=True, static_url_path='/static')
     app.ollama_api = OllamaAPI()
     if not app.ollama_api.check_connection():  # Ensure connection on startup
         logger.error("Failed to connect to Ollama API. Exiting.")
         return None
-    app.config.from_object(Config)
-    Config.init_app(app)
+    app.config.from_object(config[config_name])
+    config[config_name].init_app(app)
 
     # Database configuration
     app.config["SQLALCHEMY_DATABASE_URI"] = (
@@ -401,8 +401,8 @@ def build_search_query(search_params):
 
 
 if __name__ == "__main__":
-    app = create_app()
+    app = create_app('production')
     if app is not None:
-        app.run(debug=True, use_reloader=False)
+        app.run(host='0.0.0.0', port=5000)
     else:
         print("Failed to create the application. Please check the logs for more information.")
