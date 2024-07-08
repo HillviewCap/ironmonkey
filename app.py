@@ -293,6 +293,11 @@ def create_app():
     scheduler.add_job(func=check_and_process_rss_feeds, trigger="interval", minutes=30)
     scheduler.start()
 
+    @app.route('/favicon.ico')
+    def favicon():
+        return send_from_directory(os.path.join(app.root_path, 'static'),
+                                   'favicon.ico', mimetype='image/vnd.microsoft.icon')
+
     return app
 
 
