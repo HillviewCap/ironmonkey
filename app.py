@@ -8,7 +8,7 @@ from typing import List
 
 import bleach
 from dotenv import load_dotenv
-from flask import Flask, render_template, request, jsonify, current_app, abort
+from flask import Flask, render_template, request, jsonify, current_app, abort, send_from_directory
 from flask_migrate import Migrate
 import shutil
 from flask_wtf import FlaskForm
@@ -63,7 +63,7 @@ def check_and_process_rss_feeds():
             logger.error(f"Error in check_and_process_rss_feeds: {str(e)}")
 
 def create_app():
-    app = Flask(__name__, instance_relative_config=True)
+    app = Flask(__name__, instance_relative_config=True, static_url_path='/static')
     app.ollama_api = OllamaAPI()
     if not app.ollama_api.check_connection():  # Ensure connection on startup
         logger.error("Failed to connect to Ollama API. Exiting.")
