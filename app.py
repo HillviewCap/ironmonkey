@@ -243,9 +243,9 @@ def create_app():
 
         return render_template("search.html", form=form)
 
-    @app.route("/view/<int:item_id>")
+    @app.route("/view/<uuid:item_id>")
     def view_item(item_id):
-        item = Document.query.get_or_404(item_id)
+        item = ParsedContent.query.get_or_404(item_id)
         return render_template("view_item.html", item=item)
 
     @app.cli.command("parse-feeds")
