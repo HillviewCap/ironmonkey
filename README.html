@@ -1,109 +1,78 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IronMonkey Threat Research App README</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            line-height: 1.6;
-            color: #333;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        h1, h2 {
-            color: #2c3e50;
-        }
-        code {
-            background-color: #f4f4f4;
-            padding: 2px 5px;
-            border-radius: 3px;
-        }
-    </style>
-</head>
-<body>
-    <h1>IronMonkey Threat Research App</h1>
-    
-    <h2>Overview</h2>
-    <p>This Flask-based web application is designed for threat research and analysis. It provides features for parsing RSS feeds, tagging content using NLP, and searching through parsed content.</p>
-    
-    <h2>Key Features</h2>
-    <ul>
-        <li>User authentication (login, logout, registration)</li>
-        <li>RSS feed parsing and storage</li>
-        <li>Content tagging using Diffbot API</li>
-        <li>Content summarization using Ollama API</li>
-        <li>Advanced search functionality</li>
-        <li>Scheduled tasks for processing feeds and generating summaries</li>
-    </ul>
-    
-    <h2>Setup and Configuration</h2>
-    <ol>
-        <li>Ensure Python 3.x is installed on your system.</li>
-        <li>Install required dependencies (use <code>pip install -r requirements.txt</code> if available).</li>
-        <li>Set up environment variables:
-            <ul>
-                <li>DIFFBOT_API_KEY</li>
-                <li>OLLAMA_BASE_URL</li>
-                <li>OLLAMA_MODEL (default is "llama3:latest")</li>
-                <li>SECRET_KEY (for Flask app)</li>
-            </ul>
-        </li>
-        <li>Initialize the database (SQLite) using Flask-Migrate.</li>
-    </ol>
-    
-    <h2>Running the Application</h2>
-    <p>To run the application, execute the following command:</p>
-    <code>python app.py</code>
-    <p>The app will start in debug mode with auto-reloading disabled.</p>
-    
-    <h2>Main Components</h2>
-    <ul>
-        <li><strong>Authentication:</strong> Handled by Flask-Login with custom User model.</li>
-        <li><strong>Database:</strong> SQLAlchemy ORM with models for User, ParsedContent, RSSFeed, and more.</li>
-        <li><strong>RSS Management:</strong> Periodic fetching and parsing of RSS feeds.</li>
-        <li><strong>NLP Tagging:</strong> Content tagging using Diffbot API for entity recognition and categorization.</li>
-        <li><strong>Summarization:</strong> Content summarization using Ollama API.</li>
-        <li><strong>Search:</strong> Advanced search functionality with filtering options.</li>
-    </ul>
-    
-    <h2>API Endpoints</h2>
-    <ul>
-        <li><code>GET /</code>: Home page (requires authentication)</li>
-        <li><code>GET/POST /login</code>: User login</li>
-        <li><code>GET /logout</code>: User logout</li>
-        <li><code>GET/POST /register</code>: User registration</li>
-        <li><code>POST /tag_content</code>: Tag content using Diffbot API</li>
-        <li><code>POST /batch_tag_content</code>: Batch tag multiple content items</li>
-        <li><code>GET/POST /search</code>: Search functionality</li>
-        <li><code>GET /view/&lt;uuid:item_id&gt;</code>: View specific content item</li>
-        <li><code>POST /summarize_content</code>: Generate summary for content</li>
-    </ul>
-    
-    <h2>Scheduled Tasks</h2>
-    <ul>
-        <li>Check and process empty summaries every 10 minutes</li>
-        <li>Check and process RSS feeds every 30 minutes</li>
-    </ul>
-    
-    <h2>Error Handling</h2>
-    <p>The application includes custom error handling and logging for better debugging and user experience.</p>
-    
-    <h2>Security Considerations</h2>
-    <ul>
-        <li>CSRF protection enabled</li>
-        <li>Input sanitization using Bleach library</li>
-        <li>Secure handling of API keys and sensitive information</li>
-    </ul>
-    
-    <h2>Future Improvements</h2>
-    <ul>
-        <li>Implement more advanced NLP features</li>
-        <li>Enhance the user interface for better data visualization</li>
-        <li>Add more customization options for RSS feed management</li>
-        <li>Implement user roles and permissions for enhanced access control</li>
-    </ul>
-</body>
-</html>
+# IronMonkey Threat Research App
+
+## Overview
+
+This Flask-based web application is designed for threat research and analysis. It provides features for parsing RSS feeds, tagging content using NLP, and searching through parsed content.
+
+## Key Features
+
+- User authentication (login, logout, registration)
+- RSS feed parsing and storage
+- Content tagging using Diffbot API
+- Content summarization using Ollama API
+- Advanced search functionality
+- Scheduled tasks for processing feeds and generating summaries
+
+## Setup and Configuration
+
+1. Ensure Python 3.x is installed on your system.
+2. Install required dependencies (use `pip install -r requirements.txt` if available).
+3. Set up environment variables:
+   - DIFFBOT_API_KEY
+   - OLLAMA_BASE_URL
+   - OLLAMA_MODEL (default is "llama3:latest")
+   - SECRET_KEY (for Flask app)
+4. Initialize the database (SQLite) using Flask-Migrate.
+
+## Running the Application
+
+To run the application, execute the following command:
+
+```
+python app.py
+```
+
+The app will start in debug mode with auto-reloading disabled.
+
+## Main Components
+
+- **Authentication:** Handled by Flask-Login with custom User model.
+- **Database:** SQLAlchemy ORM with models for User, ParsedContent, RSSFeed, and more.
+- **RSS Management:** Periodic fetching and parsing of RSS feeds.
+- **NLP Tagging:** Content tagging using Diffbot API for entity recognition and categorization.
+- **Summarization:** Content summarization using Ollama API.
+- **Search:** Advanced search functionality with filtering options.
+
+## API Endpoints
+
+- `GET /`: Home page (requires authentication)
+- `GET/POST /login`: User login
+- `GET /logout`: User logout
+- `GET/POST /register`: User registration
+- `POST /tag_content`: Tag content using Diffbot API
+- `POST /batch_tag_content`: Batch tag multiple content items
+- `GET/POST /search`: Search functionality
+- `GET /view/<uuid:item_id>`: View specific content item
+- `POST /summarize_content`: Generate summary for content
+
+## Scheduled Tasks
+
+- Check and process empty summaries every 10 minutes
+- Check and process RSS feeds every 30 minutes
+
+## Error Handling
+
+The application includes custom error handling and logging for better debugging and user experience.
+
+## Security Considerations
+
+- CSRF protection enabled
+- Input sanitization using Bleach library
+- Secure handling of API keys and sensitive information
+
+## Future Improvements
+
+- Implement more advanced NLP features
+- Enhance the user interface for better data visualization
+- Add more customization options for RSS feed management
+- Implement user roles and permissions for enhanced access control
