@@ -661,29 +661,26 @@ def build_search_query(search_params):
     query = query.filter(
         db.or_(
             ParsedContent.title.ilike(f"%{bleach.clean(search_params.query)}%"),
+            ParsedContent.description.ilike(f"%{bleach.clean(search_params.query)}%"),
             ParsedContent.content.ilike(f"%{bleach.clean(search_params.query)}%"),
+            ParsedContent.summary.ilike(f"%{bleach.clean(search_params.query)}%")
         )
     )
 
     if search_params.start_date:
-        query = query.filter(ParsedContent.date >= search_params.start_date)
+        query = query.filter(ParsedContent.created_at >= search_params.start_date)
 
     if search_params.end_date:
-        query = query.filter(ParsedContent.date <= search_params.end_date)
-
-    if search_params.source_types:
-        query = query.filter(
-            ParsedContent.source_type.in_(
-                [bleach.clean(st) for st in search_params.source_types]
-            )
-        )
+        query = query.filter(ParsedContent.created_at <= search_params.end_date)
 
     if search_params.keywords:
         for keyword in search_params.keywords:
             query = query.filter(
                 db.or_(
                     ParsedContent.title.ilike(f"%{bleach.clean(keyword)}%"),
+                    ParsedContent.description.ilike(f"%{bleach.clean(keyword)}%"),
                     ParsedContent.content.ilike(f"%{bleach.clean(keyword)}%"),
+                    ParsedContent.summary.ilike(f"%{bleach.clean(keyword)}%")
                 )
             )
 
