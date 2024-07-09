@@ -1,5 +1,10 @@
-document.addEventListener('DOMContentLoaded', function() {
-    const table = document.getElementById('parsedContentTable');
+function initTableSort(tableId) {
+    const table = document.getElementById(tableId);
+    if (!table) {
+        console.error(`Table with id "${tableId}" not found`);
+        return;
+    }
+
     const headers = table.querySelectorAll('th.sortable');
     
     headers.forEach(header => {
@@ -13,7 +18,9 @@ document.addEventListener('DOMContentLoaded', function() {
             // Add sorting class to clicked header
             header.classList.add(order);
             
-            const rows = Array.from(table.querySelectorAll('tbody tr'));
+            const tbody = table.querySelector('tbody');
+            const rows = Array.from(tbody.querySelectorAll('tr'));
+            
             const sortedRows = rows.sort((a, b) => {
                 const aValue = a.querySelector(`td:nth-child(${Array.from(headers).indexOf(header) + 1})`).textContent.trim();
                 const bValue = b.querySelector(`td:nth-child(${Array.from(headers).indexOf(header) + 1})`).textContent.trim();
@@ -26,10 +33,10 @@ document.addEventListener('DOMContentLoaded', function() {
             });
             
             // Clear the table body
-            table.querySelector('tbody').innerHTML = '';
+            tbody.innerHTML = '';
             
             // Append sorted rows
-            sortedRows.forEach(row => table.querySelector('tbody').appendChild(row));
+            sortedRows.forEach(row => tbody.appendChild(row));
         });
     });
-});
+}
