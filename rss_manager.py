@@ -4,6 +4,8 @@ import os
 import uuid
 from flask import Blueprint, render_template, redirect, url_for, flash, request, current_app
 from flask_login import login_required
+from datetime import datetime
+from models import db, ParsedContent
 from nlp_tagging import DiffbotClient, DatabaseHandler
 from flask_wtf import FlaskForm
 from flask_wtf.csrf import CSRFProtect
@@ -257,6 +259,9 @@ def parsed_content():
 @rss_manager.route("/tag_content/<uuid:post_id>", methods=["POST"])
 @login_required
 async def tag_content(post_id):
+    # Placeholder implementation
+    flash("Content tagging not implemented yet", "warning")
+    return redirect(url_for("rss_manager.parsed_content"))
 
 @rss_manager.route("/add_parsed_content", methods=["POST"])
 @login_required
