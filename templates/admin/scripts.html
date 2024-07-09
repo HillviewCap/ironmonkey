@@ -1,9 +1,11 @@
 <script>
-    document.getElementById('showAddRSSForm').addEventListener('click', function() {
-        document.getElementById('addRSSForm').classList.toggle('hidden');
-    });
-    document.getElementById('showAddContentForm').addEventListener('click', function() {
-        document.getElementById('addContentForm').classList.toggle('hidden');
+    document.addEventListener('DOMContentLoaded', function() {
+        document.getElementById('showAddRSSForm').addEventListener('click', function() {
+            document.getElementById('addRSSForm').classList.toggle('hidden');
+        });
+        document.getElementById('showAddContentForm').addEventListener('click', function() {
+            document.getElementById('addContentForm').classList.toggle('hidden');
+        });
     });
 </script>
 <script>
