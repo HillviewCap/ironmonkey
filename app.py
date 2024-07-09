@@ -278,6 +278,13 @@ def register_routes(app):
         return send_from_directory(os.path.join(app.root_path, 'static', 'images'),
                                    'favicon.ico', mimetype='image/vnd.microsoft.icon')
 
+def setup_scheduler(app):
+    scheduler = BackgroundScheduler()
+    scheduler.add_job(func=check_and_process_rss_feeds, trigger="interval", minutes=30)
+    scheduler.add_job(func=lambda: asyncio.run(start_check_empty_summaries()), trigger="interval", minutes=31)
+    scheduler.start()
+    logger.info("Scheduler started successfully")
+
 def create_app(config_name='default'):
     global app
     app = Flask(__name__, instance_relative_config=True, static_url_path='/static')
