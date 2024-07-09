@@ -308,6 +308,7 @@ def create_app(config_name='default'):
     scheduler.add_job(func=check_and_process_rss_feeds, trigger="interval", minutes=30)
     scheduler.add_job(func=lambda: asyncio.run(start_check_empty_summaries()), trigger="interval", minutes=31)
     scheduler.start()
+    logger.info("Scheduler started successfully")
 
     @app.route('/favicon.ico')
     def favicon():
@@ -315,6 +316,16 @@ def create_app(config_name='default'):
                                    'favicon.ico', mimetype='image/vnd.microsoft.icon')
 
     return app
+
+# Start the scheduler when the app starts
+app = create_app('production')
+if app is not None:
+    with app.app_context():
+        scheduler = BackgroundScheduler()
+        scheduler.add_job(func=check_and_process_rss_feeds, trigger="interval", minutes=30)
+        scheduler.add_job(func=lambda: asyncio.run(start_check_empty_summaries()), trigger="interval", minutes=31)
+        scheduler.start()
+        logger.info("Scheduler started successfully")
 
 
 
