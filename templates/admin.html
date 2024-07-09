@@ -153,8 +153,9 @@
                         <td class="py-2 px-4">{{ content.source_type }}</td>
                         <td class="py-2 px-4">
                             <a href="{{ url_for('rss_manager.parsed_content', content_id=content.id) }}" class="text-yellow-500 hover:underline mr-2">Edit</a>
-                            <form action="{{ url_for('delete_parsed_content', content_id=content.id) }}" method="post" class="inline">
+                            <form action="{{ url_for('rss_manager.parsed_content', content_id=content.id) }}" method="post" class="inline">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                <input type="hidden" name="_method" value="DELETE">
                                 <button type="submit" class="text-red-500 hover:underline" onclick="return confirm('Are you sure you want to delete this content?')">Delete</button>
                             </form>
                         </td>
