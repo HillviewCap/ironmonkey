@@ -97,6 +97,32 @@
         0% { transform: rotate(0deg); }
         100% { transform: rotate(360deg); }
     }
+
+    .sortable {
+        cursor: pointer;
+        position: relative;
+        padding-right: 18px;
+    }
+
+    .sortable::after {
+        content: '▲';
+        position: absolute;
+        right: 5px;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 0.8em;
+        opacity: 0.5;
+    }
+
+    .sortable.asc::after {
+        content: '▲';
+        opacity: 1;
+    }
+
+    .sortable.desc::after {
+        content: '▼';
+        opacity: 1;
+    }
 </style>
 
 <script>
