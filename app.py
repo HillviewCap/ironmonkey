@@ -644,15 +644,14 @@ def perform_search(search_params):
         return render_template(
             "search.html",
             error="An error occurred during the search. Please try again.",
-            form=form
+            search_params=search_params
         )
 
     return render_template(
         "search.html",
         results=paginated_results,
         search_params=search_params,
-        total_results=total_results,
-        form=form
+        total_results=total_results
     )
 
 
