@@ -717,10 +717,19 @@ def register_routes(app):
             current_app.logger.error(f"Error in index route: {str(e)}", exc_info=True)
             return render_error_page()
 
+    @app.route("/admin")
+    @login_required
+    def admin():
+        users = User.query.all()
+        parsed_content = ParsedContent.query.all()
+        rss_feeds = RSSFeed.query.all()
+        return render_template("admin.html", users=users, parsed_content=parsed_content, rss_feeds=rss_feeds)
+
     app.add_url_rule("/", "index", index)
     app.add_url_rule("/login", "login", login, methods=["GET", "POST"])
     app.add_url_rule("/logout", "logout", logout)
     app.add_url_rule("/register", "register", register, methods=["GET", "POST"])
+    app.add_url_rule("/admin", "admin", admin)
 
     @app.route("/tag_content", methods=["POST"])
     @login_required
