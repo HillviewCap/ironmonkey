@@ -1,61 +1,79 @@
 {% extends "base.html" %}
 
 {% block content %}
-<h1>Admin Dashboard</h1>
+<div class="container mx-auto px-4 py-8">
+    <h1 class="text-3xl font-bold mb-8">Admin Dashboard</h1>
 
-<h2>Functions</h2>
+    <section class="mb-12">
+        <h2 class="text-2xl font-semibold mb-4">Functions</h2>
+        <form action="{{ url_for('deduplicate_parsed_content') }}" method="post">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+            <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                Deduplicate Parsed Content
+            </button>
+        </form>
+    </section>
 
-<form action="{{ url_for('deduplicate_parsed_content') }}" method="post">
-    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-    <button type="submit" class="btn btn-primary">Deduplicate Parsed Content</button>
-</form>
+    <section class="mb-12">
+        <h2 class="text-2xl font-semibold mb-4">Users</h2>
+        <div class="overflow-x-auto">
+            <table class="min-w-full bg-white">
+                <thead class="bg-gray-100">
+                    <tr>
+                        <th class="py-2 px-4 text-left">Username</th>
+                        <th class="py-2 px-4 text-left">Email</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in users %}
+                    <tr class="border-b">
+                        <td class="py-2 px-4">{{ user.username }}</td>
+                        <td class="py-2 px-4">{{ user.email }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
 
-<h2>Users</h2>
-<table class="table">
-    <thead>
-        <tr>
-            <th>Username</th>
-            <th>Email</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for user in users %}
-        <tr>
-            <td>{{ user.username }}</td>
-            <td>{{ user.email }}</td>
-        </tr>
+    <section>
+        <h2 class="text-2xl font-semibold mb-4">Parsed Content</h2>
+        <div class="overflow-x-auto">
+            <table class="min-w-full bg-white">
+                <thead class="bg-gray-100">
+                    <tr>
+                        <th class="py-2 px-4 text-left">Title</th>
+                        <th class="py-2 px-4 text-left">URL</th>
+                        <th class="py-2 px-4 text-left">Date</th>
+                        <th class="py-2 px-4 text-left">Source Type</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for content in parsed_content %}
+                    <tr class="border-b">
+                        <td class="py-2 px-4">{{ content.title }}</td>
+                        <td class="py-2 px-4">
+                            <a href="{{ content.url }}" target="_blank" class="text-blue-500 hover:underline">
+                                {{ content.url }}
+                            </a>
+                        </td>
+                        <td class="py-2 px-4">{{ content.date }}</td>
+                        <td class="py-2 px-4">{{ content.source_type }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="mt-4 p-4 {% if category == 'error' %}bg-red-100 text-red-700{% else %}bg-green-100 text-green-700{% endif %} rounded">
+            {{ message }}
+          </div>
         {% endfor %}
-    </tbody>
-</table>
-
-<h2>Parsed Content</h2>
-<table class="table">
-    <thead>
-        <tr>
-            <th>Title</th>
-            <th>URL</th>
-            <th>Date</th>
-            <th>Source Type</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for content in parsed_content %}
-        <tr>
-            <td>{{ content.title }}</td>
-            <td><a href="{{ content.url }}" target="_blank">{{ content.url }}</a></td>
-            <td>{{ content.date }}</td>
-            <td>{{ content.source_type }}</td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
-
-{% with messages = get_flashed_messages(with_categories=true) %}
-  {% if messages %}
-    {% for category, message in messages %}
-      <div class="alert alert-{{ category }}">{{ message }}</div>
-    {% endfor %}
-  {% endif %}
-{% endwith %}
-
+      {% endif %}
+    {% endwith %}
+</div>
 {% endblock %}
