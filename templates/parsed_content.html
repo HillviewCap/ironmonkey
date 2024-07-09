@@ -114,18 +114,6 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(response => response.json())
             .then(data => {
                 alert(data.message);
-                // After clearing summaries, start the check_empty_summaries task
-                return fetch('/start_check_empty_summaries', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': '{{ csrf_token() }}'
-                    }
-                });
-            })
-            .then(response => response.json())
-            .then(data => {
-                alert(data.message);
                 location.reload();
             })
             .catch(error => {
