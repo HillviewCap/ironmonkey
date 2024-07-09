@@ -251,14 +251,18 @@ def parsed_content():
     per_page = request.args.get("per_page", 10, type=int)
     search_query = request.args.get("search", "")
 
-    query = ParsedContent.query.order_by(ParsedContent.created_at.desc())
+    query = ParsedContent.query
 
     if search_query:
         query = query.filter(
             (ParsedContent.content.ilike(f"%{search_query}%"))
             | (ParsedContent.url.ilike(f"%{search_query}%"))
+            | (ParsedContent.title.ilike(f"%{search_query}%"))
+            | (ParsedContent.description.ilike(f"%{search_query}%"))
         )
 
+    total_results = query.count()
+    query = query.order_by(ParsedContent.created_at.desc())
     pagination = query.paginate(page=page, per_page=per_page, error_out=False)
     posts = pagination.items
 
@@ -269,6 +273,7 @@ def parsed_content():
         search_query=search_query,
         per_page=per_page,
         per_page_options=PER_PAGE_OPTIONS,
+        total_results=total_results,
     )
 
 

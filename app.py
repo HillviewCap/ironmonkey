@@ -282,13 +282,25 @@ def register_routes(app):
     @app.route("/search", methods=["GET", "POST"])
     def search():
         form = FlaskForm()
+        search_params = SearchParams(query='')  # Initialize with an empty query
+    
         if request.method == "GET":
-            return render_template("search.html", form=form)
+            # Populate search_params from GET parameters
+            search_params.query = request.args.get('query', '')
+            search_params.start_date = request.args.get('start_date')
+            search_params.end_date = request.args.get('end_date')
+            search_params.source_types = request.args.getlist('source_types')
+            search_params.keywords = request.args.get('keywords', '').split(',') if request.args.get('keywords') else []
+        elif form.validate_on_submit():
+            search_params = get_search_params(form)
+        
+        if form.validate_on_submit() or request.method == "GET":
+            logger.info(f"Performing search with params: {search_params.__dict__}")
+            results, total_results = perform_search(search_params)
+            logger.info(f"Search completed. Total results: {total_results}")
+            return render_template("search.html", form=form, search_params=search_params, results=results, total_results=total_results)
 
-        if form.validate_on_submit():
-            return perform_search(form)
-
-        return render_template("search.html", form=form)
+        return render_template("search.html", form=form, search_params=search_params)
 
     @app.route("/view/<uuid:item_id>")
     def view_item(item_id):
@@ -504,13 +516,23 @@ def create_app(config_name='default'):
     @app.route("/search", methods=["GET", "POST"])
     def search():
         form = FlaskForm()
+        search_params = SearchParams(query='')  # Initialize with an empty query
+    
         if request.method == "GET":
-            return render_template("search.html", form=form)
+            # Populate search_params from GET parameters
+            search_params.query = request.args.get('query', '')
+            search_params.start_date = request.args.get('start_date')
+            search_params.end_date = request.args.get('end_date')
+            search_params.source_types = request.args.getlist('source_types')
+            search_params.keywords = request.args.get('keywords', '').split(',') if request.args.get('keywords') else []
+        
+        if form.validate_on_submit() or request.method == "GET":
+            logger.info(f"Performing search with params: {search_params.__dict__}")
+            results, total_results = perform_search(search_params)
+            logger.info(f"Search completed. Total results: {total_results}")
+            return render_template("search.html", form=form, search_params=search_params, results=results, total_results=total_results)
 
-        if form.validate_on_submit():
-            return perform_search(form)
-
-        return render_template("search.html", form=form)
+        return render_template("search.html", form=form, search_params=search_params)
 
     @app.route("/view/<uuid:item_id>")
     def view_item(item_id):
@@ -611,26 +633,27 @@ def render_error_page():
         )
 
 
-def perform_search(form):
+def perform_search(search_params):
     page = request.args.get("page", 1, type=int)
     per_page = 10
 
-    search_params = get_search_params(form)
     query = build_search_query(search_params)
+    logger.debug(f"Built search query: {query}")
 
     try:
         paginated_results = query.paginate(page=page, per_page=per_page)
-        logger.info(f"Search completed. Total results: {paginated_results.total}")
+        total_results = query.count()
+        logger.info(f"Search completed. Total results: {total_results}")
+        
+        # Log the first few results for debugging
+        for i, result in enumerate(paginated_results.items[:5]):
+            logger.debug(f"Result {i+1}: ID={result.id}, Title={result.title}")
+        
+        return paginated_results, total_results
+        
     except Exception as e:
-        logger.error(f"Error occurred during search: {str(e)}")
-        return render_template(
-            "search_results.html",
-            error="An error occurred during the search. Please try again.",
-        )
-
-    return render_template(
-        "search_results.html", results=paginated_results, search_params=search_params
-    )
+        logger.error(f"Error occurred during search: {str(e)}", exc_info=True)
+        return None, 0
 
 
 def get_search_params(form):
@@ -661,29 +684,26 @@ def build_search_query(search_params):
     query = query.filter(
         db.or_(
             ParsedContent.title.ilike(f"%{bleach.clean(search_params.query)}%"),
+            ParsedContent.description.ilike(f"%{bleach.clean(search_params.query)}%"),
             ParsedContent.content.ilike(f"%{bleach.clean(search_params.query)}%"),
+            ParsedContent.summary.ilike(f"%{bleach.clean(search_params.query)}%")
         )
     )
 
     if search_params.start_date:
-        query = query.filter(ParsedContent.date >= search_params.start_date)
+        query = query.filter(ParsedContent.created_at >= search_params.start_date)
 
     if search_params.end_date:
-        query = query.filter(ParsedContent.date <= search_params.end_date)
-
-    if search_params.source_types:
-        query = query.filter(
-            ParsedContent.source_type.in_(
-                [bleach.clean(st) for st in search_params.source_types]
-            )
-        )
+        query = query.filter(ParsedContent.created_at <= search_params.end_date)
 
     if search_params.keywords:
         for keyword in search_params.keywords:
             query = query.filter(
                 db.or_(
                     ParsedContent.title.ilike(f"%{bleach.clean(keyword)}%"),
+                    ParsedContent.description.ilike(f"%{bleach.clean(keyword)}%"),
                     ParsedContent.content.ilike(f"%{bleach.clean(keyword)}%"),
+                    ParsedContent.summary.ilike(f"%{bleach.clean(keyword)}%")
                 )
             )
 
@@ -692,9 +712,9 @@ def build_search_query(search_params):
 
 
 if __name__ == "__main__":
-    app = create_app('production')
+    app = create_app('development')
     if app is not None:
-        app.run(host='0.0.0.0', port=5000)
+        app.run(host='0.0.0.0', port=5000, debug=True)
     else:
         print("Failed to create the application. Please check the logs for more information.")
 def register_routes(app):
