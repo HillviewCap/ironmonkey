@@ -11,6 +11,12 @@
         </form>
         <button id="clear-summaries-btn" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500">Clear All Summaries</button>
     </div>
+    
+    {% if search_query %}
+    <div class="mb-4">
+        <p>Found {{ total_results }} result{% if total_results != 1 %}s{% endif %} for "{{ search_query }}"</p>
+    </div>
+    {% endif %}
 
     <div class="overflow-x-auto max-w-full">
         <table id="parsed-content-table" class="w-full table-auto">
@@ -77,6 +83,10 @@
         {% if pagination.has_next %}
             <a href="{{ url_for('rss_manager.parsed_content', page=pagination.next_num, search=search_query) }}" class="px-3 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">Next &raquo;</a>
         {% endif %}
+    </div>
+    
+    <div class="mt-4 text-center">
+        <p>Showing {{ pagination.page }} of {{ pagination.pages }} pages</p>
     </div>
 </div>
 
