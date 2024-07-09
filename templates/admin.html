@@ -28,6 +28,28 @@
     </tbody>
 </table>
 
+<h2>Parsed Content</h2>
+<table class="table">
+    <thead>
+        <tr>
+            <th>Title</th>
+            <th>URL</th>
+            <th>Date</th>
+            <th>Source Type</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for content in parsed_content %}
+        <tr>
+            <td>{{ content.title }}</td>
+            <td><a href="{{ content.url }}" target="_blank">{{ content.url }}</a></td>
+            <td>{{ content.date }}</td>
+            <td>{{ content.source_type }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
 {% with messages = get_flashed_messages(with_categories=true) %}
   {% if messages %}
     {% for category, message in messages %}

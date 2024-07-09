@@ -126,7 +126,8 @@ def register_routes(app):
     @login_required
     def admin():
         users = User.query.all()
-        return render_template("admin.html", users=users)
+        parsed_content = ParsedContent.query.all()
+        return render_template("admin.html", users=users, parsed_content=parsed_content)
 
     @app.route("/admin/deduplicate", methods=["POST"])
     @login_required
