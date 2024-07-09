@@ -127,7 +127,8 @@ def register_routes(app):
     def admin():
         if not current_user.is_admin:
             abort(403)
-        return render_template("admin.html")
+        users = User.query.all()
+        return render_template("admin.html", users=users)
 
     @app.route("/admin/deduplicate", methods=["POST"])
     @login_required
