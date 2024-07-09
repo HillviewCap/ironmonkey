@@ -52,6 +52,18 @@ def check_and_process_rss_feeds():
         except Exception as e:
             logger.error(f"Error in check_and_process_rss_feeds: {str(e)}")
 
+async def start_check_empty_summaries():
+    with app.app_context():
+        try:
+            empty_summaries = ParsedContent.query.filter(ParsedContent.summary.is_(None)).limit(10).all()
+            for content in empty_summaries:
+                summary = await app.ollama_api.generate("threat_intel_summary", content.content)
+                content.summary = summary
+            db.session.commit()
+            logger.info(f"Processed {len(empty_summaries)} empty summaries")
+        except Exception as e:
+            logger.error(f"Error in start_check_empty_summaries: {str(e)}")
+
 def create_app(config_name='default'):
     app = Flask(__name__, instance_relative_config=True, static_url_path='/static')
     app.ollama_api = OllamaAPI()
@@ -294,6 +306,7 @@ def create_app(config_name='default'):
     # Initialize the scheduler
     scheduler = BackgroundScheduler()
     scheduler.add_job(func=check_and_process_rss_feeds, trigger="interval", minutes=30)
+    scheduler.add_job(func=lambda: asyncio.run(start_check_empty_summaries()), trigger="interval", minutes=31)
     scheduler.start()
 
     @app.route('/favicon.ico')
