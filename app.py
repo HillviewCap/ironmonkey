@@ -725,11 +725,23 @@ def register_routes(app):
         rss_feeds = RSSFeed.query.all()
         return render_template("admin.html", users=users, parsed_content=parsed_content, rss_feeds=rss_feeds)
 
+    @app.route("/admin/deduplicate", methods=["POST"])
+    @login_required
+    def deduplicate_parsed_content():
+        try:
+            deleted_count = ParsedContent.deduplicate()
+            flash(f"Successfully removed {deleted_count} duplicate entries.", "success")
+        except Exception as e:
+            current_app.logger.error(f"Error during deduplication: {str(e)}")
+            flash("An error occurred during deduplication.", "error")
+        return redirect(url_for("admin"))
+
     app.add_url_rule("/", "index", index)
     app.add_url_rule("/login", "login", login, methods=["GET", "POST"])
     app.add_url_rule("/logout", "logout", logout)
     app.add_url_rule("/register", "register", register, methods=["GET", "POST"])
     app.add_url_rule("/admin", "admin", admin)
+    app.add_url_rule("/admin/deduplicate", "deduplicate_parsed_content", deduplicate_parsed_content, methods=["POST"])
 
     @app.route("/tag_content", methods=["POST"])
     @login_required
