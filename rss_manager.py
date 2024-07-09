@@ -2,8 +2,12 @@ from __future__ import annotations
 
 import os
 import uuid
+import os
 from flask import Blueprint, render_template, redirect, url_for, flash, request, current_app
 from flask_login import login_required
+from datetime import datetime
+from models import db, ParsedContent
+from nlp_tagging import DiffbotClient, DatabaseHandler
 from nlp_tagging import DiffbotClient, DatabaseHandler
 from flask_wtf import FlaskForm
 from flask_wtf.csrf import CSRFProtect
@@ -295,12 +299,23 @@ async def tag_content(post_id):
     except Exception as e:
         db.session.rollback()
         flash(f"Error tagging content: {str(e)}", "error")
-    except ValueError as e:
-        flash(f"Error: {str(e)}", "error")
-    except Exception as e:
-        db.session.rollback()
-        flash(f"Error tagging content: {str(e)}", "error")
     return redirect(url_for("rss_manager.parsed_content"))
+
+@rss_manager.route("/add_parsed_content", methods=["POST"])
+@login_required
+def add_parsed_content():
+    form = request.form
+    new_content = ParsedContent(
+        title=form['title'],
+        url=form['url'],
+        description=form['description'],
+        date=datetime.strptime(form['date'], '%Y-%m-%d'),
+        source_type=form['source_type']
+    )
+    db.session.add(new_content)
+    db.session.commit()
+    flash('New content added successfully', 'success')
+    return redirect(url_for('admin'))
 
 
 @rss_manager.route("/summarize_content/<uuid:post_id>", methods=["POST"])

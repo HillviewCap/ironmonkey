@@ -141,6 +141,43 @@ class Threat(db.Model):
 
 class ParsedContent(db.Model):
     id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+
+    @classmethod
+    def deduplicate(cls):
+        """
+        Deduplicates the parsed articles based on the URL.
+        Keeps the earliest entry for each URL and deletes the rest.
+        Returns the number of deleted entries.
+        """
+        # Get all URLs and their earliest created_at dates
+        url_earliest_dates = db.session.query(
+            cls.url,
+            db.func.min(cls.created_at).label('earliest_date')
+        ).group_by(cls.url).all()
+
+        deleted_count = 0
+
+        for url, earliest_date in url_earliest_dates:
+            # Find all entries for this URL except the earliest one
+            duplicates = cls.query.filter(
+                cls.url == url,
+                cls.created_at > earliest_date
+            ).all()
+
+            # Delete the duplicates
+            for duplicate in duplicates:
+                db.session.delete(duplicate)
+                deleted_count += 1
+
+        db.session.commit()
+
+        from flask import flash
+        if deleted_count > 0:
+            flash(f"Deduplication complete. {deleted_count} duplicate items removed.", "success")
+        else:
+            flash("No duplicate items found during deduplication.", "info")
+
+        return deleted_count
     title = db.Column(db.String(255), nullable=False)
     url = db.Column(db.String(255), nullable=False)
     description = db.Column(db.Text, nullable=True)
