@@ -139,6 +139,58 @@ def register_routes(app):
             current_app.logger.error(f"Error during deduplication: {str(e)}")
             flash("An error occurred during deduplication.", "error")
         return redirect(url_for("admin"))
+
+    @app.route("/add_parsed_content", methods=["POST"])
+    @login_required
+    def add_parsed_content():
+        try:
+            new_content = ParsedContent(
+                title=request.form['title'],
+                url=request.form['url'],
+                date=datetime.strptime(request.form['date'], '%Y-%m-%d').date(),
+                source_type=request.form['source_type']
+            )
+            db.session.add(new_content)
+            db.session.commit()
+            flash("New content added successfully.", "success")
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.error(f"Error adding new content: {str(e)}")
+            flash("An error occurred while adding new content.", "error")
+        return redirect(url_for("admin"))
+
+    @app.route("/edit_parsed_content/<uuid:content_id>", methods=["GET", "POST"])
+    @login_required
+    def edit_parsed_content(content_id):
+        content = ParsedContent.query.get_or_404(content_id)
+        if request.method == "POST":
+            try:
+                content.title = request.form['title']
+                content.url = request.form['url']
+                content.date = datetime.strptime(request.form['date'], '%Y-%m-%d').date()
+                content.source_type = request.form['source_type']
+                db.session.commit()
+                flash("Content updated successfully.", "success")
+                return redirect(url_for("admin"))
+            except Exception as e:
+                db.session.rollback()
+                current_app.logger.error(f"Error updating content: {str(e)}")
+                flash("An error occurred while updating content.", "error")
+        return render_template("edit_parsed_content.html", content=content)
+
+    @app.route("/delete_parsed_content/<uuid:content_id>", methods=["POST"])
+    @login_required
+    def delete_parsed_content(content_id):
+        content = ParsedContent.query.get_or_404(content_id)
+        try:
+            db.session.delete(content)
+            db.session.commit()
+            flash("Content deleted successfully.", "success")
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.error(f"Error deleting content: {str(e)}")
+            flash("An error occurred while deleting content.", "error")
+        return redirect(url_for("admin"))
     @app.route("/")
     def index():
         current_app.logger.info("Entering index route")
