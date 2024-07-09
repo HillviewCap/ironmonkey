@@ -141,6 +141,24 @@ class Threat(db.Model):
 
 class ParsedContent(db.Model):
     id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+
+    @classmethod
+    def deduplicate(cls):
+        """
+        Deduplicates the parsed articles based on the URL.
+        Returns the number of deleted entries.
+        """
+        # Get a list of distinct URLs
+        distinct_urls = db.session.query(cls.url).distinct().all()
+
+        # Get a list of articles to keep (the first one for each distinct URL)
+        articles_to_keep = [article[0] for article in distinct_urls]
+
+        # Delete all articles that are not in the "articles_to_keep" list
+        deleted_count = cls.query.filter(~cls.url.in_(articles_to_keep)).delete()
+        db.session.commit()
+
+        return deleted_count
     title = db.Column(db.String(255), nullable=False)
     url = db.Column(db.String(255), nullable=False)
     description = db.Column(db.Text, nullable=True)
