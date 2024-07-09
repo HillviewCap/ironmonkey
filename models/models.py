@@ -149,19 +149,27 @@ class ParsedContent(db.Model):
         Keeps the earliest entry for each URL and deletes the rest.
         Returns the number of deleted entries.
         """
-        subquery = db.session.query(
+        # Get all URLs and their earliest created_at dates
+        url_earliest_dates = db.session.query(
             cls.url,
             db.func.min(cls.created_at).label('earliest_date')
-        ).group_by(cls.url).subquery()
+        ).group_by(cls.url).all()
 
-        to_delete = cls.query.join(
-            subquery,
-            cls.url == subquery.c.url
-        ).filter(cls.created_at > subquery.c.earliest_date)
+        deleted_count = 0
 
-        deleted_count = to_delete.delete(synchronize_session='fetch')
+        for url, earliest_date in url_earliest_dates:
+            # Find all entries for this URL except the earliest one
+            duplicates = cls.query.filter(
+                cls.url == url,
+                cls.created_at > earliest_date
+            ).all()
+
+            # Delete the duplicates
+            for duplicate in duplicates:
+                db.session.delete(duplicate)
+                deleted_count += 1
+
         db.session.commit()
-
         return deleted_count
     title = db.Column(db.String(255), nullable=False)
     url = db.Column(db.String(255), nullable=False)
