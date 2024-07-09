@@ -183,21 +183,29 @@ async def manage_rss() -> str:
         url = form.url.data
         category = form.category.data
         try:
-            title, description, last_build_date = RSSFeed.fetch_feed_info(url)
-            new_feed = RSSFeed(
-                url=url,
-                title=title if title else "Not available",
-                category=category,
-                description=description if description else "Not available",
-                last_build_date=last_build_date if last_build_date else None,
-            )
-            db.session.add(new_feed)
-            db.session.commit()
-            flash("RSS Feed added successfully!", "success")
-            logger.info(f"RSS Feed added: {url}")
+            existing_feed = RSSFeed.query.filter_by(url=url).first()
+            if existing_feed:
+                flash(f"RSS Feed with URL '{url}' already exists.", "warning")
+            else:
+                title, description, last_build_date = RSSFeed.fetch_feed_info(url)
+                new_feed = RSSFeed(
+                    url=url,
+                    title=title if title else "Not available",
+                    category=category,
+                    description=description if description else "Not available",
+                    last_build_date=last_build_date if last_build_date else None,
+                )
+                db.session.add(new_feed)
+                db.session.commit()
+                flash("RSS Feed added successfully!", "success")
+                logger.info(f"RSS Feed added: {url}")
 
-            await fetch_and_parse_feed(new_feed)
-            flash("New feed parsed successfully!", "success")
+                await fetch_and_parse_feed(new_feed)
+                flash("New feed parsed successfully!", "success")
+        except IntegrityError:
+            db.session.rollback()
+            flash(f"RSS Feed with URL '{url}' already exists.", "warning")
+            logger.warning(f"Attempted to add duplicate RSS Feed: {url}")
         except Exception as e:
             logger.error(f"Error adding or parsing RSS Feed: {str(e)}")
             flash(f"Error adding or parsing RSS Feed: {str(e)}", "error")
