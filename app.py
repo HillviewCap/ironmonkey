@@ -689,9 +689,9 @@ def build_search_query(search_params):
 
 
 if __name__ == "__main__":
-    app = create_app('production')
+    app = create_app('development')
     if app is not None:
-        app.run(host='0.0.0.0', port=5000)
+        app.run(host='0.0.0.0', port=5000, debug=True)
     else:
         print("Failed to create the application. Please check the logs for more information.")
 def register_routes(app):
