@@ -125,9 +125,6 @@ def register_routes(app):
     @app.route("/admin")
     @login_required
     def admin():
-        if not current_user.is_admin:
-            flash("You don't have permission to access the admin page.", "error")
-            return redirect(url_for("index"))
         users = User.query.all()
         parsed_content = ParsedContent.query.all()
         rss_feeds = RSSFeed.query.all()
