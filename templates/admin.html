@@ -38,6 +38,36 @@
 
     <section>
         <h2 class="text-2xl font-semibold mb-4">Parsed Content</h2>
+        <div class="mb-4">
+            <button id="showAddForm" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
+                Add New Content
+            </button>
+        </div>
+        <div id="addForm" class="hidden mb-4 p-4 bg-gray-100 rounded">
+            <h3 class="text-xl font-semibold mb-2">Add New Parsed Content</h3>
+            <form action="{{ url_for('add_parsed_content') }}" method="post">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                <div class="mb-2">
+                    <label for="title" class="block">Title:</label>
+                    <input type="text" id="title" name="title" required class="w-full px-2 py-1 border rounded">
+                </div>
+                <div class="mb-2">
+                    <label for="url" class="block">URL:</label>
+                    <input type="url" id="url" name="url" required class="w-full px-2 py-1 border rounded">
+                </div>
+                <div class="mb-2">
+                    <label for="date" class="block">Date:</label>
+                    <input type="date" id="date" name="date" required class="w-full px-2 py-1 border rounded">
+                </div>
+                <div class="mb-2">
+                    <label for="source_type" class="block">Source Type:</label>
+                    <input type="text" id="source_type" name="source_type" required class="w-full px-2 py-1 border rounded">
+                </div>
+                <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                    Add Content
+                </button>
+            </form>
+        </div>
         <div class="overflow-x-auto">
             <table class="min-w-full bg-white">
                 <thead class="bg-gray-100">
@@ -46,6 +76,7 @@
                         <th class="py-2 px-4 text-left">URL</th>
                         <th class="py-2 px-4 text-left">Date</th>
                         <th class="py-2 px-4 text-left">Source Type</th>
+                        <th class="py-2 px-4 text-left">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -59,12 +90,25 @@
                         </td>
                         <td class="py-2 px-4">{{ content.date }}</td>
                         <td class="py-2 px-4">{{ content.source_type }}</td>
+                        <td class="py-2 px-4">
+                            <a href="{{ url_for('edit_parsed_content', content_id=content.id) }}" class="text-yellow-500 hover:underline mr-2">Edit</a>
+                            <form action="{{ url_for('delete_parsed_content', content_id=content.id) }}" method="post" class="inline">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                <button type="submit" class="text-red-500 hover:underline" onclick="return confirm('Are you sure you want to delete this content?')">Delete</button>
+                            </form>
+                        </td>
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
     </section>
+
+    <script>
+        document.getElementById('showAddForm').addEventListener('click', function() {
+            document.getElementById('addForm').classList.toggle('hidden');
+        });
+    </script>
 
     {% with messages = get_flashed_messages(with_categories=true) %}
       {% if messages %}
