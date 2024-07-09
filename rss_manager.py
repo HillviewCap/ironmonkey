@@ -257,6 +257,22 @@ def parsed_content():
 @rss_manager.route("/tag_content/<uuid:post_id>", methods=["POST"])
 @login_required
 async def tag_content(post_id):
+
+@rss_manager.route("/add_parsed_content", methods=["POST"])
+@login_required
+def add_parsed_content():
+    form = request.form
+    new_content = ParsedContent(
+        title=form['title'],
+        url=form['url'],
+        description=form['description'],
+        date=datetime.strptime(form['date'], '%Y-%m-%d'),
+        source_type=form['source_type']
+    )
+    db.session.add(new_content)
+    db.session.commit()
+    flash('New content added successfully', 'success')
+    return redirect(url_for('admin'))
     """Tag a single piece of parsed content."""
     try:
         post = db.session.get(ParsedContent, post_id)
