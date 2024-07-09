@@ -15,15 +15,15 @@
             <label class="block mb-2">Source Types:</label>
             <div class="flex space-x-4">
                 <label class="inline-flex items-center">
-                    <input type="checkbox" name="source_types[]" value="news" {% if 'news' in (search_params.source_types|default([])) %}checked{% endif %} class="form-checkbox">
+                    <input type="checkbox" name="source_types" value="news" {% if 'news' in (search_params.source_types|default([])) %}checked{% endif %} class="form-checkbox">
                     <span class="ml-2">News</span>
                 </label>
                 <label class="inline-flex items-center">
-                    <input type="checkbox" name="source_types[]" value="blog" {% if 'blog' in (search_params.source_types|default([])) %}checked{% endif %} class="form-checkbox">
+                    <input type="checkbox" name="source_types" value="blog" {% if 'blog' in (search_params.source_types|default([])) %}checked{% endif %} class="form-checkbox">
                     <span class="ml-2">Blog</span>
                 </label>
                 <label class="inline-flex items-center">
-                    <input type="checkbox" name="source_types[]" value="report" {% if 'report' in (search_params.source_types|default([])) %}checked{% endif %} class="form-checkbox">
+                    <input type="checkbox" name="source_types" value="report" {% if 'report' in (search_params.source_types|default([])) %}checked{% endif %} class="form-checkbox">
                     <span class="ml-2">Report</span>
                 </label>
             </div>
