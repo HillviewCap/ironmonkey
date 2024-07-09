@@ -282,13 +282,25 @@ def register_routes(app):
     @app.route("/search", methods=["GET", "POST"])
     def search():
         form = FlaskForm()
+        search_params = SearchParams(query='')  # Initialize with an empty query
+    
         if request.method == "GET":
-            return render_template("search.html", form=form)
+            # Populate search_params from GET parameters
+            search_params.query = request.args.get('query', '')
+            search_params.start_date = request.args.get('start_date')
+            search_params.end_date = request.args.get('end_date')
+            search_params.source_types = request.args.getlist('source_types')
+            search_params.keywords = request.args.get('keywords', '').split(',') if request.args.get('keywords') else []
+        elif form.validate_on_submit():
+            search_params = get_search_params(form)
+        
+        if form.validate_on_submit() or request.method == "GET":
+            logger.info(f"Performing search with params: {search_params.__dict__}")
+            results, total_results = perform_search(search_params)
+            logger.info(f"Search completed. Total results: {total_results}")
+            return render_template("search.html", form=form, search_params=search_params, results=results, total_results=total_results)
 
-        if form.validate_on_submit():
-            return perform_search(form)
-
-        return render_template("search.html", form=form)
+        return render_template("search.html", form=form, search_params=search_params)
 
     @app.route("/view/<uuid:item_id>")
     def view_item(item_id):
