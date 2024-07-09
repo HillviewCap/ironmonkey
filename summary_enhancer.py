@@ -17,32 +17,19 @@ from logging_config import logger
 from sqlalchemy.orm import Session
 from models import ParsedContent, db, RSSFeed
 from ollama_api import OllamaAPI
-import yaml
-import httpx
 from typing import Dict, Any, Optional
 
 
 class SummaryEnhancer:
     def __init__(self, ollama_api: OllamaAPI):
         self.ollama_api = ollama_api
-        self.prompts = self.load_prompts()
         self.max_retries = 3
 
-    @staticmethod
-    def load_prompts() -> Dict[str, Any]:
-        try:
-            with open('prompts.yaml', 'r') as file:
-                return yaml.safe_load(file)
-        except Exception as e:
-            logger.error(f"Error loading prompts: {str(e)}", exc_info=True)
-            raise
-
     async def generate_summary(self, content_id: str) -> str:
-        system_prompt = self.prompts['summarize']['system_prompt']
         parsed_content = ParsedContent.get_by_id(content_id)
         if not parsed_content:
             raise ValueError(f"No ParsedContent found with id {content_id}")
-        return await self.ollama_api.generate(system_prompt=system_prompt, content_to_summarize=parsed_content.content)
+        return await self.ollama_api.generate("threat_intel_summary", parsed_content.content)
 
     async def enhance_summary(self, content_id: str) -> bool:
         logger.debug(f"Processing record {content_id}")
@@ -64,8 +51,6 @@ class SummaryEnhancer:
                             return False
                 else:
                     logger.warning(f"Empty summary generated for record {content_id}. Attempt {attempt + 1}/{self.max_retries}")
-            except httpx.ReadTimeout:
-                logger.error(f"Timeout error generating summary for record {content_id}. Attempt {attempt + 1}/{self.max_retries}", exc_info=True)
             except Exception as e:
                 logger.error(f"Error generating summary for record {content_id}: {str(e)}. Attempt {attempt + 1}/{self.max_retries}", exc_info=True)
 

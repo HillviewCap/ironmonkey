@@ -23,7 +23,6 @@ from models import db, RSSFeed, ParsedContent, Category
 from jina_api import parse_content
 from logging_config import logger
 from nlp_tagging import DiffbotClient, DatabaseHandler
-from summary_enhancer import SummaryEnhancer
 from ollama_api import OllamaAPI
 
 rss_manager = Blueprint("rss_manager", __name__)
@@ -301,12 +300,8 @@ async def summarize_content(post_id):
             return redirect(url_for("rss_manager.parsed_content"))
 
         ollama_api = current_app.ollama_api
-        enhancer = SummaryEnhancer(ollama_api)
         
-        system_prompt = enhancer.prompts["summarize"]
-        content_to_summarize = post.content
-
-        summary = await ollama_api.generate(system_prompt, content_to_summarize)
+        summary = await ollama_api.generate("threat_intel_summary", post.content)
         
         if summary:
             post.summary = summary
