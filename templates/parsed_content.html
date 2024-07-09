@@ -13,12 +13,12 @@
     </div>
 
     <div class="overflow-x-auto max-w-full">
-        <table class="w-full table-auto">
+        <table id="parsed-content-table" class="w-full table-auto">
             <thead>
                 <tr class="bg-gray-200">
-                    <th class="px-2 py-2">Title</th>
-                    <th class="px-2 py-2">URL</th>
-                    <th class="px-2 py-2">Published Date</th>
+                    <th class="px-2 py-2 sortable" data-sort="string">Title</th>
+                    <th class="px-2 py-2 sortable" data-sort="string">URL</th>
+                    <th class="px-2 py-2 sortable" data-sort="date">Published Date</th>
                     <th class="px-2 py-2">Summary</th>
                     <th class="px-2 py-2">Tag Actions</th>
                     <th class="px-2 py-2">Summarize Actions</th>
@@ -196,5 +196,11 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 });
+</script>
+<script src="{{ url_for('static', filename='js/table_sort.js') }}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        initTableSort('parsed-content-table');
+    });
 </script>
 {% endblock %}
