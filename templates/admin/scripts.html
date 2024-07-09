@@ -1,11 +1,19 @@
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        document.getElementById('showAddRSSForm').addEventListener('click', function() {
-            document.getElementById('addRSSForm').classList.toggle('hidden');
-        });
-        document.getElementById('showAddContentForm').addEventListener('click', function() {
-            document.getElementById('addContentForm').classList.toggle('hidden');
-        });
+        var showAddRSSForm = document.getElementById('showAddRSSForm');
+        var showAddContentForm = document.getElementById('showAddContentForm');
+
+        if (showAddRSSForm) {
+            showAddRSSForm.addEventListener('click', function() {
+                document.getElementById('addRSSForm').classList.toggle('hidden');
+            });
+        }
+
+        if (showAddContentForm) {
+            showAddContentForm.addEventListener('click', function() {
+                document.getElementById('addContentForm').classList.toggle('hidden');
+            });
+        }
     });
 </script>
 <script>
