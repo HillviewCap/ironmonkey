@@ -125,16 +125,12 @@ def register_routes(app):
     @app.route("/admin")
     @login_required
     def admin():
-        if not current_user.is_admin:
-            abort(403)
         users = User.query.all()
         return render_template("admin.html", users=users)
 
     @app.route("/admin/deduplicate", methods=["POST"])
     @login_required
     def deduplicate_parsed_content():
-        if not current_user.is_admin:
-            abort(403)
         try:
             deleted_count = ParsedContent.deduplicate()
             flash(f"Successfully removed {deleted_count} duplicate entries.", "success")

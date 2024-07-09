@@ -16,7 +16,6 @@
         <tr>
             <th>Username</th>
             <th>Email</th>
-            <th>Role</th>
         </tr>
     </thead>
     <tbody>
@@ -24,7 +23,6 @@
         <tr>
             <td>{{ user.username }}</td>
             <td>{{ user.email }}</td>
-            <td>{% if user.is_admin %}Admin{% else %}User{% endif %}</td>
         </tr>
         {% endfor %}
     </tbody>
