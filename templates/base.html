@@ -20,6 +20,9 @@
                 <a href="{{ url_for('rss_manager.parsed_content') }}" class="text-white mr-4">Parsed Content</a>
                 {% if current_user.is_authenticated %}
                     <a href="{{ url_for('admin') }}" class="text-white mr-4">Admin</a>
+                    <a href="{{ url_for('logout') }}" class="text-white mr-4">Logout</a>
+                {% else %}
+                    <a href="{{ url_for('login') }}" class="text-white mr-4">Login</a>
                 {% endif %}
                 <a href="#" class="text-white">About</a>
             </div>
@@ -28,5 +31,10 @@
     <div class="container mx-auto mt-8">
         {% block content %}{% endblock %}
     </div>
+    <footer class="bg-gray-200 p-4 mt-8">
+        <div class="container mx-auto text-center">
+            <p>&copy; 2023 IronMonkey Threat Research. All rights reserved.</p>
+        </div>
+    </footer>
 </body>
 </html>
