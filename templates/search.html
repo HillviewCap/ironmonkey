@@ -47,8 +47,8 @@
                 <thead>
                     <tr class="bg-gray-200 text-gray-600 uppercase text-sm leading-normal">
                         <th class="py-3 px-6 text-left">Title</th>
-                        <th class="py-3 px-6 text-left">Description</th>
-                        <th class="py-3 px-6 text-left">Source &amp; Date</th>
+                        <th class="py-3 px-6 text-left">Summary</th>
+                        <th class="py-3 px-6 text-left">Published Date</th>
                         <th class="py-3 px-6 text-center">Action</th>
                     </tr>
                 </thead>
@@ -59,11 +59,10 @@
                             <div class="font-medium">{{ result.title|truncate(50, true, '...') }}</div>
                         </td>
                         <td class="py-3 px-6 text-left">
-                            <div>{{ result.content|truncate(100, true, '...') }}</div>
+                            <div>{{ result.summary|default(result.content, true)|truncate(100, true, '...') }}</div>
                         </td>
                         <td class="py-3 px-6 text-left">
-                            <div>{{ result.source_type|capitalize }}</div>
-                            <div class="text-xs text-gray-500">{{ result.date.strftime('%Y-%m-%d') if result.date else 'N/A' }}</div>
+                            <div class="text-xs text-gray-500">{{ result.pub_date if result.pub_date else 'N/A' }}</div>
                         </td>
                         <td class="py-3 px-6 text-center">
                             <a href="{{ url_for('view_item', item_id=result.id) }}" class="text-blue-600 hover:text-blue-900 underline">View Details</a>
