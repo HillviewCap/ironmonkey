@@ -118,6 +118,9 @@ def process_csv_file(csv_file) -> Tuple[int, int, List[str]]:
     csv_file = TextIOWrapper(csv_file, encoding="utf-8")
     csv_reader = csv.reader(csv_file)
 
+    # Skip the header row
+    next(csv_reader, None)
+
     for row in csv_reader:
         if len(row) >= 1:
             url = row[0]

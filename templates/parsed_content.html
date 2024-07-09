@@ -4,11 +4,12 @@
 <div class="container mx-auto px-4">
     <h1 class="text-2xl font-bold mb-4">Parsed Content</h1>
     
-    <div class="mb-4">
+    <div class="mb-4 flex justify-between items-center">
         <form action="{{ url_for('rss_manager.parsed_content') }}" method="get" class="flex items-center">
             <input type="text" name="search" value="{{ search_query }}" placeholder="Search..." class="border rounded-l px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
             <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded-r hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500">Search</button>
         </form>
+        <button id="clear-summaries-btn" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500">Clear All Summaries</button>
     </div>
 
     <div class="overflow-x-auto max-w-full">
@@ -16,9 +17,8 @@
             <thead>
                 <tr class="bg-gray-200">
                     <th class="px-2 py-2">Title</th>
-                    <th class="px-2 py-2">Content</th>
                     <th class="px-2 py-2">URL</th>
-                    <th class="px-2 py-2">Created At</th>
+                    <th class="px-2 py-2">Published Date</th>
                     <th class="px-2 py-2">Summary</th>
                     <th class="px-2 py-2">Tag Actions</th>
                     <th class="px-2 py-2">Summarize Actions</th>
@@ -32,13 +32,12 @@
                             {{ post.title[:50] }}
                         </a>
                     </td>
-                    <td class="border px-2 py-2 break-words">{{ post.content[:50] }}</td>
                     <td class="border px-2 py-2 break-words">
                         <a href="{{ post.url }}" class="text-blue-500 hover:underline" target="_blank">
                             {{ post.url[:50] }}
                         </a>
                     </td>
-                    <td class="border px-2 py-2">{{ post.created_at.strftime('%Y-%m-%d') }}</td>
+                    <td class="border px-2 py-2">{{ post.pub_date }}</td>
                     <td class="border px-2 py-2 break-words">
                         <span class="summary-content">{{ post.summary[:50] if post.summary else 'No summary' }}</span>
                     </td>
@@ -102,6 +101,40 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    const clearSummariesBtn = document.getElementById('clear-summaries-btn');
+    clearSummariesBtn.addEventListener('click', function() {
+        if (confirm('Are you sure you want to clear all summaries? This action cannot be undone.')) {
+            fetch('/clear_all_summaries', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token() }}'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.message);
+                // After clearing summaries, start the check_empty_summaries task
+                return fetch('/start_check_empty_summaries', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token() }}'
+                    }
+                });
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.message);
+                location.reload();
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while processing your request.');
+            });
+        }
+    });
+
     const tagButtons = document.querySelectorAll('.tag-content-btn');
     tagButtons.forEach(button => {
         button.addEventListener('click', function() {

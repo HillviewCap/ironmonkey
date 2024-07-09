@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 import asyncio
 import uuid
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import List
 
 import bleach
@@ -291,6 +291,33 @@ def create_app(config_name='default'):
         except Exception as e:
             current_app.logger.exception(f"Error summarizing content: {str(e)}")
             return jsonify({"error": f"Error summarizing content: {str(e)}"}), 200
+
+    @app.route("/clear_all_summaries", methods=["POST"])
+    @login_required
+    def clear_all_summaries():
+        try:
+            ParsedContent.query.update({ParsedContent.summary: None})
+            db.session.commit()
+            return jsonify({"message": "All summaries have been cleared"}), 200
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.error(f"Error clearing summaries: {str(e)}")
+            return jsonify({"error": "An error occurred while clearing summaries"}), 500
+
+    @app.route("/start_check_empty_summaries", methods=["POST"])
+    @login_required
+    def start_check_empty_summaries():
+        try:
+            scheduler.add_job(
+                func=check_empty_summaries,
+                trigger="date",
+                run_date=datetime.now() + timedelta(seconds=5),
+                id="check_empty_summaries_now"
+            )
+            return jsonify({"message": "Check empty summaries task scheduled"}), 200
+        except Exception as e:
+            current_app.logger.error(f"Error starting check_empty_summaries task: {str(e)}")
+            return jsonify({"error": "An error occurred while scheduling the task"}), 500
 
     # Initialize the scheduler
     scheduler = BackgroundScheduler()

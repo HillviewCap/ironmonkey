@@ -2,6 +2,7 @@ import logging
 from logging.handlers import RotatingFileHandler
 import os
 import gzip
+import sys
 
 def namer(name):
     return name + ".gz"
@@ -23,14 +24,15 @@ def setup_logger(name, log_file, level=logging.DEBUG):
     logger.setLevel(level)
 
     # Create handlers
-    c_handler = logging.StreamHandler()
+    c_handler = logging.StreamHandler(sys.stdout)
     f_handler = RotatingFileHandler(
         os.path.join(logs_dir, log_file),
         maxBytes=10*1024*1024,  # 10MB
         backupCount=5,
-        mode='a'
+        mode='a',
+        encoding='utf-8'
     )
-    c_handler.setLevel(logging.WARNING)
+    c_handler.setLevel(logging.DEBUG)
     f_handler.setLevel(logging.DEBUG)
 
     # Set up rotation
@@ -38,10 +40,9 @@ def setup_logger(name, log_file, level=logging.DEBUG):
     f_handler.namer = namer
 
     # Create formatters and add them to handlers
-    c_format = logging.Formatter('%(name)s - %(levelname)s - %(message)s')
-    f_format = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    c_handler.setFormatter(c_format)
-    f_handler.setFormatter(f_format)
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    c_handler.setFormatter(formatter)
+    f_handler.setFormatter(formatter)
 
     # Add handlers to the logger
     logger.addHandler(c_handler)
