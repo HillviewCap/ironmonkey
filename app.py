@@ -323,7 +323,7 @@ if app is not None:
     with app.app_context():
         scheduler = BackgroundScheduler()
         scheduler.add_job(func=check_and_process_rss_feeds, trigger="interval", minutes=30)
-        scheduler.add_job(func=lambda: asyncio.run(start_check_empty_summaries()), trigger="interval", minutes=31)
+        scheduler.add_job(func=lambda: asyncio.run(start_check_empty_summaries()), trigger="interval", minutes=1)
         scheduler.start()
         logger.info("Scheduler started successfully")
 
