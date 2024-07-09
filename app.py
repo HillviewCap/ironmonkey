@@ -48,7 +48,7 @@ def check_and_process_rss_feeds():
 async def start_check_empty_summaries():
     with app.app_context():
         try:
-            empty_summaries = ParsedContent.query.filter(ParsedContent.summary.is_(None)).limit(10).all()
+            empty_summaries = ParsedContent.query.filter(ParsedContent.summary.is_(None)).limit(100).all()
             for content in empty_summaries:
                 summary = await app.ollama_api.generate("threat_intel_summary", content.content)
                 content.summary = summary
