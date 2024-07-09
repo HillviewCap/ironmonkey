@@ -8,7 +8,7 @@ load_dotenv()
 class OllamaAPI:
     def __init__(self):
         self.base_url = os.getenv("OLLAMA_BASE_URL")
-        self.model = os.getenv("OLLAMA_MODEL", "llama2:latest")
+        self.model = os.getenv("OLLAMA_MODEL")
         if not self.base_url:
             raise ValueError("OLLAMA_BASE_URL must be set in the .env file")
         self.llm = Ollama(base_url=self.base_url, model=self.model)
