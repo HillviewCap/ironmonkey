@@ -146,16 +146,20 @@ class ParsedContent(db.Model):
     def deduplicate(cls):
         """
         Deduplicates the parsed articles based on the URL.
+        Keeps the earliest entry for each URL and deletes the rest.
         Returns the number of deleted entries.
         """
-        # Get a list of distinct URLs
-        distinct_urls = db.session.query(cls.url).distinct().all()
+        subquery = db.session.query(
+            cls.url,
+            db.func.min(cls.created_at).label('earliest_date')
+        ).group_by(cls.url).subquery()
 
-        # Get a list of articles to keep (the first one for each distinct URL)
-        articles_to_keep = [article[0] for article in distinct_urls]
+        to_delete = cls.query.join(
+            subquery,
+            cls.url == subquery.c.url
+        ).filter(cls.created_at > subquery.c.earliest_date)
 
-        # Delete all articles that are not in the "articles_to_keep" list
-        deleted_count = cls.query.filter(~cls.url.in_(articles_to_keep)).delete()
+        deleted_count = to_delete.delete(synchronize_session='fetch')
         db.session.commit()
 
         return deleted_count
