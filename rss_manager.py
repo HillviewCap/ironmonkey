@@ -65,8 +65,10 @@ async def fetch_and_parse_feed(feed: RSSFeed) -> None:
             response.raise_for_status()  # Raise an exception for bad status codes
             feed_data = feedparser.parse(response.text)
 
+            new_entries_count = 0
             for entry in feed_data.entries:
-                if not ParsedContent.query.filter_by(url=entry.link).first():
+                existing_content = ParsedContent.query.filter_by(url=entry.link).first()
+                if not existing_content:
                     try:
                         parsed_content = await parse_content(entry.link)
                         if parsed_content is not None:
@@ -86,13 +88,17 @@ async def fetch_and_parse_feed(feed: RSSFeed) -> None:
                                 db_category = Category.create_from_feedparser(category, new_content.id)
                                 db.session.add(db_category)
                             logger.info(f"Added new content: {new_content.url}")
+                            new_entries_count += 1
                         else:
                             logger.warning(f"Failed to parse content for {entry.link}")
                     except Exception as e:
                         logger.error(f"Error parsing entry {entry.link}: {str(e)}")
+                else:
+                    logger.info(f"Skipped existing content: {entry.link}")
+            
             try:
                 db.session.commit()
-                logger.info(f"Committed {len(feed_data.entries)} new entries to database")
+                logger.info(f"Committed {new_entries_count} new entries to database")
             except Exception as e:
                 db.session.rollback()
                 logger.error(f"Error committing to database: {str(e)}")
@@ -177,21 +183,29 @@ async def manage_rss() -> str:
         url = form.url.data
         category = form.category.data
         try:
-            title, description, last_build_date = RSSFeed.fetch_feed_info(url)
-            new_feed = RSSFeed(
-                url=url,
-                title=title if title else "Not available",
-                category=category,
-                description=description if description else "Not available",
-                last_build_date=last_build_date if last_build_date else None,
-            )
-            db.session.add(new_feed)
-            db.session.commit()
-            flash("RSS Feed added successfully!", "success")
-            logger.info(f"RSS Feed added: {url}")
+            existing_feed = RSSFeed.query.filter_by(url=url).first()
+            if existing_feed:
+                flash(f"RSS Feed with URL '{url}' already exists.", "warning")
+            else:
+                title, description, last_build_date = RSSFeed.fetch_feed_info(url)
+                new_feed = RSSFeed(
+                    url=url,
+                    title=title if title else "Not available",
+                    category=category,
+                    description=description if description else "Not available",
+                    last_build_date=last_build_date if last_build_date else None,
+                )
+                db.session.add(new_feed)
+                db.session.commit()
+                flash("RSS Feed added successfully!", "success")
+                logger.info(f"RSS Feed added: {url}")
 
-            await fetch_and_parse_feed(new_feed)
-            flash("New feed parsed successfully!", "success")
+                await fetch_and_parse_feed(new_feed)
+                flash("New feed parsed successfully!", "success")
+        except IntegrityError:
+            db.session.rollback()
+            flash(f"RSS Feed with URL '{url}' already exists.", "warning")
+            logger.warning(f"Attempted to add duplicate RSS Feed: {url}")
         except Exception as e:
             logger.error(f"Error adding or parsing RSS Feed: {str(e)}")
             flash(f"Error adding or parsing RSS Feed: {str(e)}", "error")
