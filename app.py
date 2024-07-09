@@ -504,7 +504,7 @@ def create_app(config_name='default'):
     @app.route("/search", methods=["GET", "POST"])
     def search():
         form = FlaskForm()
-        search_params = SearchParams()
+        search_params = SearchParams(query='')  # Initialize with an empty query
     
         if request.method == "GET":
             # Populate search_params from GET parameters
