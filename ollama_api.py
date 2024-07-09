@@ -28,7 +28,7 @@ class OllamaAPI:
             prompt_data = self.prompts.get(prompt_type, {})
             system_prompt = prompt_data.get('system_prompt', '')
             full_prompt = f"System: {system_prompt}\n\nHuman: Analyze the following article:\n\nArticle: {article}"
-            output = self.llm(full_prompt)
+            output = self.llm.invoke(full_prompt)
             logger.debug(f"Generated response: {output}")
             return output
         except Exception as exc:
@@ -39,7 +39,7 @@ class OllamaAPI:
         try:
             # A simple prompt to test the connection
             test_prompt = "Hello, are you working?"
-            response = self.llm(test_prompt)
+            response = self.llm.invoke(test_prompt)
             logger.info(f"Successfully connected to Ollama API at {self.base_url} and verified model {self.model}")
             return True
         except Exception as e:
