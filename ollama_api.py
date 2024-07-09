@@ -12,8 +12,11 @@ class OllamaAPI:
         self.model = os.getenv("OLLAMA_MODEL")
         if not self.base_url:
             raise ValueError("OLLAMA_BASE_URL must be set in the .env file")
+        if not self.model:
+            raise ValueError("OLLAMA_MODEL must be set in the .env file")
         self.llm = Ollama(base_url=self.base_url, model=self.model)
         self.prompts = self.load_prompts()
+        logger.info(f"Initialized OllamaAPI with base_url: {self.base_url} and model: {self.model}")
 
     @staticmethod
     def load_prompts():
