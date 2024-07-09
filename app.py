@@ -5,11 +5,12 @@ import uuid
 from datetime import datetime
 import bleach
 from dotenv import load_dotenv
-from flask import Flask, render_template, request, jsonify, current_app, abort, send_from_directory, redirect, url_for
+from flask import Flask, render_template, request, jsonify, current_app, abort, send_from_directory, redirect, url_for, flash
 from flask_migrate import Migrate
 from flask_wtf import FlaskForm
 from flask_wtf.csrf import CSRFProtect
 from flask_login import LoginManager, login_required, current_user
+from sqlalchemy import func
 from sqlalchemy.exc import SQLAlchemyError
 from werkzeug.exceptions import BadRequest
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -121,6 +122,25 @@ def build_search_query(search_params):
     return query
 
 def register_routes(app):
+    @app.route("/admin")
+    @login_required
+    def admin():
+        if not current_user.is_admin:
+            abort(403)
+        return render_template("admin.html")
+
+    @app.route("/admin/deduplicate", methods=["POST"])
+    @login_required
+    def deduplicate_parsed_content():
+        if not current_user.is_admin:
+            abort(403)
+        try:
+            deleted_count = ParsedContent.deduplicate()
+            flash(f"Successfully removed {deleted_count} duplicate entries.", "success")
+        except Exception as e:
+            current_app.logger.error(f"Error during deduplication: {str(e)}")
+            flash("An error occurred during deduplication.", "error")
+        return redirect(url_for("admin"))
     @app.route("/")
     def index():
         current_app.logger.info("Entering index route")
