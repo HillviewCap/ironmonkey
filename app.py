@@ -239,13 +239,31 @@ def create_app(config_name='default'):
     @app.route("/search", methods=["GET", "POST"])
     def search():
         form = FlaskForm()
+        search_params = SearchParams()
+    
         if request.method == "GET":
-            return render_template("search.html", form=form)
+            # Populate search_params from GET parameters
+            search_params.query = request.args.get('query', '')
+            search_params.start_date = request.args.get('start_date')
+            search_params.end_date = request.args.get('end_date')
+            search_params.source_types = request.args.getlist('source_types')
+            search_params.keywords = request.args.get('keywords', '').split(',') if request.args.get('keywords') else []
+        
+            results = perform_search(search_params)
+            return render_template("search.html", form=form, search_params=search_params, results=results)
 
         if form.validate_on_submit():
-            return perform_search(form)
+            # Populate search_params from form data
+            search_params.query = form.data.get('query', '')
+            search_params.start_date = form.data.get('start_date')
+            search_params.end_date = form.data.get('end_date')
+            search_params.source_types = form.data.getlist('source_types')
+            search_params.keywords = form.data.get('keywords', '').split(',') if form.data.get('keywords') else []
+        
+            results = perform_search(search_params)
+            return render_template("search.html", form=form, search_params=search_params, results=results)
 
-        return render_template("search.html", form=form)
+        return render_template("search.html", form=form, search_params=search_params)
 
     @app.route("/view/<uuid:item_id>")
     def view_item(item_id):
@@ -325,11 +343,10 @@ def render_error_page():
         )
 
 
-def perform_search(form):
+def perform_search(search_params):
     page = request.args.get("page", 1, type=int)
     per_page = 10
 
-    search_params = get_search_params(form)
     query = build_search_query(search_params)
 
     try:
