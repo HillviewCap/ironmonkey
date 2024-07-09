@@ -13,18 +13,3 @@
         </button>
     </form>
 </section>
-<section class="mb-12">
-    <h2 class="text-2xl font-semibold mb-4">Functions</h2>
-    <form action="{{ url_for('deduplicate_parsed_content') }}" method="post" class="mb-4">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-        <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-            Deduplicate Parsed Content
-        </button>
-    </form>
-    <form action="{{ url_for('clear_all_summaries') }}" method="post" class="mb-4">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-        <button type="submit" class="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded">
-            Clear All Summaries
-        </button>
-    </form>
-</section>

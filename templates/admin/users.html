@@ -19,24 +19,3 @@
         </table>
     </div>
 </section>
-<section class="mb-12">
-    <h2 class="text-2xl font-semibold mb-4">Users</h2>
-    <div class="overflow-x-auto">
-        <table class="min-w-full bg-white">
-            <thead class="bg-gray-100">
-                <tr>
-                    <th class="py-2 px-4 text-left">Username</th>
-                    <th class="py-2 px-4 text-left">Email</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for user in users %}
-                <tr class="border-b">
-                    <td class="py-2 px-4">{{ user.username }}</td>
-                    <td class="py-2 px-4">{{ user.email }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-</section>
