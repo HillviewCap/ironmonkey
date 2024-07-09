@@ -514,7 +514,9 @@ def create_app(config_name='default'):
             search_params.source_types = request.args.getlist('source_types')
             search_params.keywords = request.args.get('keywords', '').split(',') if request.args.get('keywords') else []
         
+            logger.info(f"Performing search with params: {search_params.__dict__}")
             results = perform_search(search_params)
+            logger.info(f"Search completed. Results: {results}")
             return render_template("search.html", form=form, search_params=search_params, results=results)
 
         if form.validate_on_submit():
@@ -525,7 +527,9 @@ def create_app(config_name='default'):
             search_params.source_types = form.data.getlist('source_types')
             search_params.keywords = form.data.get('keywords', '').split(',') if form.data.get('keywords') else []
         
+            logger.info(f"Performing search with params: {search_params.__dict__}")
             results = perform_search(search_params)
+            logger.info(f"Search completed. Results: {results}")
             return render_template("search.html", form=form, search_params=search_params, results=results)
 
         return render_template("search.html", form=form, search_params=search_params)
@@ -634,13 +638,19 @@ def perform_search(search_params):
     per_page = 10
 
     query = build_search_query(search_params)
+    logger.debug(f"Built search query: {query}")
 
     try:
         paginated_results = query.paginate(page=page, per_page=per_page)
         total_results = query.count()
         logger.info(f"Search completed. Total results: {total_results}")
+        
+        # Log the first few results for debugging
+        for i, result in enumerate(paginated_results.items[:5]):
+            logger.debug(f"Result {i+1}: ID={result.id}, Title={result.title}")
+        
     except Exception as e:
-        logger.error(f"Error occurred during search: {str(e)}")
+        logger.error(f"Error occurred during search: {str(e)}", exc_info=True)
         return render_template(
             "search.html",
             error="An error occurred during the search. Please try again.",
