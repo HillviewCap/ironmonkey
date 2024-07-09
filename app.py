@@ -334,16 +334,22 @@ def perform_search(form):
 
     try:
         paginated_results = query.paginate(page=page, per_page=per_page)
-        logger.info(f"Search completed. Total results: {paginated_results.total}")
+        total_results = query.count()
+        logger.info(f"Search completed. Total results: {total_results}")
     except Exception as e:
         logger.error(f"Error occurred during search: {str(e)}")
         return render_template(
-            "search_results.html",
+            "search.html",
             error="An error occurred during the search. Please try again.",
+            form=form
         )
 
     return render_template(
-        "search_results.html", results=paginated_results, search_params=search_params
+        "search.html",
+        results=paginated_results,
+        search_params=search_params,
+        total_results=total_results,
+        form=form
     )
 
 
