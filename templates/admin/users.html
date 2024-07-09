@@ -1,0 +1,32 @@
+<section class="mb-12">
+    <h2 class="text-2xl font-semibold mb-4">Users</h2>
+    <div class="overflow-x-auto">
+        <table class="min-w-full bg-white">
+            <thead class="bg-gray-100">
+                <tr>
+                    <th class="py-2 px-4 text-left">Username</th>
+                    <th class="py-2 px-4 text-left">Email</th>
+                    <th class="py-2 px-4 text-left">Admin</th>
+                    <th class="py-2 px-4 text-left">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in users %}
+                <tr class="border-b">
+                    <td class="py-2 px-4">{{ user.username }}</td>
+                    <td class="py-2 px-4">{{ user.email }}</td>
+                    <td class="py-2 px-4">{{ 'Yes' if user.is_admin else 'No' }}</td>
+                    <td class="py-2 px-4">
+                        <form action="{{ url_for('toggle_admin', user_id=user.id) }}" method="post" class="inline">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                            <button type="submit" class="text-blue-500 hover:underline">
+                                {{ 'Remove Admin' if user.is_admin else 'Make Admin' }}
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
