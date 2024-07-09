@@ -542,7 +542,13 @@ def register_routes(app):
                     result = await diffbot_client.tag_content(document.content, client)
                     db_handler.process_nlp_result(document, result)
                     document.summary = result.get("summary", {}).get("text")
-                    tagge
+                    tagged_count += 1
+                except Exception as e:
+                    current_app.logger.error(f"Error tagging document ID {document.id}: {str(e)}")
+
+        db.session.commit()
+        return jsonify({"message": f"Tagged {tagged_count} out of {len(untagged_documents)} documents"}), 200
+
     @app.route("/search", methods=["GET", "POST"])
     def search():
         form = FlaskForm()
