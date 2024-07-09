@@ -1,4 +1,5 @@
 import os
+import yaml
 from dotenv import load_dotenv
 from langchain_community.llms import Ollama
 from logging_config import logger
@@ -12,9 +13,16 @@ class OllamaAPI:
         if not self.base_url:
             raise ValueError("OLLAMA_BASE_URL must be set in the .env file")
         self.llm = Ollama(base_url=self.base_url, model=self.model)
+        self.prompts = self.load_prompts()
 
-    async def generate(self, prompt_data: dict, article: str) -> str:
+    @staticmethod
+    def load_prompts():
+        with open('prompts.yaml', 'r') as file:
+            return yaml.safe_load(file)
+
+    async def generate(self, prompt_type: str, article: str) -> str:
         try:
+            prompt_data = self.prompts.get(prompt_type, {})
             system_prompt = prompt_data.get('system_prompt', '')
             full_prompt = f"System: {system_prompt}\n\nHuman: Analyze the following article:\n\nArticle: {article}"
             output = self.llm(full_prompt)
