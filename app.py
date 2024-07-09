@@ -514,23 +514,11 @@ def create_app(config_name='default'):
             search_params.source_types = request.args.getlist('source_types')
             search_params.keywords = request.args.get('keywords', '').split(',') if request.args.get('keywords') else []
         
+        if form.validate_on_submit() or request.method == "GET":
             logger.info(f"Performing search with params: {search_params.__dict__}")
-            results = perform_search(search_params)
-            logger.info(f"Search completed. Results: {results}")
-            return render_template("search.html", form=form, search_params=search_params, results=results)
-
-        if form.validate_on_submit():
-            # Populate search_params from form data
-            search_params.query = form.data.get('query', '')
-            search_params.start_date = form.data.get('start_date')
-            search_params.end_date = form.data.get('end_date')
-            search_params.source_types = form.data.getlist('source_types')
-            search_params.keywords = form.data.get('keywords', '').split(',') if form.data.get('keywords') else []
-        
-            logger.info(f"Performing search with params: {search_params.__dict__}")
-            results = perform_search(search_params)
-            logger.info(f"Search completed. Results: {results}")
-            return render_template("search.html", form=form, search_params=search_params, results=results)
+            results, total_results = perform_search(search_params)
+            logger.info(f"Search completed. Total results: {total_results}")
+            return render_template("search.html", form=form, search_params=search_params, results=results, total_results=total_results)
 
         return render_template("search.html", form=form, search_params=search_params)
 
@@ -649,20 +637,11 @@ def perform_search(search_params):
         for i, result in enumerate(paginated_results.items[:5]):
             logger.debug(f"Result {i+1}: ID={result.id}, Title={result.title}")
         
+        return paginated_results, total_results
+        
     except Exception as e:
         logger.error(f"Error occurred during search: {str(e)}", exc_info=True)
-        return render_template(
-            "search.html",
-            error="An error occurred during the search. Please try again.",
-            search_params=search_params
-        )
-
-    return render_template(
-        "search.html",
-        results=paginated_results,
-        search_params=search_params,
-        total_results=total_results
-    )
+        return None, 0
 
 
 def get_search_params(form):
