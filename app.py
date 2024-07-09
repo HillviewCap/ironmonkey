@@ -36,22 +36,11 @@ import httpx
 # Load environment variables
 load_dotenv()
 
-from summary_enhancer import SummaryEnhancer
 from init_db import init_db
 
 # Configure logging
 logger = setup_logger('app', 'app.log')
 
-def check_empty_summaries():
-    with app.app_context():
-        try:
-            empty_summaries = ParsedContent.query.filter(ParsedContent.summary == None).limit(10).all()
-            enhancer = SummaryEnhancer(app.ollama_api)
-            for content in empty_summaries:
-                asyncio.run(enhancer.process_single_record(content, db.session))
-            logger.info(f"Processed {len(empty_summaries)} empty summaries")
-        except Exception as e:
-            logger.error(f"Error in check_empty_summaries: {str(e)}")
 
 def check_and_process_rss_feeds():
     with app.app_context():
@@ -277,20 +266,18 @@ def create_app(config_name='default'):
                 current_app.logger.error(f"Document not found for id: {content_id}")
                 return jsonify({"error": "Document not found"}), 404
 
-            enhancer = SummaryEnhancer(app.ollama_api)
-            success = await enhancer.process_single_record(document, db.session)
-            if success:
-                current_app.logger.info(f"Summary generated successfully for document id: {content_id}")
-                return jsonify({"summary": document.summary}), 200
-            else:
-                current_app.logger.error(f"Failed to generate summary for document id: {content_id}")
-                return jsonify({"error": "Failed to generate summary"}), 500
+            summary = await app.ollama_api.generate("threat_intel_summary", document.content)
+            document.summary = summary
+            db.session.commit()
+
+            current_app.logger.info(f"Summary generated successfully for document id: {content_id}")
+            return jsonify({"summary": summary}), 200
         except ValueError:
             current_app.logger.error(f"Invalid UUID format for content_id: {content_id}")
             return jsonify({"error": "Invalid content_id format"}), 400
         except Exception as e:
             current_app.logger.exception(f"Error summarizing content: {str(e)}")
-            return jsonify({"error": f"Error summarizing content: {str(e)}"}), 200
+            return jsonify({"error": f"Error summarizing content: {str(e)}"}), 500
 
     @app.route("/clear_all_summaries", methods=["POST"])
     @login_required
@@ -321,7 +308,6 @@ def create_app(config_name='default'):
 
     # Initialize the scheduler
     scheduler = BackgroundScheduler()
-    scheduler.add_job(func=check_empty_summaries, trigger="interval", minutes=10)
     scheduler.add_job(func=check_and_process_rss_feeds, trigger="interval", minutes=30)
     scheduler.start()
 
