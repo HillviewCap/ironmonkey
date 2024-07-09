@@ -170,6 +170,13 @@ class ParsedContent(db.Model):
                 deleted_count += 1
 
         db.session.commit()
+
+        from flask import flash
+        if deleted_count > 0:
+            flash(f"Deduplication complete. {deleted_count} duplicate items removed.", "success")
+        else:
+            flash("No duplicate items found during deduplication.", "info")
+
         return deleted_count
     title = db.Column(db.String(255), nullable=False)
     url = db.Column(db.String(255), nullable=False)
