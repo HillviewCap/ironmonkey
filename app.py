@@ -120,6 +120,164 @@ def build_search_query(search_params):
     logger.debug(f"Final SQL query: {query}")
     return query
 
+def register_routes(app):
+    @app.route("/")
+    def index():
+        current_app.logger.info("Entering index route")
+        try:
+            if current_user.is_authenticated:
+                recent_items = (
+                    db.session.query(ParsedContent)
+                    .filter(ParsedContent.title.isnot(None), ParsedContent.description.isnot(None))
+                    .order_by(ParsedContent.created_at.desc())
+                    .limit(6)
+                    .all()
+                )
+                return render_template("index.html", recent_items=recent_items)
+            else:
+                return redirect(url_for("login"))
+        except Exception as e:
+            current_app.logger.error(f"Error in index route: {str(e)}", exc_info=True)
+            return render_error_page()
+
+    app.add_url_rule("/", "index", index)
+    app.add_url_rule("/login", "login", login, methods=["GET", "POST"])
+    app.add_url_rule("/logout", "logout", logout)
+    app.add_url_rule("/register", "register", register, methods=["GET", "POST"])
+
+    @app.route("/tag_content", methods=["POST"])
+    @login_required
+    async def tag_content():
+        diffbot_api_key = os.getenv("DIFFBOT_API_KEY")
+        if not diffbot_api_key:
+            return jsonify({"error": "DIFFBOT_API_KEY not set"}), 500
+
+        diffbot_client = DiffbotClient(diffbot_api_key)
+        db_handler = DatabaseHandler(app.config["SQLALCHEMY_DATABASE_URI"])
+
+        content_id = request.json.get("content_id")
+        if not content_id:
+            return jsonify({"error": "content_id is required"}), 400
+
+        document = ParsedContent.get_document_by_id(content_id)
+        if not document:
+            return jsonify({"error": "Document not found"}), 404
+
+        try:
+            async with httpx.AsyncClient() as client:
+                result = await diffbot_client.tag_content(document.content, client)
+        
+            db_handler.process_nlp_result(document, result, db.session)
+            document.summary = result.get("summary", {}).get("text")
+            db.session.commit()
+
+            return jsonify({"message": "Content tagged successfully"}), 200
+        except Exception as e:
+            current_app.logger.error(f"Error tagging content: {str(e)}")
+            return jsonify({"error": "Error tagging content"}), 500
+
+    @app.route("/batch_tag_content", methods=["POST"])
+    @login_required
+    async def batch_tag_content():
+        diffbot_api_key = os.getenv("DIFFBOT_API_KEY")
+        if not diffbot_api_key:
+            return jsonify({"error": "DIFFBOT_API_KEY not set"}), 500
+
+        diffbot_client = DiffbotClient(diffbot_api_key)
+        db_handler = DatabaseHandler(app.config["SQLALCHEMY_DATABASE_URI"])
+
+        untagged_documents = (
+            Document.query.filter(
+                (Document.entities == None) & (Document.categories == None)
+            )
+            .limit(10)
+            .all()
+        )
+
+        tagged_count = 0
+        async with httpx.AsyncClient() as client:
+            for document in untagged_documents:
+                try:
+                    result = await diffbot_client.tag_content(document.content, client)
+                    db_handler.process_nlp_result(document, result)
+                    document.summary = result.get("summary", {}).get("text")
+                    tagged_count += 1
+                except Exception as e:
+                    current_app.logger.error(f"Error tagging document ID {document.id}: {str(e)}")
+
+        db.session.commit()
+        return jsonify({"message": f"Tagged {tagged_count} out of {len(untagged_documents)} documents"}), 200
+
+    @app.route("/search", methods=["GET", "POST"])
+    def search():
+        form = FlaskForm()
+        if request.method == "GET":
+            return render_template("search.html", form=form)
+
+        if form.validate_on_submit():
+            return perform_search(form)
+
+        return render_template("search.html", form=form)
+
+    @app.route("/view/<uuid:item_id>")
+    def view_item(item_id):
+        item = db.session.get(ParsedContent, item_id)
+        if item is None:
+            abort(404)
+        return render_template("view_item.html", item=item)
+
+    @app.cli.command("parse-feeds")
+    def parse_feeds_command():
+        """Parse all RSS feeds and store new content."""
+        with app.app_context():
+            asyncio.run(rss_manager.parse_feeds())
+        print("Feeds parsed successfully.")
+
+    @app.route("/summarize_content", methods=["POST"])
+    @login_required
+    async def summarize_content():
+        content_id = request.json.get("content_id")
+        if not content_id:
+            current_app.logger.error("content_id is missing in the request")
+            return jsonify({"error": "content_id is required"}), 400
+
+        try:
+            content_id = uuid.UUID(content_id)
+            document = db.session.get(ParsedContent, content_id)
+            if not document:
+                current_app.logger.error(f"Document not found for id: {content_id}")
+                return jsonify({"error": "Document not found"}), 404
+
+            summary = await app.ollama_api.generate("threat_intel_summary", document.content)
+            document.summary = summary
+            db.session.commit()
+
+            current_app.logger.info(f"Summary generated successfully for document id: {content_id}")
+            return jsonify({"summary": summary}), 200
+        except ValueError:
+            current_app.logger.error(f"Invalid UUID format for content_id: {content_id}")
+            return jsonify({"error": "Invalid content_id format"}), 400
+        except Exception as e:
+            current_app.logger.exception(f"Error summarizing content: {str(e)}")
+            return jsonify({"error": f"Error summarizing content: {str(e)}"}), 500
+
+    @app.route("/clear_all_summaries", methods=["POST"])
+    @login_required
+    def clear_all_summaries():
+        try:
+            ParsedContent.query.update({ParsedContent.summary: None})
+            db.session.commit()
+            return jsonify({"message": "All summaries have been cleared"}), 200
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.error(f"Error clearing summaries: {str(e)}")
+            return jsonify({"error": "An error occurred while clearing summaries"}), 500
+
+    @app.route('/favicon.ico')
+    def favicon():
+        return send_from_directory(os.path.join(app.root_path, 'static', 'images'),
+                                   'favicon.ico', mimetype='image/vnd.microsoft.icon')
+
 def create_app(config_name='default'):
     global app
     app = Flask(__name__, instance_relative_config=True, static_url_path='/static')
