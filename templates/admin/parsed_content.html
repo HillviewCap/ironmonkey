@@ -31,13 +31,13 @@
         </form>
     </div>
     <div class="overflow-x-auto">
-        <table class="min-w-full bg-white">
+        <table id="parsed-content-table" class="min-w-full bg-white">
             <thead class="bg-gray-100">
                 <tr>
-                    <th class="py-2 px-4 text-left">Title</th>
-                    <th class="py-2 px-4 text-left">URL</th>
-                    <th class="py-2 px-4 text-left">Date</th>
-                    <th class="py-2 px-4 text-left">Source Type</th>
+                    <th class="py-2 px-4 text-left sortable" data-sort="string">Title</th>
+                    <th class="py-2 px-4 text-left sortable" data-sort="string">URL</th>
+                    <th class="py-2 px-4 text-left sortable" data-sort="date">Date</th>
+                    <th class="py-2 px-4 text-left sortable" data-sort="string">Source Type</th>
                     <th class="py-2 px-4 text-left">Actions</th>
                 </tr>
             </thead>
@@ -65,3 +65,9 @@
         </table>
     </div>
 </section>
+<script src="{{ url_for('static', filename='js/table_sort.js') }}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        initTableSort('parsed-content-table');
+    });
+</script>
