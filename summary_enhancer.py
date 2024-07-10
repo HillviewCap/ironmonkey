@@ -1,32 +1,30 @@
-# Workflow:
-# 1. Initialize SummaryEnhancer with OllamaAPI
-# 2. Load prompts from prompts.yaml
-# 3. Call enhance_summaries() method
-#    a. Query database for ParsedContent with null summary
-#    b. For each record:
-#       i. Generate summary using OllamaAPI
-#       ii. Update ParsedContent with new summary
-#       iii. Commit changes to database
-#    c. Repeat until no more records to update
-# 4. Handle errors and retries
-# 5. Log process status and completion
+"""
+SummaryEnhancer: A class to enhance summaries of parsed content using OllamaAPI.
+
+Workflow:
+1. Initialize SummaryEnhancer with OllamaAPI
+2. Call summarize_feed() method for a specific feed
+3. For each ParsedContent without a summary:
+   a. Generate summary using OllamaAPI
+   b. Update ParsedContent with new summary
+   c. Commit changes to database
+4. Handle errors and retries
+5. Log process status and completion
+"""
 
 from __future__ import annotations
-
 from logging_config import setup_logger
-
-# Set up logger for summary enhancer
-logger = setup_logger('summary_enhancer', 'summary_enhancer.log')
 from sqlalchemy.orm import Session
 from models import ParsedContent, db, RSSFeed
 from ollama_api import OllamaAPI
-from typing import Dict, Any, Optional
+from typing import Optional
 
+logger = setup_logger('summary_enhancer', 'summary_enhancer.log')
 
 class SummaryEnhancer:
-    def __init__(self, ollama_api: OllamaAPI):
+    def __init__(self, ollama_api: OllamaAPI, max_retries: int = 3):
         self.ollama_api = ollama_api
-        self.max_retries = 3
+        self.max_retries = max_retries
 
     async def generate_summary(self, content_id: str) -> str:
         parsed_content = ParsedContent.get_by_id(content_id)
@@ -40,20 +38,21 @@ class SummaryEnhancer:
         for attempt in range(self.max_retries):
             try:
                 summary = await self.generate_summary(content_id)
-                if summary:
-                    with db.session.begin():
-                        parsed_content = ParsedContent.get_by_id(content_id)
-                        if parsed_content:
-                            parsed_content.summary = summary.strip()
-                            db.session.commit()
-                            logger.info(f"Updated summary for record {content_id}")
-                            logger.info(f"Summary generated for record {content_id}")
-                            return True
-                        else:
-                            logger.warning(f"ParsedContent not found for id {content_id}")
-                            return False
-                else:
+                if not summary:
                     logger.warning(f"Empty summary generated for record {content_id}. Attempt {attempt + 1}/{self.max_retries}")
+                    continue
+
+                with db.session.begin():
+                    parsed_content = ParsedContent.get_by_id(content_id)
+                    if not parsed_content:
+                        logger.warning(f"ParsedContent not found for id {content_id}")
+                        return False
+
+                    parsed_content.summary = summary.strip()
+                    db.session.commit()
+                    logger.info(f"Updated summary for record {content_id}")
+                    return True
+
             except Exception as e:
                 logger.error(f"Error generating summary for record {content_id}: {str(e)}. Attempt {attempt + 1}/{self.max_retries}", exc_info=True)
 
@@ -70,24 +69,26 @@ class SummaryEnhancer:
 
         parsed_contents = ParsedContent.query.filter_by(feed_id=feed_id, summary=None).all()
         for content in parsed_contents:
-            success = await self.process_single_record(content, db.session)
+            success = await self.process_single_record(content)
             if not success:
                 logger.warning(f"Failed to generate summary for content {content.id}")
 
         logger.info(f"Summary enhancement for feed {feed_id} completed")
 
-    async def process_single_record(self, document: ParsedContent, session: Session) -> Optional[str]:
+    async def process_single_record(self, document: ParsedContent) -> bool:
         logger.info(f"Processing single record {document.id}")
         try:
             summary = await self.generate_summary(str(document.id))
-            if summary:
-                document.summary = summary.strip()
-                session.commit()
-                logger.info(f"Updated summary for record {document.id}")
-                return summary
-            else:
+            if not summary:
                 logger.warning(f"Empty summary generated for record {document.id}")
-                return None
+                return False
+
+            with db.session.begin():
+                document.summary = summary.strip()
+                db.session.commit()
+                logger.info(f"Updated summary for record {document.id}")
+            return True
+
         except Exception as e:
             logger.error(f"Error processing record {document.id}: {str(e)}", exc_info=True)
-            return None
+            return False
