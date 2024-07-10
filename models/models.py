@@ -190,6 +190,7 @@ class ParsedContent(db.Model):
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     pub_date = db.Column(db.String(100), nullable=True)
     creator = db.Column(db.String(255), nullable=True)
+    art_hash = db.Column(db.String(64), unique=True, index=True)
 
     @classmethod
     def get_by_id(cls, content_id):
