@@ -5,6 +5,7 @@ import uuid
 from datetime import datetime
 import bleach
 from dotenv import load_dotenv
+import os
 from flask import (
     Flask,
     render_template,
@@ -522,16 +523,19 @@ def register_routes(app):
 
 
 def setup_scheduler(app):
+    rss_check_interval = int(os.getenv('RSS_CHECK_INTERVAL', 30))
+    summary_check_interval = int(os.getenv('SUMMARY_CHECK_INTERVAL', 31))
+    
     scheduler = BackgroundScheduler()
-    scheduler.add_job(func=check_and_process_rss_feeds, trigger="interval", minutes=30)
+    scheduler.add_job(func=check_and_process_rss_feeds, trigger="interval", minutes=rss_check_interval)
     scheduler.add_job(
         func=lambda: asyncio.run(start_check_empty_summaries()),
         trigger="interval",
-        minutes=31,
+        minutes=summary_check_interval,
     )
-    return scheduler
     scheduler.start()
-    logger.info("Scheduler started successfully")
+    logger.info(f"Scheduler started successfully with RSS check interval: {rss_check_interval} minutes and Summary check interval: {summary_check_interval} minutes")
+    return scheduler
 
 
 def create_app(config_name="default"):
