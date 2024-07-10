@@ -140,6 +140,8 @@ async def fetch_and_parse_feed(feed: RSSFeed) -> None:
         logger.error(f"Unexpected error occurred while parsing feed {feed.url}: {e}", exc_info=True)
         logger.error(f"new_entries_count: {new_entries_count}")
         logger.error(f"feed_data entries: {len(feed_data.entries)}")
+        logger.error(f"Last processed entry: {url if 'url' in locals() else 'Unknown'}")
+        logger.error(f"Last processed title: {title if 'title' in locals() else 'Unknown'}")
         raise ValueError(f"Unexpected error: {str(e)}")
     except httpx.HTTPStatusError as e:
         logger.error(f"HTTP error occurred while fetching feed {feed.url}: {e}")
