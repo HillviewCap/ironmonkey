@@ -33,7 +33,7 @@ def init_db(app=None):
         engine = create_engine(app.config['SQLALCHEMY_DATABASE_URI'])
         DiffbotBase.metadata.create_all(engine)
         
-        # Add the summary column to ParsedContent if it doesn't exist
+        # Add the summary and art_hash columns to ParsedContent if they don't exist
         with engine.connect() as connection:
             result = connection.execute(
                 text("PRAGMA table_info(parsed_content)")
@@ -41,6 +41,8 @@ def init_db(app=None):
             columns = [row[1] for row in result.fetchall()]
             if "summary" not in columns:
                 connection.execute(text("ALTER TABLE parsed_content ADD COLUMN summary TEXT"))
+            if "art_hash" not in columns:
+                connection.execute(text("ALTER TABLE parsed_content ADD COLUMN art_hash TEXT"))
         
         print(f"All database tables created and updated successfully in {app.instance_path}")
 
