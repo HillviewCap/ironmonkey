@@ -1,7 +1,7 @@
 import httpx
 import os
 from dotenv import load_dotenv
-from tenacity import retry, stop_after_attempt, wait_exponential
+from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type, before_sleep_log
 from ratelimit import limits, sleep_and_retry
 import logging
 from logging_config import setup_logger
@@ -14,10 +14,30 @@ JINA_API_KEY = os.getenv("JINA_API_KEY")
 logger = setup_logger("jina_api", "jina_api.log")
 
 
+async def follow_redirects(url: str) -> str:
+    """
+    Follow redirects and return the final URL.
+
+    Args:
+        url (str): The initial URL.
+
+    Returns:
+        str: The final URL after following all redirects.
+    """
+    async with httpx.AsyncClient(follow_redirects=True) as client:
+        response = await client.get(url)
+        return str(response.url)
+
+
 # Rate limit: 200 requests per minute
 @sleep_and_retry
 @limits(calls=200, period=60)
-@retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=4, max=10))
+@retry(
+    stop=stop_after_attempt(5),  # Increased from 3 to 5
+    wait=wait_exponential(multiplier=1, min=4, max=60),  # Increased max wait time to 60 seconds
+    retry=retry_if_exception_type((httpx.HTTPStatusError, httpx.RequestError, httpx.ReadTimeout, ValueError, KeyError)),
+    before_sleep=before_sleep_log(logger, logging.ERROR)
+)
 async def parse_content(url: str) -> str:
     """
     Parse content using the Jina API.
@@ -26,7 +46,7 @@ async def parse_content(url: str) -> str:
         url (str): The URL to parse.
 
     Returns:
-        str: Parsed text content.
+        str: Parsed text content or None if an error occurs.
     """
     headers = {
         "Authorization": f"Bearer {JINA_API_KEY}",
@@ -36,25 +56,39 @@ async def parse_content(url: str) -> str:
 
     logger.info(f"Parsing content from URL: {url}")
 
-    async with httpx.AsyncClient() as client:
-        try:
-            response = await client.get(f"https://r.jina.ai/{url}", headers=headers)
+    try:
+        # Follow redirects to get the final URL
+        final_url = await follow_redirects(url)
+        logger.info(f"Final URL after redirects: {final_url}")
+
+        async with httpx.AsyncClient() as client:
+            response = await client.get(f"https://r.jina.ai/{final_url}", headers=headers)
             response.raise_for_status()
             data = response.json()
 
             if data["code"] != 200 or data["status"] != 20000:
                 logger.error(
-                    f"API returned unexpected status. Code: {data['code']}, Status: {data['status']}"
+                    f"API returned unexpected status for URL {final_url}. Code: {data['code']}, Status: {data['status']}"
                 )
                 return None
 
+            logger.info(f"Successfully parsed content from URL: {final_url}")
             return data["data"]["text"]
-        except httpx.HTTPStatusError as e:
-            logger.error(f"HTTP error occurred: {e}")
-            return None
-        except Exception as e:
-            logger.error(f"An unexpected error occurred: {e}")
-            return None
+    except httpx.HTTPStatusError as e:
+        logger.error(f"HTTP error occurred while parsing URL {url}: {str(e)}", exc_info=True)
+        return None
+    except httpx.RequestError as e:
+        logger.error(f"Request error occurred while parsing URL {url}: {str(e)}", exc_info=True)
+        return None
+    except ValueError as e:
+        logger.error(f"JSON decoding error occurred while parsing URL {url}: {str(e)}", exc_info=True)
+        return None
+    except KeyError as e:
+        logger.error(f"Unexpected API response structure for URL {url}: {str(e)}", exc_info=True)
+        return None
+    except Exception as e:
+        logger.error(f"An unexpected error occurred while parsing URL {url}: {str(e)}", exc_info=True)
+        return None
 
 
 async def update_content_in_database(post_id: str, content: str):
@@ -66,9 +100,12 @@ async def update_content_in_database(post_id: str, content: str):
         content (str): The new content to set.
     """
     # This is a placeholder function. You need to implement the actual database update logic.
-    logger.info(f"Updating content for post ID: {post_id}")
-    # Your database update code here
-    pass
+    try:
+        logger.info(f"Updating content for post ID: {post_id}")
+        # Your database update code here
+        logger.info(f"Successfully updated content for post ID: {post_id}")
+    except Exception as e:
+        logger.error(f"Failed to update content for post ID {post_id}: {e}")
 
 
 async def process_url(url: str, post_id: str):
@@ -82,6 +119,6 @@ async def process_url(url: str, post_id: str):
     content = await parse_content(url)
     if content:
         await update_content_in_database(post_id, content)
-        logger.info(f"Successfully processed URL: {url}")
+        logger.info(f"Successfully processed URL: {url} for post ID: {post_id}")
     else:
-        logger.warning(f"Failed to process URL: {url}")
+        logger.warning(f"Failed to process URL: {url} for post ID: {post_id}")

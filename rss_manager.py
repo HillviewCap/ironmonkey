@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 import uuid
 import os
+import hashlib
 from flask import Blueprint, render_template, redirect, url_for, flash, request, current_app
 from flask_login import login_required
 from datetime import datetime
@@ -34,6 +35,10 @@ csrf = CSRFProtect()
 
 PER_PAGE_OPTIONS = [10, 25, 50, 100]
 
+def init_app(app):
+    with app.app_context():
+        hashed_count = ParsedContent.hash_existing_articles()
+        logger.info(f"Hashed {hashed_count} existing articles")
 
 # Form classes
 class RSSFeedForm(FlaskForm):
@@ -64,48 +69,52 @@ class EditRSSFeedForm(FlaskForm):
 async def fetch_and_parse_feed(feed: RSSFeed) -> None:
     """Fetch and parse a single RSS feed."""
     try:
-        async with httpx.AsyncClient() as client:
-            response = await client.get(feed.url, timeout=30.0)  # Set a timeout
-            response.raise_for_status()  # Raise an exception for bad status codes
+        async with httpx.AsyncClient(follow_redirects=True) as client:
+            response = await client.get(feed.url, timeout=30.0)
+            response.raise_for_status()
+
+            # Check if the URL has been redirected
+            if response.url != feed.url:
+                logger.info(f"Feed URL redirected from {feed.url} to {response.url}")
+                feed.url = str(response.url)
+                db.session.commit()
+
             feed_data = feedparser.parse(response.text)
 
             new_entries_count = 0
             for entry in feed_data.entries:
-                existing_content = ParsedContent.query.filter_by(url=entry.link).first()
-                if not existing_content:
-                    try:
-                        parsed_content = await parse_content(entry.link)
+                try:
+                    url = entry.link
+                    title = entry.get('title', '')
+                    art_hash = hashlib.sha256(f"{url}{title}".encode()).hexdigest()
+
+                    existing_content = ParsedContent.query.filter_by(art_hash=art_hash).first()
+                    if not existing_content:
+                        parsed_content = await parse_content(url)
                         if parsed_content is not None:
                             new_content = ParsedContent(
                                 content=parsed_content,
                                 feed_id=feed.id,
-                                url=entry.link,
-                                title=entry.get('title', ''),
+                                url=url,
+                                title=title,
                                 description=entry.get('description', ''),
                                 pub_date=entry.get('published', ''),
-                                creator=entry.get('author', '')
+                                creator=entry.get('author', ''),
+                                art_hash=art_hash
                             )
                             db.session.add(new_content)
-                        
-                            # Add categories using the new method
+                            db.session.flush()  # This will assign the UUID to new_content
+
                             for category in entry.get('tags', []):
                                 db_category = Category.create_from_feedparser(category, new_content.id)
                                 db.session.add(db_category)
-                            logger.info(f"Added new content: {new_content.url}")
                             new_entries_count += 1
-                        else:
-                            logger.warning(f"Failed to parse content for {entry.link}")
-                    except Exception as e:
-                        logger.error(f"Error parsing entry {entry.link}: {str(e)}")
-                else:
-                    logger.info(f"Skipped existing content: {entry.link}")
-            
-            try:
-                db.session.commit()
-                logger.info(f"Committed {new_entries_count} new entries to database")
-            except Exception as e:
-                db.session.rollback()
-                logger.error(f"Error committing to database: {str(e)}")
+                except Exception as entry_error:
+                    logger.error(f"Error processing entry {entry.get('link', 'Unknown')} from feed {feed.url}: {str(entry_error)}")
+                    continue  # Continue with the next entry
+
+            db.session.commit()
+            logger.info(f"Feed: {feed.url} - Added {new_entries_count} new entries to database")
     except httpx.HTTPStatusError as e:
         logger.error(f"HTTP error occurred while fetching feed {feed.url}: {e}")
         raise ValueError(f"HTTP error: {e.response.status_code} - {e.response.reason_phrase}")
@@ -115,6 +124,9 @@ async def fetch_and_parse_feed(feed: RSSFeed) -> None:
     except httpx.TimeoutException as e:
         logger.error(f"Timeout occurred while fetching feed {feed.url}: {e}")
         raise ValueError(f"Timeout error: The request to {feed.url} timed out")
+    except feedparser.FeedParserError as e:
+        logger.error(f"FeedParser error occurred while parsing feed {feed.url}: {e}")
+        raise ValueError(f"FeedParser error: {str(e)}")
     except Exception as e:
         logger.error(f"Unexpected error occurred while parsing feed {feed.url}: {e}", exc_info=True)
         raise ValueError(f"Unexpected error: {str(e)}")
@@ -166,13 +178,24 @@ def process_csv_file(csv_file) -> Tuple[int, int, List[str]]:
 async def parse_feeds():
     """Parse all RSS feeds in the database."""
     feeds = RSSFeed.query.all()
+    success_count = 0
+    error_count = 0
     for feed in feeds:
         try:
             await fetch_and_parse_feed(feed)
+            success_count += 1
         except Exception as e:
-            flash(f"Error parsing feed {feed.url}: {str(e)}", "error")
+            error_count += 1
+            logger.error(f"Error parsing feed {feed.url}: {str(e)}", exc_info=True)
+            # Don't flash for each error to avoid overwhelming the user
+            continue
 
-    flash("Feed parsing completed", "success")
+    if success_count > 0:
+        flash(f"Successfully parsed {success_count} feed(s)", "success")
+    if error_count > 0:
+        flash(f"Failed to parse {error_count} feed(s). Check logs for details.", "warning")
+    
+    flash("Feed parsing completed", "info")
     return redirect(url_for("rss_manager.manage_rss"))
 
 
@@ -355,8 +378,17 @@ async def summarize_content(post_id):
 def delete_feed(feed_id: uuid.UUID):
     """Delete an RSS feed from the database."""
     feed = RSSFeed.query.get_or_404(feed_id)
-    db.session.delete(feed)
-    db.session.commit()
+    try:
+        # Delete associated parsed content
+        ParsedContent.query.filter_by(feed_id=feed_id).delete()
+        # Delete the feed
+        db.session.delete(feed)
+        db.session.commit()
+        flash("RSS Feed and associated content deleted successfully!", "success")
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Error deleting RSS Feed: {str(e)}")
+        flash(f"Error deleting RSS Feed: {str(e)}", "error")
     return redirect(url_for("rss_manager.manage_rss"))
 
 

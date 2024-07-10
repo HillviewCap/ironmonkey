@@ -13,7 +13,10 @@
 
 from __future__ import annotations
 
-from logging_config import logger
+from logging_config import setup_logger
+
+# Set up logger for summary enhancer
+logger = setup_logger('summary_enhancer', 'summary_enhancer.log')
 from sqlalchemy.orm import Session
 from models import ParsedContent, db, RSSFeed
 from ollama_api import OllamaAPI
@@ -32,7 +35,7 @@ class SummaryEnhancer:
         return await self.ollama_api.generate("threat_intel_summary", parsed_content.content)
 
     async def enhance_summary(self, content_id: str) -> bool:
-        logger.debug(f"Processing record {content_id}")
+        logger.info(f"Processing record {content_id}")
 
         for attempt in range(self.max_retries):
             try:
@@ -44,7 +47,7 @@ class SummaryEnhancer:
                             parsed_content.summary = summary.strip()
                             db.session.commit()
                             logger.info(f"Updated summary for record {content_id}")
-                            logger.debug(f"Summary: {summary}")
+                            logger.info(f"Summary generated for record {content_id}")
                             return True
                         else:
                             logger.warning(f"ParsedContent not found for id {content_id}")
@@ -74,7 +77,7 @@ class SummaryEnhancer:
         logger.info(f"Summary enhancement for feed {feed_id} completed")
 
     async def process_single_record(self, document: ParsedContent, session: Session) -> Optional[str]:
-        logger.debug(f"Processing single record {document.id}")
+        logger.info(f"Processing single record {document.id}")
         try:
             summary = await self.generate_summary(str(document.id))
             if summary:

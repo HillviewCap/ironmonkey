@@ -1,4 +1,7 @@
 import os
+import requests
+import feedparser
+import hashlib
 from flask import Flask
 from models import db, User, RSSFeed, ParsedContent, Category, Threat, SearchParams
 from models.diffbot_model import Base as DiffbotBase, Document, Entity, EntityMention, EntityType, EntityUri, Category as DiffbotCategory
@@ -33,14 +36,19 @@ def init_db(app=None):
         engine = create_engine(app.config['SQLALCHEMY_DATABASE_URI'])
         DiffbotBase.metadata.create_all(engine)
         
-        # Add the summary column to ParsedContent if it doesn't exist
+        # Add the summary and art_hash columns to ParsedContent if they don't exist
         with engine.connect() as connection:
             result = connection.execute(
                 text("PRAGMA table_info(parsed_content)")
             )
-            columns = [row[1] for row in result.fetchall()]
+            columns = {row[1]: row[2] for row in result.fetchall()}
             if "summary" not in columns:
                 connection.execute(text("ALTER TABLE parsed_content ADD COLUMN summary TEXT"))
+            if "art_hash" not in columns:
+                connection.execute(text("ALTER TABLE parsed_content ADD COLUMN art_hash VARCHAR(64)"))
+            elif columns["art_hash"] != "VARCHAR(64)":
+                connection.execute(text("ALTER TABLE parsed_content DROP COLUMN art_hash"))
+                connection.execute(text("ALTER TABLE parsed_content ADD COLUMN art_hash VARCHAR(64)"))
         
         print(f"All database tables created and updated successfully in {app.instance_path}")
 

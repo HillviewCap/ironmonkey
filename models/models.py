@@ -5,6 +5,7 @@ from typing import List, Optional, Tuple
 from uuid import UUID as PyUUID, uuid4
 import uuid
 import uuid
+import hashlib
 from pydantic import BaseModel, Field
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin
@@ -190,6 +191,7 @@ class ParsedContent(db.Model):
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     pub_date = db.Column(db.String(100), nullable=True)
     creator = db.Column(db.String(255), nullable=True)
+    art_hash = db.Column(db.String(64), unique=True, index=True)
 
     @classmethod
     def get_by_id(cls, content_id):
@@ -208,6 +210,16 @@ class ParsedContent(db.Model):
             except ValueError:
                 return None
         return cls.query.filter(cls.id == document_id).first()
+
+    @classmethod
+    def hash_existing_articles(cls):
+        articles = cls.query.all()
+        hashed_count = 0
+        for article in articles:
+            article.art_hash = hashlib.sha256(f"{article.url}{article.title}".encode()).hexdigest()
+            hashed_count += 1
+        db.session.commit()
+        return hashed_count
 
 
 class Category(db.Model):
