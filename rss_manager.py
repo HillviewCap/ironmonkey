@@ -78,25 +78,29 @@ async def fetch_and_parse_feed(feed: RSSFeed) -> None:
 
             new_entries_count = 0
             for entry in feed_data.entries:
-                existing_content = ParsedContent.query.filter_by(url=entry.link).first()
-                if not existing_content:
-                    parsed_content = await parse_content(entry.link)
-                    if parsed_content is not None:
-                        new_content = ParsedContent(
-                            content=parsed_content,
-                            feed_id=feed.id,
-                            url=entry.link,
-                            title=entry.get('title', ''),
-                            description=entry.get('description', ''),
-                            pub_date=entry.get('published', ''),
-                            creator=entry.get('author', '')
-                        )
-                        db.session.add(new_content)
-                        
-                        for category in entry.get('tags', []):
-                            db_category = Category.create_from_feedparser(category, new_content.id)
-                            db.session.add(db_category)
-                        new_entries_count += 1
+                try:
+                    existing_content = ParsedContent.query.filter_by(url=entry.link).first()
+                    if not existing_content:
+                        parsed_content = await parse_content(entry.link)
+                        if parsed_content is not None:
+                            new_content = ParsedContent(
+                                content=parsed_content,
+                                feed_id=feed.id,
+                                url=entry.link,
+                                title=entry.get('title', ''),
+                                description=entry.get('description', ''),
+                                pub_date=entry.get('published', ''),
+                                creator=entry.get('author', '')
+                            )
+                            db.session.add(new_content)
+                            
+                            for category in entry.get('tags', []):
+                                db_category = Category.create_from_feedparser(category, new_content.id)
+                                db.session.add(db_category)
+                            new_entries_count += 1
+                except Exception as entry_error:
+                    logger.error(f"Error processing entry {entry.get('link', 'Unknown')} from feed {feed.url}: {str(entry_error)}")
+                    continue  # Continue with the next entry
 
             db.session.commit()
             logger.info(f"Feed: {feed.url} - Added {new_entries_count} new entries to database")
@@ -109,6 +113,9 @@ async def fetch_and_parse_feed(feed: RSSFeed) -> None:
     except httpx.TimeoutException as e:
         logger.error(f"Timeout occurred while fetching feed {feed.url}: {e}")
         raise ValueError(f"Timeout error: The request to {feed.url} timed out")
+    except feedparser.FeedParserError as e:
+        logger.error(f"FeedParser error occurred while parsing feed {feed.url}: {e}")
+        raise ValueError(f"FeedParser error: {str(e)}")
     except Exception as e:
         logger.error(f"Unexpected error occurred while parsing feed {feed.url}: {e}", exc_info=True)
         raise ValueError(f"Unexpected error: {str(e)}")
@@ -160,13 +167,24 @@ def process_csv_file(csv_file) -> Tuple[int, int, List[str]]:
 async def parse_feeds():
     """Parse all RSS feeds in the database."""
     feeds = RSSFeed.query.all()
+    success_count = 0
+    error_count = 0
     for feed in feeds:
         try:
             await fetch_and_parse_feed(feed)
+            success_count += 1
         except Exception as e:
-            flash(f"Error parsing feed {feed.url}: {str(e)}", "error")
+            error_count += 1
+            logger.error(f"Error parsing feed {feed.url}: {str(e)}", exc_info=True)
+            # Don't flash for each error to avoid overwhelming the user
+            continue
 
-    flash("Feed parsing completed", "success")
+    if success_count > 0:
+        flash(f"Successfully parsed {success_count} feed(s)", "success")
+    if error_count > 0:
+        flash(f"Failed to parse {error_count} feed(s). Check logs for details.", "warning")
+    
+    flash("Feed parsing completed", "info")
     return redirect(url_for("rss_manager.manage_rss"))
 
 
