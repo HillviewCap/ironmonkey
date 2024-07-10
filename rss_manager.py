@@ -161,10 +161,12 @@ async def fetch_and_parse_feed(feed: RSSFeed) -> int:
         return new_entries_count
 
 
-def process_csv_file(csv_file) -> Tuple[int, int, List[str]]:
+from typing import TextIO, Tuple, List
+
+def process_csv_file(csv_file: TextIO) -> Tuple[int, int, List[str]]:
     """Process the uploaded CSV file and return import statistics."""
     imported_count, skipped_count = 0, 0
-    errors = []
+    errors: List[str] = []
     csv_file = TextIOWrapper(csv_file, encoding="utf-8")
     csv_reader = csv.reader(csv_file)
 
