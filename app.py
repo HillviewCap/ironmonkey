@@ -135,6 +135,41 @@ def get_search_params(form):
         ),
     )
 
+def build_search_query(search_params):
+    query = db.session.query(ParsedContent)
+
+    query = query.filter(
+        db.or_(
+            ParsedContent.title.ilike(f"%{bleach.clean(search_params.query)}%"),
+            ParsedContent.content.ilike(f"%{bleach.clean(search_params.query)}%"),
+        )
+    )
+
+    if search_params.start_date:
+        query = query.filter(ParsedContent.date >= search_params.start_date)
+
+    if search_params.end_date:
+        query = query.filter(ParsedContent.date <= search_params.end_date)
+
+    if search_params.source_types:
+        query = query.filter(
+            ParsedContent.source_type.in_(
+                [bleach.clean(st) for st in search_params.source_types]
+            )
+        )
+
+    if search_params.keywords:
+        for keyword in search_params.keywords:
+            query = query.filter(
+                db.or_(
+                    ParsedContent.title.ilike(f"%{bleach.clean(keyword)}%"),
+                    ParsedContent.content.ilike(f"%{bleach.clean(keyword)}%"),
+                )
+            )
+
+    logger.debug(f"Final SQL query: {query}")
+    return query
+
 def perform_search(search_params):
     page = request.args.get("page", 1, type=int)
     per_page = 10
