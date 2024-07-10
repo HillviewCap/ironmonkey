@@ -206,9 +206,12 @@ def check_and_process_rss_feeds():
         for feed in feeds:
             try:
                 new_articles = asyncio.run(fetch_and_parse_feed(feed))
-                new_articles_count += new_articles
+                if new_articles is not None:
+                    new_articles_count += new_articles
+                else:
+                    scheduler_logger.warning(f"fetch_and_parse_feed returned None for feed {feed.url}")
             except Exception as e:
-                scheduler_logger.error(f"Error processing feed {feed.url}: {str(e)}")
+                scheduler_logger.error(f"Error processing feed {feed.url}: {str(e)}", exc_info=True)
         scheduler_logger.info(
             f"Processed {len(feeds)} RSS feeds, added {new_articles_count} new articles"
         )

@@ -66,8 +66,9 @@ class EditRSSFeedForm(FlaskForm):
 
 
 # Helper functions
-async def fetch_and_parse_feed(feed: RSSFeed) -> None:
+async def fetch_and_parse_feed(feed: RSSFeed) -> int:
     """Fetch and parse a single RSS feed."""
+    new_entries_count = 0
     try:
         logger.debug(f"Starting to fetch and parse feed: {feed.url}")
         async with httpx.AsyncClient(follow_redirects=True) as client:
@@ -82,8 +83,6 @@ async def fetch_and_parse_feed(feed: RSSFeed) -> None:
 
             feed_data = feedparser.parse(response.text)
             logger.debug(f"Parsed feed data for {feed.url}")
-
-            new_entries_count = 0
             for entry in feed_data.entries:
                 try:
                     url = entry.link
@@ -158,6 +157,8 @@ async def fetch_and_parse_feed(feed: RSSFeed) -> None:
     except Exception as e:
         logger.error(f"Unexpected error occurred while parsing feed {feed.url}: {e}", exc_info=True)
         raise ValueError(f"Unexpected error: {str(e)}")
+    finally:
+        return new_entries_count
 
 
 def process_csv_file(csv_file) -> Tuple[int, int, List[str]]:
