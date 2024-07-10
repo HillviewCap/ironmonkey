@@ -5,7 +5,18 @@ import uuid
 from datetime import datetime
 import bleach
 from dotenv import load_dotenv
-from flask import Flask, render_template, request, jsonify, current_app, abort, send_from_directory, redirect, url_for, flash
+from flask import (
+    Flask,
+    render_template,
+    request,
+    jsonify,
+    current_app,
+    abort,
+    send_from_directory,
+    redirect,
+    url_for,
+    flash,
+)
 from flask_migrate import Migrate
 from flask_wtf import FlaskForm
 from flask_wtf.csrf import CSRFProtect
@@ -30,8 +41,8 @@ from init_db import init_db
 load_dotenv()
 
 # Configure logging
-app_logger = setup_logger('app', 'app.log')
-scheduler_logger = setup_logger('scheduler', 'scheduler.log')
+app_logger = setup_logger("app", "app.log")
+scheduler_logger = setup_logger("scheduler", "scheduler.log")
 
 # Initialize Flask application
 app = None
@@ -47,31 +58,56 @@ def check_and_process_rss_feeds():
                 new_articles_count += new_articles
             except Exception as e:
                 scheduler_logger.error(f"Error processing feed {feed.url}: {str(e)}")
-        scheduler_logger.info(f"Processed {len(feeds)} RSS feeds, added {new_articles_count} new articles")
+        scheduler_logger.info(
+            f"Processed {len(feeds)} RSS feeds, added {new_articles_count} new articles"
+        )
+
 
 async def start_check_empty_summaries():
     with app.app_context():
         try:
-            empty_summaries = ParsedContent.query.filter(ParsedContent.summary.is_(None)).limit(100).all()
+            empty_summaries = (
+                ParsedContent.query.filter(ParsedContent.summary.is_(None))
+                .limit(100)
+                .all()
+            )
             processed_count = 0
             for content in empty_summaries:
                 try:
-                    summary = await app.ollama_api.generate("threat_intel_summary", content.content)
+                    summary = await app.ollama_api.generate(
+                        "threat_intel_summary", content.content
+                    )
                     content.summary = summary
                     processed_count += 1
                 except Exception as e:
-                    scheduler_logger.error(f"Error generating summary for content {content.id}: {str(e)}")
+                    scheduler_logger.error(
+                        f"Error generating summary for content {content.id}: {str(e)}"
+                    )
             db.session.commit()
-            scheduler_logger.info(f"Processed {processed_count} out of {len(empty_summaries)} empty summaries")
+            scheduler_logger.info(
+                f"Processed {processed_count} out of {len(empty_summaries)} empty summaries"
+            )
         except Exception as e:
             scheduler_logger.error(f"Error in start_check_empty_summaries: {str(e)}")
 
+
 def render_error_page():
     try:
-        return render_template("error.html", error="An error occurred. Please try again later."), 500
+        return (
+            render_template(
+                "error.html", error="An error occurred. Please try again later."
+            ),
+            500,
+        )
     except Exception as template_error:
-        logger.error(f"Error rendering error template: {str(template_error)}", exc_info=True)
-        return "An error occurred, and we couldn't render the error page. Please try again later.", 500
+        logger.error(
+            f"Error rendering error template: {str(template_error)}", exc_info=True
+        )
+        return (
+            "An error occurred, and we couldn't render the error page. Please try again later.",
+            500,
+        )
+
 
 def get_search_params(form):
     return SearchParams(
@@ -93,6 +129,7 @@ def get_search_params(form):
             else []
         ),
     )
+
 
 def build_search_query(search_params):
     query = db.session.query(ParsedContent)
@@ -129,6 +166,7 @@ def build_search_query(search_params):
     logger.debug(f"Final SQL query: {query}")
     return query
 
+
 def register_routes(app):
     @app.route("/admin")
     @login_required
@@ -136,7 +174,12 @@ def register_routes(app):
         users = User.query.all()
         parsed_content = ParsedContent.query.all()
         rss_feeds = RSSFeed.query.all()
-        return render_template("admin.html", users=users, parsed_content=parsed_content, rss_feeds=rss_feeds)
+        return render_template(
+            "admin.html",
+            users=users,
+            parsed_content=parsed_content,
+            rss_feeds=rss_feeds,
+        )
 
     @app.route("/admin/deduplicate", methods=["POST"])
     @login_required
@@ -154,10 +197,10 @@ def register_routes(app):
     def add_parsed_content():
         try:
             new_content = ParsedContent(
-                title=request.form['title'],
-                url=request.form['url'],
-                date=datetime.strptime(request.form['date'], '%Y-%m-%d').date(),
-                source_type=request.form['source_type']
+                title=request.form["title"],
+                url=request.form["url"],
+                date=datetime.strptime(request.form["date"], "%Y-%m-%d").date(),
+                source_type=request.form["source_type"],
             )
             db.session.add(new_content)
             db.session.commit()
@@ -174,10 +217,12 @@ def register_routes(app):
         content = ParsedContent.query.get_or_404(content_id)
         if request.method == "POST":
             try:
-                content.title = request.form['title']
-                content.url = request.form['url']
-                content.date = datetime.strptime(request.form['date'], '%Y-%m-%d').date()
-                content.source_type = request.form['source_type']
+                content.title = request.form["title"]
+                content.url = request.form["url"]
+                content.date = datetime.strptime(
+                    request.form["date"], "%Y-%m-%d"
+                ).date()
+                content.source_type = request.form["source_type"]
                 db.session.commit()
                 flash("Content updated successfully.", "success")
                 return redirect(url_for("admin"))
@@ -200,6 +245,7 @@ def register_routes(app):
             current_app.logger.error(f"Error deleting content: {str(e)}")
             flash("An error occurred while deleting content.", "error")
         return redirect(url_for("admin"))
+
     @app.route("/")
     def index():
         current_app.logger.info("Entering index route")
@@ -207,7 +253,10 @@ def register_routes(app):
             if current_user.is_authenticated:
                 recent_items = (
                     db.session.query(ParsedContent)
-                    .filter(ParsedContent.title.isnot(None), ParsedContent.description.isnot(None))
+                    .filter(
+                        ParsedContent.title.isnot(None),
+                        ParsedContent.description.isnot(None),
+                    )
                     .order_by(ParsedContent.created_at.desc())
                     .limit(6)
                     .all()
@@ -245,7 +294,7 @@ def register_routes(app):
         try:
             async with httpx.AsyncClient() as client:
                 result = await diffbot_client.tag_content(document.content, client)
-        
+
             db_handler.process_nlp_result(document, result, db.session)
             document.summary = result.get("summary", {}).get("text")
             db.session.commit()
@@ -282,31 +331,50 @@ def register_routes(app):
                     document.summary = result.get("summary", {}).get("text")
                     tagged_count += 1
                 except Exception as e:
-                    current_app.logger.error(f"Error tagging document ID {document.id}: {str(e)}")
+                    current_app.logger.error(
+                        f"Error tagging document ID {document.id}: {str(e)}"
+                    )
 
         db.session.commit()
-        return jsonify({"message": f"Tagged {tagged_count} out of {len(untagged_documents)} documents"}), 200
+        return (
+            jsonify(
+                {
+                    "message": f"Tagged {tagged_count} out of {len(untagged_documents)} documents"
+                }
+            ),
+            200,
+        )
 
     @app.route("/search", methods=["GET", "POST"])
     def search():
         form = FlaskForm()
-        search_params = SearchParams(query='')  # Initialize with an empty query
-    
+        search_params = SearchParams(query="")  # Initialize with an empty query
+
         if request.method == "GET":
             # Populate search_params from GET parameters
-            search_params.query = request.args.get('query', '')
-            search_params.start_date = request.args.get('start_date')
-            search_params.end_date = request.args.get('end_date')
-            search_params.source_types = request.args.getlist('source_types')
-            search_params.keywords = request.args.get('keywords', '').split(',') if request.args.get('keywords') else []
+            search_params.query = request.args.get("query", "")
+            search_params.start_date = request.args.get("start_date")
+            search_params.end_date = request.args.get("end_date")
+            search_params.source_types = request.args.getlist("source_types")
+            search_params.keywords = (
+                request.args.get("keywords", "").split(",")
+                if request.args.get("keywords")
+                else []
+            )
         elif form.validate_on_submit():
             search_params = get_search_params(form)
-        
+
         if form.validate_on_submit() or request.method == "GET":
             logger.info(f"Performing search with params: {search_params.__dict__}")
             results, total_results = perform_search(search_params)
             logger.info(f"Search completed. Total results: {total_results}")
-            return render_template("search.html", form=form, search_params=search_params, results=results, total_results=total_results)
+            return render_template(
+                "search.html",
+                form=form,
+                search_params=search_params,
+                results=results,
+                total_results=total_results,
+            )
 
         return render_template("search.html", form=form, search_params=search_params)
 
@@ -339,14 +407,20 @@ def register_routes(app):
                 current_app.logger.error(f"Document not found for id: {content_id}")
                 return jsonify({"error": "Document not found"}), 404
 
-            summary = await app.ollama_api.generate("threat_intel_summary", document.content)
+            summary = await app.ollama_api.generate(
+                "threat_intel_summary", document.content
+            )
             document.summary = summary
             db.session.commit()
 
-            current_app.logger.info(f"Summary generated successfully for document id: {content_id}")
+            current_app.logger.info(
+                f"Summary generated successfully for document id: {content_id}"
+            )
             return jsonify({"summary": summary}), 200
         except ValueError:
-            current_app.logger.error(f"Invalid UUID format for content_id: {content_id}")
+            current_app.logger.error(
+                f"Invalid UUID format for content_id: {content_id}"
+            )
             return jsonify({"error": "Invalid content_id format"}), 400
         except Exception as e:
             current_app.logger.exception(f"Error summarizing content: {str(e)}")
@@ -364,21 +438,30 @@ def register_routes(app):
             current_app.logger.error(f"Error clearing summaries: {str(e)}")
             return jsonify({"error": "An error occurred while clearing summaries"}), 500
 
-    @app.route('/favicon.ico')
+    @app.route("/favicon.ico")
     def favicon():
-        return send_from_directory(os.path.join(app.root_path, 'static', 'images'),
-                                   'favicon.ico', mimetype='image/vnd.microsoft.icon')
+        return send_from_directory(
+            os.path.join(app.root_path, "static", "images"),
+            "favicon.ico",
+            mimetype="image/vnd.microsoft.icon",
+        )
+
 
 def setup_scheduler(app):
     scheduler = BackgroundScheduler()
     scheduler.add_job(func=check_and_process_rss_feeds, trigger="interval", minutes=30)
-    scheduler.add_job(func=lambda: asyncio.run(start_check_empty_summaries()), trigger="interval", minutes=31)
+    scheduler.add_job(
+        func=lambda: asyncio.run(start_check_empty_summaries()),
+        trigger="interval",
+        minutes=31,
+    )
     scheduler.start()
     logger.info("Scheduler started successfully")
 
-def create_app(config_name='default'):
+
+def create_app(config_name="default"):
     global app
-    app = Flask(__name__, instance_relative_config=True, static_url_path='/static')
+    app = Flask(__name__, instance_relative_config=True, static_url_path="/static")
     app.ollama_api = OllamaAPI()
     if not app.ollama_api.check_connection():
         logger.error("Failed to connect to Ollama API. Exiting.")
@@ -387,7 +470,9 @@ def create_app(config_name='default'):
     app.config.from_object(config[config_name])
     config[config_name].init_app(app)
 
-    app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{os.path.join(app.instance_path, 'threats.db')}"
+    app.config["SQLALCHEMY_DATABASE_URI"] = (
+        f"sqlite:///{os.path.join(app.instance_path, 'threats.db')}"
+    )
     logger.info(f"Database URI: {app.config['SQLALCHEMY_DATABASE_URI']}")
 
     try:
@@ -441,7 +526,7 @@ def create_app(config_name='default'):
         try:
             async with httpx.AsyncClient() as client:
                 result = await diffbot_client.tag_content(document.content, client)
-        
+
             # Use the existing db.session for processing the result
             db_handler.process_nlp_result(document, result, db.session)
             # Update the summary field
@@ -524,21 +609,31 @@ def create_app(config_name='default'):
     @app.route("/search", methods=["GET", "POST"])
     def search():
         form = FlaskForm()
-        search_params = SearchParams(query='')  # Initialize with an empty query
-    
+        search_params = SearchParams(query="")  # Initialize with an empty query
+
         if request.method == "GET":
             # Populate search_params from GET parameters
-            search_params.query = request.args.get('query', '')
-            search_params.start_date = request.args.get('start_date')
-            search_params.end_date = request.args.get('end_date')
-            search_params.source_types = request.args.getlist('source_types')
-            search_params.keywords = request.args.get('keywords', '').split(',') if request.args.get('keywords') else []
-        
+            search_params.query = request.args.get("query", "")
+            search_params.start_date = request.args.get("start_date")
+            search_params.end_date = request.args.get("end_date")
+            search_params.source_types = request.args.getlist("source_types")
+            search_params.keywords = (
+                request.args.get("keywords", "").split(",")
+                if request.args.get("keywords")
+                else []
+            )
+
         if form.validate_on_submit() or request.method == "GET":
             logger.info(f"Performing search with params: {search_params.__dict__}")
             results, total_results = perform_search(search_params)
             logger.info(f"Search completed. Total results: {total_results}")
-            return render_template("search.html", form=form, search_params=search_params, results=results, total_results=total_results)
+            return render_template(
+                "search.html",
+                form=form,
+                search_params=search_params,
+                results=results,
+                total_results=total_results,
+            )
 
         return render_template("search.html", form=form, search_params=search_params)
 
@@ -556,7 +651,6 @@ def create_app(config_name='default'):
             asyncio.run(rss_manager.parse_feeds())
         print("Feeds parsed successfully.")
 
-
     @app.route("/summarize_content", methods=["POST"])
     @login_required
     async def summarize_content():
@@ -572,14 +666,20 @@ def create_app(config_name='default'):
                 current_app.logger.error(f"Document not found for id: {content_id}")
                 return jsonify({"error": "Document not found"}), 404
 
-            summary = await app.ollama_api.generate("threat_intel_summary", document.content)
+            summary = await app.ollama_api.generate(
+                "threat_intel_summary", document.content
+            )
             document.summary = summary
             db.session.commit()
 
-            current_app.logger.info(f"Summary generated successfully for document id: {content_id}")
+            current_app.logger.info(
+                f"Summary generated successfully for document id: {content_id}"
+            )
             return jsonify({"summary": summary}), 200
         except ValueError:
-            current_app.logger.error(f"Invalid UUID format for content_id: {content_id}")
+            current_app.logger.error(
+                f"Invalid UUID format for content_id: {content_id}"
+            )
             return jsonify({"error": "Invalid content_id format"}), 400
         except Exception as e:
             current_app.logger.exception(f"Error summarizing content: {str(e)}")
@@ -600,27 +700,40 @@ def create_app(config_name='default'):
     # Initialize the scheduler
     scheduler = BackgroundScheduler()
     scheduler.add_job(func=check_and_process_rss_feeds, trigger="interval", minutes=30)
-    scheduler.add_job(func=lambda: asyncio.run(start_check_empty_summaries()), trigger="interval", minutes=31)
+    scheduler.add_job(
+        func=lambda: asyncio.run(start_check_empty_summaries()),
+        trigger="interval",
+        minutes=31,
+    )
     scheduler.start()
     logger.info("Scheduler started successfully")
 
-    @app.route('/favicon.ico')
+    @app.route("/favicon.ico")
     def favicon():
-        return send_from_directory(os.path.join(app.root_path, 'static', 'images'),
-                                   'favicon.ico', mimetype='image/vnd.microsoft.icon')
+        return send_from_directory(
+            os.path.join(app.root_path, "static", "images"),
+            "favicon.ico",
+            mimetype="image/vnd.microsoft.icon",
+        )
 
     return app
 
+
 # Start the scheduler when the app starts
-app = create_app('production')
+app = create_app("production")
 if app is not None:
     with app.app_context():
         scheduler = BackgroundScheduler()
-        scheduler.add_job(func=check_and_process_rss_feeds, trigger="interval", minutes=30)
-        scheduler.add_job(func=lambda: asyncio.run(start_check_empty_summaries()), trigger="interval", minutes=1)
+        scheduler.add_job(
+            func=check_and_process_rss_feeds, trigger="interval", minutes=30
+        )
+        scheduler.add_job(
+            func=lambda: asyncio.run(start_check_empty_summaries()),
+            trigger="interval",
+            minutes=1,
+        )
         scheduler.start()
         logger.info("Scheduler started successfully")
-
 
 
 def render_error_page():
@@ -652,13 +765,13 @@ def perform_search(search_params):
         paginated_results = query.paginate(page=page, per_page=per_page)
         total_results = query.count()
         logger.info(f"Search completed. Total results: {total_results}")
-        
+
         # Log the first few results for debugging
         for i, result in enumerate(paginated_results.items[:5]):
             logger.debug(f"Result {i+1}: ID={result.id}, Title={result.title}")
-        
+
         return paginated_results, total_results
-        
+
     except Exception as e:
         logger.error(f"Error occurred during search: {str(e)}", exc_info=True)
         return None, 0
@@ -694,7 +807,7 @@ def build_search_query(search_params):
             ParsedContent.title.ilike(f"%{bleach.clean(search_params.query)}%"),
             ParsedContent.description.ilike(f"%{bleach.clean(search_params.query)}%"),
             ParsedContent.content.ilike(f"%{bleach.clean(search_params.query)}%"),
-            ParsedContent.summary.ilike(f"%{bleach.clean(search_params.query)}%")
+            ParsedContent.summary.ilike(f"%{bleach.clean(search_params.query)}%"),
         )
     )
 
@@ -711,7 +824,7 @@ def build_search_query(search_params):
                     ParsedContent.title.ilike(f"%{bleach.clean(keyword)}%"),
                     ParsedContent.description.ilike(f"%{bleach.clean(keyword)}%"),
                     ParsedContent.content.ilike(f"%{bleach.clean(keyword)}%"),
-                    ParsedContent.summary.ilike(f"%{bleach.clean(keyword)}%")
+                    ParsedContent.summary.ilike(f"%{bleach.clean(keyword)}%"),
                 )
             )
 
@@ -720,11 +833,15 @@ def build_search_query(search_params):
 
 
 if __name__ == "__main__":
-    app = create_app('development')
+    app = create_app("development")
     if app is not None:
-        app.run(host='0.0.0.0', port=5000, debug=True)
+        app.run(host="0.0.0.0", port=5000, debug=True)
     else:
-        print("Failed to create the application. Please check the logs for more information.")
+        print(
+            "Failed to create the application. Please check the logs for more information."
+        )
+
+
 def register_routes(app):
     @app.route("/")
     def index():
@@ -733,7 +850,10 @@ def register_routes(app):
             if current_user.is_authenticated:
                 recent_items = (
                     db.session.query(ParsedContent)
-                    .filter(ParsedContent.title.isnot(None), ParsedContent.description.isnot(None))
+                    .filter(
+                        ParsedContent.title.isnot(None),
+                        ParsedContent.description.isnot(None),
+                    )
                     .order_by(ParsedContent.created_at.desc())
                     .limit(6)
                     .all()
@@ -751,7 +871,12 @@ def register_routes(app):
         users = User.query.all()
         parsed_content = ParsedContent.query.all()
         rss_feeds = RSSFeed.query.all()
-        return render_template("admin.html", users=users, parsed_content=parsed_content, rss_feeds=rss_feeds)
+        return render_template(
+            "admin.html",
+            users=users,
+            parsed_content=parsed_content,
+            rss_feeds=rss_feeds,
+        )
 
     @app.route("/admin/deduplicate", methods=["POST"])
     @login_required
@@ -769,7 +894,12 @@ def register_routes(app):
     app.add_url_rule("/logout", "logout", logout)
     app.add_url_rule("/register", "register", register, methods=["GET", "POST"])
     app.add_url_rule("/admin", "admin", admin)
-    app.add_url_rule("/admin/deduplicate", "deduplicate_parsed_content", deduplicate_parsed_content, methods=["POST"])
+    app.add_url_rule(
+        "/admin/deduplicate",
+        "deduplicate_parsed_content",
+        deduplicate_parsed_content,
+        methods=["POST"],
+    )
 
     @app.route("/tag_content", methods=["POST"])
     @login_required
@@ -792,7 +922,7 @@ def register_routes(app):
         try:
             async with httpx.AsyncClient() as client:
                 result = await diffbot_client.tag_content(document.content, client)
-        
+
             db_handler.process_nlp_result(document, result, db.session)
             document.summary = result.get("summary", {}).get("text")
             db.session.commit()
@@ -829,10 +959,19 @@ def register_routes(app):
                     document.summary = result.get("summary", {}).get("text")
                     tagged_count += 1
                 except Exception as e:
-                    current_app.logger.error(f"Error tagging document ID {document.id}: {str(e)}")
+                    current_app.logger.error(
+                        f"Error tagging document ID {document.id}: {str(e)}"
+                    )
 
         db.session.commit()
-        return jsonify({"message": f"Tagged {tagged_count} out of {len(untagged_documents)} documents"}), 200
+        return (
+            jsonify(
+                {
+                    "message": f"Tagged {tagged_count} out of {len(untagged_documents)} documents"
+                }
+            ),
+            200,
+        )
 
     @app.route("/search", methods=["GET", "POST"])
     def search():
@@ -874,14 +1013,20 @@ def register_routes(app):
                 current_app.logger.error(f"Document not found for id: {content_id}")
                 return jsonify({"error": "Document not found"}), 404
 
-            summary = await app.ollama_api.generate("threat_intel_summary", document.content)
+            summary = await app.ollama_api.generate(
+                "threat_intel_summary", document.content
+            )
             document.summary = summary
             db.session.commit()
 
-            current_app.logger.info(f"Summary generated successfully for document id: {content_id}")
+            current_app.logger.info(
+                f"Summary generated successfully for document id: {content_id}"
+            )
             return jsonify({"summary": summary}), 200
         except ValueError:
-            current_app.logger.error(f"Invalid UUID format for content_id: {content_id}")
+            current_app.logger.error(
+                f"Invalid UUID format for content_id: {content_id}"
+            )
             return jsonify({"error": "Invalid content_id format"}), 400
         except Exception as e:
             current_app.logger.exception(f"Error summarizing content: {str(e)}")
@@ -899,13 +1044,22 @@ def register_routes(app):
             current_app.logger.error(f"Error clearing summaries: {str(e)}")
             return jsonify({"error": "An error occurred while clearing summaries"}), 500
 
-    @app.route('/favicon.ico')
+    @app.route("/favicon.ico")
     def favicon():
-        return send_from_directory(os.path.join(app.root_path, 'static', 'images'),
-                                   'favicon.ico', mimetype='image/vnd.microsoft.icon')
+        return send_from_directory(
+            os.path.join(app.root_path, "static", "images"),
+            "favicon.ico",
+            mimetype="image/vnd.microsoft.icon",
+        )
+
+
 def setup_scheduler(app):
     scheduler = BackgroundScheduler()
-    scheduler.add_job(func=check_and_process_rss_feeds, trigger="interval", minutes=30)
-    scheduler.add_job(func=lambda: asyncio.run(start_check_empty_summaries()), trigger="interval", minutes=31)
+    scheduler.add_job(func=check_and_process_rss_feeds, trigger="interval", minutes=1)
+    scheduler.add_job(
+        func=lambda: asyncio.run(start_check_empty_summaries()),
+        trigger="interval",
+        minutes=31,
+    )
     scheduler.start()
     logger.info("Scheduler started successfully")
