@@ -60,3 +60,6 @@ class OllamaAPI:
                 f"Failed to connect to Ollama API at {self.base_url}: {str(e)}"
             )
             return False
+
+    def check_connection_sync(self) -> bool:
+        return asyncio.run(self.check_connection())

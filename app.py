@@ -463,7 +463,7 @@ def create_app(config_name="default"):
     global app
     app = Flask(__name__, instance_relative_config=True, static_url_path="/static")
     app.ollama_api = OllamaAPI()
-    if not app.ollama_api.check_connection():
+    if not app.ollama_api.check_connection_sync():
         logger.error("Failed to connect to Ollama API. Exiting.")
         return None
 
