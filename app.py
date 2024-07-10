@@ -798,7 +798,7 @@ if __name__ == "__main__":
     flask_env = os.getenv("FLASK_ENV", "production")
     port = int(os.getenv("FLASK_PORT", 5000))
     debug = flask_env == "development"
-    
+
     app = create_app(flask_env)
     if app is not None:
         app.run(host="0.0.0.0", port=port, debug=debug)
@@ -1015,5 +1015,3 @@ if __name__ == "__main__":
             "favicon.ico",
             mimetype="image/vnd.microsoft.icon",
         )
-
-
