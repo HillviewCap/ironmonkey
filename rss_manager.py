@@ -69,6 +69,7 @@ class EditRSSFeedForm(FlaskForm):
 async def fetch_and_parse_feed(feed: RSSFeed) -> None:
     """Fetch and parse a single RSS feed."""
     try:
+        logger.debug(f"Starting to fetch and parse feed: {feed.url}")
         async with httpx.AsyncClient(follow_redirects=True) as client:
             response = await client.get(feed.url, timeout=30.0)
             response.raise_for_status()
@@ -80,16 +81,19 @@ async def fetch_and_parse_feed(feed: RSSFeed) -> None:
                 db.session.commit()
 
             feed_data = feedparser.parse(response.text)
+            logger.debug(f"Parsed feed data for {feed.url}")
 
             new_entries_count = 0
             for entry in feed_data.entries:
                 try:
                     url = entry.link
                     title = entry.get('title', '')
+                    logger.debug(f"Processing entry: {url} - {title}")
                     art_hash = hashlib.sha256(f"{url}{title}".encode()).hexdigest()
 
                     existing_content = ParsedContent.query.filter_by(art_hash=art_hash).first()
                     if not existing_content:
+                        logger.debug(f"New content found: {url}")
                         parsed_content = await parse_content(url)
                         if parsed_content is not None:
                             new_content = ParsedContent(
@@ -109,12 +113,28 @@ async def fetch_and_parse_feed(feed: RSSFeed) -> None:
                                 db_category = Category.create_from_feedparser(category, new_content.id)
                                 db.session.add(db_category)
                             new_entries_count += 1
+                            logger.debug(f"Added new entry: {url}")
                 except Exception as entry_error:
                     logger.error(f"Error processing entry {entry.get('link', 'Unknown')} from feed {feed.url}: {str(entry_error)}")
                     continue  # Continue with the next entry
 
             db.session.commit()
             logger.info(f"Feed: {feed.url} - Added {new_entries_count} new entries to database")
+    except httpx.HTTPStatusError as e:
+        logger.error(f"HTTP error occurred while fetching feed {feed.url}: {e}")
+        raise ValueError(f"HTTP error: {e.response.status_code} - {e.response.reason_phrase}")
+    except httpx.RequestError as e:
+        logger.error(f"An error occurred while requesting {feed.url}: {e}")
+        raise ValueError(f"Request error: {str(e)}")
+    except httpx.TimeoutException as e:
+        logger.error(f"Timeout occurred while fetching feed {feed.url}: {e}")
+        raise ValueError(f"Timeout error: The request to {feed.url} timed out")
+    except feedparser.FeedParserError as e:
+        logger.error(f"FeedParser error occurred while parsing feed {feed.url}: {e}")
+        raise ValueError(f"FeedParser error: {str(e)}")
+    except Exception as e:
+        logger.error(f"Unexpected error occurred while parsing feed {feed.url}: {e}", exc_info=True)
+        raise ValueError(f"Unexpected error: {str(e)}")
     except httpx.HTTPStatusError as e:
         logger.error(f"HTTP error occurred while fetching feed {feed.url}: {e}")
         raise ValueError(f"HTTP error: {e.response.status_code} - {e.response.reason_phrase}")
