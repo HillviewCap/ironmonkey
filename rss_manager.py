@@ -27,6 +27,7 @@ import asyncio
 from models import db, RSSFeed, ParsedContent, Category
 from jina_api import parse_content
 from logging_config import logger
+from flask import current_app
 from nlp_tagging import DiffbotClient, DatabaseHandler
 from ollama_api import OllamaAPI
 
@@ -70,7 +71,8 @@ async def fetch_and_parse_feed(feed: RSSFeed) -> int:
     """Fetch and parse a single RSS feed."""
     new_entries_count = 0
     try:
-        logger.debug(f"Starting to fetch and parse feed: {feed.url}")
+        if current_app.debug:
+            logger.debug(f"Starting to fetch and parse feed: {feed.url}")
         async with httpx.AsyncClient(follow_redirects=True) as client:
             response = await client.get(feed.url, timeout=30.0)
             response.raise_for_status()
@@ -82,17 +84,20 @@ async def fetch_and_parse_feed(feed: RSSFeed) -> int:
                 db.session.commit()
 
             feed_data = feedparser.parse(response.text)
-            logger.debug(f"Parsed feed data for {feed.url}")
+            if current_app.debug:
+                logger.debug(f"Parsed feed data for {feed.url}")
             for entry in feed_data.entries:
                 try:
                     url = entry.link
                     title = entry.get('title', '')
-                    logger.debug(f"Processing entry: {url} - {title}")
+                    if current_app.debug:
+                        logger.debug(f"Processing entry: {url} - {title}")
                     art_hash = hashlib.sha256(f"{url}{title}".encode()).hexdigest()
 
                     existing_content = ParsedContent.query.filter_by(art_hash=art_hash).first()
                     if not existing_content:
-                        logger.debug(f"New content found: {url}")
+                        if current_app.debug:
+                            logger.debug(f"New content found: {url}")
                         parsed_content = await parse_content(url)
                         if parsed_content is not None:
                             new_content = ParsedContent(
@@ -112,11 +117,13 @@ async def fetch_and_parse_feed(feed: RSSFeed) -> int:
                                 db_category = Category.create_from_feedparser(category, new_content.id)
                                 db.session.add(db_category)
                             new_entries_count += 1
-                            logger.debug(f"Added new entry: {url}")
+                            if current_app.debug:
+                                logger.debug(f"Added new entry: {url}")
                         else:
                             logger.warning(f"Failed to parse content for URL: {url}")
                     else:
-                        logger.debug(f"Content already exists: {url}")
+                        if current_app.debug:
+                            logger.debug(f"Content already exists: {url}")
                 except Exception as entry_error:
                     logger.error(f"Error processing entry {entry.get('link', 'Unknown')} from feed {feed.url}: {str(entry_error)}")
                     continue  # Continue with the next entry
@@ -161,10 +168,12 @@ async def fetch_and_parse_feed(feed: RSSFeed) -> int:
         return new_entries_count
 
 
-def process_csv_file(csv_file) -> Tuple[int, int, List[str]]:
+from typing import TextIO, Tuple, List
+
+def process_csv_file(csv_file: TextIO) -> Tuple[int, int, List[str]]:
     """Process the uploaded CSV file and return import statistics."""
     imported_count, skipped_count = 0, 0
-    errors = []
+    errors: List[str] = []
     csv_file = TextIOWrapper(csv_file, encoding="utf-8")
     csv_reader = csv.reader(csv_file)
 

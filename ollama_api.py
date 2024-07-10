@@ -5,6 +5,7 @@ from langchain_community.llms import Ollama
 from logging_config import logger
 import asyncio
 from functools import partial
+from flask import current_app
 
 load_dotenv()
 
@@ -38,7 +39,8 @@ class OllamaAPI:
                 None, partial(self.llm.invoke, full_prompt)
             )
 
-            logger.debug(f"Generated response: {output}")
+            if current_app.debug:
+                logger.debug(f"Generated response: {output}")
             return output
         except Exception as exc:
             logger.error(f"Error occurred: {exc}")
@@ -51,9 +53,10 @@ class OllamaAPI:
             response = await asyncio.get_event_loop().run_in_executor(
                 None, partial(self.llm.invoke, test_prompt)
             )
-            logger.info(
-                f"Successfully connected to Ollama API at {self.base_url} and verified model {self.model}"
-            )
+            if current_app.debug:
+                logger.info(
+                    f"Successfully connected to Ollama API at {self.base_url} and verified model {self.model}"
+                )
             return True
         except Exception as e:
             logger.error(
