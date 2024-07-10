@@ -47,14 +47,15 @@ scheduler_logger = setup_logger("scheduler", "scheduler.log")
 # Initialize Flask application
 app = None
 
+
 def create_app(config_name="default"):
     global app
     app = Flask(__name__, instance_relative_config=True, static_url_path="/static")
-    app.ollama_api = OllamaAPI()
-    
+    #    app.ollama_api = OllamaAPI() Check_connection() is initializing ollama  now
+
     async def check_connection():
         return await app.ollama_api.check_connection()
-    
+
     if not asyncio.run(check_connection()):
         logger.error("Failed to connect to Ollama API. Exiting.")
         return None
@@ -71,7 +72,7 @@ def create_app(config_name="default"):
         db.init_app(app)
         CSRFProtect(app)
         init_auth(app)
-        Migrate(app, db)
+        #        Migrate(app, db)
 
         login_manager = LoginManager()
         login_manager.init_app(app)
@@ -97,6 +98,7 @@ def create_app(config_name="default"):
 
     return app
 
+
 def render_error_page():
     try:
         return (
@@ -113,6 +115,7 @@ def render_error_page():
             "An error occurred, and we couldn't render the error page. Please try again later.",
             500,
         )
+
 
 def get_search_params(form):
     return SearchParams(
@@ -134,6 +137,7 @@ def get_search_params(form):
             else []
         ),
     )
+
 
 def build_search_query(search_params):
     query = db.session.query(ParsedContent)
@@ -170,6 +174,7 @@ def build_search_query(search_params):
     logger.debug(f"Final SQL query: {query}")
     return query
 
+
 def perform_search(search_params):
     page = request.args.get("page", 1, type=int)
     per_page = 10
@@ -192,6 +197,7 @@ def perform_search(search_params):
         logger.error(f"Error occurred during search: {str(e)}", exc_info=True)
         return None, 0
 
+
 def check_and_process_rss_feeds():
     with app.app_context():
         feeds = RSSFeed.query.all()
@@ -205,6 +211,7 @@ def check_and_process_rss_feeds():
         scheduler_logger.info(
             f"Processed {len(feeds)} RSS feeds, added {new_articles_count} new articles"
         )
+
 
 async def start_check_empty_summaries():
     with app.app_context():
@@ -232,6 +239,7 @@ async def start_check_empty_summaries():
             )
         except Exception as e:
             scheduler_logger.error(f"Error in start_check_empty_summaries: {str(e)}")
+
 
 def register_routes(app):
     @app.route("/admin")
@@ -794,6 +802,7 @@ if __name__ == "__main__":
         print(
             "Failed to create the application. Please check the logs for more information."
         )
+
     @app.route("/")
     def index():
         current_app.logger.info("Entering index route")
@@ -1006,11 +1015,11 @@ if __name__ == "__main__":
 
 def setup_scheduler(app):
     scheduler = BackgroundScheduler()
-    scheduler.add_job(func=check_and_process_rss_feeds, trigger="interval", minutes=1)
+    scheduler.add_job(func=check_and_process_rss_feeds, trigger="interval", minutes=5)
     scheduler.add_job(
         func=lambda: asyncio.run(start_check_empty_summaries()),
         trigger="interval",
-        minutes=31,
+        minutes=6,
     )
     scheduler.start()
     logger.info("Scheduler started successfully")
