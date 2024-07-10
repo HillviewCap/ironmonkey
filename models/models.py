@@ -213,11 +213,13 @@ class ParsedContent(db.Model):
 
     @classmethod
     def hash_existing_articles(cls):
-        articles = cls.query.filter(cls.art_hash.is_(None)).all()
+        articles = cls.query.all()
+        hashed_count = 0
         for article in articles:
             article.art_hash = hashlib.sha256(f"{article.url}{article.title}".encode()).hexdigest()
+            hashed_count += 1
         db.session.commit()
-        return len(articles)
+        return hashed_count
 
 
 class Category(db.Model):
