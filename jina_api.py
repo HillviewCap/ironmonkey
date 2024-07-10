@@ -14,6 +14,21 @@ JINA_API_KEY = os.getenv("JINA_API_KEY")
 logger = setup_logger("jina_api", "jina_api.log")
 
 
+async def follow_redirects(url: str) -> str:
+    """
+    Follow redirects and return the final URL.
+
+    Args:
+        url (str): The initial URL.
+
+    Returns:
+        str: The final URL after following all redirects.
+    """
+    async with httpx.AsyncClient(follow_redirects=True) as client:
+        response = await client.get(url)
+        return str(response.url)
+
+
 # Rate limit: 200 requests per minute
 @sleep_and_retry
 @limits(calls=200, period=60)
@@ -41,35 +56,39 @@ async def parse_content(url: str) -> str:
 
     logger.info(f"Parsing content from URL: {url}")
 
-    async with httpx.AsyncClient() as client:
-        try:
-            response = await client.get(f"https://r.jina.ai/{url}", headers=headers)
+    try:
+        # Follow redirects to get the final URL
+        final_url = await follow_redirects(url)
+        logger.info(f"Final URL after redirects: {final_url}")
+
+        async with httpx.AsyncClient() as client:
+            response = await client.get(f"https://r.jina.ai/{final_url}", headers=headers)
             response.raise_for_status()
             data = response.json()
 
             if data["code"] != 200 or data["status"] != 20000:
                 logger.error(
-                    f"API returned unexpected status for URL {url}. Code: {data['code']}, Status: {data['status']}"
+                    f"API returned unexpected status for URL {final_url}. Code: {data['code']}, Status: {data['status']}"
                 )
                 return None
 
-            logger.info(f"Successfully parsed content from URL: {url}")
+            logger.info(f"Successfully parsed content from URL: {final_url}")
             return data["data"]["text"]
-        except httpx.HTTPStatusError as e:
-            logger.error(f"HTTP error occurred while parsing URL {url}: {str(e)}", exc_info=True)
-            return None
-        except httpx.RequestError as e:
-            logger.error(f"Request error occurred while parsing URL {url}: {str(e)}", exc_info=True)
-            return None
-        except ValueError as e:
-            logger.error(f"JSON decoding error occurred while parsing URL {url}: {str(e)}", exc_info=True)
-            return None
-        except KeyError as e:
-            logger.error(f"Unexpected API response structure for URL {url}: {str(e)}", exc_info=True)
-            return None
-        except Exception as e:
-            logger.error(f"An unexpected error occurred while parsing URL {url}: {str(e)}", exc_info=True)
-            return None
+    except httpx.HTTPStatusError as e:
+        logger.error(f"HTTP error occurred while parsing URL {url}: {str(e)}", exc_info=True)
+        return None
+    except httpx.RequestError as e:
+        logger.error(f"Request error occurred while parsing URL {url}: {str(e)}", exc_info=True)
+        return None
+    except ValueError as e:
+        logger.error(f"JSON decoding error occurred while parsing URL {url}: {str(e)}", exc_info=True)
+        return None
+    except KeyError as e:
+        logger.error(f"Unexpected API response structure for URL {url}: {str(e)}", exc_info=True)
+        return None
+    except Exception as e:
+        logger.error(f"An unexpected error occurred while parsing URL {url}: {str(e)}", exc_info=True)
+        return None
 
 
 async def update_content_in_database(post_id: str, content: str):
