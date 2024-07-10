@@ -498,13 +498,17 @@ def setup_scheduler(app):
 def create_app(config_name="default"):
     global app
     app = Flask(__name__, instance_relative_config=True, static_url_path="/static")
-    app.ollama_api = OllamaAPI()
-    if not app.ollama_api.check_connection_sync():
-        logger.error("Failed to connect to Ollama API. Exiting.")
-        return None
-
+    
     app.config.from_object(config[config_name])
     config[config_name].init_app(app)
+
+    app.ollama_api = OllamaAPI()
+    
+    # Check Ollama API connection
+    with app.app_context():
+        if not app.ollama_api.check_connection_sync():
+            logger.error("Failed to connect to Ollama API. Exiting.")
+            return None
 
     app.config["SQLALCHEMY_DATABASE_URI"] = (
         f"sqlite:///{os.path.join(app.instance_path, 'threats.db')}"
