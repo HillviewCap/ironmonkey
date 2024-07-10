@@ -116,6 +116,8 @@ async def fetch_and_parse_feed(feed: RSSFeed) -> None:
                             logger.debug(f"Added new entry: {url}")
                         else:
                             logger.warning(f"Failed to parse content for URL: {url}")
+                    else:
+                        logger.debug(f"Content already exists: {url}")
                 except Exception as entry_error:
                     logger.error(f"Error processing entry {entry.get('link', 'Unknown')} from feed {feed.url}: {str(entry_error)}")
                     continue  # Continue with the next entry
@@ -136,6 +138,8 @@ async def fetch_and_parse_feed(feed: RSSFeed) -> None:
         raise ValueError(f"FeedParser error: {str(e)}")
     except Exception as e:
         logger.error(f"Unexpected error occurred while parsing feed {feed.url}: {e}", exc_info=True)
+        logger.error(f"new_entries_count: {new_entries_count}")
+        logger.error(f"feed_data entries: {len(feed_data.entries)}")
         raise ValueError(f"Unexpected error: {str(e)}")
     except httpx.HTTPStatusError as e:
         logger.error(f"HTTP error occurred while fetching feed {feed.url}: {e}")
