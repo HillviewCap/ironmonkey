@@ -795,9 +795,13 @@ def create_app(config_name="default"):
 
 
 if __name__ == "__main__":
-    app = create_app("development")
+    flask_env = os.getenv("FLASK_ENV", "production")
+    port = int(os.getenv("FLASK_PORT", 5000))
+    debug = flask_env == "development"
+    
+    app = create_app(flask_env)
     if app is not None:
-        app.run(host="0.0.0.0", port=5000, debug=True)
+        app.run(host="0.0.0.0", port=port, debug=debug)
     else:
         print(
             "Failed to create the application. Please check the logs for more information."
