@@ -1,7 +1,7 @@
 import httpx
 import os
 from dotenv import load_dotenv
-from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
+from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type, before_sleep_log
 from ratelimit import limits, sleep_and_retry
 import logging
 from logging_config import setup_logger
@@ -20,7 +20,8 @@ logger = setup_logger("jina_api", "jina_api.log")
 @retry(
     stop=stop_after_attempt(3),
     wait=wait_exponential(multiplier=1, min=4, max=10),
-    retry=retry_if_exception_type((httpx.HTTPStatusError, httpx.RequestError, ValueError, KeyError))
+    retry=retry_if_exception_type((httpx.HTTPStatusError, httpx.RequestError, ValueError, KeyError)),
+    before_sleep=before_sleep_log(logger, logging.ERROR)
 )
 async def parse_content(url: str) -> str:
     """
@@ -55,19 +56,19 @@ async def parse_content(url: str) -> str:
             logger.info(f"Successfully parsed content from URL: {url}")
             return data["data"]["text"]
         except httpx.HTTPStatusError as e:
-            logger.error(f"HTTP error occurred while parsing URL {url}: {e}")
+            logger.error(f"HTTP error occurred while parsing URL {url}: {str(e)}", exc_info=True)
             return None
         except httpx.RequestError as e:
-            logger.error(f"Request error occurred while parsing URL {url}: {e}")
+            logger.error(f"Request error occurred while parsing URL {url}: {str(e)}", exc_info=True)
             return None
         except ValueError as e:
-            logger.error(f"JSON decoding error occurred while parsing URL {url}: {e}")
+            logger.error(f"JSON decoding error occurred while parsing URL {url}: {str(e)}", exc_info=True)
             return None
         except KeyError as e:
-            logger.error(f"Unexpected API response structure for URL {url}: {e}")
+            logger.error(f"Unexpected API response structure for URL {url}: {str(e)}", exc_info=True)
             return None
         except Exception as e:
-            logger.error(f"An unexpected error occurred while parsing URL {url}: {e}")
+            logger.error(f"An unexpected error occurred while parsing URL {url}: {str(e)}", exc_info=True)
             return None
 
 
