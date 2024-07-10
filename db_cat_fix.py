@@ -5,6 +5,7 @@ import hashlib
 from flask import Flask
 from models import db, RSSFeed, ParsedContent, Category
 from config import Config
+from logging_config import logger
 
 def create_app():
     app = Flask(__name__)
@@ -21,6 +22,11 @@ def create_app():
     
     db.init_app(app)
     return app
+
+def init_app(app):
+    with app.app_context():
+        hashed_count = ParsedContent.hash_existing_articles()
+        logger.info(f"Hashed {hashed_count} existing articles")
 
 def fix_orphaned_categories(app):
     with app.app_context():
