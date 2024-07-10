@@ -68,7 +68,7 @@ async def start_check_empty_summaries():
         try:
             empty_summaries = (
                 ParsedContent.query.filter(ParsedContent.summary.is_(None))
-                .limit(100)
+                .limit(20)
                 .all()
             )
             processed_count = 0
