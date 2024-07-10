@@ -65,47 +65,34 @@ async def fetch_and_parse_feed(feed: RSSFeed) -> None:
     """Fetch and parse a single RSS feed."""
     try:
         async with httpx.AsyncClient() as client:
-            response = await client.get(feed.url, timeout=30.0)  # Set a timeout
-            response.raise_for_status()  # Raise an exception for bad status codes
+            response = await client.get(feed.url, timeout=30.0)
+            response.raise_for_status()
             feed_data = feedparser.parse(response.text)
 
             new_entries_count = 0
             for entry in feed_data.entries:
                 existing_content = ParsedContent.query.filter_by(url=entry.link).first()
                 if not existing_content:
-                    try:
-                        parsed_content = await parse_content(entry.link)
-                        if parsed_content is not None:
-                            new_content = ParsedContent(
-                                content=parsed_content,
-                                feed_id=feed.id,
-                                url=entry.link,
-                                title=entry.get('title', ''),
-                                description=entry.get('description', ''),
-                                pub_date=entry.get('published', ''),
-                                creator=entry.get('author', '')
-                            )
-                            db.session.add(new_content)
+                    parsed_content = await parse_content(entry.link)
+                    if parsed_content is not None:
+                        new_content = ParsedContent(
+                            content=parsed_content,
+                            feed_id=feed.id,
+                            url=entry.link,
+                            title=entry.get('title', ''),
+                            description=entry.get('description', ''),
+                            pub_date=entry.get('published', ''),
+                            creator=entry.get('author', '')
+                        )
+                        db.session.add(new_content)
                         
-                            # Add categories using the new method
-                            for category in entry.get('tags', []):
-                                db_category = Category.create_from_feedparser(category, new_content.id)
-                                db.session.add(db_category)
-                            logger.info(f"Added new content: {new_content.url}")
-                            new_entries_count += 1
-                        else:
-                            logger.warning(f"Failed to parse content for {entry.link}")
-                    except Exception as e:
-                        logger.error(f"Error parsing entry {entry.link}: {str(e)}")
-                else:
-                    logger.info(f"Skipped existing content: {entry.link}")
-            
-            try:
-                db.session.commit()
-                logger.info(f"Committed {new_entries_count} new entries to database")
-            except Exception as e:
-                db.session.rollback()
-                logger.error(f"Error committing to database: {str(e)}")
+                        for category in entry.get('tags', []):
+                            db_category = Category.create_from_feedparser(category, new_content.id)
+                            db.session.add(db_category)
+                        new_entries_count += 1
+
+            db.session.commit()
+            logger.info(f"Feed: {feed.url} - Added {new_entries_count} new entries to database")
     except httpx.HTTPStatusError as e:
         logger.error(f"HTTP error occurred while fetching feed {feed.url}: {e}")
         raise ValueError(f"HTTP error: {e.response.status_code} - {e.response.reason_phrase}")

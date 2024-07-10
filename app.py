@@ -38,13 +38,10 @@ app = None
 
 def check_and_process_rss_feeds():
     with app.app_context():
-        try:
-            feeds = RSSFeed.query.all()
-            for feed in feeds:
-                asyncio.run(fetch_and_parse_feed(feed))
-            logger.info(f"Checked and processed {len(feeds)} RSS feeds")
-        except Exception as e:
-            logger.error(f"Error in check_and_process_rss_feeds: {str(e)}")
+        feeds = RSSFeed.query.all()
+        for feed in feeds:
+            asyncio.run(fetch_and_parse_feed(feed))
+        logger.info(f"Processed {len(feeds)} RSS feeds")
 
 async def start_check_empty_summaries():
     with app.app_context():
