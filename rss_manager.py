@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 import uuid
 import os
+import hashlib
 from flask import Blueprint, render_template, redirect, url_for, flash, request, current_app
 from flask_login import login_required
 from datetime import datetime
@@ -79,18 +80,23 @@ async def fetch_and_parse_feed(feed: RSSFeed) -> None:
             new_entries_count = 0
             for entry in feed_data.entries:
                 try:
-                    existing_content = ParsedContent.query.filter_by(url=entry.link).first()
+                    url = entry.link
+                    title = entry.get('title', '')
+                    art_hash = hashlib.sha256(f"{url}{title}".encode()).hexdigest()
+
+                    existing_content = ParsedContent.query.filter_by(art_hash=art_hash).first()
                     if not existing_content:
-                        parsed_content = await parse_content(entry.link)
+                        parsed_content = await parse_content(url)
                         if parsed_content is not None:
                             new_content = ParsedContent(
                                 content=parsed_content,
                                 feed_id=feed.id,
-                                url=entry.link,
-                                title=entry.get('title', ''),
+                                url=url,
+                                title=title,
                                 description=entry.get('description', ''),
                                 pub_date=entry.get('published', ''),
-                                creator=entry.get('author', '')
+                                creator=entry.get('author', ''),
+                                art_hash=art_hash
                             )
                             db.session.add(new_content)
                             
