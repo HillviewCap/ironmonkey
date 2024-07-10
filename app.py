@@ -49,56 +49,6 @@ scheduler_logger = setup_logger("scheduler", "scheduler.log")
 app = None
 
 
-def create_app(config_name="default"):
-    global app
-    app = Flask(__name__, instance_relative_config=True, static_url_path="/static")
-    #    app.ollama_api = OllamaAPI() Check_connection() is initializing ollama  now
-
-    async def check_connection():
-        return await app.ollama_api.check_connection()
-
-    if not asyncio.run(check_connection()):
-        logger.error("Failed to connect to Ollama API. Exiting.")
-        return None
-
-    app.config.from_object(config[config_name])
-    config[config_name].init_app(app)
-
-    app.config["SQLALCHEMY_DATABASE_URI"] = (
-        f"sqlite:///{os.path.join(app.instance_path, 'threats.db')}"
-    )
-    logger.info(f"Database URI: {app.config['SQLALCHEMY_DATABASE_URI']}")
-
-    try:
-        db.init_app(app)
-        CSRFProtect(app)
-        init_auth(app)
-        #        Migrate(app, db)
-
-        login_manager = LoginManager()
-        login_manager.init_app(app)
-
-        @login_manager.user_loader
-        def load_user(user_id):
-            try:
-                return db.session.get(User, uuid.UUID(user_id))
-            except ValueError:
-                return None
-
-        app.register_blueprint(rss_manager)
-
-        with app.app_context():
-            init_db(app)
-
-        register_routes(app)
-        app.scheduler = setup_scheduler(app)
-
-    except Exception as e:
-        logger.error(f"Error during app initialization: {str(e)}")
-        raise
-
-    return app
-
 
 def render_error_page():
     try:
