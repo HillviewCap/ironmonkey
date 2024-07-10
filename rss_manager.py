@@ -367,8 +367,17 @@ async def summarize_content(post_id):
 def delete_feed(feed_id: uuid.UUID):
     """Delete an RSS feed from the database."""
     feed = RSSFeed.query.get_or_404(feed_id)
-    db.session.delete(feed)
-    db.session.commit()
+    try:
+        # Delete associated parsed content
+        ParsedContent.query.filter_by(feed_id=feed_id).delete()
+        # Delete the feed
+        db.session.delete(feed)
+        db.session.commit()
+        flash("RSS Feed and associated content deleted successfully!", "success")
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Error deleting RSS Feed: {str(e)}")
+        flash(f"Error deleting RSS Feed: {str(e)}", "error")
     return redirect(url_for("rss_manager.manage_rss"))
 
 
