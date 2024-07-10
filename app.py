@@ -1013,13 +1013,3 @@ if __name__ == "__main__":
         )
 
 
-def setup_scheduler(app):
-    scheduler = BackgroundScheduler()
-    scheduler.add_job(func=check_and_process_rss_feeds, trigger="interval", minutes=5)
-    scheduler.add_job(
-        func=lambda: asyncio.run(start_check_empty_summaries()),
-        trigger="interval",
-        minutes=6,
-    )
-    scheduler.start()
-    logger.info("Scheduler started successfully")
