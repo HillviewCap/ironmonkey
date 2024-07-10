@@ -64,9 +64,16 @@ class EditRSSFeedForm(FlaskForm):
 async def fetch_and_parse_feed(feed: RSSFeed) -> None:
     """Fetch and parse a single RSS feed."""
     try:
-        async with httpx.AsyncClient() as client:
+        async with httpx.AsyncClient(follow_redirects=True) as client:
             response = await client.get(feed.url, timeout=30.0)
             response.raise_for_status()
+
+            # Check if the URL has been redirected
+            if response.url != feed.url:
+                logger.info(f"Feed URL redirected from {feed.url} to {response.url}")
+                feed.url = str(response.url)
+                db.session.commit()
+
             feed_data = feedparser.parse(response.text)
 
             new_entries_count = 0
