@@ -26,7 +26,7 @@ async def parse_content(url: str) -> str:
         url (str): The URL to parse.
 
     Returns:
-        str: Parsed text content.
+        str: Parsed text content or None if an error occurs.
     """
     headers = {
         "Authorization": f"Bearer {JINA_API_KEY}",
@@ -44,16 +44,26 @@ async def parse_content(url: str) -> str:
 
             if data["code"] != 200 or data["status"] != 20000:
                 logger.error(
-                    f"API returned unexpected status. Code: {data['code']}, Status: {data['status']}"
+                    f"API returned unexpected status for URL {url}. Code: {data['code']}, Status: {data['status']}"
                 )
                 return None
 
+            logger.info(f"Successfully parsed content from URL: {url}")
             return data["data"]["text"]
         except httpx.HTTPStatusError as e:
-            logger.error(f"HTTP error occurred: {e}")
+            logger.error(f"HTTP error occurred while parsing URL {url}: {e}")
+            return None
+        except httpx.RequestError as e:
+            logger.error(f"Request error occurred while parsing URL {url}: {e}")
+            return None
+        except ValueError as e:
+            logger.error(f"JSON decoding error occurred while parsing URL {url}: {e}")
+            return None
+        except KeyError as e:
+            logger.error(f"Unexpected API response structure for URL {url}: {e}")
             return None
         except Exception as e:
-            logger.error(f"An unexpected error occurred: {e}")
+            logger.error(f"An unexpected error occurred while parsing URL {url}: {e}")
             return None
 
 
@@ -66,9 +76,12 @@ async def update_content_in_database(post_id: str, content: str):
         content (str): The new content to set.
     """
     # This is a placeholder function. You need to implement the actual database update logic.
-    logger.info(f"Updating content for post ID: {post_id}")
-    # Your database update code here
-    pass
+    try:
+        logger.info(f"Updating content for post ID: {post_id}")
+        # Your database update code here
+        logger.info(f"Successfully updated content for post ID: {post_id}")
+    except Exception as e:
+        logger.error(f"Failed to update content for post ID {post_id}: {e}")
 
 
 async def process_url(url: str, post_id: str):
@@ -82,6 +95,6 @@ async def process_url(url: str, post_id: str):
     content = await parse_content(url)
     if content:
         await update_content_in_database(post_id, content)
-        logger.info(f"Successfully processed URL: {url}")
+        logger.info(f"Successfully processed URL: {url} for post ID: {post_id}")
     else:
-        logger.warning(f"Failed to process URL: {url}")
+        logger.warning(f"Failed to process URL: {url} for post ID: {post_id}")
