@@ -219,7 +219,7 @@ async def start_check_empty_summaries():
         try:
             empty_summaries = (
                 ParsedContent.query.filter(ParsedContent.summary.is_(None))
-                .limit(20)
+                .limit(5)
                 .all()
             )
             processed_count = 0
@@ -523,18 +523,22 @@ def register_routes(app):
 
 
 def setup_scheduler(app):
-    rss_check_interval = int(os.getenv('RSS_CHECK_INTERVAL', 30))
-    summary_check_interval = int(os.getenv('SUMMARY_CHECK_INTERVAL', 31))
-    
+    rss_check_interval = int(os.getenv("RSS_CHECK_INTERVAL", 30))
+    summary_check_interval = int(os.getenv("SUMMARY_CHECK_INTERVAL", 31))
+
     scheduler = BackgroundScheduler()
-    scheduler.add_job(func=check_and_process_rss_feeds, trigger="interval", minutes=rss_check_interval)
+    scheduler.add_job(
+        func=check_and_process_rss_feeds, trigger="interval", minutes=rss_check_interval
+    )
     scheduler.add_job(
         func=lambda: asyncio.run(start_check_empty_summaries()),
         trigger="interval",
         minutes=summary_check_interval,
     )
     scheduler.start()
-    logger.info(f"Scheduler started successfully with RSS check interval: {rss_check_interval} minutes and Summary check interval: {summary_check_interval} minutes")
+    logger.info(
+        f"Scheduler started successfully with RSS check interval: {rss_check_interval} minutes and Summary check interval: {summary_check_interval} minutes"
+    )
     return scheduler
 
 
