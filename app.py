@@ -559,7 +559,13 @@ def create_app(config_name="default"):
     app.config["SQLALCHEMY_DATABASE_URI"] = (
         f"sqlite:///{os.path.join(app.instance_path, 'threats.db')}"
     )
-    logger.info(f"Database URI: {app.config['SQLALCHEMY_DATABASE_URI']}")
+    
+    # Adjust logging level based on the environment
+    if config_name == "production":
+        app.logger.setLevel(logging.WARNING)
+        logger.setLevel(logging.WARNING)
+    else:
+        logger.info(f"Database URI: {app.config['SQLALCHEMY_DATABASE_URI']}")
 
     try:
         db.init_app(app)
