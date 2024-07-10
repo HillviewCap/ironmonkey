@@ -69,7 +69,7 @@ def fix_orphaned_categories(app):
         # Step 2: Re-associate categories
         parsed_contents = ParsedContent.query.all()
         for content in parsed_contents:
-            feed = RSSFeed.query.get(content.feed_id)
+            feed = db.session.get(RSSFeed, content.feed_id)
             if feed:
                 try:
                     # Fetch the feed data
