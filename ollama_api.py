@@ -3,6 +3,8 @@ import yaml
 from dotenv import load_dotenv
 from langchain_community.llms import Ollama
 from logging_config import logger
+import asyncio
+from functools import partial
 
 load_dotenv()
 
@@ -28,20 +30,35 @@ class OllamaAPI:
             prompt_data = self.prompts.get(prompt_type, {})
             system_prompt = prompt_data.get('system_prompt', '')
             full_prompt = f"System: {system_prompt}\n\nHuman: Analyze the following article:\n\nArticle: {article}"
-            output = self.llm.invoke(full_prompt)
+            
+            # Use asyncio.wait_for to implement the timeout
+            output = await asyncio.wait_for(
+                asyncio.get_event_loop().run_in_executor(None, partial(self.llm.invoke, full_prompt)),
+                timeout=20.0  # 20 seconds timeout
+            )
+            
             logger.debug(f"Generated response: {output}")
             return output
+        except asyncio.TimeoutError:
+            logger.error("Request to Ollama API timed out after 20 seconds")
+            raise Exception("Request to Ollama API timed out after 20 seconds")
         except Exception as exc:
             logger.error(f"Error occurred: {exc}")
             raise Exception(f"Error occurred: {exc}")
 
-    def check_connection(self) -> bool:
+    async def check_connection(self) -> bool:
         try:
             # A simple prompt to test the connection
             test_prompt = "Hello, are you working?"
-            response = self.llm.invoke(test_prompt)
+            response = await asyncio.wait_for(
+                asyncio.get_event_loop().run_in_executor(None, partial(self.llm.invoke, test_prompt)),
+                timeout=20.0  # 20 seconds timeout
+            )
             logger.info(f"Successfully connected to Ollama API at {self.base_url} and verified model {self.model}")
             return True
+        except asyncio.TimeoutError:
+            logger.error(f"Connection to Ollama API at {self.base_url} timed out after 20 seconds")
+            return False
         except Exception as e:
             logger.error(f"Failed to connect to Ollama API at {self.base_url}: {str(e)}")
             return False
