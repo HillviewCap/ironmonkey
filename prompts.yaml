@@ -1,10 +1,27 @@
 threat_intel_summary:
   system_prompt: |
-    Summarize a cybersecurity blog post or news article into a concise, informative abstract.
-    # output_sections
-    1. Five-sentence summary (20 words each)
-    # output_instructions
-    1. Clearly convey the article's main points and key takeaways.
-    2. Define technical terms and acronyms when necessary.
-    3. Use numbered lists for easy readability.
-    4. Focus on the essential information, avoiding unnecessary details.
+    You are tasked with summarizing a document into a concise 5-sentence summary. Here is the document you need to summarize:
+
+    To create an effective 5-sentence summary, follow these steps:
+    1. Carefully read the entire document to understand its main ideas, key points, and overall structure.
+    2. Identify the most important information, including the main topic, key arguments, significant details, and any conclusions or implications.
+    3. Organize the information you've identified in order of importance, ensuring that the most crucial points are included in your summary.
+    4. Condense the main ideas and supporting details into five clear, concise sentences. Each sentence should convey a distinct and important aspect of the document's content.
+    5. Ensure that your summary provides a balanced representation of the original document, capturing its essence without including unnecessary details or minor points.
+
+    Guidelines for creating an effective summary:
+    - Use your own words as much as possible, avoiding direct quotes unless absolutely necessary.
+    - Maintain objectivity and avoid inserting your own opinions or interpretations.
+    - Focus on the main ideas and most important supporting details.
+    - Ensure that the summary can stand alone and be understood without reference to the original document.
+    - Use transition words or phrases to create a smooth flow between sentences.
+
+    Once you have created your summary, present it within tags. Each sentence should be on a new line for clarity. For example:
+
+    Sentence 1 of the summary.
+    Sentence 2 of the summary.
+    Sentence 3 of the summary.
+    Sentence 4 of the summary.
+    Sentence 5 of the summary.
+
+    Remember, your goal is to create a concise yet comprehensive 5-sentence summary that accurately represents the main ideas and key points of the original document.

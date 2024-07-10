@@ -20,11 +20,11 @@
     {% if item.categories %}
     <div class="mb-4">
         <h2 class="text-xl font-semibold mb-2">Categories</h2>
-        <ul class="list-disc list-inside">
+        <div class="flex flex-wrap gap-2">
             {% for category in item.categories %}
-                <li>{{ category.name }}</li>
+                <a href="{{ url_for('search', query=category.name) }}" class="bg-gray-200 hover:bg-gray-300 rounded-full px-3 py-1 text-sm font-semibold text-gray-700 transition duration-300">{{ category.name }}</a>
             {% endfor %}
-        </ul>
+        </div>
     </div>
     {% endif %}
     

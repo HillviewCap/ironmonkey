@@ -1,10 +1,13 @@
 import httpx
+from httpx import ReadTimeout
 import os
 from dotenv import load_dotenv
 from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type, before_sleep_log
 from ratelimit import limits, sleep_and_retry
 import logging
 from logging_config import setup_logger
+from cachetools import TTLCache
+from functools import lru_cache
 
 load_dotenv()
 
@@ -12,6 +15,9 @@ JINA_API_KEY = os.getenv("JINA_API_KEY")
 
 # Set up logger
 logger = setup_logger("jina_api", "jina_api.log")
+
+# Create a TTL cache with a maximum of 1000 items and a 1-hour expiration
+content_cache = TTLCache(maxsize=1000, ttl=3600)
 
 
 async def follow_redirects(url: str) -> str:
@@ -33,9 +39,9 @@ async def follow_redirects(url: str) -> str:
 @sleep_and_retry
 @limits(calls=200, period=60)
 @retry(
-    stop=stop_after_attempt(5),  # Increased from 3 to 5
-    wait=wait_exponential(multiplier=1, min=4, max=60),  # Increased max wait time to 60 seconds
-    retry=retry_if_exception_type((httpx.HTTPStatusError, httpx.RequestError, httpx.ReadTimeout, ValueError, KeyError)),
+    stop=stop_after_attempt(5),
+    wait=wait_exponential(multiplier=1, min=4, max=60),
+    retry=retry_if_exception_type((httpx.HTTPStatusError, httpx.RequestError, ReadTimeout, ValueError, KeyError)),
     before_sleep=before_sleep_log(logger, logging.ERROR)
 )
 async def parse_content(url: str) -> str:
@@ -48,6 +54,11 @@ async def parse_content(url: str) -> str:
     Returns:
         str: Parsed text content or None if an error occurs.
     """
+    # Check if the content is already in the cache
+    if url in content_cache:
+        logger.info(f"Retrieved cached content for URL: {url}")
+        return content_cache[url]
+
     headers = {
         "Authorization": f"Bearer {JINA_API_KEY}",
         "X-Return-Format": "text",
@@ -62,7 +73,7 @@ async def parse_content(url: str) -> str:
         logger.info(f"Final URL after redirects: {final_url}")
 
         async with httpx.AsyncClient() as client:
-            response = await client.get(f"https://r.jina.ai/{final_url}", headers=headers)
+            response = await client.get(f"https://r.jina.ai/{final_url}", headers=headers, timeout=60.0)
             response.raise_for_status()
             data = response.json()
 
@@ -72,8 +83,15 @@ async def parse_content(url: str) -> str:
                 )
                 return None
 
+            content = data["data"]["text"]
             logger.info(f"Successfully parsed content from URL: {final_url}")
-            return data["data"]["text"]
+            
+            # Cache the parsed content
+            content_cache[url] = content
+            return content
+    except ReadTimeout as e:
+        logger.error(f"Read timeout occurred while parsing URL {url}: {str(e)}", exc_info=True)
+        return None
     except httpx.HTTPStatusError as e:
         logger.error(f"HTTP error occurred while parsing URL {url}: {str(e)}", exc_info=True)
         return None
@@ -116,7 +134,12 @@ async def process_url(url: str, post_id: str):
         url (str): The URL to process.
         post_id (str): The ID of the associated post in the database.
     """
-    content = await parse_content(url)
+    if url in content_cache:
+        content = content_cache[url]
+        logger.info(f"Using cached content for URL: {url}")
+    else:
+        content = await parse_content(url)
+    
     if content:
         await update_content_in_database(post_id, content)
         logger.info(f"Successfully processed URL: {url} for post ID: {post_id}")
