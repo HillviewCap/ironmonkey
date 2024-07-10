@@ -6,6 +6,24 @@ from flask import Flask
 from models import db, RSSFeed, ParsedContent, Category
 from config import Config
 from logging_config import logger
+from sqlalchemy.exc import SQLAlchemyError
+
+def update_missing_hashes(app):
+    with app.app_context():
+        try:
+            items_without_hash = ParsedContent.query.filter(ParsedContent.art_hash == None).all()
+            updated_count = 0
+            
+            for item in items_without_hash:
+                if item.link and item.title:
+                    item.art_hash = hashlib.sha256(f"{item.link}{item.title}".encode()).hexdigest()
+                    updated_count += 1
+            
+            db.session.commit()
+            print(f"Updated {updated_count} items with missing hashes.")
+        except SQLAlchemyError as e:
+            db.session.rollback()
+            print(f"An error occurred while updating hashes: {str(e)}")
 
 def create_app():
     app = Flask(__name__)
@@ -67,4 +85,5 @@ def fix_orphaned_categories(app):
 if __name__ == "__main__":
     app = create_app()
     init_app(app)  # Initialize the database
+    update_missing_hashes(app)  # Update missing hashes
     fix_orphaned_categories(app)
