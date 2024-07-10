@@ -47,125 +47,55 @@ scheduler_logger = setup_logger("scheduler", "scheduler.log")
 # Initialize Flask application
 app = None
 
+def create_app(config_name="default"):
+    global app
+    app = Flask(__name__, instance_relative_config=True, static_url_path="/static")
+    app.ollama_api = OllamaAPI()
+    
+    async def check_connection():
+        return await app.ollama_api.check_connection()
+    
+    if not asyncio.run(check_connection()):
+        logger.error("Failed to connect to Ollama API. Exiting.")
+        return None
 
-def check_and_process_rss_feeds():
-    with app.app_context():
-        feeds = RSSFeed.query.all()
-        new_articles_count = 0
-        for feed in feeds:
-            try:
-                new_articles = asyncio.run(fetch_and_parse_feed(feed))
-                new_articles_count += new_articles
-            except Exception as e:
-                scheduler_logger.error(f"Error processing feed {feed.url}: {str(e)}")
-        scheduler_logger.info(
-            f"Processed {len(feeds)} RSS feeds, added {new_articles_count} new articles"
-        )
+    app.config.from_object(config[config_name])
+    config[config_name].init_app(app)
 
+    app.config["SQLALCHEMY_DATABASE_URI"] = (
+        f"sqlite:///{os.path.join(app.instance_path, 'threats.db')}"
+    )
+    logger.info(f"Database URI: {app.config['SQLALCHEMY_DATABASE_URI']}")
 
-async def start_check_empty_summaries():
-    with app.app_context():
-        try:
-            empty_summaries = (
-                ParsedContent.query.filter(ParsedContent.summary.is_(None))
-                .limit(20)
-                .all()
-            )
-            processed_count = 0
-            for content in empty_summaries:
-                try:
-                    summary = await app.ollama_api.generate(
-                        "threat_intel_summary", content.content
-                    )
-                    content.summary = summary
-                    processed_count += 1
-                except Exception as e:
-                    scheduler_logger.error(
-                        f"Error generating summary for content {content.id}: {str(e)}"
-                    )
-            db.session.commit()
-            scheduler_logger.info(
-                f"Processed {processed_count} out of {len(empty_summaries)} empty summaries"
-            )
-        except Exception as e:
-            scheduler_logger.error(f"Error in start_check_empty_summaries: {str(e)}")
-
-
-def render_error_page():
     try:
-        return (
-            render_template(
-                "error.html", error="An error occurred. Please try again later."
-            ),
-            500,
-        )
-    except Exception as template_error:
-        logger.error(
-            f"Error rendering error template: {str(template_error)}", exc_info=True
-        )
-        return (
-            "An error occurred, and we couldn't render the error page. Please try again later.",
-            500,
-        )
+        db.init_app(app)
+        CSRFProtect(app)
+        init_auth(app)
+        Migrate(app, db)
 
+        login_manager = LoginManager()
+        login_manager.init_app(app)
 
-def get_search_params(form):
-    return SearchParams(
-        query=form.data.get("query", ""),
-        start_date=(
-            datetime.strptime(form.data.get("start_date"), "%Y-%m-%d").date()
-            if form.data.get("start_date")
-            else None
-        ),
-        end_date=(
-            datetime.strptime(form.data.get("end_date"), "%Y-%m-%d").date()
-            if form.data.get("end_date")
-            else None
-        ),
-        source_types=form.data.get("source_types", []),
-        keywords=(
-            form.data.get("keywords", "").split(",")
-            if form.data.get("keywords")
-            else []
-        ),
-    )
+        @login_manager.user_loader
+        def load_user(user_id):
+            try:
+                return db.session.get(User, uuid.UUID(user_id))
+            except ValueError:
+                return None
 
+        app.register_blueprint(rss_manager)
 
-def build_search_query(search_params):
-    query = db.session.query(ParsedContent)
+        with app.app_context():
+            init_db(app)
 
-    query = query.filter(
-        db.or_(
-            ParsedContent.title.ilike(f"%{bleach.clean(search_params.query)}%"),
-            ParsedContent.content.ilike(f"%{bleach.clean(search_params.query)}%"),
-        )
-    )
+        register_routes(app)
+        setup_scheduler(app)
 
-    if search_params.start_date:
-        query = query.filter(ParsedContent.date >= search_params.start_date)
+    except Exception as e:
+        logger.error(f"Error during app initialization: {str(e)}")
+        raise
 
-    if search_params.end_date:
-        query = query.filter(ParsedContent.date <= search_params.end_date)
-
-    if search_params.source_types:
-        query = query.filter(
-            ParsedContent.source_type.in_(
-                [bleach.clean(st) for st in search_params.source_types]
-            )
-        )
-
-    if search_params.keywords:
-        for keyword in search_params.keywords:
-            query = query.filter(
-                db.or_(
-                    ParsedContent.title.ilike(f"%{bleach.clean(keyword)}%"),
-                    ParsedContent.content.ilike(f"%{bleach.clean(keyword)}%"),
-                )
-            )
-
-    logger.debug(f"Final SQL query: {query}")
-    return query
-
+    return app
 
 def register_routes(app):
     @app.route("/admin")
@@ -719,119 +649,6 @@ def create_app(config_name="default"):
     return app
 
 
-# Start the scheduler when the app starts
-app = create_app("production")
-if app is not None:
-    with app.app_context():
-        scheduler = BackgroundScheduler()
-        scheduler.add_job(
-            func=check_and_process_rss_feeds, trigger="interval", minutes=30
-        )
-        scheduler.add_job(
-            func=lambda: asyncio.run(start_check_empty_summaries()),
-            trigger="interval",
-            minutes=1,
-        )
-        scheduler.start()
-        logger.info("Scheduler started successfully")
-
-
-def render_error_page():
-    try:
-        return (
-            render_template(
-                "error.html", error="An error occurred. Please try again later."
-            ),
-            500,
-        )
-    except Exception as template_error:
-        logger.error(
-            f"Error rendering error template: {str(template_error)}", exc_info=True
-        )
-        return (
-            "An error occurred, and we couldn't render the error page. Please try again later.",
-            500,
-        )
-
-
-def perform_search(search_params):
-    page = request.args.get("page", 1, type=int)
-    per_page = 10
-
-    query = build_search_query(search_params)
-    logger.debug(f"Built search query: {query}")
-
-    try:
-        paginated_results = query.paginate(page=page, per_page=per_page)
-        total_results = query.count()
-        logger.info(f"Search completed. Total results: {total_results}")
-
-        # Log the first few results for debugging
-        for i, result in enumerate(paginated_results.items[:5]):
-            logger.debug(f"Result {i+1}: ID={result.id}, Title={result.title}")
-
-        return paginated_results, total_results
-
-    except Exception as e:
-        logger.error(f"Error occurred during search: {str(e)}", exc_info=True)
-        return None, 0
-
-
-def get_search_params(form):
-    return SearchParams(
-        query=form.data.get("query", ""),
-        start_date=(
-            datetime.strptime(form.data.get("start_date"), "%Y-%m-%d").date()
-            if form.data.get("start_date")
-            else None
-        ),
-        end_date=(
-            datetime.strptime(form.data.get("end_date"), "%Y-%m-%d").date()
-            if form.data.get("end_date")
-            else None
-        ),
-        source_types=form.data.get("source_types", []),
-        keywords=(
-            form.data.get("keywords", "").split(",")
-            if form.data.get("keywords")
-            else []
-        ),
-    )
-
-
-def build_search_query(search_params):
-    query = db.session.query(ParsedContent)
-
-    query = query.filter(
-        db.or_(
-            ParsedContent.title.ilike(f"%{bleach.clean(search_params.query)}%"),
-            ParsedContent.description.ilike(f"%{bleach.clean(search_params.query)}%"),
-            ParsedContent.content.ilike(f"%{bleach.clean(search_params.query)}%"),
-            ParsedContent.summary.ilike(f"%{bleach.clean(search_params.query)}%"),
-        )
-    )
-
-    if search_params.start_date:
-        query = query.filter(ParsedContent.created_at >= search_params.start_date)
-
-    if search_params.end_date:
-        query = query.filter(ParsedContent.created_at <= search_params.end_date)
-
-    if search_params.keywords:
-        for keyword in search_params.keywords:
-            query = query.filter(
-                db.or_(
-                    ParsedContent.title.ilike(f"%{bleach.clean(keyword)}%"),
-                    ParsedContent.description.ilike(f"%{bleach.clean(keyword)}%"),
-                    ParsedContent.content.ilike(f"%{bleach.clean(keyword)}%"),
-                    ParsedContent.summary.ilike(f"%{bleach.clean(keyword)}%"),
-                )
-            )
-
-    logger.debug(f"Final SQL query: {query}")
-    return query
-
-
 if __name__ == "__main__":
     app = create_app("development")
     if app is not None:
@@ -840,9 +657,6 @@ if __name__ == "__main__":
         print(
             "Failed to create the application. Please check the logs for more information."
         )
-
-
-def register_routes(app):
     @app.route("/")
     def index():
         current_app.logger.info("Entering index route")
