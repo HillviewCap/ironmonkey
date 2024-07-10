@@ -114,6 +114,8 @@ async def fetch_and_parse_feed(feed: RSSFeed) -> None:
                                 db.session.add(db_category)
                             new_entries_count += 1
                             logger.debug(f"Added new entry: {url}")
+                        else:
+                            logger.warning(f"Failed to parse content for URL: {url}")
                 except Exception as entry_error:
                     logger.error(f"Error processing entry {entry.get('link', 'Unknown')} from feed {feed.url}: {str(entry_error)}")
                     continue  # Continue with the next entry
