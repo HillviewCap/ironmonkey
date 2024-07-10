@@ -38,11 +38,14 @@ def init_db(app=None):
             result = connection.execute(
                 text("PRAGMA table_info(parsed_content)")
             )
-            columns = [row[1] for row in result.fetchall()]
+            columns = {row[1]: row[2] for row in result.fetchall()}
             if "summary" not in columns:
                 connection.execute(text("ALTER TABLE parsed_content ADD COLUMN summary TEXT"))
             if "art_hash" not in columns:
-                connection.execute(text("ALTER TABLE parsed_content ADD COLUMN art_hash TEXT"))
+                connection.execute(text("ALTER TABLE parsed_content ADD COLUMN art_hash VARCHAR(64)"))
+            elif columns["art_hash"] != "VARCHAR(64)":
+                connection.execute(text("ALTER TABLE parsed_content DROP COLUMN art_hash"))
+                connection.execute(text("ALTER TABLE parsed_content ADD COLUMN art_hash VARCHAR(64)"))
         
         print(f"All database tables created and updated successfully in {app.instance_path}")
 
