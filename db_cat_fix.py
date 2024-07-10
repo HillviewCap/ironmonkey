@@ -12,18 +12,28 @@ def update_missing_hashes(app):
     with app.app_context():
         try:
             items_without_hash = ParsedContent.query.filter(ParsedContent.art_hash == None).all()
+            total_items = len(items_without_hash)
+            print(f"Found {total_items} items without hash.")
             updated_count = 0
             
             for item in items_without_hash:
                 if item.link and item.title:
-                    item.art_hash = hashlib.sha256(f"{item.link}{item.title}".encode()).hexdigest()
+                    new_hash = hashlib.sha256(f"{item.link}{item.title}".encode()).hexdigest()
+                    item.art_hash = new_hash
                     updated_count += 1
+                    print(f"Updated item {item.id} with hash: {new_hash}")
+                else:
+                    print(f"Skipped item {item.id} due to missing link or title")
             
             db.session.commit()
-            print(f"Updated {updated_count} items with missing hashes.")
+            print(f"Updated {updated_count} out of {total_items} items with missing hashes.")
         except SQLAlchemyError as e:
             db.session.rollback()
             print(f"An error occurred while updating hashes: {str(e)}")
+        
+        # Double-check after update
+        remaining_items = ParsedContent.query.filter(ParsedContent.art_hash == None).count()
+        print(f"Remaining items without hash after update: {remaining_items}")
 
 def create_app():
     app = Flask(__name__)
