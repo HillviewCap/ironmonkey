@@ -6,6 +6,8 @@ from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_excep
 from ratelimit import limits, sleep_and_retry
 import logging
 from logging_config import setup_logger
+from cachetools import TTLCache
+from functools import lru_cache
 
 load_dotenv()
 
@@ -13,6 +15,9 @@ JINA_API_KEY = os.getenv("JINA_API_KEY")
 
 # Set up logger
 logger = setup_logger("jina_api", "jina_api.log")
+
+# Create a TTL cache with a maximum of 1000 items and a 1-hour expiration
+content_cache = TTLCache(maxsize=1000, ttl=3600)
 
 
 async def follow_redirects(url: str) -> str:
@@ -49,6 +54,11 @@ async def parse_content(url: str) -> str:
     Returns:
         str: Parsed text content or None if an error occurs.
     """
+    # Check if the content is already in the cache
+    if url in content_cache:
+        logger.info(f"Retrieved cached content for URL: {url}")
+        return content_cache[url]
+
     headers = {
         "Authorization": f"Bearer {JINA_API_KEY}",
         "X-Return-Format": "text",
@@ -73,8 +83,12 @@ async def parse_content(url: str) -> str:
                 )
                 return None
 
+            content = data["data"]["text"]
             logger.info(f"Successfully parsed content from URL: {final_url}")
-            return data["data"]["text"]
+            
+            # Cache the parsed content
+            content_cache[url] = content
+            return content
     except ReadTimeout as e:
         logger.error(f"Read timeout occurred while parsing URL {url}: {str(e)}", exc_info=True)
         return None
@@ -120,7 +134,12 @@ async def process_url(url: str, post_id: str):
         url (str): The URL to process.
         post_id (str): The ID of the associated post in the database.
     """
-    content = await parse_content(url)
+    if url in content_cache:
+        content = content_cache[url]
+        logger.info(f"Using cached content for URL: {url}")
+    else:
+        content = await parse_content(url)
+    
     if content:
         await update_content_in_database(post_id, content)
         logger.info(f"Successfully processed URL: {url} for post ID: {post_id}")
