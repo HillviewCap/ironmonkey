@@ -35,6 +35,10 @@ csrf = CSRFProtect()
 
 PER_PAGE_OPTIONS = [10, 25, 50, 100]
 
+def init_app(app):
+    with app.app_context():
+        hashed_count = ParsedContent.hash_existing_articles()
+        logger.info(f"Hashed {hashed_count} existing articles")
 
 # Form classes
 class RSSFeedForm(FlaskForm):
