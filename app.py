@@ -16,7 +16,7 @@ from werkzeug.exceptions import BadRequest
 from apscheduler.schedulers.background import BackgroundScheduler
 import httpx
 
-from logging_config import setup_logger
+from logging_config import setup_logger, logger
 from models import db, User, SearchParams, RSSFeed, ParsedContent
 from models.diffbot_model import Entity, EntityMention, EntityType, EntityUri, Category
 from auth import init_auth, login, logout, register
@@ -30,7 +30,8 @@ from init_db import init_db
 load_dotenv()
 
 # Configure logging
-logger = setup_logger('app', 'app.log')
+app_logger = setup_logger('app', 'app.log')
+scheduler_logger = setup_logger('scheduler', 'scheduler.log')
 
 # Initialize Flask application
 app = None
@@ -39,21 +40,31 @@ app = None
 def check_and_process_rss_feeds():
     with app.app_context():
         feeds = RSSFeed.query.all()
+        new_articles_count = 0
         for feed in feeds:
-            asyncio.run(fetch_and_parse_feed(feed))
-        logger.info(f"Processed {len(feeds)} RSS feeds")
+            try:
+                new_articles = asyncio.run(fetch_and_parse_feed(feed))
+                new_articles_count += new_articles
+            except Exception as e:
+                scheduler_logger.error(f"Error processing feed {feed.url}: {str(e)}")
+        scheduler_logger.info(f"Processed {len(feeds)} RSS feeds, added {new_articles_count} new articles")
 
 async def start_check_empty_summaries():
     with app.app_context():
         try:
             empty_summaries = ParsedContent.query.filter(ParsedContent.summary.is_(None)).limit(100).all()
+            processed_count = 0
             for content in empty_summaries:
-                summary = await app.ollama_api.generate("threat_intel_summary", content.content)
-                content.summary = summary
+                try:
+                    summary = await app.ollama_api.generate("threat_intel_summary", content.content)
+                    content.summary = summary
+                    processed_count += 1
+                except Exception as e:
+                    scheduler_logger.error(f"Error generating summary for content {content.id}: {str(e)}")
             db.session.commit()
-            logger.info(f"Processed {len(empty_summaries)} empty summaries")
+            scheduler_logger.info(f"Processed {processed_count} out of {len(empty_summaries)} empty summaries")
         except Exception as e:
-            logger.error(f"Error in start_check_empty_summaries: {str(e)}")
+            scheduler_logger.error(f"Error in start_check_empty_summaries: {str(e)}")
 
 def render_error_page():
     try:
