@@ -34,19 +34,12 @@ class OllamaAPI:
             system_prompt = prompt_data.get("system_prompt", "")
             full_prompt = f"System: You are a world renowned cybersecurity researcher tasked with summarizing cybersecurity blog posts and news articles:\n\nHuman: {system_prompt}\n\n Article: {article}"
 
-            # Use asyncio.wait_for to implement the timeout
-            output = await asyncio.wait_for(
-                asyncio.get_event_loop().run_in_executor(
-                    None, partial(self.llm.invoke, full_prompt)
-                ),
-                timeout=20.0,  # 20 seconds timeout
+            output = await asyncio.get_event_loop().run_in_executor(
+                None, partial(self.llm.invoke, full_prompt)
             )
 
             logger.debug(f"Generated response: {output}")
             return output
-        except asyncio.TimeoutError:
-            logger.error("Request to Ollama API timed out after 20 seconds")
-            raise Exception("Request to Ollama API timed out after 20 seconds")
         except Exception as exc:
             logger.error(f"Error occurred: {exc}")
             raise Exception(f"Error occurred: {exc}")
@@ -55,21 +48,13 @@ class OllamaAPI:
         try:
             # A simple prompt to test the connection
             test_prompt = "Hello, are you working?"
-            response = await asyncio.wait_for(
-                asyncio.get_event_loop().run_in_executor(
-                    None, partial(self.llm.invoke, test_prompt)
-                ),
-                timeout=20.0,  # 20 seconds timeout
+            response = await asyncio.get_event_loop().run_in_executor(
+                None, partial(self.llm.invoke, test_prompt)
             )
             logger.info(
                 f"Successfully connected to Ollama API at {self.base_url} and verified model {self.model}"
             )
             return True
-        except asyncio.TimeoutError:
-            logger.error(
-                f"Connection to Ollama API at {self.base_url} timed out after 20 seconds"
-            )
-            return False
         except Exception as e:
             logger.error(
                 f"Failed to connect to Ollama API at {self.base_url}: {str(e)}"
