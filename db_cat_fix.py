@@ -25,6 +25,7 @@ def create_app():
 
 def init_app(app):
     with app.app_context():
+        db.create_all()  # This will create all tables defined in your models
         hashed_count = ParsedContent.hash_existing_articles()
         logger.info(f"Hashed {hashed_count} existing articles")
 
@@ -65,4 +66,5 @@ def fix_orphaned_categories(app):
 
 if __name__ == "__main__":
     app = create_app()
+    init_app(app)  # Initialize the database
     fix_orphaned_categories(app)
