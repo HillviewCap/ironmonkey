@@ -23,10 +23,22 @@ from sqlalchemy.exc import IntegrityError
 import feedparser
 import httpx
 import asyncio
+import html
+import re
 
 from models import db, RSSFeed, ParsedContent, Category
 from jina_api import parse_content
 from logging_config import setup_logger
+
+def sanitize_html(text):
+    """Remove HTML tags and unescape HTML entities."""
+    # Unescape HTML entities
+    text = html.unescape(text)
+    # Remove HTML tags
+    text = re.sub(r'<[^>]+>', '', text)
+    # Remove extra whitespace
+    text = re.sub(r'\s+', ' ', text).strip()
+    return text
 
 # Create a separate logger for RSS manager
 logger = setup_logger('rss_manager', 'rss_manager.log')
@@ -110,10 +122,10 @@ async def fetch_and_parse_feed(feed: RSSFeed) -> int:
                                 content=parsed_content,
                                 feed_id=feed.id,
                                 url=url,
-                                title=title,
-                                description=entry.get('description', ''),
+                                title=sanitize_html(title),
+                                description=sanitize_html(entry.get('description', '')),
                                 pub_date=entry.get('published', ''),
-                                creator=entry.get('author', ''),
+                                creator=sanitize_html(entry.get('author', '')),
                                 art_hash=art_hash
                             )
                             db.session.add(new_content)
