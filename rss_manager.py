@@ -26,7 +26,10 @@ import asyncio
 
 from models import db, RSSFeed, ParsedContent, Category
 from jina_api import parse_content
-from logging_config import logger
+from logging_config import setup_logger
+
+# Create a separate logger for RSS manager
+logger = setup_logger('rss_manager', 'rss_manager.log')
 from flask import current_app
 from nlp_tagging import DiffbotClient, DatabaseHandler
 from ollama_api import OllamaAPI
