@@ -9,6 +9,7 @@ attrs==23.2.0
 beautifulsoup4==4.12.3
 bleach==6.1.0
 blinker==1.8.2
+cachetools==5.3.3
 certifi==2024.7.4
 charset-normalizer==3.3.2
 click==8.1.7
@@ -75,4 +76,3 @@ webencodings==0.5.1
 Werkzeug==3.0.3
 WTForms==3.1.2
 yarl==1.9.4
-cachetools
