@@ -329,8 +329,12 @@ def parsed_content():
     page = request.args.get("page", 1, type=int)
     per_page = request.args.get("per_page", 10, type=int)
     search_query = request.args.get("search", "")
+    feed_id = request.args.get("feed_id")
 
     query = ParsedContent.query
+
+    if feed_id:
+        query = query.filter(ParsedContent.feed_id == feed_id)
 
     if search_query:
         query = query.filter(
@@ -353,6 +357,7 @@ def parsed_content():
         per_page=per_page,
         per_page_options=PER_PAGE_OPTIONS,
         total_results=total_results,
+        feed_id=feed_id,
     )
 
 
