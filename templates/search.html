@@ -81,10 +81,10 @@
             </div>
             <div class="space-x-2">
                 {% if results.has_prev %}
-                    <a href="{{ url_for('search', page=results.prev_num, **request.args) }}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">Previous</a>
+                    <a href="{{ url_for('search', page=results.prev_num, **{k: v for k, v in request.args.items() if k != 'page'}) }}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">Previous</a>
                 {% endif %}
                 {% if results.has_next %}
-                    <a href="{{ url_for('search', page=results.next_num, **request.args) }}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">Next</a>
+                    <a href="{{ url_for('search', page=results.next_num, **{k: v for k, v in request.args.items() if k != 'page'}) }}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">Next</a>
                 {% endif %}
             </div>
         </div>
