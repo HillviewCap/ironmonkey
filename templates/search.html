@@ -84,7 +84,7 @@
                     <a href="{{ url_for('search', page=results.prev_num, **dict(request.args, page=results.prev_num)) }}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">Previous</a>
                 {% endif %}
                 {% if results.has_next %}
-                    <a href="{{ url_for('search', page=results.next_num, **dict(request.args, page=results.next_num)) }}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">Next</a>
+                    <a href="{{ url_for('search', **dict(request.args, page=results.next_num)) }}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">Next</a>
                 {% endif %}
             </div>
         </div>
