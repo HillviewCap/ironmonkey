@@ -1,8 +1,9 @@
 threat_intel_summary:
   system_prompt: |
-    You are tasked with summarizing a document into a concise 5-sentence summary. Here is the document you need to summarize:
+    You are tasked with summarizing a document into a concise summary.
 
-    To create an effective 5-sentence summary, follow these steps:
+    To create an effective summary, follow these steps:
+
     1. Carefully read the entire document to understand its main ideas, key points, and overall structure.
     2. Identify the most important information, including the main topic, key arguments, significant details, and any conclusions or implications.
     3. Organize the information you've identified in order of importance, ensuring that the most crucial points are included in your summary.
@@ -15,13 +16,10 @@ threat_intel_summary:
     - Focus on the main ideas and most important supporting details.
     - Ensure that the summary can stand alone and be understood without reference to the original document.
     - Use transition words or phrases to create a smooth flow between sentences.
+    
+    Example Summary
+    Space ISAC signs a Memorandum of Understanding with the Australian Cyber Collaboration Centre (Aus3C) to boost space cybersecurity initiatives. Aus3C is committed to building cyber capacity and securing Australia's digital landscape through collaboration and information sharing. The partnership aligns seamlessly with Space ISAC's goal of enhancing the cybersecurity of space systems through robust collaboration and information sharing. Space ISAC establishes partnerships with government agencies to facilitate collaboration to protect the security of the global space industry. Space ISAC officials, including Space ISAC executive director Erin Miller, are currently attending an Australian Space Cyber Forum. The partnership leverages advanced tools, capabilities, and expertise from both organizations, aiming to address critical challenges and foster growth within the space-cyber sector.
 
-    Once you have created your summary, present it within tags. Each sentence should be on a new line for clarity. For example:
+    Create a paragraph of your summary and remember, your goal is to create a concise yet comprehensive summary that accurately represents the main ideas and key points of the original document.
 
-    Sentence 1 of the summary.
-    Sentence 2 of the summary.
-    Sentence 3 of the summary.
-    Sentence 4 of the summary.
-    Sentence 5 of the summary.
-
-    Remember, your goal is to create a concise yet comprehensive 5-sentence summary that accurately represents the main ideas and key points of the original document.
+    Input:

@@ -23,10 +23,25 @@ from sqlalchemy.exc import IntegrityError
 import feedparser
 import httpx
 import asyncio
+import html
+import re
 
 from models import db, RSSFeed, ParsedContent, Category
 from jina_api import parse_content
-from logging_config import logger
+from logging_config import setup_logger
+
+def sanitize_html(text):
+    """Remove HTML tags and unescape HTML entities."""
+    # Unescape HTML entities
+    text = html.unescape(text)
+    # Remove HTML tags
+    text = re.sub(r'<[^>]+>', '', text)
+    # Remove extra whitespace
+    text = re.sub(r'\s+', ' ', text).strip()
+    return text
+
+# Create a separate logger for RSS manager
+logger = setup_logger('rss_manager', 'rss_manager.log')
 from flask import current_app
 from nlp_tagging import DiffbotClient, DatabaseHandler
 from ollama_api import OllamaAPI
@@ -73,8 +88,11 @@ async def fetch_and_parse_feed(feed: RSSFeed) -> int:
     try:
         if current_app.debug:
             logger.debug(f"Starting to fetch and parse feed: {feed.url}")
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+        }
         async with httpx.AsyncClient(follow_redirects=True) as client:
-            response = await client.get(feed.url, timeout=30.0)
+            response = await client.get(feed.url, timeout=30.0, headers=headers)
             response.raise_for_status()
 
             # Check if the URL has been redirected
@@ -104,10 +122,10 @@ async def fetch_and_parse_feed(feed: RSSFeed) -> int:
                                 content=parsed_content,
                                 feed_id=feed.id,
                                 url=url,
-                                title=title,
-                                description=entry.get('description', ''),
+                                title=sanitize_html(title),
+                                description=sanitize_html(entry.get('description', '')),
                                 pub_date=entry.get('published', ''),
-                                creator=entry.get('author', ''),
+                                creator=sanitize_html(entry.get('author', '')),
                                 art_hash=art_hash
                             )
                             db.session.add(new_content)
@@ -311,8 +329,17 @@ def parsed_content():
     page = request.args.get("page", 1, type=int)
     per_page = request.args.get("per_page", 10, type=int)
     search_query = request.args.get("search", "")
+    feed_id = request.args.get("feed_id")
 
     query = ParsedContent.query
+
+    if feed_id:
+        try:
+            feed_id = uuid.UUID(feed_id)
+            query = query.filter(ParsedContent.feed_id == feed_id)
+        except ValueError:
+            flash("Invalid feed ID", "error")
+            return redirect(url_for("rss_manager.manage_rss"))
 
     if search_query:
         query = query.filter(
@@ -335,6 +362,7 @@ def parsed_content():
         per_page=per_page,
         per_page_options=PER_PAGE_OPTIONS,
         total_results=total_results,
+        feed_id=feed_id,
     )
 
 
