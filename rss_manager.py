@@ -76,8 +76,11 @@ async def fetch_and_parse_feed(feed: RSSFeed) -> int:
     try:
         if current_app.debug:
             logger.debug(f"Starting to fetch and parse feed: {feed.url}")
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+        }
         async with httpx.AsyncClient(follow_redirects=True) as client:
-            response = await client.get(feed.url, timeout=30.0)
+            response = await client.get(feed.url, timeout=30.0, headers=headers)
             response.raise_for_status()
 
             # Check if the URL has been redirected
