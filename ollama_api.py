@@ -18,7 +18,7 @@ class OllamaAPI:
             raise ValueError("OLLAMA_BASE_URL must be set in the .env file")
         if not self.model:
             raise ValueError("OLLAMA_MODEL must be set in the .env file")
-        self.llm = Ollama(base_url=self.base_url, model=self.model, num_ctx=32000, num_gpu=1)
+        self.llm = Ollama(base_url=self.base_url, model=self.model, num_ctx=8200)
         self.prompts = self.load_prompts()
         logger.info(
             f"Initialized OllamaAPI with base_url: {self.base_url} and model: {self.model}"
@@ -33,7 +33,7 @@ class OllamaAPI:
         try:
             prompt_data = self.prompts.get(prompt_type, {})
             system_prompt = prompt_data.get("system_prompt", "")
-            full_prompt = f"System: You are a world renowned cybersecurity researcher tasked with summarizing cybersecurity blog posts and news articles:\n\nHuman: {system_prompt}\n\n Article: {article}"
+            full_prompt = f"Human: {system_prompt}\n\n Article: {article}"
 
             output = await asyncio.get_event_loop().run_in_executor(
                 None, partial(self.llm.invoke, full_prompt)
