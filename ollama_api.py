@@ -2,7 +2,10 @@ import os
 import yaml
 from dotenv import load_dotenv
 from langchain_community.llms import Ollama
-from logging_config import logger
+from logging_config import setup_logger
+
+# Create a separate logger for Ollama API
+logger = setup_logger('ollama_api', 'ollama_api.log')
 import asyncio
 from functools import partial
 from flask import current_app
@@ -15,14 +18,14 @@ class OllamaAPI:
         self.base_url = os.getenv("OLLAMA_BASE_URL")
         self.model = os.getenv("OLLAMA_MODEL")
         if not self.base_url:
+            logger.error("OLLAMA_BASE_URL must be set in the .env file")
             raise ValueError("OLLAMA_BASE_URL must be set in the .env file")
         if not self.model:
+            logger.error("OLLAMA_MODEL must be set in the .env file")
             raise ValueError("OLLAMA_MODEL must be set in the .env file")
         self.llm = Ollama(base_url=self.base_url, model=self.model, num_ctx=8200)
         self.prompts = self.load_prompts()
-        logger.info(
-            f"Initialized OllamaAPI with base_url: {self.base_url} and model: {self.model}"
-        )
+        logger.info(f"Initialized OllamaAPI with base_url: {self.base_url} and model: {self.model}")
 
     @staticmethod
     def load_prompts():
