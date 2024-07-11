@@ -6,9 +6,9 @@ from dotenv import load_dotenv
 load_dotenv()
 
 flask_env = os.getenv('FLASK_ENV', 'production')
-app = create_app(flask_env)
+app = create_app("production")
 
 if __name__ == "__main__":
     port = int(os.getenv('FLASK_PORT', 5000))
     debug = os.getenv('DEBUG', 'true').lower() == 'true'
-    app.run(host='0.0.0.0', port=port, debug=True)
+    app.run(host='0.0.0.0', port=port, debug=False)
