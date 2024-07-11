@@ -334,7 +334,12 @@ def parsed_content():
     query = ParsedContent.query
 
     if feed_id:
-        query = query.filter(ParsedContent.feed_id == feed_id)
+        try:
+            feed_id = uuid.UUID(feed_id)
+            query = query.filter(ParsedContent.feed_id == feed_id)
+        except ValueError:
+            flash("Invalid feed ID", "error")
+            return redirect(url_for("rss_manager.manage_rss"))
 
     if search_query:
         query = query.filter(
