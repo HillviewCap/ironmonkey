@@ -126,15 +126,14 @@ def build_search_query(search_params):
     return query
 
 
-def perform_search(search_params):
-    page = request.args.get("page", 1, type=int)
+def perform_search(search_params, page=1):
     per_page = 10
 
     query = build_search_query(search_params)
     logger.debug(f"Built search query: {query}")
 
     try:
-        paginated_results = query.paginate(page=page, per_page=per_page)
+        paginated_results = query.paginate(page=page, per_page=per_page, error_out=False)
         total_results = query.count()
         logger.info(f"Search completed. Total results: {total_results}")
 
@@ -392,9 +391,10 @@ def register_routes(app):
         elif form.validate_on_submit():
             search_params = get_search_params(form)
 
+        page = request.args.get('page', 1, type=int)
         if form.validate_on_submit() or request.method == "GET":
             logger.info(f"Performing search with params: {search_params.__dict__}")
-            results, total_results = perform_search(search_params)
+            results, total_results = perform_search(search_params, page)
             logger.info(f"Search completed. Total results: {total_results}")
             return render_template(
                 "search.html",
@@ -402,6 +402,7 @@ def register_routes(app):
                 search_params=search_params,
                 results=results,
                 total_results=total_results,
+                page=page
             )
 
         return render_template("search.html", form=form, search_params=search_params)
