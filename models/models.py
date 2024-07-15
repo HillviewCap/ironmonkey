@@ -16,10 +16,11 @@ import feedparser
 from bs4 import BeautifulSoup
 import logging_config
 from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy import Column, String, DateTime
 
 db = SQLAlchemy()
 
-__all__ = ['db', 'User', 'SearchParams', 'RSSFeed', 'Threat', 'ParsedContent', 'Category']
+__all__ = ['db', 'User', 'SearchParams', 'RSSFeed', 'Threat', 'ParsedContent', 'Category', 'AwesomeThreatIntelBlog']
 
 class SearchParams:
     def __init__(
@@ -245,3 +246,36 @@ class Category(db.Model):
             )
         else:
             raise ValueError("Unsupported category format")
+
+class AwesomeThreatIntelBlog(db.Model):
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    blog = Column(String(255), nullable=False)
+    blog_category = Column(String(100), nullable=False)
+    type = Column(String(50), nullable=False)
+    blog_link = Column(String(255), nullable=False)
+    feed_link = Column(String(255), nullable=True)
+    feed_type = Column(String(50), nullable=True)
+    last_checked = Column(DateTime, nullable=True)
+
+    @classmethod
+    def update_or_create(cls, blog, blog_category, type, blog_link, feed_link, feed_type):
+        existing = cls.query.filter_by(blog_link=blog_link).first()
+        if existing:
+            existing.blog = blog
+            existing.blog_category = blog_category
+            existing.type = type
+            existing.feed_link = feed_link
+            existing.feed_type = feed_type
+            existing.last_checked = datetime.utcnow()
+        else:
+            new_entry = cls(
+                blog=blog,
+                blog_category=blog_category,
+                type=type,
+                blog_link=blog_link,
+                feed_link=feed_link,
+                feed_type=feed_type,
+                last_checked=datetime.utcnow()
+            )
+            db.session.add(new_entry)
+        db.session.commit()
