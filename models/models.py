@@ -294,9 +294,10 @@ class AwesomeThreatIntelBlog(db.Model):
     @classmethod
     def import_from_csv(cls, csv_file_path):
         import csv
+        import os
         from flask import current_app
 
-        full_path = current_app.root_path / 'static' / csv_file_path
+        full_path = os.path.join(current_app.root_path, 'static', csv_file_path)
 
         with open(full_path, 'r', encoding='utf-8') as csvfile:
             reader = csv.DictReader(csvfile)
