@@ -3,7 +3,7 @@ import requests
 import feedparser
 import hashlib
 from flask import Flask
-from models import db, User, RSSFeed, ParsedContent, Category, Threat, SearchParams
+from models import db, User, RSSFeed, ParsedContent, Category, Threat, SearchParams, AwesomeThreatIntelBlog
 from models.diffbot_model import Base as DiffbotBase, Document, Entity, EntityMention, EntityType, EntityUri, Category as DiffbotCategory
 from config import Config
 from sqlalchemy import create_engine, text
