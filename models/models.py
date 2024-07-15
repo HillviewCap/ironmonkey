@@ -63,6 +63,8 @@ class RSSFeed(db.Model):
     category = db.Column(db.String(100), nullable=False)
     description = db.Column(db.Text, nullable=True)
     last_build_date = db.Column(db.String(100), nullable=True)
+    awesome_blog_id = db.Column(UUID(as_uuid=True), db.ForeignKey('awesome_threat_intel_blog.id'), nullable=True)
+    awesome_blog = db.relationship('AwesomeThreatIntelBlog', backref=db.backref('rss_feeds', lazy=True))
 
     @staticmethod
     def fetch_feed_info(url: str) -> Tuple[str, str, Optional[str]]:
@@ -256,6 +258,15 @@ class AwesomeThreatIntelBlog(db.Model):
     feed_link = Column(String(255), nullable=True)
     feed_type = Column(String(50), nullable=True)
     last_checked = Column(DateTime, nullable=True)
+
+    @classmethod
+    def link_with_rss_feed(cls):
+        awesome_blogs = cls.query.all()
+        for blog in awesome_blogs:
+            rss_feed = RSSFeed.query.filter_by(url=blog.feed_link).first()
+            if rss_feed:
+                rss_feed.awesome_blog = blog
+        db.session.commit()
 
     @classmethod
     def update_or_create(cls, blog, blog_category, type, blog_link, feed_link, feed_type):
