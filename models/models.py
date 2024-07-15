@@ -297,7 +297,7 @@ class AwesomeThreatIntelBlog(db.Model):
         import os
         from flask import current_app
 
-        full_path = os.path.join(current_app.root_path, 'static', csv_file_path)
+        full_path = os.path.join(current_app.root_path, 'static', 'Awesome Threat Intel Blogs - MASTER.csv')
 
         with open(full_path, 'r', encoding='utf-8') as csvfile:
             reader = csv.DictReader(csvfile)
