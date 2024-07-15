@@ -542,6 +542,7 @@ def create_app(config_name="default"):
 
         with app.app_context():
             init_db(app)
+            import_awesome_threat_intel_blogs(app)
 
         register_routes(app)
         setup_scheduler(app)
@@ -551,6 +552,14 @@ def create_app(config_name="default"):
         raise
 
     return app
+
+def import_awesome_threat_intel_blogs(app):
+    csv_file_path = 'awesome_threat_intel_blogs.csv'
+    try:
+        result = AwesomeThreatIntelBlog.import_from_csv(csv_file_path)
+        logger.info(result)
+    except Exception as e:
+        logger.error(f"Error importing Awesome Threat Intel Blogs: {str(e)}")
 
     @app.route("/tag_content", methods=["POST"])
     @login_required
