@@ -66,6 +66,10 @@ class RSSFeed(db.Model):
     
     # Relationship with ParsedContent
     parsed_contents = db.relationship('ParsedContent', back_populates='feed', cascade='all, delete-orphan')
+    
+    # Relationship with AwesomeThreatIntelBlog
+    awesome_blog_id = db.Column(UUID(as_uuid=True), db.ForeignKey('awesome_threat_intel_blog.id'), nullable=True)
+    awesome_blog = db.relationship('AwesomeThreatIntelBlog', back_populates='rss_feeds')
 
     @staticmethod
     def fetch_feed_info(url: str) -> Tuple[str, str, Optional[str]]:
@@ -259,6 +263,9 @@ class AwesomeThreatIntelBlog(db.Model):
     feed_link = Column(String(255), nullable=True)
     feed_type = Column(String(50), nullable=True)
     last_checked = Column(DateTime, nullable=True)
+
+    # Relationship with RSSFeed
+    rss_feeds = db.relationship('RSSFeed', back_populates='awesome_blog')
 
     @classmethod
     def link_with_rss_feed(cls):
