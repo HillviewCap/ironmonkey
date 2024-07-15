@@ -29,7 +29,7 @@ from apscheduler.schedulers.background import BackgroundScheduler
 import httpx
 
 from logging_config import setup_logger, logger
-from models import db, User, SearchParams, RSSFeed, ParsedContent
+from models import db, User, SearchParams, RSSFeed, ParsedContent, AwesomeThreatIntelBlog
 from models.diffbot_model import Entity, EntityMention, EntityType, EntityUri, Category
 from auth import init_auth, login, logout, register
 from config import config
