@@ -63,8 +63,9 @@ class RSSFeed(db.Model):
     category = db.Column(db.String(100), nullable=False)
     description = db.Column(db.Text, nullable=True)
     last_build_date = db.Column(db.String(100), nullable=True)
-    awesome_blog_id = db.Column(UUID(as_uuid=True), db.ForeignKey('awesome_threat_intel_blog.id'), nullable=True)
-    awesome_blog = db.relationship('AwesomeThreatIntelBlog', backref=db.backref('rss_feeds', lazy=True))
+    
+    # Relationship with ParsedContent
+    parsed_contents = db.relationship('ParsedContent', back_populates='feed', cascade='all, delete-orphan')
 
     @staticmethod
     def fetch_feed_info(url: str) -> Tuple[str, str, Optional[str]]:
