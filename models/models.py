@@ -292,7 +292,7 @@ class AwesomeThreatIntelBlog(db.Model):
             for row in reader:
                 cls.update_or_create(
                     blog=row['Blog'],
-                    blog_category=row['Category'],
+                    blog_category=row['Blog Category'],
                     type=row['Type'],
                     blog_link=row['Blog Link'],
                     feed_link=row['Feed Link'],
