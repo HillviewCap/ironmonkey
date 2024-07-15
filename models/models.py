@@ -279,3 +279,24 @@ class AwesomeThreatIntelBlog(db.Model):
             )
             db.session.add(new_entry)
         db.session.commit()
+
+    @classmethod
+    def import_from_csv(cls, csv_file_path):
+        import csv
+        from flask import current_app
+
+        full_path = current_app.root_path / 'static' / csv_file_path
+
+        with open(full_path, 'r', encoding='utf-8') as csvfile:
+            reader = csv.DictReader(csvfile)
+            for row in reader:
+                cls.update_or_create(
+                    blog=row['Blog'],
+                    blog_category=row['Category'],
+                    type=row['Type'],
+                    blog_link=row['Blog Link'],
+                    feed_link=row['Feed Link'],
+                    feed_type=row['Feed Type']
+                )
+        
+        return "CSV import completed successfully."
