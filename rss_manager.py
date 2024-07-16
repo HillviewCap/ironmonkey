@@ -263,6 +263,10 @@ async def manage_rss() -> str:
     csv_form = CSVUploadForm()
     awesome_blogs = AwesomeThreatIntelBlog.query.all()
 
+    # Get unique categories and types for filters
+    categories = sorted(set(blog.blog_category for blog in awesome_blogs if blog.blog_category))
+    types = sorted(set(blog.type for blog in awesome_blogs if blog.type))
+
     if form.validate_on_submit():
         url = form.url.data
         category = form.category.data
