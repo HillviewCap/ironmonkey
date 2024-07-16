@@ -26,7 +26,7 @@ import asyncio
 import html
 import re
 
-from models import db, RSSFeed, ParsedContent, Category
+from models import db, RSSFeed, ParsedContent, Category, AwesomeThreatIntelBlog
 from jina_api import parse_content
 from logging_config import setup_logger
 
@@ -261,6 +261,7 @@ async def manage_rss() -> str:
     """Handle RSS feed management operations."""
     form = RSSFeedForm()
     csv_form = CSVUploadForm()
+    awesome_blogs = AwesomeThreatIntelBlog.query.all()
 
     if form.validate_on_submit():
         url = form.url.data
@@ -319,7 +320,45 @@ async def manage_rss() -> str:
         csv_form=csv_form,
         feeds=feeds,
         delete_form=delete_form,
+        awesome_blogs=awesome_blogs,
     )
+
+@rss_manager.route("/add_awesome_feed/<int:blog_id>", methods=["POST"])
+@login_required
+async def add_awesome_feed(blog_id):
+    """Add an RSS feed from the Awesome Threat Intel Blog list."""
+    awesome_blog = AwesomeThreatIntelBlog.query.get_or_404(blog_id)
+    
+    if not awesome_blog.feed_link:
+        flash("This blog doesn't have an associated RSS feed.", "warning")
+        return redirect(url_for("rss_manager.manage_rss"))
+
+    existing_feed = RSSFeed.query.filter_by(url=awesome_blog.feed_link).first()
+    if existing_feed:
+        flash(f"RSS Feed with URL '{awesome_blog.feed_link}' already exists.", "warning")
+    else:
+        try:
+            title, description, last_build_date = RSSFeed.fetch_feed_info(awesome_blog.feed_link)
+            new_feed = RSSFeed(
+                url=awesome_blog.feed_link,
+                title=title if title else awesome_blog.blog,
+                category=awesome_blog.blog_category,
+                description=description if description else "Not available",
+                last_build_date=last_build_date if last_build_date else None,
+                awesome_blog_id=awesome_blog.id
+            )
+            db.session.add(new_feed)
+            db.session.commit()
+            flash("Awesome Threat Intel Blog RSS Feed added successfully!", "success")
+            logger.info(f"Awesome Threat Intel Blog RSS Feed added: {awesome_blog.feed_link}")
+
+            await fetch_and_parse_feed(new_feed)
+            flash("New feed parsed successfully!", "success")
+        except Exception as e:
+            logger.error(f"Error adding or parsing Awesome Threat Intel Blog RSS Feed: {str(e)}")
+            flash(f"Error adding or parsing RSS Feed: {str(e)}", "error")
+
+    return redirect(url_for("rss_manager.manage_rss"))
 
 
 @rss_manager.route("/parsed_content")
