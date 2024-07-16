@@ -53,8 +53,143 @@
         </div>
     </div>
 
+    <h2 class="text-2xl font-bold mb-4">Awesome Threat Intel Blogs</h2>
+    <button id="toggleAwesomeBlogs" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mb-4">
+        Show Awesome Threat Intel Blogs
+    </button>
+    <div id="awesomeBlogsContainer" class="hidden">
+        <div class="mb-4">
+            <input type="text" id="blogSearch" placeholder="Search blogs..." class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+            <select id="categoryFilter" class="mt-2 shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                <option value="">All Categories</option>
+                {% for category in categories %}
+                    <option value="{{ category }}">{{ category }}</option>
+                {% endfor %}
+            </select>
+            <select id="typeFilter" class="mt-2 shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                <option value="">All Types</option>
+                {% for type in types %}
+                    <option value="{{ type }}">{{ type }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div id="awesomeBlogsList" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
+        {% for blog in awesome_blogs %}
+            <div class="blog-item bg-white shadow-md rounded px-6 py-4 flex flex-col h-full" data-category="{{ blog.blog_category }}" data-type="{{ blog.type }}">
+                <div class="flex-grow">
+                    <h3 class="text-lg font-semibold mb-2">{{ blog.blog }}</h3>
+                    <p class="text-sm text-gray-600 mb-2">Category: {{ blog.blog_category }}</p>
+                    <p class="text-sm text-gray-500 mb-2">Type: {{ blog.type }}</p>
+                    <a href="{{ blog.blog_link }}" target="_blank" class="text-blue-500 hover:text-blue-700 break-all">Blog Link</a>
+                    {% if blog.feed_link %}
+                        <p class="text-sm text-gray-500 mt-2">Feed Type: {{ blog.feed_type }}</p>
+                        <a href="{{ blog.feed_link }}" target="_blank" class="text-blue-500 hover:text-blue-700 break-all">Feed Link</a>
+                    {% endif %}
+                </div>
+                <div class="mt-4">
+                    {% if blog.feed_link %}
+                        {% if blog.is_in_rss_feeds %}
+                            <p class="text-sm text-green-500 font-bold">Already in RSS Feeds</p>
+                        {% else %}
+                            <button onclick="addAwesomeFeed('{{ blog.id|string }}')" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline add-feed-btn">
+                                Add Feed
+                            </button>
+                        {% endif %}
+                    {% else %}
+                        <p class="text-sm text-gray-500">No RSS feed available</p>
+                    {% endif %}
+                </div>
+            </div>
+        {% endfor %}
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const blogSearch = document.getElementById('blogSearch');
+            const categoryFilter = document.getElementById('categoryFilter');
+            const typeFilter = document.getElementById('typeFilter');
+            const blogItems = document.querySelectorAll('.blog-item');
+            const toggleButton = document.getElementById('toggleAwesomeBlogs');
+            const awesomeBlogsContainer = document.getElementById('awesomeBlogsContainer');
+
+            function filterBlogs() {
+                const searchTerm = blogSearch.value.toLowerCase();
+                const selectedCategory = categoryFilter.value;
+                const selectedType = typeFilter.value;
+
+                blogItems.forEach(item => {
+                    const title = item.querySelector('h3').textContent.toLowerCase();
+                    const category = item.dataset.category;
+                    const type = item.dataset.type;
+
+                    const matchesSearch = title.includes(searchTerm);
+                    const matchesCategory = selectedCategory === '' || category === selectedCategory;
+                    const matchesType = selectedType === '' || type === selectedType;
+
+                    if (matchesSearch && matchesCategory && matchesType) {
+                        item.style.display = '';
+                    } else {
+                        item.style.display = 'none';
+                    }
+                });
+            }
+
+            blogSearch.addEventListener('input', filterBlogs);
+            categoryFilter.addEventListener('change', filterBlogs);
+            typeFilter.addEventListener('change', filterBlogs);
+
+            toggleButton.addEventListener('click', function() {
+                if (awesomeBlogsContainer.classList.contains('hidden')) {
+                    awesomeBlogsContainer.classList.remove('hidden');
+                    toggleButton.textContent = 'Hide Awesome Threat Intel Blogs';
+                } else {
+                    awesomeBlogsContainer.classList.add('hidden');
+                    toggleButton.textContent = 'Show Awesome Threat Intel Blogs';
+                }
+            });
+        });
+    </script>
+    <script>
+        function addAwesomeFeed(blogId) {
+            fetch(`/add_awesome_feed/${blogId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token() }}'
+                },
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    alert(data.message);
+                    // Update the button to show it's already added
+                    const button = document.querySelector(`button[onclick="addAwesomeFeed('${blogId}')"]`);
+                    button.textContent = 'Added';
+                    button.disabled = true;
+                    button.classList.remove('bg-green-500', 'hover:bg-green-700');
+                    button.classList.add('bg-gray-500', 'cursor-not-allowed');
+                } else if (data.status === 'exists') {
+                    alert(data.message);
+                    // Update the button to show it's already added
+                    const button = document.querySelector(`button[onclick="addAwesomeFeed('${blogId}')"]`);
+                    button.textContent = 'Already Added';
+                    button.disabled = true;
+                    button.classList.remove('bg-green-500', 'hover:bg-green-700');
+                    button.classList.add('bg-gray-500', 'cursor-not-allowed');
+                } else {
+                    alert(data.message);
+                }
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+                alert('An error occurred while adding the feed.');
+            });
+        }
+    </script>
+
     <h2 class="text-2xl font-bold mb-4">Existing RSS Feeds</h2>
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+    <div id="existingFeedsContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {% for feed in feeds %}
             <div class="bg-white shadow-md rounded px-6 py-4 flex flex-col h-full">
                 <div class="flex-grow">

@@ -4,7 +4,7 @@ import os
 import uuid
 import os
 import hashlib
-from flask import Blueprint, render_template, redirect, url_for, flash, request, current_app
+from flask import Blueprint, render_template, redirect, url_for, flash, request, current_app, jsonify
 from flask_login import login_required
 from datetime import datetime
 from models import db, ParsedContent
@@ -26,7 +26,7 @@ import asyncio
 import html
 import re
 
-from models import db, RSSFeed, ParsedContent, Category
+from models import db, RSSFeed, ParsedContent, Category, AwesomeThreatIntelBlog
 from jina_api import parse_content
 from logging_config import setup_logger
 
@@ -261,6 +261,19 @@ async def manage_rss() -> str:
     """Handle RSS feed management operations."""
     form = RSSFeedForm()
     csv_form = CSVUploadForm()
+    awesome_blogs = AwesomeThreatIntelBlog.query.all()
+
+    # Get unique categories and types for filters
+    categories = sorted(set(blog.blog_category for blog in awesome_blogs if blog.blog_category))
+    types = sorted(set(blog.type for blog in awesome_blogs if blog.type))
+
+    # Get all RSS feeds
+    rss_feeds = RSSFeed.query.all()
+    rss_feed_urls = {feed.url for feed in rss_feeds}
+
+    # Mark awesome blogs that are already in RSS feeds
+    for blog in awesome_blogs:
+        blog.is_in_rss_feeds = blog.feed_link in rss_feed_urls
 
     if form.validate_on_submit():
         url = form.url.data
@@ -319,7 +332,43 @@ async def manage_rss() -> str:
         csv_form=csv_form,
         feeds=feeds,
         delete_form=delete_form,
+        awesome_blogs=awesome_blogs,
+        categories=categories,
+        types=types,
     )
+
+@rss_manager.route("/add_awesome_feed/<uuid:blog_id>", methods=["POST"])
+@login_required
+async def add_awesome_feed(blog_id):
+    """Add an RSS feed from the Awesome Threat Intel Blog list."""
+    awesome_blog = AwesomeThreatIntelBlog.query.get_or_404(blog_id)
+    
+    if not awesome_blog.feed_link:
+        return jsonify({"status": "error", "message": "This blog doesn't have an associated RSS feed."}), 400
+
+    existing_feed = RSSFeed.query.filter_by(url=awesome_blog.feed_link).first()
+    if existing_feed:
+        return jsonify({"status": "exists", "message": f"RSS Feed with URL '{awesome_blog.feed_link}' already exists."}), 200
+
+    try:
+        title, description, last_build_date = RSSFeed.fetch_feed_info(awesome_blog.feed_link)
+        new_feed = RSSFeed(
+            url=awesome_blog.feed_link,
+            title=title if title else awesome_blog.blog,
+            category=awesome_blog.blog_category,
+            description=description if description else "Not available",
+            last_build_date=last_build_date if last_build_date else None,
+            awesome_blog_id=awesome_blog.id
+        )
+        db.session.add(new_feed)
+        db.session.commit()
+        logger.info(f"Awesome Threat Intel Blog RSS Feed added: {awesome_blog.feed_link}")
+
+        await fetch_and_parse_feed(new_feed)
+        return jsonify({"status": "success", "message": "RSS Feed added and parsed successfully!"}), 200
+    except Exception as e:
+        logger.error(f"Error adding or parsing Awesome Threat Intel Blog RSS Feed: {str(e)}")
+        return jsonify({"status": "error", "message": f"Error adding or parsing RSS Feed: {str(e)}"}), 500
 
 
 @rss_manager.route("/parsed_content")

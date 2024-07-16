@@ -16,10 +16,11 @@ import feedparser
 from bs4 import BeautifulSoup
 import logging_config
 from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy import Column, String, DateTime
 
 db = SQLAlchemy()
 
-__all__ = ['db', 'User', 'SearchParams', 'RSSFeed', 'Threat', 'ParsedContent', 'Category']
+__all__ = ['db', 'User', 'SearchParams', 'RSSFeed', 'Threat', 'ParsedContent', 'Category', 'AwesomeThreatIntelBlog']
 
 class SearchParams:
     def __init__(
@@ -62,6 +63,18 @@ class RSSFeed(db.Model):
     category = db.Column(db.String(100), nullable=False)
     description = db.Column(db.Text, nullable=True)
     last_build_date = db.Column(db.String(100), nullable=True)
+    
+    # Relationship with ParsedContent
+    parsed_items = db.relationship('ParsedContent', back_populates='feed', cascade='all, delete-orphan')
+    
+    # Relationship with AwesomeThreatIntelBlog
+    awesome_blog_id = db.Column(UUID(as_uuid=True), db.ForeignKey('awesome_threat_intel_blog.id'), nullable=True)
+    awesome_blog = db.relationship('AwesomeThreatIntelBlog', back_populates='rss_feeds')
+
+    def __init__(self, **kwargs):
+        super(RSSFeed, self).__init__(**kwargs)
+        if not self.id:
+            self.id = uuid4()
 
     @staticmethod
     def fetch_feed_info(url: str) -> Tuple[str, str, Optional[str]]:
@@ -187,7 +200,7 @@ class ParsedContent(db.Model):
     feed_id = db.Column(
         UUID(as_uuid=True), db.ForeignKey("rss_feed.id"), nullable=False
     )
-    feed = db.relationship("RSSFeed", backref=db.backref("parsed_contents", lazy=True))
+    feed = db.relationship("RSSFeed", back_populates="parsed_items")
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     pub_date = db.Column(db.String(100), nullable=True)
     creator = db.Column(db.String(255), nullable=True)
@@ -245,3 +258,70 @@ class Category(db.Model):
             )
         else:
             raise ValueError("Unsupported category format")
+
+class AwesomeThreatIntelBlog(db.Model):
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    blog = Column(String(255), nullable=False)
+    blog_category = Column(String(100), nullable=False)
+    type = Column(String(50), nullable=False)
+    blog_link = Column(String(255), nullable=False)
+    feed_link = Column(String(255), nullable=True)
+    feed_type = Column(String(50), nullable=True)
+    last_checked = Column(DateTime, nullable=True)
+
+    # Relationship with RSSFeed
+    rss_feeds = db.relationship('RSSFeed', back_populates='awesome_blog')
+
+    @classmethod
+    def link_with_rss_feed(cls):
+        awesome_blogs = cls.query.all()
+        for blog in awesome_blogs:
+            rss_feed = RSSFeed.query.filter_by(url=blog.feed_link).first()
+            if rss_feed:
+                rss_feed.awesome_blog = blog
+        db.session.commit()
+
+    @classmethod
+    def update_or_create(cls, blog, blog_category, type, blog_link, feed_link, feed_type):
+        existing = cls.query.filter_by(blog_link=blog_link).first()
+        if existing:
+            existing.blog = blog
+            existing.blog_category = blog_category
+            existing.type = type
+            existing.feed_link = feed_link
+            existing.feed_type = feed_type
+            existing.last_checked = datetime.utcnow()
+        else:
+            new_entry = cls(
+                blog=blog,
+                blog_category=blog_category,
+                type=type,
+                blog_link=blog_link,
+                feed_link=feed_link,
+                feed_type=feed_type,
+                last_checked=datetime.utcnow()
+            )
+            db.session.add(new_entry)
+        db.session.commit()
+
+    @classmethod
+    def import_from_csv(cls, csv_file_path):
+        import csv
+        import os
+        from flask import current_app
+
+        full_path = os.path.join(current_app.root_path, 'static', 'Awesome Threat Intel Blogs - MASTER.csv')
+
+        with open(full_path, 'r', encoding='utf-8') as csvfile:
+            reader = csv.DictReader(csvfile)
+            for row in reader:
+                cls.update_or_create(
+                    blog=row['Blog'],
+                    blog_category=row['Blog Category'],
+                    type=row['Type'],
+                    blog_link=row['Blog Link'],
+                    feed_link=row['Feed Link'],
+                    feed_type=row['Feed Type']
+                )
+        
+        return "CSV import completed successfully."
