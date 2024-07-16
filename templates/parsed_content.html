@@ -28,21 +28,18 @@
         const grid = new gridjs.Grid({
             columns: [
                 { id: 'title', name: 'Title' },
+                { id: 'summary', name: 'Summary' },
                 { 
                     id: 'url', 
                     name: 'URL',
                     formatter: (cell) => gridjs.html(`<a href="${cell}" target="_blank" class="text-blue-500 hover:underline">${cell}</a>`)
                 },
                 { id: 'pub_date', name: 'Published Date' },
-                { id: 'summary', name: 'Summary' },
                 {
                     id: 'actions',
                     name: 'Actions',
                     formatter: (_, row) => gridjs.html(`
-                        <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-2 rounded tag-content-btn" data-post-id="${row.cells[4].data}">
-                            Tag Content
-                        </button>
-                        <button class="bg-green-500 hover:bg-green-700 text-white font-bold py-1 px-2 rounded ml-2 summarize-btn" data-post-id="${row.cells[4].data}">
+                        <button class="bg-green-500 hover:bg-green-700 text-white font-bold py-1 px-2 rounded summarize-btn" data-post-id="${row.cells[4].data}">
                             Summarize
                         </button>
                     `)
