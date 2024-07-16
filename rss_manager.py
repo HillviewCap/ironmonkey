@@ -340,35 +340,31 @@ async def add_awesome_feed(blog_id):
     awesome_blog = AwesomeThreatIntelBlog.query.get_or_404(blog_id)
     
     if not awesome_blog.feed_link:
-        flash("This blog doesn't have an associated RSS feed.", "warning")
-        return redirect(url_for("rss_manager.manage_rss"))
+        return jsonify({"status": "error", "message": "This blog doesn't have an associated RSS feed."}), 400
 
     existing_feed = RSSFeed.query.filter_by(url=awesome_blog.feed_link).first()
     if existing_feed:
-        flash(f"RSS Feed with URL '{awesome_blog.feed_link}' already exists.", "warning")
-    else:
-        try:
-            title, description, last_build_date = RSSFeed.fetch_feed_info(awesome_blog.feed_link)
-            new_feed = RSSFeed(
-                url=awesome_blog.feed_link,
-                title=title if title else awesome_blog.blog,
-                category=awesome_blog.blog_category,
-                description=description if description else "Not available",
-                last_build_date=last_build_date if last_build_date else None,
-                awesome_blog_id=awesome_blog.id
-            )
-            db.session.add(new_feed)
-            db.session.commit()
-            flash("Awesome Threat Intel Blog RSS Feed added successfully!", "success")
-            logger.info(f"Awesome Threat Intel Blog RSS Feed added: {awesome_blog.feed_link}")
+        return jsonify({"status": "exists", "message": f"RSS Feed with URL '{awesome_blog.feed_link}' already exists."}), 200
 
-            await fetch_and_parse_feed(new_feed)
-            flash("New feed parsed successfully!", "success")
-        except Exception as e:
-            logger.error(f"Error adding or parsing Awesome Threat Intel Blog RSS Feed: {str(e)}")
-            flash(f"Error adding or parsing RSS Feed: {str(e)}", "error")
+    try:
+        title, description, last_build_date = RSSFeed.fetch_feed_info(awesome_blog.feed_link)
+        new_feed = RSSFeed(
+            url=awesome_blog.feed_link,
+            title=title if title else awesome_blog.blog,
+            category=awesome_blog.blog_category,
+            description=description if description else "Not available",
+            last_build_date=last_build_date if last_build_date else None,
+            awesome_blog_id=awesome_blog.id
+        )
+        db.session.add(new_feed)
+        db.session.commit()
+        logger.info(f"Awesome Threat Intel Blog RSS Feed added: {awesome_blog.feed_link}")
 
-    return redirect(url_for("rss_manager.manage_rss"))
+        await fetch_and_parse_feed(new_feed)
+        return jsonify({"status": "success", "message": "RSS Feed added and parsed successfully!"}), 200
+    except Exception as e:
+        logger.error(f"Error adding or parsing Awesome Threat Intel Blog RSS Feed: {str(e)}")
+        return jsonify({"status": "error", "message": f"Error adding or parsing RSS Feed: {str(e)}"}), 500
 
 
 @rss_manager.route("/parsed_content")
