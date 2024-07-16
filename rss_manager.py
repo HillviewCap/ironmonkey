@@ -118,13 +118,21 @@ async def fetch_and_parse_feed(feed: RSSFeed) -> int:
                             logger.debug(f"New content found: {url}")
                         parsed_content = await parse_content(url)
                         if parsed_content is not None:
+                            pub_date = entry.get('published', '')
+                            if pub_date:
+                                try:
+                                    pub_date = datetime.strptime(pub_date, '%a, %d %b %Y %H:%M:%S %z')
+                                    pub_date = pub_date.strftime('%Y-%m-%d %H:%M:%S')
+                                except ValueError:
+                                    logger.warning(f"Could not parse date: {pub_date}. Using original string.")
+                            
                             new_content = ParsedContent(
                                 content=parsed_content,
                                 feed_id=feed.id,
                                 url=url,
                                 title=sanitize_html(title),
                                 description=sanitize_html(entry.get('description', '')),
-                                pub_date=entry.get('published', ''),
+                                pub_date=pub_date,
                                 creator=sanitize_html(entry.get('author', '')),
                                 art_hash=art_hash
                             )
