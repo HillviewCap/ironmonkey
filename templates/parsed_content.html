@@ -36,8 +36,11 @@
                 { 
                     id: 'url', 
                     name: 'URL',
-                    formatter: (cell) => gridjs.html(`<a href="${cell}" target="_blank" class="text-blue-500 hover:underline">Source</a>`),
-                    width: '80px'
+                    formatter: (cell) => {
+                        const truncatedCell = cell.length > 500 ? cell.substring(0, 500) + '...' : cell;
+                        return gridjs.html(`<a href="${cell}" target="_blank" class="text-blue-500 hover:underline" title="${cell}">Source</a>`);
+                    },
+                    width: '100px'
                 },
                 { id: 'pub_date', name: 'Published Date' },
                 {
