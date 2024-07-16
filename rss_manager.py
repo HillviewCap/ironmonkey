@@ -267,9 +267,13 @@ async def manage_rss() -> str:
     categories = sorted(set(blog.blog_category for blog in awesome_blogs if blog.blog_category))
     types = sorted(set(blog.type for blog in awesome_blogs if blog.type))
 
-    # Get unique categories and types for filters
-    categories = sorted(set(blog.blog_category for blog in awesome_blogs if blog.blog_category))
-    types = sorted(set(blog.type for blog in awesome_blogs if blog.type))
+    # Get all RSS feeds
+    rss_feeds = RSSFeed.query.all()
+    rss_feed_urls = {feed.url for feed in rss_feeds}
+
+    # Mark awesome blogs that are already in RSS feeds
+    for blog in awesome_blogs:
+        blog.is_in_rss_feeds = blog.feed_link in rss_feed_urls
 
     if form.validate_on_submit():
         url = form.url.data
