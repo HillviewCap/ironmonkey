@@ -414,6 +414,51 @@ def parsed_content():
         feed_id=feed_id,
     )
 
+@rss_manager.route("/parsed_content_data")
+@login_required
+def parsed_content_data():
+    """Serve parsed content data as JSON for Grid.js."""
+    page = request.args.get("page", 1, type=int)
+    per_page = request.args.get("per_page", 10, type=int)
+    search_query = request.args.get("search", "")
+    feed_id = request.args.get("feed_id")
+
+    query = ParsedContent.query
+
+    if feed_id:
+        try:
+            feed_id = uuid.UUID(feed_id)
+            query = query.filter(ParsedContent.feed_id == feed_id)
+        except ValueError:
+            return jsonify({"error": "Invalid feed ID"}), 400
+
+    if search_query:
+        query = query.filter(
+            (ParsedContent.content.ilike(f"%{search_query}%"))
+            | (ParsedContent.url.ilike(f"%{search_query}%"))
+            | (ParsedContent.title.ilike(f"%{search_query}%"))
+            | (ParsedContent.description.ilike(f"%{search_query}%"))
+        )
+
+    total = query.count()
+    query = query.order_by(ParsedContent.created_at.desc())
+    posts = query.paginate(page=page, per_page=per_page, error_out=False).items
+
+    data = [
+        {
+            "id": str(post.id),
+            "title": post.title,
+            "url": post.url,
+            "description": post.description,
+            "pub_date": post.pub_date.isoformat() if post.pub_date else None,
+            "creator": post.creator,
+            "summary": post.summary
+        }
+        for post in posts
+    ]
+
+    return jsonify({"data": data, "total": total})
+
 
 @rss_manager.route("/tag_content/<uuid:post_id>", methods=["POST"])
 @login_required
