@@ -65,7 +65,7 @@ class RSSFeed(db.Model):
     last_build_date = db.Column(db.String(100), nullable=True)
     
     # Relationship with ParsedContent
-    parsed_contents = db.relationship('ParsedContent', back_populates='feed', cascade='all, delete-orphan')
+    parsed_items = db.relationship('ParsedContent', back_populates='feed', cascade='all, delete-orphan')
     
     # Relationship with AwesomeThreatIntelBlog
     awesome_blog_id = db.Column(UUID(as_uuid=True), db.ForeignKey('awesome_threat_intel_blog.id'), nullable=True)
@@ -195,7 +195,7 @@ class ParsedContent(db.Model):
     feed_id = db.Column(
         UUID(as_uuid=True), db.ForeignKey("rss_feed.id"), nullable=False
     )
-    feed = db.relationship("RSSFeed", backref=db.backref("parsed_contents", lazy=True))
+    feed = db.relationship("RSSFeed", back_populates="parsed_items")
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     pub_date = db.Column(db.String(100), nullable=True)
     creator = db.Column(db.String(255), nullable=True)
