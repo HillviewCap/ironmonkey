@@ -47,7 +47,7 @@
             ],
             server: {
                 url: '{{ url_for("rss_manager.parsed_content_data") }}',
-                then: data => data.data.map(post => [post.title, post.url, post.pub_date, post.summary, post.id]),
+                then: data => data.data.map(post => [post.title, post.summary, post.url, post.pub_date, post.id]),
                 total: data => data.total
             },
             search: true,
