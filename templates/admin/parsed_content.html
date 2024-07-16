@@ -44,7 +44,11 @@
     document.addEventListener('DOMContentLoaded', function() {
         new gridjs.Grid({
             columns: [
-                { id: 'title', name: 'Title' },
+                { 
+                    id: 'title', 
+                    name: 'Title',
+                    formatter: (cell, row) => gridjs.html(`<a href="/view/${row.cells[4].data}" class="text-blue-500 hover:underline">${cell}</a>`)
+                },
                 { 
                     id: 'url', 
                     name: 'URL',
