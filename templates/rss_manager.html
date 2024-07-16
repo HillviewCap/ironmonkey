@@ -54,22 +54,26 @@
     </div>
 
     <h2 class="text-2xl font-bold mb-4">Awesome Threat Intel Blogs</h2>
-    <div class="mb-4">
-        <input type="text" id="blogSearch" placeholder="Search blogs..." class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-        <select id="categoryFilter" class="mt-2 shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-            <option value="">All Categories</option>
-            {% for category in categories %}
-                <option value="{{ category }}">{{ category }}</option>
-            {% endfor %}
-        </select>
-        <select id="typeFilter" class="mt-2 shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-            <option value="">All Types</option>
-            {% for type in types %}
-                <option value="{{ type }}">{{ type }}</option>
-            {% endfor %}
-        </select>
-    </div>
-    <div id="awesomeBlogsList" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
+    <button id="toggleAwesomeBlogs" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mb-4">
+        Show Awesome Threat Intel Blogs
+    </button>
+    <div id="awesomeBlogsContainer" class="hidden">
+        <div class="mb-4">
+            <input type="text" id="blogSearch" placeholder="Search blogs..." class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+            <select id="categoryFilter" class="mt-2 shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                <option value="">All Categories</option>
+                {% for category in categories %}
+                    <option value="{{ category }}">{{ category }}</option>
+                {% endfor %}
+            </select>
+            <select id="typeFilter" class="mt-2 shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                <option value="">All Types</option>
+                {% for type in types %}
+                    <option value="{{ type }}">{{ type }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div id="awesomeBlogsList" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
         {% for blog in awesome_blogs %}
             <div class="blog-item bg-white shadow-md rounded px-6 py-4 flex flex-col h-full" data-category="{{ blog.blog_category }}" data-type="{{ blog.type }}">
                 <div class="flex-grow">
@@ -104,6 +108,8 @@
             const categoryFilter = document.getElementById('categoryFilter');
             const typeFilter = document.getElementById('typeFilter');
             const blogItems = document.querySelectorAll('.blog-item');
+            const toggleButton = document.getElementById('toggleAwesomeBlogs');
+            const awesomeBlogsContainer = document.getElementById('awesomeBlogsContainer');
 
             function filterBlogs() {
                 const searchTerm = blogSearch.value.toLowerCase();
@@ -130,6 +136,16 @@
             blogSearch.addEventListener('input', filterBlogs);
             categoryFilter.addEventListener('change', filterBlogs);
             typeFilter.addEventListener('change', filterBlogs);
+
+            toggleButton.addEventListener('click', function() {
+                if (awesomeBlogsContainer.classList.contains('hidden')) {
+                    awesomeBlogsContainer.classList.remove('hidden');
+                    toggleButton.textContent = 'Hide Awesome Threat Intel Blogs';
+                } else {
+                    awesomeBlogsContainer.classList.add('hidden');
+                    toggleButton.textContent = 'Show Awesome Threat Intel Blogs';
+                }
+            });
         });
     </script>
 
