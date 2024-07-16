@@ -333,7 +333,7 @@ async def manage_rss() -> str:
         types=types,
     )
 
-@rss_manager.route("/add_awesome_feed/<int:blog_id>", methods=["POST"])
+@rss_manager.route("/add_awesome_feed/<uuid:blog_id>", methods=["POST"])
 @login_required
 async def add_awesome_feed(blog_id):
     """Add an RSS feed from the Awesome Threat Intel Blog list."""
