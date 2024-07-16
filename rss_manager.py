@@ -267,6 +267,10 @@ async def manage_rss() -> str:
     categories = sorted(set(blog.blog_category for blog in awesome_blogs if blog.blog_category))
     types = sorted(set(blog.type for blog in awesome_blogs if blog.type))
 
+    # Get unique categories and types for filters
+    categories = sorted(set(blog.blog_category for blog in awesome_blogs if blog.blog_category))
+    types = sorted(set(blog.type for blog in awesome_blogs if blog.type))
+
     if form.validate_on_submit():
         url = form.url.data
         category = form.category.data
@@ -325,6 +329,8 @@ async def manage_rss() -> str:
         feeds=feeds,
         delete_form=delete_form,
         awesome_blogs=awesome_blogs,
+        categories=categories,
+        types=types,
     )
 
 @rss_manager.route("/add_awesome_feed/<int:blog_id>", methods=["POST"])
