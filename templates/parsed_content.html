@@ -36,12 +36,13 @@
                     id: 'summary', 
                     name: 'Summary', 
                     width: '300px',
-                    formatter: (cell) => cell.length > 500 ? cell.substring(0, 500) + '...' : cell
+                    formatter: (cell) => cell && cell.length > 500 ? cell.substring(0, 500) + '...' : cell
                 },
                 { 
                     id: 'url', 
                     name: 'URL',
                     formatter: (cell) => {
+                        if (!cell) return '';
                         const truncatedCell = cell.length > 500 ? cell.substring(0, 500) + '...' : cell;
                         return gridjs.html(`<a href="${cell}" target="_blank" class="text-blue-500 hover:underline" title="${cell}">Source</a>`);
                     },
@@ -60,7 +61,13 @@
             ],
             server: {
                 url: '{{ url_for("rss_manager.parsed_content_data") }}',
-                then: data => data.data.map(post => [post.title, post.summary, post.url, post.pub_date, post.id]),
+                then: data => data.data.map(post => [
+                    post.title || '',
+                    post.summary || '',
+                    post.url || '',
+                    post.pub_date || '',
+                    post.id || ''
+                ]),
                 total: data => data.total
             },
             search: true,
