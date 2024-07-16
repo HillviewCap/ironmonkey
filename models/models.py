@@ -71,6 +71,11 @@ class RSSFeed(db.Model):
     awesome_blog_id = db.Column(UUID(as_uuid=True), db.ForeignKey('awesome_threat_intel_blog.id'), nullable=True)
     awesome_blog = db.relationship('AwesomeThreatIntelBlog', back_populates='rss_feeds')
 
+    def __init__(self, **kwargs):
+        super(RSSFeed, self).__init__(**kwargs)
+        if not self.id:
+            self.id = uuid4()
+
     @staticmethod
     def fetch_feed_info(url: str) -> Tuple[str, str, Optional[str]]:
         """

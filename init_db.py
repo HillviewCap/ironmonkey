@@ -49,6 +49,14 @@ def init_db(app=None):
             elif columns["art_hash"] != "VARCHAR(64)":
                 connection.execute(text("ALTER TABLE parsed_content DROP COLUMN art_hash"))
                 connection.execute(text("ALTER TABLE parsed_content ADD COLUMN art_hash VARCHAR(64)"))
+            
+            # Add the awesome_blog_id column to RSSFeed if it doesn't exist
+            result = connection.execute(
+                text("PRAGMA table_info(rss_feed)")
+            )
+            columns = {row[1]: row[2] for row in result.fetchall()}
+            if "awesome_blog_id" not in columns:
+                connection.execute(text("ALTER TABLE rss_feed ADD COLUMN awesome_blog_id VARCHAR(36)"))
         
         print(f"All database tables created and updated successfully in {app.instance_path}")
 
