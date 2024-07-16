@@ -88,12 +88,9 @@
                 </div>
                 <div class="mt-4">
                     {% if blog.feed_link %}
-                        <form action="{{ url_for('rss_manager.add_awesome_feed', blog_id=blog.id|string) }}" method="POST" class="inline">
-                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                            <button type="submit" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
-                                Add Feed
-                            </button>
-                        </form>
+                        <button onclick="addAwesomeFeed('{{ blog.id|string }}')" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline add-feed-btn">
+                            Add Feed
+                        </button>
                     {% else %}
                         <p class="text-sm text-gray-500">No RSS feed available</p>
                     {% endif %}
@@ -147,6 +144,43 @@
                 }
             });
         });
+    </script>
+    <script>
+        function addAwesomeFeed(blogId) {
+            fetch(`/add_awesome_feed/${blogId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token() }}'
+                },
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    alert(data.message);
+                    // Update the button to show it's already added
+                    const button = document.querySelector(`button[onclick="addAwesomeFeed('${blogId}')"]`);
+                    button.textContent = 'Added';
+                    button.disabled = true;
+                    button.classList.remove('bg-green-500', 'hover:bg-green-700');
+                    button.classList.add('bg-gray-500', 'cursor-not-allowed');
+                } else if (data.status === 'exists') {
+                    alert(data.message);
+                    // Update the button to show it's already added
+                    const button = document.querySelector(`button[onclick="addAwesomeFeed('${blogId}')"]`);
+                    button.textContent = 'Already Added';
+                    button.disabled = true;
+                    button.classList.remove('bg-green-500', 'hover:bg-green-700');
+                    button.classList.add('bg-gray-500', 'cursor-not-allowed');
+                } else {
+                    alert(data.message);
+                }
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+                alert('An error occurred while adding the feed.');
+            });
+        }
     </script>
 
     <h2 class="text-2xl font-bold mb-4">Existing RSS Feeds</h2>
