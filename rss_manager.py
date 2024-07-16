@@ -6,7 +6,7 @@ import os
 import hashlib
 from flask import Blueprint, render_template, redirect, url_for, flash, request, current_app, jsonify
 from flask_login import login_required
-from datetime import datetime
+from datetime import datetime, date
 from models import db, ParsedContent
 from nlp_tagging import DiffbotClient, DatabaseHandler
 from nlp_tagging import DiffbotClient, DatabaseHandler
@@ -450,7 +450,7 @@ def parsed_content_data():
             "title": post.title,
             "url": post.url,
             "description": post.description,
-            "pub_date": post.pub_date.isoformat() if post.pub_date else None,
+            "pub_date": post.pub_date.isoformat() if isinstance(post.pub_date, datetime) else post.pub_date,
             "creator": post.creator,
             "summary": post.summary
         }
