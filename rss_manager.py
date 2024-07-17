@@ -45,6 +45,7 @@ logger = setup_logger('rss_manager', 'rss_manager.log')
 from flask import current_app
 from nlp_tagging import DiffbotClient, DatabaseHandler
 from ollama_api import OllamaAPI
+from summary_enhancer import SummaryEnhancer
 
 rss_manager = Blueprint("rss_manager", __name__)
 csrf = CSRFProtect()
@@ -524,13 +525,10 @@ async def summarize_content(post_id):
             flash("Content not found", "error")
             return redirect(url_for("rss_manager.parsed_content"))
 
-        ollama_api = current_app.ollama_api
+        summary_enhancer = SummaryEnhancer()
+        success = await summary_enhancer.process_single_record(post)
         
-        summary = await ollama_api.generate("threat_intel_summary", post.content)
-        
-        if summary:
-            post.summary = summary
-            db.session.commit()
+        if success:
             flash("Content summarized successfully!", "success")
         else:
             flash("Failed to summarize content", "error")
