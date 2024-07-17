@@ -94,12 +94,13 @@ class SummaryEnhancer:
                 logger.warning(f"Empty summary generated for record {document.id}")
                 return False
 
-            with db.session.begin():
-                document.summary = summary.strip()
-                db.session.commit()
-                logger.info(f"Updated summary for record {document.id}")
+            document.summary = summary.strip()
+            db.session.add(document)
+            db.session.commit()
+            logger.info(f"Updated summary for record {document.id}")
             return True
 
         except Exception as e:
             logger.error(f"Error processing record {document.id}: {str(e)}", exc_info=True)
+            db.session.rollback()
             return False
