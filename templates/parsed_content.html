@@ -80,20 +80,15 @@
             }
         }).render(document.getElementById("parsed-content-table"));
 
-        grid.on('rendered', () => {
-            document.querySelectorAll('.tag-content-btn').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    const postId = this.getAttribute('data-post-id');
-                    tagContent(postId);
-                });
-            });
-
-            document.querySelectorAll('.summarize-btn').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    const postId = this.getAttribute('data-post-id');
+        grid.on('rowClick', (_, row) => {
+            const postId = row.cells[4].data;
+            const summarizeBtn = document.querySelector(`.summarize-btn[data-post-id="${postId}"]`);
+            if (summarizeBtn) {
+                summarizeBtn.addEventListener('click', function(event) {
+                    event.stopPropagation();
                     summarizeContent(postId);
                 });
-            });
+            }
         });
 
         function tagContent(postId) {
@@ -122,7 +117,7 @@
             button.textContent = 'Summarizing...';
             button.disabled = true;
 
-            fetch('/summarize_content/' + postId, {
+            fetch('{{ url_for("rss_manager.summarize_content", post_id="__postId__") }}'.replace('__postId__', postId), {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
