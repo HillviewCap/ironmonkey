@@ -122,25 +122,26 @@
                 headers: {
                     'Content-Type': 'application/json',
                     'X-CSRFToken': '{{ csrf_token() }}'
-                }
+                },
+                body: JSON.stringify({ content_id: postId })
             })
             .then(response => {
                 if (!response.ok) {
-                    throw new Error('Network response was not ok');
+                    return response.json().then(err => { throw err; });
                 }
                 return response.json();
             })
             .then(data => {
-                if (data.status === 'success') {
+                if (data.summary) {
                     alert('Content summarized successfully!');
                     grid.forceRender();
                 } else {
-                    throw new Error(data.message || 'Failed to summarize content');
+                    throw new Error(data.error || 'Failed to summarize content');
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
-                alert('An error occurred while summarizing the content: ' + error.message);
+                alert('An error occurred while summarizing the content: ' + (error.error || error.message));
             })
             .finally(() => {
                 button.textContent = originalText;

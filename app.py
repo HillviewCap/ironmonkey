@@ -437,8 +437,12 @@ def register_routes(app):
 
             if success:
                 document = ParsedContent.get_by_id(content_id)
-                current_app.logger.info(f"Summary generated successfully for document id: {content_id}")
-                return jsonify({"summary": document.summary}), 200
+                if document and document.summary:
+                    current_app.logger.info(f"Summary generated successfully for document id: {content_id}")
+                    return jsonify({"summary": document.summary}), 200
+                else:
+                    current_app.logger.error(f"Summary not found for document id: {content_id}")
+                    return jsonify({"error": "Summary not found after generation"}), 500
             else:
                 current_app.logger.error(f"Failed to generate summary for document id: {content_id}")
                 return jsonify({"error": "Failed to generate summary"}), 500
