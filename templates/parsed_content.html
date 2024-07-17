@@ -53,10 +53,11 @@
                     id: 'actions',
                     name: 'Actions',
                     formatter: (_, row) => gridjs.html(`
-                        <button class="bg-green-500 hover:bg-green-700 text-white font-bold py-1 px-2 rounded summarize-btn" data-post-id="${row.cells[4].data}">
+                        <button class="bg-green-500 hover:bg-green-700 text-white font-bold py-1 px-2 rounded summarize-btn w-full" data-post-id="${row.cells[4].data}">
                             Summarize
                         </button>
-                    `)
+                    `),
+                    width: '120px'
                 }
             ],
             server: {
@@ -80,14 +81,11 @@
             }
         }).render(document.getElementById("parsed-content-table"));
 
-        grid.on('rowClick', (_, row) => {
-            const postId = row.cells[4].data;
-            const summarizeBtn = document.querySelector(`.summarize-btn[data-post-id="${postId}"]`);
-            if (summarizeBtn) {
-                summarizeBtn.addEventListener('click', function(event) {
-                    event.stopPropagation();
-                    summarizeContent(postId);
-                });
+        document.addEventListener('click', function(event) {
+            if (event.target.classList.contains('summarize-btn')) {
+                event.stopPropagation();
+                const postId = event.target.getAttribute('data-post-id');
+                summarizeContent(postId);
             }
         });
 
@@ -113,11 +111,13 @@
 
         function summarizeContent(postId) {
             const button = document.querySelector(`button[data-post-id="${postId}"]`);
+            if (button.disabled) return; // Prevent multiple clicks
+
             const originalText = button.textContent;
             button.textContent = 'Summarizing...';
             button.disabled = true;
 
-            fetch('{{ url_for("rss_manager.summarize_content", post_id="__postId__") }}'.replace('__postId__', postId), {
+            fetch('{{ url_for("summarize_content") }}', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
