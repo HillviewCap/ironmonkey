@@ -430,26 +430,20 @@ def register_routes(app):
             return jsonify({"error": "content_id is required"}), 400
 
         try:
-            content_id = uuid.UUID(content_id)
-            document = db.session.get(ParsedContent, content_id)
-            if not document:
-                current_app.logger.error(f"Document not found for id: {content_id}")
-                return jsonify({"error": "Document not found"}), 404
+            content_id = str(uuid.UUID(content_id))  # Ensure valid UUID and convert to string
+            enhancer = SummaryEnhancer()
+            success = await enhancer.enhance_summary(content_id)
 
-            summary = await app.ollama_api.generate(
-                "threat_intel_summary", document.content
-            )
-            document.summary = summary
-            db.session.commit()
+            if success:
+                document = ParsedContent.get_by_id(content_id)
+                current_app.logger.info(f"Summary generated successfully for document id: {content_id}")
+                return jsonify({"summary": document.summary}), 200
+            else:
+                current_app.logger.error(f"Failed to generate summary for document id: {content_id}")
+                return jsonify({"error": "Failed to generate summary"}), 500
 
-            current_app.logger.info(
-                f"Summary generated successfully for document id: {content_id}"
-            )
-            return jsonify({"summary": summary}), 200
         except ValueError:
-            current_app.logger.error(
-                f"Invalid UUID format for content_id: {content_id}"
-            )
+            current_app.logger.error(f"Invalid UUID format for content_id: {content_id}")
             return jsonify({"error": "Invalid content_id format"}), 400
         except Exception as e:
             current_app.logger.exception(f"Error summarizing content: {str(e)}")
