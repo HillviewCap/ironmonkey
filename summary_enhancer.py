@@ -53,19 +53,20 @@ class SummaryEnhancer:
                     logger.warning(f"Empty summary generated for record {content_id}. Attempt {attempt + 1}/{self.max_retries}")
                     continue
 
-                with db.session.begin():
-                    parsed_content = ParsedContent.get_by_id(content_id)
-                    if not parsed_content:
-                        logger.warning(f"ParsedContent not found for id {content_id}")
-                        return False
+                parsed_content = ParsedContent.get_by_id(content_id)
+                if not parsed_content:
+                    logger.warning(f"ParsedContent not found for id {content_id}")
+                    return False
 
-                    parsed_content.summary = summary.strip()
-                    db.session.commit()
-                    logger.info(f"Updated summary for record {content_id}")
-                    return True
+                parsed_content.summary = summary.strip()
+                db.session.add(parsed_content)
+                db.session.commit()
+                logger.info(f"Updated summary for record {content_id}")
+                return True
 
             except Exception as e:
                 logger.error(f"Error generating summary for record {content_id}: {str(e)}. Attempt {attempt + 1}/{self.max_retries}", exc_info=True)
+                db.session.rollback()
 
         logger.error(f"Failed to generate summary for record {content_id} after {self.max_retries} attempts.")
         return False
