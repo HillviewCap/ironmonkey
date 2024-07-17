@@ -48,7 +48,11 @@
                     },
                     width: '100px'
                 },
-                { id: 'pub_date', name: 'Published Date' },
+                { 
+                    id: 'pub_date', 
+                    name: 'Published Date',
+                    formatter: (cell) => gridjs.html(`<span class="text-sm">${cell}</span>`)
+                },
                 {
                     id: 'actions',
                     name: 'Actions',
