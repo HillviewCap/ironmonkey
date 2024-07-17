@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 import uuid
 import hashlib
-from flask import Blueprint, render_template, redirect, url_for, flash, request, current_app, jsonify
+from flask import Blueprint, render_template, redirect, url_for, flash, request, current_app, jsonify, Response
 from flask_login import login_required
 from datetime import datetime
 from models import db, ParsedContent, RSSFeed, Category, AwesomeThreatIntelBlog
@@ -12,7 +12,7 @@ from flask_wtf import FlaskForm
 from flask_wtf.csrf import CSRFProtect
 from wtforms import StringField, SubmitField, FileField, SelectField
 from wtforms.validators import DataRequired, URL
-from typing import TextIO, Tuple, List
+from typing import TextIO, Tuple, List, Union
 import csv
 from io import TextIOWrapper
 from sqlalchemy.exc import IntegrityError
