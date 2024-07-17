@@ -2,31 +2,25 @@ from __future__ import annotations
 
 import os
 import uuid
-import os
 import hashlib
 from flask import Blueprint, render_template, redirect, url_for, flash, request, current_app, jsonify
 from flask_login import login_required
-from datetime import datetime, date
-from models import db, ParsedContent
-from nlp_tagging import DiffbotClient, DatabaseHandler
+from datetime import datetime
+from models import db, ParsedContent, RSSFeed, Category, AwesomeThreatIntelBlog
 from nlp_tagging import DiffbotClient, DatabaseHandler
 from flask_wtf import FlaskForm
 from flask_wtf.csrf import CSRFProtect
 from wtforms import StringField, SubmitField, FileField, SelectField
 from wtforms.validators import DataRequired, URL
-from typing import List, Union, Tuple
+from typing import TextIO, Tuple, List
 import csv
 from io import TextIOWrapper
-import uuid
-from werkzeug.wrappers import Response
 from sqlalchemy.exc import IntegrityError
 import feedparser
 import httpx
-import asyncio
 import html
 import re
 
-from models import db, RSSFeed, ParsedContent, Category, AwesomeThreatIntelBlog
 from jina_api import parse_content
 from logging_config import setup_logger
 
@@ -42,8 +36,6 @@ def sanitize_html(text):
 
 # Create a separate logger for RSS manager
 logger = setup_logger('rss_manager', 'rss_manager.log')
-from flask import current_app
-from nlp_tagging import DiffbotClient, DatabaseHandler
 from ollama_api import OllamaAPI
 from summary_enhancer import SummaryEnhancer
 
