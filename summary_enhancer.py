@@ -16,21 +16,32 @@ from __future__ import annotations
 from logging_config import setup_logger
 from sqlalchemy.orm import Session
 from models import ParsedContent, db, RSSFeed
+import os
 from ollama_api import OllamaAPI
+from groq_api import GroqAPI
 from typing import Optional
 
 logger = setup_logger('summary_enhancer', 'summary_enhancer.log')
 
 class SummaryEnhancer:
-    def __init__(self, ollama_api: OllamaAPI, max_retries: int = 3):
-        self.ollama_api = ollama_api
+    def __init__(self, max_retries: int = 3):
+        self.api = self._initialize_api()
         self.max_retries = max_retries
+
+    def _initialize_api(self):
+        api_choice = os.getenv("SUMMARY_API_CHOICE", "ollama").lower()
+        if api_choice == "ollama":
+            return OllamaAPI()
+        elif api_choice == "groq":
+            return GroqAPI()
+        else:
+            raise ValueError(f"Unsupported API choice: {api_choice}. Please set SUMMARY_API_CHOICE to 'ollama' or 'groq' in the .env file.")
 
     async def generate_summary(self, content_id: str) -> str:
         parsed_content = ParsedContent.get_by_id(content_id)
         if not parsed_content:
             raise ValueError(f"No ParsedContent found with id {content_id}")
-        return await self.ollama_api.generate("threat_intel_summary", parsed_content.content)
+        return await self.api.generate("threat_intel_summary", parsed_content.content)
 
     async def enhance_summary(self, content_id: str) -> bool:
         logger.info(f"Processing record {content_id}")
