@@ -117,6 +117,11 @@
         }
 
         function summarizeContent(postId) {
+            const button = document.querySelector(`button[data-post-id="${postId}"]`);
+            const originalText = button.textContent;
+            button.textContent = 'Summarizing...';
+            button.disabled = true;
+
             fetch('/summarize_content/' + postId, {
                 method: 'POST',
                 headers: {
@@ -136,6 +141,10 @@
             .catch(error => {
                 console.error('Error:', error);
                 alert('An error occurred while summarizing the content.');
+            })
+            .finally(() => {
+                button.textContent = originalText;
+                button.disabled = false;
             });
         }
 

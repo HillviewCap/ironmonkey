@@ -522,21 +522,18 @@ async def summarize_content(post_id):
     try:
         post = db.session.get(ParsedContent, post_id)
         if post is None:
-            flash("Content not found", "error")
-            return redirect(url_for("rss_manager.parsed_content"))
+            return jsonify({"status": "error", "message": "Content not found"}), 404
 
         summary_enhancer = SummaryEnhancer()
         success = await summary_enhancer.process_single_record(post)
         
         if success:
-            flash("Content summarized successfully!", "success")
+            return jsonify({"status": "success", "message": "Content summarized successfully!"}), 200
         else:
-            flash("Failed to summarize content", "error")
+            return jsonify({"status": "error", "message": "Failed to summarize content"}), 500
     except Exception as e:
         logger.error(f"Error summarizing content: {str(e)}", exc_info=True)
-        flash(f"Error summarizing content: {str(e)}", "error")
-    
-    return redirect(url_for("rss_manager.parsed_content"))
+        return jsonify({"status": "error", "message": f"Error summarizing content: {str(e)}"}), 500
 
 
 @rss_manager.route("/delete_feed/<uuid:feed_id>", methods=["POST"])
