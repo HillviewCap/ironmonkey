@@ -90,13 +90,24 @@ def init_db(app=None):
             if "awesome_blog_id" not in columns:
                 connection.execute(text("ALTER TABLE rss_feed ADD COLUMN awesome_blog_id VARCHAR(36)"))
             
-            # Add the motivation column to allgroups_values if it doesn't exist
+            # Add missing columns to allgroups_values if they don't exist
             result = connection.execute(
                 text("PRAGMA table_info(allgroups_values)")
             )
             columns = {row[1]: row[2] for row in result.fetchall()}
-            if "motivation" not in columns:
-                connection.execute(text("ALTER TABLE allgroups_values ADD COLUMN motivation TEXT"))
+            missing_columns = {
+                "motivation": "TEXT",
+                "first_seen": "TEXT",
+                "observed_sectors": "TEXT",
+                "observed_countries": "TEXT",
+                "tools": "TEXT",
+                "operations": "TEXT"
+            }
+            for column, column_type in missing_columns.items():
+                if column not in columns:
+                    connection.execute(text(f"ALTER TABLE allgroups_values ADD COLUMN {column} {column_type}"))
+                    print(f"Added column '{column}' to allgroups_values table.")
+                    logging.info(f"Added column '{column}' to allgroups_values table.")
         
         print(f"All database tables created and updated successfully in {app.instance_path}")
         
