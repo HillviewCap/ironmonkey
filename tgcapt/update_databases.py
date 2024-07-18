@@ -9,6 +9,7 @@ from sqlalchemy.orm import sessionmaker, Session
 from models.alltools import AllTools, AllToolsValues, AllToolsValuesNames
 from models.allgroups import AllGroups, AllGroupsValues, AllGroupsValuesNames
 from config import Config
+import uuid
 
 logger = logging.getLogger(__name__)
 
