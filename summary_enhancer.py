@@ -57,7 +57,7 @@ class SummaryEnhancer:
 
         async with db.session() as session:
             for attempt in range(self.max_retries):
-            try:
+                try:
                 api = self._initialize_api()
                 if api is None:
                     raise ValueError("API object is not initialized")
