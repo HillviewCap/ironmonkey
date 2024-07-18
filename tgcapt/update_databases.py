@@ -135,7 +135,7 @@ def update_databases() -> None:
                 logger.info("AllTools database updated successfully.")
             else:
                 logger.error(f"Unexpected data type for tools_data: {type(tools_data)}. Expected a list.")
-                logger.debug(f"tools_data content: {tools_data[:500]}...")  # Log first 500 characters
+                logger.debug(f"tools_data content: {str(tools_data)[:500]}...")  # Log first 500 characters
         else:
             logger.warning("Failed to load AllTools data. Skipping update.")
 
@@ -145,9 +145,12 @@ def update_databases() -> None:
             if isinstance(groups_data, list):
                 update_allgroups(session, groups_data)
                 logger.info("AllGroups database updated successfully.")
+            elif isinstance(groups_data, dict) and 'values' in groups_data:
+                update_allgroups(session, [groups_data])
+                logger.info("AllGroups database updated successfully (single group data).")
             else:
-                logger.error(f"Unexpected data type for groups_data: {type(groups_data)}. Expected a list.")
-                logger.debug(f"groups_data content: {groups_data[:500]}...")  # Log first 500 characters
+                logger.error(f"Unexpected data type for groups_data: {type(groups_data)}. Expected a list or a dict with 'values'.")
+                logger.debug(f"groups_data content: {str(groups_data)[:500]}...")  # Log first 500 characters
         else:
             logger.warning("Failed to load AllGroups data. Skipping update.")
 
