@@ -26,6 +26,7 @@ logger = setup_logger('summary_enhancer', 'summary_enhancer.log')
 class SummaryEnhancer:
     def __init__(self, max_retries: int = 3):
         self.max_retries = max_retries
+        self.api = None  # Initialize api as None
         self.api = None
 
     def _initialize_api(self):
