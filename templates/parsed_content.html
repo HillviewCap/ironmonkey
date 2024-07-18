@@ -30,14 +30,14 @@
                 { 
                     id: 'title', 
                     name: 'Title',
-                    width: '30%',
+                    width: '25%',
                     formatter: (cell, row) => gridjs.html(`<a href="/view/${row.cells[4].data}" class="text-blue-500 hover:underline">${cell}</a>`)
                 },
                 { 
                     id: 'summary', 
                     name: 'Summary', 
-                    width: '30%',
-                    formatter: (cell) => cell && cell.length > 500 ? cell.substring(0, 500) + '...' : cell
+                    width: '35%',
+                    formatter: (cell) => cell && cell.length > 200 ? cell.substring(0, 200) + '...' : cell
                 },
                 { 
                     id: 'url', 
@@ -45,7 +45,6 @@
                     width: '15%',
                     formatter: (cell) => {
                         if (!cell) return '';
-                        const truncatedCell = cell.length > 500 ? cell.substring(0, 500) + '...' : cell;
                         return gridjs.html(`<a href="${cell}" target="_blank" class="text-blue-500 hover:underline" title="${cell}">Source</a>`);
                     }
                 },
@@ -60,7 +59,7 @@
                     name: 'Actions',
                     width: '10%',
                     formatter: (_, row) => gridjs.html(`
-                        <button class="bg-green-500 hover:bg-green-700 text-white font-bold py-1 px-2 rounded summarize-btn" data-post-id="${row.cells[4].data}">
+                        <button class="bg-green-500 hover:bg-green-700 text-white font-bold py-1 px-2 rounded text-xs summarize-btn" data-post-id="${row.cells[4].data}">
                             Summarize
                         </button>
                     `)
