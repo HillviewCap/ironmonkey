@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-import hashlib
 import logging
 from typing import Dict, List, Any, Optional
 import httpx
@@ -35,17 +34,6 @@ def fetch_json(file_type: str) -> Optional[Dict[str, Any]]:
     
     return None
 
-def calculate_hash(data: Dict[str, Any]) -> str:
-    """
-    Calculate the MD5 hash of the given data.
-
-    Args:
-        data (Dict[str, Any]): The data to calculate the hash for.
-
-    Returns:
-        str: The MD5 hash of the data.
-    """
-    return hashlib.md5(json.dumps(data, sort_keys=True).encode()).hexdigest()
 
 def update_alltools(session: Session, data: List[Dict[str, Any]]) -> None:
     """
@@ -144,30 +132,16 @@ def update_databases() -> None:
         # Update AllTools
         tools_data = fetch_json('tools')
         if tools_data is not None and isinstance(tools_data, list):
-            tools_hash = calculate_hash(tools_data)
-
-            # Check if the data has changed
-            if tools_hash != getattr(Config, 'LAST_TOOLS_HASH', None):
-                update_alltools(session, tools_data)
-                Config.LAST_TOOLS_HASH = tools_hash
-                logger.info("AllTools database updated successfully.")
-            else:
-                logger.info("AllTools database is already up to date.")
+            update_alltools(session, tools_data)
+            logger.info("AllTools database updated successfully.")
         else:
             logger.warning("Failed to load valid AllTools data. Skipping update.")
 
         # Update AllGroups
         groups_data = fetch_json('groups')
         if groups_data is not None and isinstance(groups_data, list):
-            groups_hash = calculate_hash(groups_data)
-
-            # Check if the data has changed
-            if groups_hash != getattr(Config, 'LAST_GROUPS_HASH', None):
-                update_allgroups(session, groups_data)
-                Config.LAST_GROUPS_HASH = groups_hash
-                logger.info("AllGroups database updated successfully.")
-            else:
-                logger.info("AllGroups database is already up to date.")
+            update_allgroups(session, groups_data)
+            logger.info("AllGroups database updated successfully.")
         else:
             logger.warning("Failed to load valid AllGroups data. Skipping update.")
 
