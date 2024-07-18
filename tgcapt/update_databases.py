@@ -127,6 +127,12 @@ def update_databases() -> None:
     session = Session()
 
     try:
+        # Check if tables exist
+        inspector = inspect(engine)
+        if not inspector.has_table("alltools") or not inspector.has_table("allgroups"):
+            logger.error("Required tables do not exist. Please run init_db.py to create the tables.")
+            return
+
         # Update AllTools
         tools_data = load_json_file("tgcapt/Threat Group Card - All tools.json")
         if tools_data is not None:

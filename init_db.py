@@ -34,23 +34,31 @@ def init_db(app=None):
         app = create_app()
     
     with app.app_context():
-        # Create tables for models defined with Flask-SQLAlchemy
-        db.create_all()
-        
-        # Create tables for models defined with SQLAlchemy (diffbot_model, alltools, allgroups)
         engine = create_engine(app.config['SQLALCHEMY_DATABASE_URI'])
-        DiffbotBase.metadata.create_all(engine)
-        AllToolsBase.metadata.create_all(engine)
-        AllGroupsBase.metadata.create_all(engine)
+        
+        try:
+            # Create tables for models defined with Flask-SQLAlchemy
+            db.create_all()
+            
+            # Create tables for models defined with SQLAlchemy (diffbot_model, alltools, allgroups)
+            DiffbotBase.metadata.create_all(engine)
+            AllToolsBase.metadata.create_all(engine)
+            AllGroupsBase.metadata.create_all(engine)
 
-        # Verify that the tables were created
-        with engine.connect() as connection:
-            for table_name in ['alltools', 'alltools_values', 'alltools_values_names', 'allgroups', 'allgroups_values', 'allgroups_values_names']:
-                result = connection.execute(text(f"SELECT name FROM sqlite_master WHERE type='table' AND name='{table_name}'"))
-                if result.fetchone() is None:
-                    print(f"Warning: Table '{table_name}' was not created.")
-                else:
-                    print(f"Table '{table_name}' was created successfully.")
+            # Verify that the tables were created
+            with engine.connect() as connection:
+                for table_name in ['alltools', 'alltools_values', 'alltools_values_names', 'allgroups', 'allgroups_values', 'allgroups_values_names']:
+                    result = connection.execute(text(f"SELECT name FROM sqlite_master WHERE type='table' AND name='{table_name}'"))
+                    if result.fetchone() is None:
+                        print(f"Error: Table '{table_name}' was not created.")
+                        logging.error(f"Table '{table_name}' was not created.")
+                    else:
+                        print(f"Table '{table_name}' was created successfully.")
+                        logging.info(f"Table '{table_name}' was created successfully.")
+        except Exception as e:
+            print(f"An error occurred while creating tables: {str(e)}")
+            logging.error(f"An error occurred while creating tables: {str(e)}")
+            return
         
         # Add the summary and art_hash columns to ParsedContent if they don't exist
         with engine.connect() as connection:
