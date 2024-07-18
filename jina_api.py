@@ -21,6 +21,7 @@ content_cache = TTLCache(maxsize=1000, ttl=3600)
 
 
 async def follow_redirects(url: str) -> str:
+    """Follow redirects and return the final URL."""
     """
     Follow redirects and return the final URL.
 
@@ -45,6 +46,7 @@ async def follow_redirects(url: str) -> str:
     before_sleep=before_sleep_log(logger, logging.ERROR)
 )
 async def parse_content(url: str) -> str:
+    """Parse content using the Jina API and return the parsed text."""
     """
     Parse content using the Jina API.
 
@@ -55,6 +57,10 @@ async def parse_content(url: str) -> str:
         str: Parsed text content or None if an error occurs.
     """
     # Check if the content is already in the cache
+    if not post_id:
+        logger.warning("No post ID provided for content update.")
+        return
+
     if url in content_cache:
         logger.info(f"Retrieved cached content for URL: {url}")
         return content_cache[url]
@@ -109,7 +115,7 @@ async def parse_content(url: str) -> str:
         return None
 
 
-async def update_content_in_database(post_id: str, content: str):
+async def update_content_in_database(post_id: str, content: str) -> None:
     """
     Update the content field in the database for the given post.
 
@@ -142,6 +148,6 @@ async def process_url(url: str, post_id: str):
     
     if content:
         await update_content_in_database(post_id, content)
-        logger.info(f"Successfully processed URL: {url} for post ID: {post_id}")
+        logger.info(f"Successfully processed URL: {url} and updated post ID: {post_id}")
     else:
         logger.warning(f"Failed to process URL: {url} for post ID: {post_id}")
