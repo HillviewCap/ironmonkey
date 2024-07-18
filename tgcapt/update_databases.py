@@ -14,23 +14,21 @@ logger = logging.getLogger(__name__)
 
 import os
 
-def fetch_json(file_type: str) -> Optional[Dict[str, Any]]:
+def load_json_file(file_path: str) -> Optional[List[Dict[str, Any]]]:
     """
     Load JSON data from a local file.
 
     Args:
-        file_type (str): The type of file to load ('groups' or 'tools').
+        file_path (str): The path to the JSON file.
 
     Returns:
-        Optional[Dict[str, Any]]: The JSON data as a dictionary, or None if an error occurs.
+        Optional[List[Dict[str, Any]]]: The JSON data as a list of dictionaries, or None if an error occurs.
     """
-    local_file = f"tgcapt/Threat Group Card - All {file_type}.json"
-    
     try:
-        with open(local_file, 'r', encoding='utf-8') as f:
+        with open(file_path, 'r', encoding='utf-8') as f:
             return json.load(f)
     except Exception as e:
-        logger.error(f"Error reading local file {local_file}: {e}")
+        logger.error(f"Error reading local file {file_path}: {e}")
     
     return None
 
@@ -122,7 +120,7 @@ def update_allgroups(session: Session, data: List[Dict[str, Any]]) -> None:
 
 def update_databases() -> None:
     """
-    Update the AllTools and AllGroups databases with the latest data from the API.
+    Update the AllTools and AllGroups databases with the latest data from the local JSON files.
     """
     engine = create_engine(Config.SQLALCHEMY_DATABASE_URI)
     Session = sessionmaker(bind=engine)
@@ -130,7 +128,7 @@ def update_databases() -> None:
 
     try:
         # Update AllTools
-        tools_data = fetch_json('tools')
+        tools_data = load_json_file("tgcapt/Threat Group Card - All tools.json")
         if tools_data is not None:
             update_alltools(session, tools_data)
             logger.info("AllTools database updated successfully.")
@@ -138,7 +136,7 @@ def update_databases() -> None:
             logger.warning("Failed to load AllTools data. Skipping update.")
 
         # Update AllGroups
-        groups_data = fetch_json('groups')
+        groups_data = load_json_file("tgcapt/Threat Group Card - All groups.json")
         if groups_data is not None:
             update_allgroups(session, groups_data)
             logger.info("AllGroups database updated successfully.")
