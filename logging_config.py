@@ -13,18 +13,18 @@ def rotator(source, dest):
             df.writelines(sf)
     os.remove(source)
 
-def setup_logger(name, log_file, level=logging.DEBUG):
+def setup_logger(app, log_file, level=logging.DEBUG):
     """Function to set up a logger with file and console handlers"""
     # Ensure logs directory exists
     logs_dir = 'logs'
     os.makedirs(logs_dir, exist_ok=True)
 
-    # Create a custom logger
-    logger = logging.getLogger(name)
+    # Use Flask's built-in logger
+    logger = app.logger
     logger.setLevel(level)
 
     # Create handlers
-    c_handler = logging.StreamHandler(sys.stdout)
+    c_handler = logging.StreamHandler()
     f_handler = RotatingFileHandler(
         os.path.join(logs_dir, log_file),
         maxBytes=10*1024*1024,  # 10MB
@@ -32,8 +32,8 @@ def setup_logger(name, log_file, level=logging.DEBUG):
         mode='a',
         encoding='utf-8'
     )
-    c_handler.setLevel(logging.DEBUG)
-    f_handler.setLevel(logging.DEBUG)
+    c_handler.setLevel(logging.INFO)  # Console logs at INFO level
+    f_handler.setLevel(logging.DEBUG)  # File logs at DEBUG level
 
     # Set up rotation
     f_handler.rotator = rotator
@@ -44,9 +44,10 @@ def setup_logger(name, log_file, level=logging.DEBUG):
     c_handler.setFormatter(formatter)
     f_handler.setFormatter(formatter)
 
-    # Add handlers to the logger
+    # Add handlers to the Flask logger
     logger.addHandler(c_handler)
     logger.addHandler(f_handler)
+    logger.info("Logging setup complete.")
 
     return logger
 
