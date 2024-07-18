@@ -10,6 +10,8 @@ from models.allgroups import Base as AllGroupsBase, AllGroups, AllGroupsValues, 
 from config import Config
 from sqlalchemy import create_engine, text
 from tgcapt import update_databases as update_databases_module
+import json
+import logging
 
 def create_app():
     app = Flask(__name__)
@@ -66,7 +68,14 @@ def init_db(app=None):
         print(f"All database tables created and updated successfully in {app.instance_path}")
         
         # Update the databases with the latest data
-        update_databases_module.update_databases()
+        try:
+            update_databases_module.update_databases()
+        except json.JSONDecodeError as e:
+            logging.error(f"JSON Decode Error in update_databases: {str(e)}")
+            print(f"An error occurred while parsing JSON: {str(e)}")
+        except Exception as e:
+            logging.error(f"Unexpected error in update_databases: {str(e)}")
+            print(f"An unexpected error occurred: {str(e)}")
 
 if __name__ == "__main__":
     init_db()
