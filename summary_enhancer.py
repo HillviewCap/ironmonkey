@@ -24,6 +24,7 @@ from typing import Optional
 logger = setup_logger('summary_enhancer', 'summary_enhancer.log')
 
 class SummaryEnhancer:
+    """A class to enhance summaries of parsed content using OllamaAPI."""
     def __init__(self, max_retries: int = 3):
         self.max_retries = max_retries
         self.api = None
@@ -39,10 +40,11 @@ class SummaryEnhancer:
                 raise ValueError(f"Unsupported API choice: {api_choice}. Please set SUMMARY_API_CHOICE to 'ollama' or 'groq' in the .env file.")
         return self.api
 
-    async def generate_summary(self, content_id: str) -> str:
+    async def generate_summary(self, content_id: str) -> Optional[str]:
         api = self._initialize_api()  # Ensure API is initialized before use
 
-        parsed_content = ParsedContent.get_by_id(content_id)
+        async with db.session() as session:
+            parsed_content = await session.get(ParsedContent, content_id)
         if not parsed_content:
             raise ValueError(f"No ParsedContent found with id {content_id}")
         if api is None:
@@ -50,7 +52,7 @@ class SummaryEnhancer:
             raise ValueError("API object is not initialized")
         return await api.generate("threat_intel_summary", parsed_content.content)
 
-    async def enhance_summary(self, content_id: str) -> bool:
+    async def enhance_summary(self, content_id: str) -> Optional[bool]:
         logger.info(f"Processing record {content_id}")
 
         for attempt in range(self.max_retries):
@@ -69,19 +71,18 @@ class SummaryEnhancer:
                     return False
 
                 parsed_content.summary = summary.strip()
-                db.session.add(parsed_content)
-                db.session.commit()
+                await session.commit()
                 logger.info(f"Updated summary for record {content_id}")
                 return True
 
             except Exception as e:
                 logger.error(f"Error generating summary for record {content_id}: {str(e)}. Attempt {attempt + 1}/{self.max_retries}", exc_info=True)
-                db.session.rollback()
+                await session.rollback()
 
         logger.error(f"Failed to generate summary for record {content_id} after {self.max_retries} attempts.")
         return False  # Return False instead of raising an exception
 
-    async def summarize_feed(self, feed_id: str) -> None:
+    async def summarize_feed(self, feed_id: str) -> Optional[None]:
         logger.info(f"Starting summary enhancement for feed {feed_id}")
 
         feed = RSSFeed.query.get(feed_id)
