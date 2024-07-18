@@ -104,9 +104,10 @@ def update_allgroups(session: Session, data: List[Dict[str, Any]]) -> None:
         db_group.last_db_change = group.get('last_db_change')
 
         for value in group.get('values', []):
-            db_value = session.query(AllGroupsValues).filter(AllGroupsValues.uuid == value['uuid']).first()
+            value_uuid = str(value['uuid'])  # Convert UUID to string
+            db_value = session.query(AllGroupsValues).filter(AllGroupsValues.uuid == value_uuid).first()
             if not db_value:
-                db_value = AllGroupsValues(uuid=value['uuid'])
+                db_value = AllGroupsValues(uuid=value_uuid)
                 db_group.values.append(db_value)
             
             db_value.actor = value.get('actor')
@@ -118,7 +119,7 @@ def update_allgroups(session: Session, data: List[Dict[str, Any]]) -> None:
             for name in value.get('names', []):
                 db_name = session.query(AllGroupsValuesNames).filter(AllGroupsValuesNames.name == name['name']).first()
                 if not db_name:
-                    db_name = AllGroupsValuesNames(name=name['name'], name_giver=name.get('name_giver'))
+                    db_name = AllGroupsValuesNames(name=name['name'], name_giver=name.get('name_giver'), uuid=str(uuid.uuid4()))
                     db_value.names.append(db_name)
 
 def update_databases() -> None:

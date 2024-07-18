@@ -1,7 +1,6 @@
 from sqlalchemy import Column, String, Text, ForeignKey
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.dialects.postgresql import UUID
 import uuid
 
 Base = declarative_base()
@@ -25,13 +24,13 @@ class AllGroups(Base):
 class AllGroupsValues(Base):
     __tablename__ = 'allgroups_values'
 
-    uuid = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    uuid = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     actor = Column(String)
     country = Column(String)
     description = Column(Text)
     information = Column(Text)
     last_card_change = Column(String)
-    allgroups_uuid = Column(UUID(as_uuid=True), ForeignKey('allgroups.uuid'))
+    allgroups_uuid = Column(String(36), ForeignKey('allgroups.uuid'))
 
     allgroup = relationship("AllGroups", back_populates="values")
     names = relationship("AllGroupsValuesNames", back_populates="allgroups_value")
@@ -39,10 +38,10 @@ class AllGroupsValues(Base):
 class AllGroupsValuesNames(Base):
     __tablename__ = 'allgroups_values_names'
 
-    uuid = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    uuid = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     name = Column(String)
     name_giver = Column(String)
-    allgroups_values_uuid = Column(UUID(as_uuid=True), ForeignKey('allgroups_values.uuid'))
+    allgroups_values_uuid = Column(String(36), ForeignKey('allgroups_values.uuid'))
 
     allgroups_value = relationship("AllGroupsValues", back_populates="names")
 
