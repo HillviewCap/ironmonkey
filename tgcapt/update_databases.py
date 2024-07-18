@@ -72,7 +72,8 @@ def update_alltools(session: Session, data: List[Dict[str, Any]]) -> None:
             db_value.information = ', '.join(value.get('information')) if isinstance(value.get('information'), list) else value.get('information')
             db_value.last_card_change = value.get('last_card_change')
 
-            for name in value.get('names', []):
+            for name_data in value.get('names', []):
+                name = name_data['name'] if isinstance(name_data, dict) else name_data
                 db_name = session.query(AllToolsValuesNames).filter(AllToolsValuesNames.name == name).first()
                 if not db_name:
                     db_name = AllToolsValuesNames(name=name, uuid=str(uuid.uuid4()))  # Generate a new UUID as string
