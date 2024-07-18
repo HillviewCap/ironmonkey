@@ -58,9 +58,10 @@ def update_alltools(session: Session, data: List[Dict[str, Any]]) -> None:
         db_tool.last_db_change = tool.get('last_db_change')
 
         for value in tool.get('values', []):
-            db_value = session.query(AllToolsValues).filter(AllToolsValues.uuid == value['uuid']).first()
+            value_uuid = str(value['uuid'])  # Convert UUID to string
+            db_value = session.query(AllToolsValues).filter(AllToolsValues.uuid == value_uuid).first()
             if not db_value:
-                db_value = AllToolsValues(uuid=value['uuid'])
+                db_value = AllToolsValues(uuid=value_uuid)
                 db_tool.values.append(db_value)
             
             db_value.tool = value.get('tool')
@@ -73,7 +74,7 @@ def update_alltools(session: Session, data: List[Dict[str, Any]]) -> None:
             for name in value.get('names', []):
                 db_name = session.query(AllToolsValuesNames).filter(AllToolsValuesNames.name == name).first()
                 if not db_name:
-                    db_name = AllToolsValuesNames(name=name)
+                    db_name = AllToolsValuesNames(name=name, uuid=str(uuid.uuid4()))  # Generate a new UUID as string
                     db_value.names.append(db_name)
 
 def update_allgroups(session: Session, data: List[Dict[str, Any]]) -> None:
