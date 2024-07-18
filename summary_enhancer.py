@@ -58,7 +58,7 @@ class SummaryEnhancer:
         async with db.session() as session:
             for attempt in range(self.max_retries):
                 try:
-                api = self._initialize_api()
+                    api = self._initialize_api()
                 if api is None:
                     raise ValueError("API object is not initialized")
                 summary = await self.generate_summary(content_id)
