@@ -69,9 +69,14 @@ def init_db(app=None):
         
         # Update the databases with the latest data
         try:
-            update_databases_module.update_databases()
+            logging.info("Starting update_databases()")
+            json_data = update_databases_module.update_databases()
+            logging.info("update_databases() completed successfully")
+            logging.info(f"JSON data (first 1000 characters): {json.dumps(json_data)[:1000]}")
         except json.JSONDecodeError as e:
             logging.error(f"JSON Decode Error in update_databases: {str(e)}")
+            logging.error(f"Error occurred at line {e.lineno}, column {e.colno}")
+            logging.error(f"JSON snippet around error: {e.doc[max(0, e.pos-50):e.pos+50]}")
             print(f"An error occurred while parsing JSON: {str(e)}")
         except Exception as e:
             logging.error(f"Unexpected error in update_databases: {str(e)}")
