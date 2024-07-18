@@ -9,7 +9,7 @@ from models.alltools import Base as AllToolsBase, AllTools, AllToolsValues, AllT
 from models.allgroups import Base as AllGroupsBase, AllGroups, AllGroupsValues, AllGroupsValuesNames
 from config import Config
 from sqlalchemy import create_engine, text
-from update_databases import update_databases
+from .update_databases import update_databases
 
 def create_app():
     app = Flask(__name__)
