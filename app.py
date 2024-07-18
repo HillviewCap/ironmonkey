@@ -801,8 +801,24 @@ if __name__ == "__main__":
 from flask import Flask
 from routes.apt_groups import apt_groups_bp
 
-app = Flask(__name__)
-app.register_blueprint(apt_groups_bp)
+def create_app(config_name="default"):
+    app = Flask(__name__, instance_relative_config=True, static_url_path="/static")
+    
+    # ... (keep other configurations)
 
-if __name__ == '__main__':
-    app.run(debug=True)
+    app.register_blueprint(apt_groups_bp)
+
+    # ... (keep other configurations and route registrations)
+
+    return app
+
+if __name__ == "__main__":
+    flask_env = os.getenv("FLASK_ENV", "production")
+    port = int(os.getenv("FLASK_PORT", 5000))
+    debug = flask_env == "development"
+
+    app = create_app(flask_env)
+    if app is not None:
+        app.run(host="0.0.0.0", port=port, debug=debug)
+    else:
+        print("Failed to create the application. Please check the logs for more information.")
