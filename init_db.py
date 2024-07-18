@@ -102,7 +102,9 @@ def init_db(app=None):
                 "observed_countries": "TEXT",
                 "tools": "TEXT",
                 "operations": "TEXT",
-                "sponsor": "TEXT"
+                "sponsor": "TEXT",
+                "counter_operations": "TEXT",
+                "mitre_attack": "TEXT"
             }
             for column, column_type in missing_columns.items():
                 if column not in columns:
