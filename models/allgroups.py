@@ -26,7 +26,7 @@ class AllGroupsValues(Base):
 
     uuid = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     actor = Column(String)
-    country = Column(String)
+    country = Column(Text)  # Changed to Text to accommodate potentially long strings
     description = Column(Text)
     information = Column(Text)
     last_card_change = Column(String)
