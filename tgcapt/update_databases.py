@@ -131,19 +131,19 @@ def update_databases() -> None:
     try:
         # Update AllTools
         tools_data = fetch_json('tools')
-        if tools_data is not None and isinstance(tools_data, list):
+        if tools_data is not None:
             update_alltools(session, tools_data)
             logger.info("AllTools database updated successfully.")
         else:
-            logger.warning("Failed to load valid AllTools data. Skipping update.")
+            logger.warning("Failed to load AllTools data. Skipping update.")
 
         # Update AllGroups
         groups_data = fetch_json('groups')
-        if groups_data is not None and isinstance(groups_data, list):
+        if groups_data is not None:
             update_allgroups(session, groups_data)
             logger.info("AllGroups database updated successfully.")
         else:
-            logger.warning("Failed to load valid AllGroups data. Skipping update.")
+            logger.warning("Failed to load AllGroups data. Skipping update.")
 
         session.commit()
     except Exception as e:
