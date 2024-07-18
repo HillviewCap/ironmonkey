@@ -51,7 +51,22 @@
 * Use a consistent naming convention for modules and packages (e.g., `snake_case`).
 * Keep the `models` package separate from the `routes` package.
 
-**Misc**
+**Flask Application Structure**
+
+* Organize your Flask application using the application factory pattern.
+* Keep the main application logic in a separate module (e.g., `app.py`).
+* Use blueprints to organize routes and views for better modularity.
+
+**API Development**
+
+* Follow RESTful principles when designing APIs.
+* Use versioning in your API endpoints (e.g., `/api/v1/resource`).
+* Return appropriate HTTP status codes for different responses.
+
+**Frontend Integration**
+
+* Use AJAX or Fetch API for asynchronous communication between the frontend and Flask backend.
+* Ensure that the frontend can handle CORS (Cross-Origin Resource Sharing) if hosted on a different domain.
 
 * Use `environment variables` to store sensitive information, such as API keys and database credentials.
 * Follow the principle of least privilege when setting up access controls for the platform.
