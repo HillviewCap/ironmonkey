@@ -142,6 +142,12 @@ def update_allgroups(session: Session, data: List[Dict[str, Any]]) -> None:
             else:
                 db_value.mitre_attack = None
 
+            # Handle playbook
+            if 'playbook' in value and isinstance(value['playbook'], list):
+                db_value.playbook = ', '.join(value['playbook'])
+            else:
+                db_value.playbook = None
+
             for name_data in value.get('names', []):
                 db_name = session.query(AllGroupsValuesNames).filter(
                     AllGroupsValuesNames.name == name_data['name'],

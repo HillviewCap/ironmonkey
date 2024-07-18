@@ -26,7 +26,7 @@ class AllGroupsValues(Base):
 
     uuid = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     actor = Column(String)
-    country = Column(Text)  # Changed to Text to accommodate potentially long strings
+    country = Column(Text)
     description = Column(Text)
     information = Column(Text)
     last_card_change = Column(String)
@@ -39,6 +39,7 @@ class AllGroupsValues(Base):
     sponsor = Column(Text)
     counter_operations = Column(Text)
     mitre_attack = Column(Text)
+    playbook = Column(Text)  # New field added
     allgroups_uuid = Column(String(36), ForeignKey('allgroups.uuid'))
 
     allgroup = relationship("AllGroups", back_populates="values")
