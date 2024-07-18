@@ -42,9 +42,9 @@ def update_alltools(session: Session, data: List[Dict[str, Any]]) -> None:
         data (List[Dict[str, Any]]): The data to update the database with.
     """
     for tool in data:
-        db_tool = session.query(AllTools).filter_by(uuid=tool['uuid']).first()
+        db_tool = session.query(AllTools).filter(AllTools.uuid == str(tool['uuid'])).first()
         if not db_tool:
-            db_tool = AllTools(uuid=tool['uuid'])
+            db_tool = AllTools(uuid=str(tool['uuid']))
             session.add(db_tool)
         
         db_tool.authors = tool.get('authors')
@@ -58,9 +58,9 @@ def update_alltools(session: Session, data: List[Dict[str, Any]]) -> None:
         db_tool.last_db_change = tool.get('last_db_change')
 
         for value in tool.get('values', []):
-            db_value = session.query(AllToolsValues).filter_by(uuid=value['uuid']).first()
+            db_value = session.query(AllToolsValues).filter(AllToolsValues.uuid == str(value['uuid'])).first()
             if not db_value:
-                db_value = AllToolsValues(uuid=value['uuid'])
+                db_value = AllToolsValues(uuid=str(value['uuid']))
                 db_tool.values.append(db_value)
             
             db_value.tool = value.get('tool')
@@ -71,7 +71,7 @@ def update_alltools(session: Session, data: List[Dict[str, Any]]) -> None:
             db_value.last_card_change = value.get('last_card_change')
 
             for name in value.get('names', []):
-                db_name = session.query(AllToolsValuesNames).filter_by(name=name).first()
+                db_name = session.query(AllToolsValuesNames).filter(AllToolsValuesNames.name == name).first()
                 if not db_name:
                     db_name = AllToolsValuesNames(name=name)
                     db_value.names.append(db_name)
