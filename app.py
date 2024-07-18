@@ -502,13 +502,21 @@ def create_app(config_name="default"):
     app.config.from_object(config[config_name])
     config[config_name].init_app(app)
 
-    app.ollama_api = OllamaAPI()
+    summary_api_choice = os.getenv("SUMMARY_API_CHOICE", "ollama").lower()
     
-    # Check Ollama API connection
-    with app.app_context():
-        if not app.ollama_api.check_connection_sync():
-            logger.error("Failed to connect to Ollama API. Exiting.")
-            return None
+    if summary_api_choice == "ollama":
+        app.ollama_api = OllamaAPI()
+        # Check Ollama API connection
+        with app.app_context():
+            if not app.ollama_api.check_connection_sync():
+                logger.error("Failed to connect to Ollama API. Exiting.")
+                return None
+    elif summary_api_choice == "groq":
+        # Initialize Groq API here if needed
+        pass
+    else:
+        logger.error(f"Invalid SUMMARY_API_CHOICE: {summary_api_choice}. Exiting.")
+        return None
 
     app.config["SQLALCHEMY_DATABASE_URI"] = (
         f"sqlite:///{os.path.join(app.instance_path, 'threats.db')}"

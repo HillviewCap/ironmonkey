@@ -27,6 +27,12 @@ class OllamaAPI:
         self.prompts = self.load_prompts()
         logger.info(f"Initialized OllamaAPI with base_url: {self.base_url} and model: {self.model}")
 
+    @classmethod
+    def initialize_if_ollama(cls):
+        if os.getenv("SUMMARY_API_CHOICE", "ollama").lower() == "ollama":
+            return cls()
+        return None
+
     @staticmethod
     def load_prompts():
         with open("prompts.yaml", "r") as file:
