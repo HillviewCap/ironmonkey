@@ -129,6 +129,19 @@ def update_allgroups(session: Session, data: List[Dict[str, Any]]) -> None:
             else:
                 db_value.operations = None
 
+            # Handle counter-operations
+            if 'counter-operations' in value and isinstance(value['counter-operations'], list):
+                counter_operations_json = json.dumps(value['counter-operations'])
+                db_value.counter_operations = counter_operations_json
+            else:
+                db_value.counter_operations = None
+
+            # Handle mitre-attack
+            if 'mitre-attack' in value and isinstance(value['mitre-attack'], list):
+                db_value.mitre_attack = ', '.join(value['mitre-attack'])
+            else:
+                db_value.mitre_attack = None
+
             for name_data in value.get('names', []):
                 db_name = session.query(AllGroupsValuesNames).filter(
                     AllGroupsValuesNames.name == name_data['name'],
