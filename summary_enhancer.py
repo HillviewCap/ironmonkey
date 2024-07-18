@@ -55,7 +55,8 @@ class SummaryEnhancer:
     async def enhance_summary(self, content_id: str) -> Optional[bool]:
         logger.info(f"Processing record {content_id}")
 
-        for attempt in range(self.max_retries):
+        async with db.session() as session:
+            for attempt in range(self.max_retries):
             try:
                 api = self._initialize_api()
                 if api is None:
@@ -71,13 +72,13 @@ class SummaryEnhancer:
                     return False
 
                 parsed_content.summary = summary.strip()
-                await session.commit()
+                await session.commit()  # Commit changes to the database
                 logger.info(f"Updated summary for record {content_id}")
                 return True
 
             except Exception as e:
                 logger.error(f"Error generating summary for record {content_id}: {str(e)}. Attempt {attempt + 1}/{self.max_retries}", exc_info=True)
-                await session.rollback()
+                await session.rollback()  # Rollback changes in case of an error
 
         logger.error(f"Failed to generate summary for record {content_id} after {self.max_retries} attempts.")
         return False  # Return False instead of raising an exception
