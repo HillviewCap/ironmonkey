@@ -798,3 +798,11 @@ if __name__ == "__main__":
             "favicon.ico",
             mimetype="image/vnd.microsoft.icon",
         )
+from flask import Flask
+from routes.apt_groups import apt_groups_bp
+
+app = Flask(__name__)
+app.register_blueprint(apt_groups_bp)
+
+if __name__ == '__main__':
+    app.run(debug=True)
