@@ -39,7 +39,7 @@ def fetch_json(url: str) -> Optional[Dict[str, Any]]:
     
     try:
         if os.path.exists(local_file):
-            with open(local_file, 'r') as f:
+            with open(local_file, 'r', encoding='utf-8') as f:
                 return json.load(f)
         else:
             logger.error(f"Local file not found: {local_file}")
