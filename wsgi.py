@@ -11,5 +11,5 @@ app = create_app(flask_env)
 
 if __name__ == "__main__":
     port = int(os.getenv('FLASK_PORT', 5000))
-    debug = os.getenv('DEBUG', 'false').lower() == 'true'
+    debug = os.getenv('DEBUG', 'False').lower() in ['true', '1', 'yes']
     app.run(host='0.0.0.0', port=port, debug=debug)
