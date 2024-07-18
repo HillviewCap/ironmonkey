@@ -7,8 +7,8 @@ from typing import Dict, List, Any, Optional
 import httpx
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
-from .models.alltools import AllTools, AllToolsValues, AllToolsValuesNames
-from .models.allgroups import AllGroups, AllGroupsValues, AllGroupsValuesNames
+from models.alltools import AllTools, AllToolsValues, AllToolsValuesNames
+from models.allgroups import AllGroups, AllGroupsValues, AllGroupsValuesNames
 from config import Config
 
 logger = logging.getLogger(__name__)
