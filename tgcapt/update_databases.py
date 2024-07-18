@@ -29,7 +29,7 @@ def fetch_json(url: str) -> Optional[Dict[str, Any]]:
         with httpx.Client() as client:
             response = client.get(url)
             response.raise_for_status()
-            return response.json(encoding='utf-8')
+            return response.json()
     except (httpx.HTTPStatusError, json.JSONDecodeError, Exception) as e:
         logger.error(f"Error fetching or parsing JSON from URL: {e}")
 
