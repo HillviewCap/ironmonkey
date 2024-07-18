@@ -26,7 +26,6 @@ logger = setup_logger('summary_enhancer', 'summary_enhancer.log')
 class SummaryEnhancer:
     def __init__(self, max_retries: int = 3):
         self.max_retries = max_retries
-        self.api = None  # Initialize api as None
         self.api = None
 
     def _initialize_api(self):
@@ -41,22 +40,23 @@ class SummaryEnhancer:
         return self.api
 
     async def generate_summary(self, content_id: str) -> str:
-        self._initialize_api()  # Ensure API is initialized before use
+        api = self._initialize_api()  # Ensure API is initialized before use
 
         parsed_content = ParsedContent.get_by_id(content_id)
         if not parsed_content:
             raise ValueError(f"No ParsedContent found with id {content_id}")
-        if self.api is None:
+        if api is None:
             logger.error("API object is not initialized")
             raise ValueError("API object is not initialized")
-        return await self.api.generate("threat_intel_summary", parsed_content.content)
+        return await api.generate("threat_intel_summary", parsed_content.content)
 
     async def enhance_summary(self, content_id: str) -> bool:
         logger.info(f"Processing record {content_id}")
 
         for attempt in range(self.max_retries):
             try:
-                if self.api is None:
+                api = self._initialize_api()
+                if api is None:
                     raise ValueError("API object is not initialized")
                 summary = await self.generate_summary(content_id)
                 if not summary:
@@ -79,7 +79,7 @@ class SummaryEnhancer:
                 db.session.rollback()
 
         logger.error(f"Failed to generate summary for record {content_id} after {self.max_retries} attempts.")
-        raise  # Re-raise the last exception to propagate it
+        return False  # Return False instead of raising an exception
 
     async def summarize_feed(self, feed_id: str) -> None:
         logger.info(f"Starting summary enhancement for feed {feed_id}")
