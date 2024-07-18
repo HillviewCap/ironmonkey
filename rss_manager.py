@@ -3,29 +3,38 @@ from __future__ import annotations
 import os
 import uuid
 import hashlib
+import csv
+import html
+import re
+from io import TextIOWrapper
+from datetime import datetime
+from typing import TextIO, Tuple, List, Union, Optional
+
+import httpx
+import feedparser
 from flask import Blueprint, render_template, redirect, url_for, flash, request, current_app, jsonify, Response
 from flask_login import login_required
-from datetime import datetime
-from models import db, ParsedContent, RSSFeed, Category, AwesomeThreatIntelBlog
-from nlp_tagging import DiffbotClient, DatabaseHandler
 from flask_wtf import FlaskForm
 from flask_wtf.csrf import CSRFProtect
 from wtforms import StringField, SubmitField, FileField, SelectField
 from wtforms.validators import DataRequired, URL
-from typing import TextIO, Tuple, List, Union
-import csv
-from io import TextIOWrapper
 from sqlalchemy.exc import IntegrityError
-import feedparser
-import httpx
-import html
-import re
 
+from models import db, ParsedContent, RSSFeed, Category, AwesomeThreatIntelBlog
+from nlp_tagging import DiffbotClient, DatabaseHandler
 from jina_api import parse_content
 from logging_config import setup_logger
 
-def sanitize_html(text):
-    """Remove HTML tags and unescape HTML entities."""
+def sanitize_html(text: str) -> str:
+    """
+    Remove HTML tags and unescape HTML entities.
+    
+    Args:
+        text (str): The input text containing HTML.
+    
+    Returns:
+        str: The sanitized text with HTML tags removed and entities unescaped.
+    """
     # Unescape HTML entities
     text = html.unescape(text)
     # Remove HTML tags
@@ -182,7 +191,7 @@ async def fetch_and_parse_feed(feed: RSSFeed) -> int:
         raise ValueError(f"FeedParser error: {str(e)}")
     except Exception as e:
         logger.error(f"Unexpected error occurred while parsing feed {feed.url}: {e}", exc_info=True)
-        raise ValueError(f"Unexpected error: {str(e)}")
+        raise RuntimeError(f"Unexpected error: {str(e)}")
     finally:
         return new_entries_count
 
