@@ -808,6 +808,23 @@ def create_app(config_name="default"):
 
     app.register_blueprint(apt_groups_bp)
 
+    @app.route("/")
+    def index():
+        if current_user.is_authenticated:
+            recent_items = (
+                db.session.query(ParsedContent)
+                .filter(
+                    ParsedContent.title.isnot(None),
+                    ParsedContent.description.isnot(None),
+                )
+                .order_by(ParsedContent.created_at.desc())
+                .limit(6)
+                .all()
+            )
+            return render_template("index.html", recent_items=recent_items)
+        else:
+            return redirect(url_for("login"))
+
     # ... (keep other configurations and route registrations)
 
     return app
