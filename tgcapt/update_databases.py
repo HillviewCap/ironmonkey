@@ -114,7 +114,7 @@ def update_allgroups(session: Session, data: List[Dict[str, Any]]) -> None:
             db_value.country = ', '.join(value.get('country', [])) if isinstance(value.get('country'), list) else value.get('country')
             db_value.description = value.get('description')
             db_value.information = ', '.join(value.get('information', [])) if isinstance(value.get('information'), list) else value.get('information')
-            db_value.last_card_change = value.get('last_card_change')
+            db_value.last_card_change = value.get('last-card-change')  # Changed from 'last_card_change' to 'last-card-change'
 
             for name in value.get('names', []):
                 db_name = session.query(AllGroupsValuesNames).filter(AllGroupsValuesNames.name == name['name']).first()
