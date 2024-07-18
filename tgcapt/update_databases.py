@@ -116,11 +116,21 @@ def update_allgroups(session: Session, data: List[Dict[str, Any]]) -> None:
             db_value.information = ', '.join(value.get('information', [])) if isinstance(value.get('information'), list) else value.get('information')
             db_value.last_card_change = value.get('last-card-change')  # Changed from 'last_card_change' to 'last-card-change'
 
-            for name in value.get('names', []):
-                db_name = session.query(AllGroupsValuesNames).filter(AllGroupsValuesNames.name == name['name']).first()
+            for name_data in value.get('names', []):
+                db_name = session.query(AllGroupsValuesNames).filter(
+                    AllGroupsValuesNames.name == name_data['name'],
+                    AllGroupsValuesNames.allgroups_values_uuid == db_value.uuid
+                ).first()
                 if not db_name:
-                    db_name = AllGroupsValuesNames(name=name['name'], name_giver=name.get('name-giver'), uuid=str(uuid.uuid4()))
+                    db_name = AllGroupsValuesNames(
+                        name=name_data['name'],
+                        name_giver=name_data.get('name-giver'),
+                        uuid=str(uuid.uuid4()),
+                        allgroups_values_uuid=db_value.uuid
+                    )
                     db_value.names.append(db_name)
+                else:
+                    db_name.name_giver = name_data.get('name-giver')
 
 def update_databases() -> None:
     """
