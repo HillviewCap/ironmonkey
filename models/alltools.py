@@ -1,13 +1,15 @@
-from sqlalchemy import Column, Integer, String, Text, ForeignKey
+from sqlalchemy import Column, String, Text, ForeignKey
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.dialects.postgresql import UUID
+import uuid
 
 Base = declarative_base()
 
 class AllTools(Base):
     __tablename__ = 'alltools'
 
-    id = Column(Integer, primary_key=True, autoincrement=True)
+    uuid = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     authors = Column(Text)
     category = Column(String)
     name = Column(String)
@@ -16,7 +18,6 @@ class AllTools(Base):
     description = Column(Text)
     tlp = Column(String)
     license = Column(String)
-    uuid = Column(String)
     last_db_change = Column(String)
 
     values = relationship("AllToolsValues", back_populates="alltool")
@@ -24,15 +25,14 @@ class AllTools(Base):
 class AllToolsValues(Base):
     __tablename__ = 'alltools_values'
 
-    id = Column(Integer, primary_key=True, autoincrement=True)
+    uuid = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     tool = Column(String)
     description = Column(Text)
     category = Column(String)
     type = Column(String)
     information = Column(Text)
-    uuid = Column(String)
     last_card_change = Column(String)
-    alltools_id = Column(Integer, ForeignKey('alltools.id'))
+    alltools_uuid = Column(UUID(as_uuid=True), ForeignKey('alltools.uuid'))
 
     alltool = relationship("AllTools", back_populates="values")
     names = relationship("AllToolsValuesNames", back_populates="alltools_value")
@@ -40,14 +40,13 @@ class AllToolsValues(Base):
 class AllToolsValuesNames(Base):
     __tablename__ = 'alltools_values_names'
 
-    id = Column(Integer, primary_key=True, autoincrement=True)
+    uuid = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     name = Column(String)
-    alltools_values_id = Column(Integer, ForeignKey('alltools_values.id'))
+    alltools_values_uuid = Column(UUID(as_uuid=True), ForeignKey('alltools_values.uuid'))
 
     alltools_value = relationship("AllToolsValues", back_populates="names")
 
-# You might want to add indexes here for frequently queried columns
-# For example:
-# from sqlalchemy import Index
-# Index('idx_alltools_uuid', AllTools.uuid)
-# Index('idx_alltools_values_uuid', AllToolsValues.uuid)
+# Add indexes for frequently queried columns
+from sqlalchemy import Index
+Index('idx_alltools_uuid', AllTools.uuid)
+Index('idx_alltools_values_uuid', AllToolsValues.uuid)
