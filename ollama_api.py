@@ -39,6 +39,7 @@ class OllamaAPI:
             return yaml.safe_load(file)
 
     async def generate(self, prompt_type: str, article: str) -> str:
+        """Generate a response based on the prompt type and article."""
         try:
             prompt_data = self.prompts.get(prompt_type, {})
             system_prompt = prompt_data.get("system_prompt", "")
@@ -52,8 +53,8 @@ class OllamaAPI:
                 logger.debug(f"Generated response: {output}")
             return output
         except Exception as exc:
-            logger.error(f"Error occurred: {exc}")
-            raise Exception(f"Error occurred: {exc}")
+            logger.error(f"Error occurred while generating response: {exc}")
+            raise RuntimeError(f"Error occurred while generating response: {exc}")
 
     async def check_connection(self) -> bool:
         try:
@@ -63,9 +64,7 @@ class OllamaAPI:
                 None, partial(self.llm.invoke, test_prompt)
             )
             if current_app.debug:
-                logger.info(
-                    f"Successfully connected to Ollama API at {self.base_url} and verified model {self.model}"
-                )
+                logger.info(f"Successfully connected to Ollama API at {self.base_url} with model: {self.model}")
             return True
         except Exception as e:
             logger.error(
