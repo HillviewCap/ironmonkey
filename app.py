@@ -483,15 +483,23 @@ def setup_scheduler(app):
     scheduler.add_job(
         func=check_and_process_rss_feeds, trigger="interval", minutes=rss_check_interval
     )
-    scheduler.add_job(
-        func=lambda: asyncio.run(start_check_empty_summaries()),
-        trigger="interval",
-        minutes=summary_check_interval,
-    )
+    
+    summary_api_choice = os.getenv("SUMMARY_API_CHOICE", "ollama").lower()
+    if summary_api_choice == "ollama":
+        scheduler.add_job(
+            func=lambda: asyncio.run(start_check_empty_summaries()),
+            trigger="interval",
+            minutes=summary_check_interval,
+        )
+        logger.info(f"Scheduler started with Ollama API for summaries, check interval: {summary_check_interval} minutes")
+    elif summary_api_choice == "groq":
+        # Add Groq-specific job here if needed
+        logger.info("Scheduler started with Groq API for summaries, no automatic summary generation scheduled")
+    else:
+        logger.warning(f"Invalid SUMMARY_API_CHOICE: {summary_api_choice}. No summary generation scheduled.")
+
     scheduler.start()
-    logger.info(
-        f"Scheduler started successfully with RSS check interval: {rss_check_interval} minutes and Summary check interval: {summary_check_interval} minutes"
-    )
+    logger.info(f"Scheduler started successfully with RSS check interval: {rss_check_interval} minutes")
     return scheduler
 
 
