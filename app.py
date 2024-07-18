@@ -798,8 +798,10 @@ if __name__ == "__main__":
             "favicon.ico",
             mimetype="image/vnd.microsoft.icon",
         )
-from flask import Flask
+from flask import Flask, render_template, redirect, url_for
+from flask_login import LoginManager, current_user
 from routes.apt_groups import apt_groups_bp
+from models import db, ParsedContent
 
 def create_app(config_name="default"):
     app = Flask(__name__, instance_relative_config=True, static_url_path="/static")
@@ -807,6 +809,15 @@ def create_app(config_name="default"):
     # ... (keep other configurations)
 
     app.register_blueprint(apt_groups_bp)
+
+    # Initialize LoginManager
+    login_manager = LoginManager()
+    login_manager.init_app(app)
+
+    @login_manager.user_loader
+    def load_user(user_id):
+        # Implement user loading logic here
+        pass
 
     @app.route("/")
     def index():
