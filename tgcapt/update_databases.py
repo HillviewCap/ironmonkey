@@ -47,7 +47,7 @@ def update_alltools(session: Session, data: List[Dict[str, Any]]) -> None:
             db_tool = AllTools(uuid=tool['uuid'])
             session.add(db_tool)
         
-        db_tool.authors = tool.get('authors')
+        db_tool.authors = ', '.join(tool.get('authors', [])) if isinstance(tool.get('authors'), list) else tool.get('authors')
         db_tool.category = tool.get('category')
         db_tool.name = tool.get('name')
         db_tool.type = tool.get('type')
@@ -90,7 +90,7 @@ def update_allgroups(session: Session, data: List[Dict[str, Any]]) -> None:
             db_group = AllGroups(uuid=group['uuid'])
             session.add(db_group)
         
-        db_group.authors = group.get('authors')
+        db_group.authors = ', '.join(group.get('authors', [])) if isinstance(group.get('authors'), list) else group.get('authors')
         db_group.category = group.get('category')
         db_group.name = group.get('name')
         db_group.type = group.get('type')
