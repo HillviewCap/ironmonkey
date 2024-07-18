@@ -24,7 +24,7 @@ def create_app():
         pass
     
     # Set the database path to be in the instance folder
-    app.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite:///{os.path.join(app.instance_path, 'iron_monkey.db')}"
+    app.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite:///{os.path.join(app.instance_path, 'threats.db')}"
     
     db.init_app(app)
     return app

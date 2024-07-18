@@ -25,14 +25,14 @@ class AllTools(Base):
 class AllToolsValues(Base):
     __tablename__ = 'alltools_values'
 
-    uuid = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    uuid = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     tool = Column(String)
     description = Column(Text)
     category = Column(String)
     type = Column(String)
     information = Column(Text)
     last_card_change = Column(String)
-    alltools_uuid = Column(UUID(as_uuid=True), ForeignKey('alltools.uuid'))
+    alltools_uuid = Column(String(36), ForeignKey('alltools.uuid'))
 
     alltool = relationship("AllTools", back_populates="values")
     names = relationship("AllToolsValuesNames", back_populates="alltools_value")
@@ -40,9 +40,9 @@ class AllToolsValues(Base):
 class AllToolsValuesNames(Base):
     __tablename__ = 'alltools_values_names'
 
-    uuid = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    uuid = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     name = Column(String)
-    alltools_values_uuid = Column(UUID(as_uuid=True), ForeignKey('alltools_values.uuid'))
+    alltools_values_uuid = Column(String(36), ForeignKey('alltools_values.uuid'))
 
     alltools_value = relationship("AllToolsValues", back_populates="names")
 
