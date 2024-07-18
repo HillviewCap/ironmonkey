@@ -13,9 +13,11 @@ from config import Config
 
 logger = logging.getLogger(__name__)
 
+import os
+
 def fetch_json(url: str) -> Optional[Dict[str, Any]]:
     """
-    Fetch JSON data from a given URL.
+    Fetch JSON data from a given URL or local file as fallback.
 
     Args:
         url (str): The URL to fetch JSON data from.
@@ -47,6 +49,20 @@ def fetch_json(url: str) -> Optional[Dict[str, Any]]:
         logger.error(f"HTTP error occurred: {e}")
     except Exception as e:
         logger.error(f"An unexpected error occurred: {e}")
+
+    # If we reach here, there was an unrecoverable error. Try to use local file.
+    local_file = "tgcapt\\Threat Group Card - All groups.json" if "g=all" in url else "tgcapt\\Threat Group Card - All tools.json"
+    logger.warning(f"Attempting to use local file: {local_file}")
+    
+    try:
+        if os.path.exists(local_file):
+            with open(local_file, 'r') as f:
+                return json.load(f)
+        else:
+            logger.error(f"Local file not found: {local_file}")
+    except Exception as e:
+        logger.error(f"Error reading local file: {e}")
+    
     return None
 
 def calculate_hash(data: Dict[str, Any]) -> str:
