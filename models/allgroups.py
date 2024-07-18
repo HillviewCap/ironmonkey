@@ -37,6 +37,8 @@ class AllGroupsValues(Base):
     tools = Column(Text)
     operations = Column(Text)
     sponsor = Column(Text)
+    counter_operations = Column(Text)
+    mitre_attack = Column(Text)
     allgroups_uuid = Column(String(36), ForeignKey('allgroups.uuid'))
 
     allgroup = relationship("AllGroups", back_populates="values")
