@@ -806,6 +806,9 @@ from models import db, ParsedContent
 def create_app(config_name="default"):
     app = Flask(__name__, instance_relative_config=True, static_url_path="/static")
     
+    # Set a secret key for the application
+    app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY') or 'you-will-never-guess'
+    
     # ... (keep other configurations)
 
     app.register_blueprint(apt_groups_bp)
