@@ -9,7 +9,7 @@ from models.alltools import Base as AllToolsBase, AllTools, AllToolsValues, AllT
 from models.allgroups import Base as AllGroupsBase, AllGroups, AllGroupsValues, AllGroupsValuesNames
 from config import Config
 from sqlalchemy import create_engine, text
-from tgcapt import update_databases
+from tgcapt import update_databases as update_databases_module
 
 def create_app():
     app = Flask(__name__)
@@ -66,7 +66,7 @@ def init_db(app=None):
         print(f"All database tables created and updated successfully in {app.instance_path}")
         
         # Update the databases with the latest data
-        update_databases()
+        update_databases_module.update_databases()
 
 if __name__ == "__main__":
     init_db()
