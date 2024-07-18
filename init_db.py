@@ -8,7 +8,7 @@ from models.diffbot_model import Base as DiffbotBase, Document, Entity, EntityMe
 from models.alltools import Base as AllToolsBase, AllTools, AllToolsValues, AllToolsValuesNames
 from models.allgroups import Base as AllGroupsBase, AllGroups, AllGroupsValues, AllGroupsValuesNames
 from config import Config
-from sqlalchemy import create_engine, text
+from sqlalchemy import create_engine, text, inspect
 from tgcapt import update_databases as update_databases_module
 import json
 import logging
@@ -40,21 +40,29 @@ def init_db(app=None):
             # Create tables for models defined with Flask-SQLAlchemy
             db.create_all()
             
-            # Create tables for models defined with SQLAlchemy (diffbot_model, alltools, allgroups)
+            # Create tables for models defined with SQLAlchemy (diffbot_model)
             DiffbotBase.metadata.create_all(engine)
-            AllToolsBase.metadata.create_all(engine)
-            AllGroupsBase.metadata.create_all(engine)
 
-            # Verify that the tables were created
-            with engine.connect() as connection:
-                for table_name in ['alltools', 'alltools_values', 'alltools_values_names', 'allgroups', 'allgroups_values', 'allgroups_values_names']:
-                    result = connection.execute(text(f"SELECT name FROM sqlite_master WHERE type='table' AND name='{table_name}'"))
-                    if result.fetchone() is None:
-                        print(f"Error: Table '{table_name}' was not created.")
-                        logging.error(f"Table '{table_name}' was not created.")
-                    else:
-                        print(f"Table '{table_name}' was created successfully.")
-                        logging.info(f"Table '{table_name}' was created successfully.")
+            # Check if AllTools and AllGroups tables exist, create them if they don't
+            inspector = inspect(engine)
+            if not inspector.has_table("alltools"):
+                AllToolsBase.metadata.create_all(engine)
+                print("AllTools tables created successfully.")
+                logging.info("AllTools tables created successfully.")
+            if not inspector.has_table("allgroups"):
+                AllGroupsBase.metadata.create_all(engine)
+                print("AllGroups tables created successfully.")
+                logging.info("AllGroups tables created successfully.")
+
+            # Verify that all required tables were created
+            required_tables = ['alltools', 'alltools_values', 'alltools_values_names', 'allgroups', 'allgroups_values', 'allgroups_values_names']
+            for table_name in required_tables:
+                if not inspector.has_table(table_name):
+                    print(f"Error: Table '{table_name}' was not created.")
+                    logging.error(f"Table '{table_name}' was not created.")
+                else:
+                    print(f"Table '{table_name}' exists.")
+                    logging.info(f"Table '{table_name}' exists.")
         except Exception as e:
             print(f"An error occurred while creating tables: {str(e)}")
             logging.error(f"An error occurred while creating tables: {str(e)}")
