@@ -5,6 +5,8 @@ import hashlib
 from flask import Flask
 from models import db, User, RSSFeed, ParsedContent, Category, Threat, SearchParams, AwesomeThreatIntelBlog
 from models.diffbot_model import Base as DiffbotBase, Document, Entity, EntityMention, EntityType, EntityUri, Category as DiffbotCategory
+from models.alltools import Base as AllToolsBase, AllTools, AllToolsValues, AllToolsValuesNames
+from models.allgroups import Base as AllGroupsBase, AllGroups, AllGroupsValues, AllGroupsValuesNames
 from config import Config
 from sqlalchemy import create_engine, text
 
@@ -32,9 +34,11 @@ def init_db(app=None):
         # Create tables for models defined with Flask-SQLAlchemy
         db.create_all()
         
-        # Create tables for models defined with SQLAlchemy (diffbot_model)
+        # Create tables for models defined with SQLAlchemy (diffbot_model, alltools, allgroups)
         engine = create_engine(app.config['SQLALCHEMY_DATABASE_URI'])
         DiffbotBase.metadata.create_all(engine)
+        AllToolsBase.metadata.create_all(engine)
+        AllGroupsBase.metadata.create_all(engine)
         
         # Add the summary and art_hash columns to ParsedContent if they don't exist
         with engine.connect() as connection:
