@@ -9,6 +9,7 @@ from models.alltools import Base as AllToolsBase, AllTools, AllToolsValues, AllT
 from models.allgroups import Base as AllGroupsBase, AllGroups, AllGroupsValues, AllGroupsValuesNames
 from config import Config
 from sqlalchemy import create_engine, text
+from tgc_apt.update_databases import update_databases
 
 def create_app():
     app = Flask(__name__)
@@ -63,6 +64,9 @@ def init_db(app=None):
                 connection.execute(text("ALTER TABLE rss_feed ADD COLUMN awesome_blog_id VARCHAR(36)"))
         
         print(f"All database tables created and updated successfully in {app.instance_path}")
+        
+        # Update the databases with the latest data
+        update_databases()
 
 if __name__ == "__main__":
     init_db()
