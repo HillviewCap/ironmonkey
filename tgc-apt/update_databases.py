@@ -1,21 +1,53 @@
-import requests
+from __future__ import annotations
+
 import json
 import hashlib
+from typing import Dict, List, Any
+import httpx
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, Session
 from models.alltools import AllTools, AllToolsValues, AllToolsValuesNames
 from models.allgroups import AllGroups, AllGroupsValues, AllGroupsValuesNames
 from config import Config
 
-def fetch_json(url):
-    response = requests.get(url)
-    response.raise_for_status()
-    return response.json()
+def fetch_json(url: str) -> Dict[str, Any]:
+    """
+    Fetch JSON data from a given URL.
 
-def calculate_hash(data):
+    Args:
+        url (str): The URL to fetch JSON data from.
+
+    Returns:
+        Dict[str, Any]: The JSON data as a dictionary.
+
+    Raises:
+        httpx.HTTPStatusError: If the HTTP request fails.
+    """
+    with httpx.Client() as client:
+        response = client.get(url)
+        response.raise_for_status()
+        return response.json()
+
+def calculate_hash(data: Dict[str, Any]) -> str:
+    """
+    Calculate the MD5 hash of the given data.
+
+    Args:
+        data (Dict[str, Any]): The data to calculate the hash for.
+
+    Returns:
+        str: The MD5 hash of the data.
+    """
     return hashlib.md5(json.dumps(data, sort_keys=True).encode()).hexdigest()
 
-def update_alltools(session, data):
+def update_alltools(session: Session, data: List[Dict[str, Any]]) -> None:
+    """
+    Update the AllTools database with the given data.
+
+    Args:
+        session (Session): The SQLAlchemy session.
+        data (List[Dict[str, Any]]): The data to update the database with.
+    """
     for tool in data:
         db_tool = session.query(AllTools).filter_by(uuid=tool['uuid']).first()
         if not db_tool:
@@ -51,7 +83,14 @@ def update_alltools(session, data):
                     db_name = AllToolsValuesNames(name=name)
                     db_value.names.append(db_name)
 
-def update_allgroups(session, data):
+def update_allgroups(session: Session, data: List[Dict[str, Any]]) -> None:
+    """
+    Update the AllGroups database with the given data.
+
+    Args:
+        session (Session): The SQLAlchemy session.
+        data (List[Dict[str, Any]]): The data to update the database with.
+    """
     for group in data:
         db_group = session.query(AllGroups).filter_by(uuid=group['uuid']).first()
         if not db_group:
@@ -86,7 +125,10 @@ def update_allgroups(session, data):
                     db_name = AllGroupsValuesNames(name=name['name'], name_giver=name.get('name_giver'))
                     db_value.names.append(db_name)
 
-def update_databases():
+def update_databases() -> None:
+    """
+    Update the AllTools and AllGroups databases with the latest data from the API.
+    """
     engine = create_engine(Config.SQLALCHEMY_DATABASE_URI)
     Session = sessionmaker(bind=engine)
     session = Session()
