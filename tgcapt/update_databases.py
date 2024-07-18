@@ -27,12 +27,24 @@ def fetch_json(url: str) -> Optional[Dict[str, Any]]:
         with httpx.Client() as client:
             response = client.get(url)
             response.raise_for_status()
-            return response.json()
+            
+            # Try to parse the JSON data
+            try:
+                return response.json()
+            except json.JSONDecodeError as e:
+                # If JSON parsing fails, log the error and attempt to fix the JSON
+                logger.error(f"JSON decode error occurred: {e}")
+                logger.error(f"Response content (first 1000 chars): {response.text[:1000]}...")
+                
+                # Attempt to fix the JSON by finding the last complete object
+                fixed_json = response.text.rsplit("}", 1)[0] + "}"
+                try:
+                    return json.loads(fixed_json)
+                except json.JSONDecodeError:
+                    logger.error("Failed to fix JSON data.")
+                    return None
     except httpx.HTTPStatusError as e:
         logger.error(f"HTTP error occurred: {e}")
-    except json.JSONDecodeError as e:
-        logger.error(f"JSON decode error occurred: {e}")
-        logger.error(f"Response content: {response.text[:1000]}...")  # Log the first 1000 characters of the response
     except Exception as e:
         logger.error(f"An unexpected error occurred: {e}")
     return None
@@ -146,7 +158,7 @@ def update_databases() -> None:
         # Update AllTools
         tools_url = "https://apt.etda.or.th/cgi-bin/getcard.cgi?t=all&o=j"
         tools_data = fetch_json(tools_url)
-        if tools_data is not None:
+        if tools_data is not None and isinstance(tools_data, list):
             tools_hash = calculate_hash(tools_data)
 
             # Check if the data has changed
@@ -157,12 +169,12 @@ def update_databases() -> None:
             else:
                 logger.info("AllTools database is already up to date.")
         else:
-            logger.warning("Failed to fetch AllTools data. Skipping update.")
+            logger.warning("Failed to fetch valid AllTools data. Skipping update.")
 
         # Update AllGroups
         groups_url = "https://apt.etda.or.th/cgi-bin/getcard.cgi?g=all&o=j"
         groups_data = fetch_json(groups_url)
-        if groups_data is not None:
+        if groups_data is not None and isinstance(groups_data, list):
             groups_hash = calculate_hash(groups_data)
 
             # Check if the data has changed
@@ -173,7 +185,7 @@ def update_databases() -> None:
             else:
                 logger.info("AllGroups database is already up to date.")
         else:
-            logger.warning("Failed to fetch AllGroups data. Skipping update.")
+            logger.warning("Failed to fetch valid AllGroups data. Skipping update.")
 
         session.commit()
     except Exception as e:
