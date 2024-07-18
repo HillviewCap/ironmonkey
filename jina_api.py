@@ -57,10 +57,6 @@ async def parse_content(url: str) -> str:
         str: Parsed text content or None if an error occurs.
     """
     # Check if the content is already in the cache
-    if not post_id:
-        logger.warning("No post ID provided for content update.")
-        return
-
     if url in content_cache:
         logger.info(f"Retrieved cached content for URL: {url}")
         return content_cache[url]
@@ -132,7 +128,7 @@ async def update_content_in_database(post_id: str, content: str) -> None:
         logger.error(f"Failed to update content for post ID {post_id}: {e}")
 
 
-async def process_url(url: str, post_id: str):
+async def process_url(url: str, post_id: str) -> None:
     """
     Process a URL: parse its content and update the database.
 
