@@ -43,10 +43,12 @@ class SummaryEnhancer:
     async def generate_summary(self, content_id: str) -> str:
         self._initialize_api()  # Ensure API is initialized before use
 
-    async def generate_summary(self, content_id: str) -> str:
         parsed_content = ParsedContent.get_by_id(content_id)
         if not parsed_content:
             raise ValueError(f"No ParsedContent found with id {content_id}")
+        if self.api is None:
+            logger.error("API object is not initialized")
+            raise ValueError("API object is not initialized")
         return await self.api.generate("threat_intel_summary", parsed_content.content)
 
     async def enhance_summary(self, content_id: str) -> bool:
@@ -54,6 +56,8 @@ class SummaryEnhancer:
 
         for attempt in range(self.max_retries):
             try:
+                if self.api is None:
+                    raise ValueError("API object is not initialized")
                 summary = await self.generate_summary(content_id)
                 if not summary:
                     logger.warning(f"Empty summary generated for record {content_id}. Attempt {attempt + 1}/{self.max_retries}")
@@ -75,7 +79,7 @@ class SummaryEnhancer:
                 db.session.rollback()
 
         logger.error(f"Failed to generate summary for record {content_id} after {self.max_retries} attempts.")
-        return False
+        raise  # Re-raise the last exception to propagate it
 
     async def summarize_feed(self, feed_id: str) -> None:
         logger.info(f"Starting summary enhancement for feed {feed_id}")
