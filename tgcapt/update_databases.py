@@ -68,8 +68,8 @@ def update_alltools(session: Session, data: List[Dict[str, Any]]) -> None:
             db_value.tool = value.get('tool')
             db_value.description = value.get('description')
             db_value.category = value.get('category')
-            db_value.type = value.get('type')
-            db_value.information = value.get('information')
+            db_value.type = ', '.join(value.get('type')) if isinstance(value.get('type'), list) else value.get('type')
+            db_value.information = ', '.join(value.get('information')) if isinstance(value.get('information'), list) else value.get('information')
             db_value.last_card_change = value.get('last_card_change')
 
             for name in value.get('names', []):
