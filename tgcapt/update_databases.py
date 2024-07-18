@@ -29,28 +29,11 @@ def fetch_json(url: str) -> Optional[Dict[str, Any]]:
         with httpx.Client() as client:
             response = client.get(url)
             response.raise_for_status()
-            
-            # Try to parse the JSON data
-            try:
-                return response.json()
-            except json.JSONDecodeError as e:
-                # If JSON parsing fails, log the error and attempt to fix the JSON
-                logger.error(f"JSON decode error occurred: {e}")
-                logger.error(f"Response content (first 1000 chars): {response.text[:1000]}...")
-                
-                # Attempt to fix the JSON by finding the last complete object
-                fixed_json = response.text.rsplit("}", 1)[0] + "}"
-                try:
-                    return json.loads(fixed_json)
-                except json.JSONDecodeError:
-                    logger.error("Failed to fix JSON data.")
-                    return None
-    except httpx.HTTPStatusError as e:
-        logger.error(f"HTTP error occurred: {e}")
-    except Exception as e:
-        logger.error(f"An unexpected error occurred: {e}")
+            return response.json()
+    except (httpx.HTTPStatusError, json.JSONDecodeError, Exception) as e:
+        logger.error(f"Error fetching or parsing JSON from URL: {e}")
 
-    # If we reach here, there was an unrecoverable error. Try to use local file.
+    # If we reach here, there was an error. Try to use local file.
     local_file = "tgcapt/Threat Group Card - All groups.json" if "g=all" in url else "tgcapt/Threat Group Card - All tools.json"
     logger.warning(f"Attempting to use local file: {local_file}")
     
