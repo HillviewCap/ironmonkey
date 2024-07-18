@@ -802,6 +802,7 @@ from flask import Flask, render_template, redirect, url_for
 from flask_login import LoginManager, current_user
 from routes.apt_groups import apt_groups_bp
 from routes.admin import admin_bp
+from routes.search import search_bp
 from models import db, ParsedContent
 
 def create_app(config_name="default"):
@@ -814,6 +815,7 @@ def create_app(config_name="default"):
 
     app.register_blueprint(apt_groups_bp)
     app.register_blueprint(admin_bp)
+    app.register_blueprint(search_bp)
 
     # Initialize LoginManager
     login_manager = LoginManager()
