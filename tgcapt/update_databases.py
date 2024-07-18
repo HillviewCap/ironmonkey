@@ -120,6 +120,7 @@ def update_allgroups(session: Session, data: List[Dict[str, Any]]) -> None:
             db_value.observed_sectors = ', '.join(value.get('observed-sectors', [])) if isinstance(value.get('observed-sectors'), list) else value.get('observed-sectors')
             db_value.observed_countries = ', '.join(value.get('observed-countries', [])) if isinstance(value.get('observed-countries'), list) else value.get('observed-countries')
             db_value.tools = ', '.join(value.get('tools', [])) if isinstance(value.get('tools'), list) else value.get('tools')
+            db_value.sponsor = value.get('sponsor')
             
             # Handle operations separately as it's a list of dictionaries
             if 'operations' in value and isinstance(value['operations'], list):

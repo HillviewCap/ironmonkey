@@ -36,6 +36,7 @@ class AllGroupsValues(Base):
     observed_countries = Column(Text)
     tools = Column(Text)
     operations = Column(Text)
+    sponsor = Column(Text)
     allgroups_uuid = Column(String(36), ForeignKey('allgroups.uuid'))
 
     allgroup = relationship("AllGroups", back_populates="values")
