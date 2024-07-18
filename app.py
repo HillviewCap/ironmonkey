@@ -1,28 +1,18 @@
 from __future__ import annotations
+
 import os
 import asyncio
 import uuid
 from datetime import datetime
+from typing import Optional, List, Dict, Any
+
 import bleach
 from dotenv import load_dotenv
-import logging
-from flask import (
-    Flask,
-    render_template,
-    request,
-    jsonify,
-    current_app,
-    abort,
-    send_from_directory,
-    redirect,
-    url_for,
-    flash,
-)
+from flask import Flask, render_template, request, jsonify, current_app, abort, send_from_directory, redirect, url_for, flash
 from flask_migrate import Migrate
 from flask_wtf import FlaskForm
 from flask_wtf.csrf import CSRFProtect
 from flask_login import LoginManager, login_required, current_user
-from sqlalchemy import func
 from sqlalchemy.exc import SQLAlchemyError
 from werkzeug.exceptions import BadRequest
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -47,7 +37,7 @@ app_logger = setup_logger("app", "app.log")
 scheduler_logger = setup_logger("scheduler", "scheduler.log")
 
 # Initialize Flask application
-app = None
+app: Optional[Flask] = None
 
 
 
@@ -503,10 +493,24 @@ def setup_scheduler(app):
     return scheduler
 
 
-def create_app(config_name="default"):
+def create_app(config_name: str = "default") -> Optional[Flask]:
     global app
     app = Flask(__name__, instance_relative_config=True, static_url_path="/static")
     
+    configure_app(app, config_name)
+    
+    try:
+        initialize_extensions(app)
+        register_blueprints(app)
+        setup_database(app)
+        setup_scheduler(app)
+    except Exception as e:
+        logger.error(f"Error during app initialization: {str(e)}")
+        raise
+
+    return app
+
+def configure_app(app: Flask, config_name: str) -> None:
     app.config.from_object(config[config_name])
     config[config_name].init_app(app)
 
@@ -514,7 +518,6 @@ def create_app(config_name="default"):
     
     if summary_api_choice == "ollama":
         app.ollama_api = OllamaAPI()
-        # Check Ollama API connection
         with app.app_context():
             if not app.ollama_api.check_connection_sync():
                 logger.error("Failed to connect to Ollama API. Exiting.")
@@ -530,51 +533,47 @@ def create_app(config_name="default"):
         f"sqlite:///{os.path.join(app.instance_path, 'threats.db')}"
     )
     
-    # Adjust logging level based on the environment
     if config_name == "production":
         app.logger.setLevel(logging.WARNING)
         logger.setLevel(logging.WARNING)
     else:
         logger.info(f"Database URI: {app.config['SQLALCHEMY_DATABASE_URI']}")
 
-    try:
-        db.init_app(app)
-        CSRFProtect(app)
-        init_auth(app)
-        Migrate(app, db)
+def initialize_extensions(app: Flask) -> None:
+    db.init_app(app)
+    CSRFProtect(app)
+    init_auth(app)
+    Migrate(app, db)
 
-        login_manager = LoginManager()
-        login_manager.init_app(app)
+    login_manager = LoginManager()
+    login_manager.init_app(app)
 
-        @login_manager.user_loader
-        def load_user(user_id):
-            try:
-                return db.session.get(User, uuid.UUID(user_id))
-            except ValueError:
-                return None
+    @login_manager.user_loader
+    def load_user(user_id: str) -> Optional[User]:
+        try:
+            return db.session.get(User, uuid.UUID(user_id))
+        except ValueError:
+            return None
 
-        app.register_blueprint(rss_manager)
+def register_blueprints(app: Flask) -> None:
+    app.register_blueprint(rss_manager)
 
-        with app.app_context():
-            init_db(app)
-            import_awesome_threat_intel_blogs(app)
+def setup_database(app: Flask) -> None:
+    with app.app_context():
+        init_db(app)
+        import_awesome_threat_intel_blogs(app)
 
-        register_routes(app)
-        setup_scheduler(app)
-
-    except Exception as e:
-        logger.error(f"Error during app initialization: {str(e)}")
-        raise
-
-    return app
-
-def import_awesome_threat_intel_blogs(app):
+def import_awesome_threat_intel_blogs(app: Flask) -> None:
     csv_file_path = 'awesome_threat_intel_blogs.csv'
     try:
         result = AwesomeThreatIntelBlog.import_from_csv(csv_file_path)
         logger.info(result)
+    except FileNotFoundError:
+        logger.error(f"CSV file not found: {csv_file_path}")
+    except SQLAlchemyError as e:
+        logger.error(f"Database error while importing Awesome Threat Intel Blogs: {str(e)}")
     except Exception as e:
-        logger.error(f"Error importing Awesome Threat Intel Blogs: {str(e)}")
+        logger.error(f"Unexpected error importing Awesome Threat Intel Blogs: {str(e)}")
 
 
 if __name__ == "__main__":
