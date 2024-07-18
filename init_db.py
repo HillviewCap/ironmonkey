@@ -104,7 +104,8 @@ def init_db(app=None):
                 "operations": "TEXT",
                 "sponsor": "TEXT",
                 "counter_operations": "TEXT",
-                "mitre_attack": "TEXT"
+                "mitre_attack": "TEXT",
+                "playbook": "TEXT"
             }
             for column, column_type in missing_columns.items():
                 if column not in columns:

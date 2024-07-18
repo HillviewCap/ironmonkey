@@ -39,7 +39,7 @@ class AllGroupsValues(Base):
     sponsor = Column(Text)
     counter_operations = Column(Text)
     mitre_attack = Column(Text)
-    playbook = Column(Text)  # New field added
+    playbook = Column(Text)
     allgroups_uuid = Column(String(36), ForeignKey('allgroups.uuid'))
 
     allgroup = relationship("AllGroups", back_populates="values")
