@@ -30,6 +30,12 @@ class AllGroupsValues(Base):
     description = Column(Text)
     information = Column(Text)
     last_card_change = Column(String)
+    motivation = Column(Text)
+    first_seen = Column(String)
+    observed_sectors = Column(Text)
+    observed_countries = Column(Text)
+    tools = Column(Text)
+    operations = Column(Text)
     allgroups_uuid = Column(String(36), ForeignKey('allgroups.uuid'))
 
     allgroup = relationship("AllGroups", back_populates="values")

@@ -114,7 +114,19 @@ def update_allgroups(session: Session, data: List[Dict[str, Any]]) -> None:
             db_value.country = ', '.join(value.get('country', [])) if isinstance(value.get('country'), list) else value.get('country')
             db_value.description = value.get('description')
             db_value.information = ', '.join(value.get('information', [])) if isinstance(value.get('information'), list) else value.get('information')
-            db_value.last_card_change = value.get('last-card-change')  # Changed from 'last_card_change' to 'last-card-change'
+            db_value.last_card_change = value.get('last-card-change')
+            db_value.motivation = ', '.join(value.get('motivation', [])) if isinstance(value.get('motivation'), list) else value.get('motivation')
+            db_value.first_seen = value.get('first-seen')
+            db_value.observed_sectors = ', '.join(value.get('observed-sectors', [])) if isinstance(value.get('observed-sectors'), list) else value.get('observed-sectors')
+            db_value.observed_countries = ', '.join(value.get('observed-countries', [])) if isinstance(value.get('observed-countries'), list) else value.get('observed-countries')
+            db_value.tools = ', '.join(value.get('tools', [])) if isinstance(value.get('tools'), list) else value.get('tools')
+            
+            # Handle operations separately as it's a list of dictionaries
+            if 'operations' in value and isinstance(value['operations'], list):
+                operations_json = json.dumps(value['operations'])
+                db_value.operations = operations_json
+            else:
+                db_value.operations = None
 
             for name_data in value.get('names', []):
                 db_name = session.query(AllGroupsValuesNames).filter(
