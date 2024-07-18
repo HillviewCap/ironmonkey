@@ -51,7 +51,7 @@ def fetch_json(url: str) -> Optional[Dict[str, Any]]:
         logger.error(f"An unexpected error occurred: {e}")
 
     # If we reach here, there was an unrecoverable error. Try to use local file.
-    local_file = "tgcapt\\Threat Group Card - All groups.json" if "g=all" in url else "tgcapt\\Threat Group Card - All tools.json"
+    local_file = "tgcapt/Threat Group Card - All groups.json" if "g=all" in url else "tgcapt/Threat Group Card - All tools.json"
     logger.warning(f"Attempting to use local file: {local_file}")
     
     try:
