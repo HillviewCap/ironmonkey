@@ -15,36 +15,23 @@ logger = logging.getLogger(__name__)
 
 import os
 
-def fetch_json(url: str) -> Optional[Dict[str, Any]]:
+def fetch_json(file_type: str) -> Optional[Dict[str, Any]]:
     """
-    Fetch JSON data from a given URL or local file as fallback.
+    Load JSON data from a local file.
 
     Args:
-        url (str): The URL to fetch JSON data from.
+        file_type (str): The type of file to load ('groups' or 'tools').
 
     Returns:
         Optional[Dict[str, Any]]: The JSON data as a dictionary, or None if an error occurs.
     """
-    try:
-        with httpx.Client() as client:
-            response = client.get(url)
-            response.raise_for_status()
-            return response.json()
-    except (httpx.HTTPStatusError, json.JSONDecodeError, Exception) as e:
-        logger.error(f"Error fetching or parsing JSON from URL: {e}")
-
-    # If we reach here, there was an error. Try to use local file.
-    local_file = "tgcapt/Threat Group Card - All groups.json" if "g=all" in url else "tgcapt/Threat Group Card - All tools.json"
-    logger.warning(f"Attempting to use local file: {local_file}")
+    local_file = f"tgcapt/Threat Group Card - All {file_type}.json"
     
     try:
-        if os.path.exists(local_file):
-            with open(local_file, 'r', encoding='utf-8') as f:
-                return json.load(f)
-        else:
-            logger.error(f"Local file not found: {local_file}")
+        with open(local_file, 'r', encoding='utf-8') as f:
+            return json.load(f)
     except Exception as e:
-        logger.error(f"Error reading local file: {e}")
+        logger.error(f"Error reading local file {local_file}: {e}")
     
     return None
 
@@ -155,8 +142,7 @@ def update_databases() -> None:
 
     try:
         # Update AllTools
-        tools_url = "https://apt.etda.or.th/cgi-bin/getcard.cgi?t=all&o=j"
-        tools_data = fetch_json(tools_url)
+        tools_data = fetch_json('tools')
         if tools_data is not None and isinstance(tools_data, list):
             tools_hash = calculate_hash(tools_data)
 
@@ -168,11 +154,10 @@ def update_databases() -> None:
             else:
                 logger.info("AllTools database is already up to date.")
         else:
-            logger.warning("Failed to fetch valid AllTools data. Skipping update.")
+            logger.warning("Failed to load valid AllTools data. Skipping update.")
 
         # Update AllGroups
-        groups_url = "https://apt.etda.or.th/cgi-bin/getcard.cgi?g=all&o=j"
-        groups_data = fetch_json(groups_url)
+        groups_data = fetch_json('groups')
         if groups_data is not None and isinstance(groups_data, list):
             groups_hash = calculate_hash(groups_data)
 
@@ -184,7 +169,7 @@ def update_databases() -> None:
             else:
                 logger.info("AllGroups database is already up to date.")
         else:
-            logger.warning("Failed to fetch valid AllGroups data. Skipping update.")
+            logger.warning("Failed to load valid AllGroups data. Skipping update.")
 
         session.commit()
     except Exception as e:
