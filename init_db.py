@@ -42,6 +42,15 @@ def init_db(app=None):
         DiffbotBase.metadata.create_all(engine)
         AllToolsBase.metadata.create_all(engine)
         AllGroupsBase.metadata.create_all(engine)
+
+        # Verify that the tables were created
+        with engine.connect() as connection:
+            for table_name in ['alltools', 'alltools_values', 'alltools_values_names', 'allgroups', 'allgroups_values', 'allgroups_values_names']:
+                result = connection.execute(text(f"SELECT name FROM sqlite_master WHERE type='table' AND name='{table_name}'"))
+                if result.fetchone() is None:
+                    print(f"Warning: Table '{table_name}' was not created.")
+                else:
+                    print(f"Table '{table_name}' was created successfully.")
         
         # Add the summary and art_hash columns to ParsedContent if they don't exist
         with engine.connect() as connection:
