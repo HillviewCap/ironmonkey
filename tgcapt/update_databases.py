@@ -2,7 +2,8 @@ from __future__ import annotations
 
 import json
 import hashlib
-from typing import Dict, List, Any
+import logging
+from typing import Dict, List, Any, Optional
 import httpx
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
@@ -10,7 +11,9 @@ from models.alltools import AllTools, AllToolsValues, AllToolsValuesNames
 from models.allgroups import AllGroups, AllGroupsValues, AllGroupsValuesNames
 from config import Config
 
-def fetch_json(url: str) -> Dict[str, Any]:
+logger = logging.getLogger(__name__)
+
+def fetch_json(url: str) -> Optional[Dict[str, Any]]:
     """
     Fetch JSON data from a given URL.
 
@@ -18,15 +21,21 @@ def fetch_json(url: str) -> Dict[str, Any]:
         url (str): The URL to fetch JSON data from.
 
     Returns:
-        Dict[str, Any]: The JSON data as a dictionary.
-
-    Raises:
-        httpx.HTTPStatusError: If the HTTP request fails.
+        Optional[Dict[str, Any]]: The JSON data as a dictionary, or None if an error occurs.
     """
-    with httpx.Client() as client:
-        response = client.get(url)
-        response.raise_for_status()
-        return response.json()
+    try:
+        with httpx.Client() as client:
+            response = client.get(url)
+            response.raise_for_status()
+            return response.json()
+    except httpx.HTTPStatusError as e:
+        logger.error(f"HTTP error occurred: {e}")
+    except json.JSONDecodeError as e:
+        logger.error(f"JSON decode error occurred: {e}")
+        logger.error(f"Response content: {response.text[:1000]}...")  # Log the first 1000 characters of the response
+    except Exception as e:
+        logger.error(f"An unexpected error occurred: {e}")
+    return None
 
 def calculate_hash(data: Dict[str, Any]) -> str:
     """
@@ -137,33 +146,39 @@ def update_databases() -> None:
         # Update AllTools
         tools_url = "https://apt.etda.or.th/cgi-bin/getcard.cgi?t=all&o=j"
         tools_data = fetch_json(tools_url)
-        tools_hash = calculate_hash(tools_data)
+        if tools_data is not None:
+            tools_hash = calculate_hash(tools_data)
 
-        # Check if the data has changed
-        if tools_hash != getattr(Config, 'LAST_TOOLS_HASH', None):
-            update_alltools(session, tools_data)
-            Config.LAST_TOOLS_HASH = tools_hash
-            print("AllTools database updated successfully.")
+            # Check if the data has changed
+            if tools_hash != getattr(Config, 'LAST_TOOLS_HASH', None):
+                update_alltools(session, tools_data)
+                Config.LAST_TOOLS_HASH = tools_hash
+                logger.info("AllTools database updated successfully.")
+            else:
+                logger.info("AllTools database is already up to date.")
         else:
-            print("AllTools database is already up to date.")
+            logger.warning("Failed to fetch AllTools data. Skipping update.")
 
         # Update AllGroups
         groups_url = "https://apt.etda.or.th/cgi-bin/getcard.cgi?g=all&o=j"
         groups_data = fetch_json(groups_url)
-        groups_hash = calculate_hash(groups_data)
+        if groups_data is not None:
+            groups_hash = calculate_hash(groups_data)
 
-        # Check if the data has changed
-        if groups_hash != getattr(Config, 'LAST_GROUPS_HASH', None):
-            update_allgroups(session, groups_data)
-            Config.LAST_GROUPS_HASH = groups_hash
-            print("AllGroups database updated successfully.")
+            # Check if the data has changed
+            if groups_hash != getattr(Config, 'LAST_GROUPS_HASH', None):
+                update_allgroups(session, groups_data)
+                Config.LAST_GROUPS_HASH = groups_hash
+                logger.info("AllGroups database updated successfully.")
+            else:
+                logger.info("AllGroups database is already up to date.")
         else:
-            print("AllGroups database is already up to date.")
+            logger.warning("Failed to fetch AllGroups data. Skipping update.")
 
         session.commit()
     except Exception as e:
         session.rollback()
-        print(f"An error occurred: {str(e)}")
+        logger.error(f"An error occurred: {str(e)}")
     finally:
         session.close()
 
