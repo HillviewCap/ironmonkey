@@ -2,31 +2,25 @@ from __future__ import annotations
 
 import os
 import uuid
-import os
 import hashlib
-from flask import Blueprint, render_template, redirect, url_for, flash, request, current_app, jsonify
+from flask import Blueprint, render_template, redirect, url_for, flash, request, current_app, jsonify, Response
 from flask_login import login_required
 from datetime import datetime
-from models import db, ParsedContent
-from nlp_tagging import DiffbotClient, DatabaseHandler
+from models import db, ParsedContent, RSSFeed, Category, AwesomeThreatIntelBlog
 from nlp_tagging import DiffbotClient, DatabaseHandler
 from flask_wtf import FlaskForm
 from flask_wtf.csrf import CSRFProtect
 from wtforms import StringField, SubmitField, FileField, SelectField
 from wtforms.validators import DataRequired, URL
-from typing import List, Union, Tuple
+from typing import TextIO, Tuple, List, Union
 import csv
 from io import TextIOWrapper
-import uuid
-from werkzeug.wrappers import Response
 from sqlalchemy.exc import IntegrityError
 import feedparser
 import httpx
-import asyncio
 import html
 import re
 
-from models import db, RSSFeed, ParsedContent, Category, AwesomeThreatIntelBlog
 from jina_api import parse_content
 from logging_config import setup_logger
 
@@ -42,9 +36,8 @@ def sanitize_html(text):
 
 # Create a separate logger for RSS manager
 logger = setup_logger('rss_manager', 'rss_manager.log')
-from flask import current_app
-from nlp_tagging import DiffbotClient, DatabaseHandler
 from ollama_api import OllamaAPI
+from summary_enhancer import SummaryEnhancer
 
 rss_manager = Blueprint("rss_manager", __name__)
 csrf = CSRFProtect()
@@ -118,13 +111,21 @@ async def fetch_and_parse_feed(feed: RSSFeed) -> int:
                             logger.debug(f"New content found: {url}")
                         parsed_content = await parse_content(url)
                         if parsed_content is not None:
+                            pub_date = entry.get('published', '')
+                            if pub_date:
+                                try:
+                                    pub_date = datetime.strptime(pub_date, '%a, %d %b %Y %H:%M:%S %z')
+                                    pub_date = pub_date.strftime('%Y-%m-%d %H:%M:%S')
+                                except ValueError:
+                                    logger.warning(f"Could not parse date: {pub_date}. Using original string.")
+                            
                             new_content = ParsedContent(
                                 content=parsed_content,
                                 feed_id=feed.id,
                                 url=url,
                                 title=sanitize_html(title),
                                 description=sanitize_html(entry.get('description', '')),
-                                pub_date=entry.get('published', ''),
+                                pub_date=pub_date,
                                 creator=sanitize_html(entry.get('author', '')),
                                 art_hash=art_hash
                             )
@@ -414,6 +415,51 @@ def parsed_content():
         feed_id=feed_id,
     )
 
+@rss_manager.route("/parsed_content_data")
+@login_required
+def parsed_content_data():
+    """Serve parsed content data as JSON for Grid.js."""
+    page = request.args.get("page", 1, type=int)
+    per_page = request.args.get("per_page", 10, type=int)
+    search_query = request.args.get("search", "")
+    feed_id = request.args.get("feed_id")
+
+    query = ParsedContent.query
+
+    if feed_id:
+        try:
+            feed_id = uuid.UUID(feed_id)
+            query = query.filter(ParsedContent.feed_id == feed_id)
+        except ValueError:
+            return jsonify({"error": "Invalid feed ID"}), 400
+
+    if search_query:
+        query = query.filter(
+            (ParsedContent.content.ilike(f"%{search_query}%"))
+            | (ParsedContent.url.ilike(f"%{search_query}%"))
+            | (ParsedContent.title.ilike(f"%{search_query}%"))
+            | (ParsedContent.description.ilike(f"%{search_query}%"))
+        )
+
+    total = query.count()
+    query = query.order_by(ParsedContent.created_at.desc())
+    posts = query.paginate(page=page, per_page=per_page, error_out=False).items
+
+    data = [
+        {
+            "id": str(post.id),
+            "title": post.title,
+            "url": post.url,
+            "description": post.description,
+            "pub_date": post.pub_date.isoformat() if isinstance(post.pub_date, datetime) else post.pub_date,
+            "creator": post.creator,
+            "summary": post.summary
+        }
+        for post in posts
+    ]
+
+    return jsonify({"data": data, "total": total})
+
 
 @rss_manager.route("/tag_content/<uuid:post_id>", methods=["POST"])
 @login_required
@@ -468,24 +514,18 @@ async def summarize_content(post_id):
     try:
         post = db.session.get(ParsedContent, post_id)
         if post is None:
-            flash("Content not found", "error")
-            return redirect(url_for("rss_manager.parsed_content"))
+            return jsonify({"status": "error", "message": "Content not found"}), 404
 
-        ollama_api = current_app.ollama_api
+        summary_enhancer = SummaryEnhancer()
+        success = await summary_enhancer.process_single_record(post)
         
-        summary = await ollama_api.generate("threat_intel_summary", post.content)
-        
-        if summary:
-            post.summary = summary
-            db.session.commit()
-            flash("Content summarized successfully!", "success")
+        if success:
+            return jsonify({"status": "success", "message": "Content summarized successfully!"}), 200
         else:
-            flash("Failed to summarize content", "error")
+            return jsonify({"status": "error", "message": "Failed to summarize content"}), 500
     except Exception as e:
         logger.error(f"Error summarizing content: {str(e)}", exc_info=True)
-        flash(f"Error summarizing content: {str(e)}", "error")
-    
-    return redirect(url_for("rss_manager.parsed_content"))
+        return jsonify({"status": "error", "message": f"Error summarizing content: {str(e)}"}), 500
 
 
 @rss_manager.route("/delete_feed/<uuid:feed_id>", methods=["POST"])

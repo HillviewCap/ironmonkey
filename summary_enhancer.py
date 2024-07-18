@@ -16,48 +16,70 @@ from __future__ import annotations
 from logging_config import setup_logger
 from sqlalchemy.orm import Session
 from models import ParsedContent, db, RSSFeed
+import os
 from ollama_api import OllamaAPI
+from groq_api import GroqAPI
 from typing import Optional
 
 logger = setup_logger('summary_enhancer', 'summary_enhancer.log')
 
 class SummaryEnhancer:
-    def __init__(self, ollama_api: OllamaAPI, max_retries: int = 3):
-        self.ollama_api = ollama_api
+    def __init__(self, max_retries: int = 3):
         self.max_retries = max_retries
+        self.api = None
+
+    def _initialize_api(self):
+        if self.api is None:
+            api_choice = os.getenv("SUMMARY_API_CHOICE", "ollama").lower()
+            if api_choice == "ollama":
+                self.api = OllamaAPI()
+            elif api_choice == "groq":
+                self.api = GroqAPI()
+            else:
+                raise ValueError(f"Unsupported API choice: {api_choice}. Please set SUMMARY_API_CHOICE to 'ollama' or 'groq' in the .env file.")
+        return self.api
 
     async def generate_summary(self, content_id: str) -> str:
+        api = self._initialize_api()  # Ensure API is initialized before use
+
         parsed_content = ParsedContent.get_by_id(content_id)
         if not parsed_content:
             raise ValueError(f"No ParsedContent found with id {content_id}")
-        return await self.ollama_api.generate("threat_intel_summary", parsed_content.content)
+        if api is None:
+            logger.error("API object is not initialized")
+            raise ValueError("API object is not initialized")
+        return await api.generate("threat_intel_summary", parsed_content.content)
 
     async def enhance_summary(self, content_id: str) -> bool:
         logger.info(f"Processing record {content_id}")
 
         for attempt in range(self.max_retries):
             try:
+                api = self._initialize_api()
+                if api is None:
+                    raise ValueError("API object is not initialized")
                 summary = await self.generate_summary(content_id)
                 if not summary:
                     logger.warning(f"Empty summary generated for record {content_id}. Attempt {attempt + 1}/{self.max_retries}")
                     continue
 
-                with db.session.begin():
-                    parsed_content = ParsedContent.get_by_id(content_id)
-                    if not parsed_content:
-                        logger.warning(f"ParsedContent not found for id {content_id}")
-                        return False
+                parsed_content = ParsedContent.get_by_id(content_id)
+                if not parsed_content:
+                    logger.warning(f"ParsedContent not found for id {content_id}")
+                    return False
 
-                    parsed_content.summary = summary.strip()
-                    db.session.commit()
-                    logger.info(f"Updated summary for record {content_id}")
-                    return True
+                parsed_content.summary = summary.strip()
+                db.session.add(parsed_content)
+                db.session.commit()
+                logger.info(f"Updated summary for record {content_id}")
+                return True
 
             except Exception as e:
                 logger.error(f"Error generating summary for record {content_id}: {str(e)}. Attempt {attempt + 1}/{self.max_retries}", exc_info=True)
+                db.session.rollback()
 
         logger.error(f"Failed to generate summary for record {content_id} after {self.max_retries} attempts.")
-        return False
+        return False  # Return False instead of raising an exception
 
     async def summarize_feed(self, feed_id: str) -> None:
         logger.info(f"Starting summary enhancement for feed {feed_id}")
@@ -83,12 +105,13 @@ class SummaryEnhancer:
                 logger.warning(f"Empty summary generated for record {document.id}")
                 return False
 
-            with db.session.begin():
-                document.summary = summary.strip()
-                db.session.commit()
-                logger.info(f"Updated summary for record {document.id}")
+            document.summary = summary.strip()
+            db.session.add(document)
+            db.session.commit()
+            logger.info(f"Updated summary for record {document.id}")
             return True
 
         except Exception as e:
             logger.error(f"Error processing record {document.id}: {str(e)}", exc_info=True)
+            db.session.rollback()
             return False

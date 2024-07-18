@@ -36,6 +36,7 @@ from config import config
 from rss_manager import rss_manager, fetch_and_parse_feed
 from nlp_tagging import DiffbotClient, DatabaseHandler, Document
 from ollama_api import OllamaAPI
+from summary_enhancer import SummaryEnhancer
 from init_db import init_db
 
 # Load environment variables
@@ -430,26 +431,24 @@ def register_routes(app):
             return jsonify({"error": "content_id is required"}), 400
 
         try:
-            content_id = uuid.UUID(content_id)
-            document = db.session.get(ParsedContent, content_id)
-            if not document:
-                current_app.logger.error(f"Document not found for id: {content_id}")
-                return jsonify({"error": "Document not found"}), 404
+            content_id = str(uuid.UUID(content_id))  # Ensure valid UUID and convert to string
+            enhancer = SummaryEnhancer()
+            success = await enhancer.enhance_summary(content_id)
 
-            summary = await app.ollama_api.generate(
-                "threat_intel_summary", document.content
-            )
-            document.summary = summary
-            db.session.commit()
+            if success:
+                document = ParsedContent.get_by_id(content_id)
+                if document and document.summary:
+                    current_app.logger.info(f"Summary generated successfully for document id: {content_id}")
+                    return jsonify({"summary": document.summary}), 200
+                else:
+                    current_app.logger.error(f"Summary not found for document id: {content_id}")
+                    return jsonify({"error": "Summary not found after generation"}), 500
+            else:
+                current_app.logger.error(f"Failed to generate summary for document id: {content_id}")
+                return jsonify({"error": "Failed to generate summary"}), 500
 
-            current_app.logger.info(
-                f"Summary generated successfully for document id: {content_id}"
-            )
-            return jsonify({"summary": summary}), 200
         except ValueError:
-            current_app.logger.error(
-                f"Invalid UUID format for content_id: {content_id}"
-            )
+            current_app.logger.error(f"Invalid UUID format for content_id: {content_id}")
             return jsonify({"error": "Invalid content_id format"}), 400
         except Exception as e:
             current_app.logger.exception(f"Error summarizing content: {str(e)}")
@@ -484,15 +483,23 @@ def setup_scheduler(app):
     scheduler.add_job(
         func=check_and_process_rss_feeds, trigger="interval", minutes=rss_check_interval
     )
-    scheduler.add_job(
-        func=lambda: asyncio.run(start_check_empty_summaries()),
-        trigger="interval",
-        minutes=summary_check_interval,
-    )
+    
+    summary_api_choice = os.getenv("SUMMARY_API_CHOICE", "ollama").lower()
+    if summary_api_choice == "ollama":
+        scheduler.add_job(
+            func=lambda: asyncio.run(start_check_empty_summaries()),
+            trigger="interval",
+            minutes=summary_check_interval,
+        )
+        logger.info(f"Scheduler started with Ollama API for summaries, check interval: {summary_check_interval} minutes")
+    elif summary_api_choice == "groq":
+        # Add Groq-specific job here if needed
+        logger.info("Scheduler started with Groq API for summaries, no automatic summary generation scheduled")
+    else:
+        logger.warning(f"Invalid SUMMARY_API_CHOICE: {summary_api_choice}. No summary generation scheduled.")
+
     scheduler.start()
-    logger.info(
-        f"Scheduler started successfully with RSS check interval: {rss_check_interval} minutes and Summary check interval: {summary_check_interval} minutes"
-    )
+    logger.info(f"Scheduler started successfully with RSS check interval: {rss_check_interval} minutes")
     return scheduler
 
 
@@ -503,13 +510,21 @@ def create_app(config_name="default"):
     app.config.from_object(config[config_name])
     config[config_name].init_app(app)
 
-    app.ollama_api = OllamaAPI()
+    summary_api_choice = os.getenv("SUMMARY_API_CHOICE", "ollama").lower()
     
-    # Check Ollama API connection
-    with app.app_context():
-        if not app.ollama_api.check_connection_sync():
-            logger.error("Failed to connect to Ollama API. Exiting.")
-            return None
+    if summary_api_choice == "ollama":
+        app.ollama_api = OllamaAPI()
+        # Check Ollama API connection
+        with app.app_context():
+            if not app.ollama_api.check_connection_sync():
+                logger.error("Failed to connect to Ollama API. Exiting.")
+                return None
+    elif summary_api_choice == "groq":
+        # Initialize Groq API here if needed
+        pass
+    else:
+        logger.error(f"Invalid SUMMARY_API_CHOICE: {summary_api_choice}. Exiting.")
+        return None
 
     app.config["SQLALCHEMY_DATABASE_URI"] = (
         f"sqlite:///{os.path.join(app.instance_path, 'threats.db')}"

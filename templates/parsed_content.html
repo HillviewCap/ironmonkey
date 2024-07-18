@@ -18,151 +18,83 @@
     </div>
     {% endif %}
 
-    <div class="overflow-x-auto max-w-full">
-        <table id="parsed-content-table" class="w-full table-auto">
-            <thead>
-                <tr class="bg-gray-200">
-                    <th class="px-2 py-2 sortable" data-sort="string">Title</th>
-                    <th class="px-2 py-2 sortable" data-sort="string">URL</th>
-                    <th class="px-2 py-2 sortable" data-sort="date">Published Date</th>
-                    <th class="px-2 py-2">Summary</th>
-                    <th class="px-2 py-2">Tag Actions</th>
-                    <th class="px-2 py-2">Summarize Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for post in posts %}
-                <tr class="{% if loop.index % 2 == 0 %}bg-gray-100{% endif %}">
-                    <td class="border px-2 py-2 break-words">
-                        <a href="{{ url_for('view_item', item_id=post.id) }}" class="text-blue-600 hover:underline">
-                            {{ post.title[:50] }}
-                        </a>
-                    </td>
-                    <td class="border px-2 py-2 break-words">
-                        <a href="{{ post.url }}" class="text-blue-500 hover:underline" target="_blank">
-                            {{ post.url[:50] }}
-                        </a>
-                    </td>
-                    <td class="border px-2 py-2">{{ post.pub_date }}</td>
-                    <td class="border px-2 py-2 break-words">
-                        <span class="summary-content">{{ post.summary[:50] if post.summary else 'No summary' }}</span>
-                    </td>
-                    <td class="border px-2 py-2">
-                        <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-2 rounded tag-content-btn" data-post-id="{{ post.id }}">
-                            Tag Content
-                        </button>
-                    </td>
-                    <td class="border px-2 py-2">
-                        <button class="bg-green-500 hover:bg-green-700 text-white font-bold py-1 px-2 rounded summarize-btn" data-post-id="{{ post.id }}">
+    <div id="parsed-content-table"></div>
+
+    <script src="{{ url_for('static', filename='js/node_modules/gridjs/dist/gridjs.umd.js') }}"></script>
+    <link href="{{ url_for('static', filename='js/node_modules/gridjs/dist/theme/mermaid.min.css') }}" rel="stylesheet" />
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const grid = new gridjs.Grid({
+            columns: [
+                { 
+                    id: 'title', 
+                    name: 'Title',
+                    width: '25%',
+                    formatter: (cell, row) => gridjs.html(`<a href="/view/${row.cells[4].data}" class="text-blue-500 hover:underline">${cell}</a>`)
+                },
+                { 
+                    id: 'summary', 
+                    name: 'Summary', 
+                    width: '35%',
+                    formatter: (cell) => cell && cell.length > 200 ? cell.substring(0, 200) + '...' : cell
+                },
+                { 
+                    id: 'url', 
+                    name: 'URL',
+                    width: '15%',
+                    formatter: (cell) => {
+                        if (!cell) return '';
+                        return gridjs.html(`<a href="${cell}" target="_blank" class="text-blue-500 hover:underline" title="${cell}">Source</a>`);
+                    }
+                },
+                { 
+                    id: 'pub_date', 
+                    name: 'Published Date',
+                    width: '15%',
+                    formatter: (cell) => gridjs.html(`<span class="text-sm">${cell}</span>`)
+                },
+                {
+                    id: 'actions',
+                    name: 'Actions',
+                    width: '10%',
+                    formatter: (_, row) => gridjs.html(`
+                        <button class="bg-green-500 hover:bg-green-700 text-white font-bold py-1 px-2 rounded text-xs summarize-btn" data-post-id="${row.cells[4].data}">
                             Summarize
                         </button>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-
-    <div class="mt-4 flex justify-center">
-        {% if pagination.has_prev %}
-            <a href="{{ url_for('rss_manager.parsed_content', page=pagination.prev_num, search=search_query) }}" class="px-3 py-2 bg-blue-500 text-white rounded mr-2 hover:bg-blue-600">&laquo; Previous</a>
-        {% endif %}
-        
-        {% for page_num in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
-            {% if page_num %}
-                {% if page_num != pagination.page %}
-                    <a href="{{ url_for('rss_manager.parsed_content', page=page_num, search=search_query) }}" class="px-3 py-2 bg-gray-200 text-gray-700 rounded mr-2 hover:bg-gray-300">{{ page_num }}</a>
-                {% else %}
-                    <span class="px-3 py-2 bg-blue-500 text-white rounded mr-2">{{ page_num }}</span>
-                {% endif %}
-            {% else %}
-                <span class="px-3 py-2">...</span>
-            {% endif %}
-        {% endfor %}
-        
-        {% if pagination.has_next %}
-            <a href="{{ url_for('rss_manager.parsed_content', page=pagination.next_num, search=search_query) }}" class="px-3 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">Next &raquo;</a>
-        {% endif %}
-    </div>
-    
-    <div class="mt-4 text-center">
-        <p>Showing {{ pagination.page }} of {{ pagination.pages }} pages</p>
-    </div>
-</div>
-
-<style>
-    .spinner {
-        border: 4px solid #f3f3f3;
-        border-top: 4px solid #3498db;
-        border-radius: 50%;
-        width: 20px;
-        height: 20px;
-        animation: spin 1s linear infinite;
-        display: inline-block;
-        margin-left: 10px;
-        vertical-align: middle;
-    }
-
-    @keyframes spin {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
-    }
-
-    .sortable {
-        cursor: pointer;
-        position: relative;
-        padding-right: 18px;
-    }
-
-    .sortable::after {
-        content: '▲';
-        position: absolute;
-        right: 5px;
-        top: 50%;
-        transform: translateY(-50%);
-        font-size: 0.8em;
-        opacity: 0.5;
-    }
-
-    .sortable.asc::after {
-        content: '▲';
-        opacity: 1;
-    }
-
-    .sortable.desc::after {
-        content: '▼';
-        opacity: 1;
-    }
-</style>
-
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const clearSummariesBtn = document.getElementById('clear-summaries-btn');
-    clearSummariesBtn.addEventListener('click', function() {
-        if (confirm('Are you sure you want to clear all summaries? This action cannot be undone.')) {
-            fetch('/clear_all_summaries', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': '{{ csrf_token() }}'
+                    `)
                 }
-            })
-            .then(response => response.json())
-            .then(data => {
-                alert(data.message);
-                location.reload();
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('An error occurred while processing your request.');
-            });
-        }
-    });
+            ],
+            server: {
+                url: '{{ url_for("rss_manager.parsed_content_data") }}',
+                then: data => data.data.map(post => [
+                    post.title || '',
+                    post.summary || '',
+                    post.url || '',
+                    post.pub_date || '',
+                    post.id || ''
+                ]),
+                total: data => data.total
+            },
+            search: true,
+            sort: true,
+            pagination: {
+                limit: 10,
+                server: {
+                    url: (prev, page, limit) => `${prev}${prev.includes('?') ? '&' : '?'}page=${page}&limit=${limit}`
+                }
+            }
+        }).render(document.getElementById("parsed-content-table"));
 
-    const tagButtons = document.querySelectorAll('.tag-content-btn');
-    tagButtons.forEach(button => {
-        button.addEventListener('click', function() {
-            const postId = this.getAttribute('data-post-id');
+        document.addEventListener('click', function(event) {
+            if (event.target.classList.contains('summarize-btn')) {
+                event.stopPropagation();
+                const postId = event.target.getAttribute('data-post-id');
+                summarizeContent(postId);
+            }
+        });
+
+        function tagContent(postId) {
             fetch('/tag_content', {
                 method: 'POST',
                 headers: {
@@ -174,35 +106,23 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(response => response.json())
             .then(data => {
                 alert(data.message);
-                location.reload();
+                grid.forceRender();
             })
             .catch(error => {
                 console.error('Error:', error);
                 alert('An error occurred while tagging the content.');
             });
-        });
-    });
+        }
 
-    const summarizeButtons = document.querySelectorAll('.summarize-btn');
-    summarizeButtons.forEach(button => {
-        button.addEventListener('click', function() {
-            const postId = this.getAttribute('data-post-id');
-            const summaryElement = this.closest('tr').querySelector('.summary-content');
-            const existingSummary = summaryElement.textContent.trim();
+        function summarizeContent(postId) {
+            const button = document.querySelector(`button[data-post-id="${postId}"]`);
+            if (button.disabled) return; // Prevent multiple clicks
 
-            if (existingSummary !== 'No summary') {
-                if (!confirm('An existing summary is present. Do you want to overwrite it?')) {
-                    return;
-                }
-            }
+            const originalText = button.textContent;
+            button.textContent = 'Summarizing...';
+            button.disabled = true;
 
-            // Disable the button and show loading spinner
-            this.disabled = true;
-            const spinner = document.createElement('div');
-            spinner.className = 'spinner';
-            this.parentNode.insertBefore(spinner, this.nextSibling);
-
-            fetch('/summarize_content', {
+            fetch('{{ url_for("summarize_content") }}', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -210,33 +130,52 @@ document.addEventListener('DOMContentLoaded', function() {
                 },
                 body: JSON.stringify({ content_id: postId })
             })
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(err => { throw err; });
+                }
+                return response.json();
+            })
             .then(data => {
                 if (data.summary) {
-                    summaryElement.textContent = data.summary.substring(0, 50) + (data.summary.length > 50 ? '...' : '');
+                    alert('Content summarized successfully!');
+                    grid.forceRender();
                 } else {
-                    console.error('Failed to generate summary.');
-                    alert('Failed to generate summary. Please try again.');
+                    throw new Error(data.error || 'Failed to summarize content');
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
-                alert('An error occurred while generating the summary. Please try again.');
-                summaryElement.textContent = 'Error generating summary';
+                alert('An error occurred while summarizing the content: ' + (error.error || error.message));
             })
             .finally(() => {
-                // Re-enable the button and remove the spinner
-                this.disabled = false;
-                spinner.remove();
+                button.textContent = originalText;
+                button.disabled = false;
             });
+        }
+
+        const clearSummariesBtn = document.getElementById('clear-summaries-btn');
+        clearSummariesBtn.addEventListener('click', function() {
+            if (confirm('Are you sure you want to clear all summaries? This action cannot be undone.')) {
+                fetch('/clear_all_summaries', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token() }}'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    alert(data.message);
+                    grid.forceRender();
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred while processing your request.');
+                });
+            }
         });
     });
-});
-</script>
-<script src="{{ url_for('static', filename='js/table_sort.js') }}"></script>
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        initTableSort('parsed-content-table');
-    });
-</script>
+    </script>
+</div>
 {% endblock %}
