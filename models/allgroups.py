@@ -9,7 +9,7 @@ Base = declarative_base()
 class AllGroups(Base):
     __tablename__ = 'allgroups'
 
-    uuid = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    uuid = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     authors = Column(Text)
     category = Column(String)
     name = Column(String)
