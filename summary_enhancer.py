@@ -25,17 +25,22 @@ logger = setup_logger('summary_enhancer', 'summary_enhancer.log')
 
 class SummaryEnhancer:
     def __init__(self, max_retries: int = 3):
-        self.api = self._initialize_api()
         self.max_retries = max_retries
+        self.api = None
 
     def _initialize_api(self):
-        api_choice = os.getenv("SUMMARY_API_CHOICE", "ollama").lower()
-        if api_choice == "ollama":
-            return OllamaAPI()
-        elif api_choice == "groq":
-            return GroqAPI()
-        else:
-            raise ValueError(f"Unsupported API choice: {api_choice}. Please set SUMMARY_API_CHOICE to 'ollama' or 'groq' in the .env file.")
+        if self.api is None:
+            api_choice = os.getenv("SUMMARY_API_CHOICE", "ollama").lower()
+            if api_choice == "ollama":
+                self.api = OllamaAPI()
+            elif api_choice == "groq":
+                self.api = GroqAPI()
+            else:
+                raise ValueError(f"Unsupported API choice: {api_choice}. Please set SUMMARY_API_CHOICE to 'ollama' or 'groq' in the .env file.")
+        return self.api
+
+    async def generate_summary(self, content_id: str) -> str:
+        self._initialize_api()  # Ensure API is initialized before use
 
     async def generate_summary(self, content_id: str) -> str:
         parsed_content = ParsedContent.get_by_id(content_id)
