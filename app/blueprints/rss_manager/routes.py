@@ -1,7 +1,6 @@
 from flask import Blueprint, request, jsonify, current_app, abort
 from flask_login import login_required
 from werkzeug.exceptions import BadRequest
-from app.services.data_processing import import_awesome_threat_intel_blogs
 from app.services.rss_feed_service import RSSFeedService
 from app.services.parsed_content_service import ParsedContentService
 from app.utils.rss_validator import validate_rss_url, extract_feed_info
@@ -94,12 +93,3 @@ def get_parsed_content():
         "per_page": per_page
     }), 200
 
-@rss_manager.route('/import_awesome_threat_intel_blogs', methods=['POST'])
-@login_required
-def import_awesome_threat_intel_blogs_route():
-    try:
-        import_awesome_threat_intel_blogs()
-        return jsonify({"message": "Import successful"}), 200
-    except Exception as e:
-        current_app.logger.error(f"Error importing awesome threat intel blogs: {str(e)}")
-        return jsonify({"error": "Import failed"}), 500
