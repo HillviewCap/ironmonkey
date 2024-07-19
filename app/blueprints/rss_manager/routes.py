@@ -60,7 +60,12 @@ async def create_rss_feed():
             raise BadRequest("Invalid RSS feed URL")
 
         feed_info = extract_feed_info(data['url'])
-        feed_data = {**data, **feed_info}
+        feed_data = {
+            'url': data['url'],
+            'category': data.get('category', 'Uncategorized'),
+            'title': feed_info.get('title', 'No Title'),
+            'description': feed_info.get('description', 'No Description'),
+        }
 
     try:
         # Check if the feed URL already exists
