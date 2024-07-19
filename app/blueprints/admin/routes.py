@@ -2,6 +2,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 from flask_login import login_required
 from werkzeug.security import generate_password_hash
 from app.models.relational import db, User, ParsedContent, RSSFeed
+from app.services.awesome_threat_intel_service import AwesomeThreatIntelService
 from datetime import datetime
 from typing import List
 import uuid
@@ -179,6 +180,20 @@ def add_rss_feed() -> str:
         db.session.rollback()
         current_app.logger.error(f"Error adding new RSS feed: {str(e)}")
         flash("An error occurred while adding new RSS feed.", "error")
+    return redirect(url_for("admin.admin"))
+
+@admin_bp.route("/update_awesome_threat_intel", methods=["POST"])
+@login_required
+def update_awesome_threat_intel() -> str:
+    """
+    Update Awesome Threat Intel Blogs and redirect to admin page.
+    """
+    try:
+        AwesomeThreatIntelService.update_from_csv()
+        flash("Awesome Threat Intel Blogs have been updated.", "success")
+    except Exception as e:
+        current_app.logger.error(f"Error updating Awesome Threat Intel Blogs: {str(e)}")
+        flash("An error occurred while updating Awesome Threat Intel Blogs.", "error")
     return redirect(url_for("admin.admin"))
 
 @admin_bp.route("/delete_rss_feed/<uuid:feed_id>", methods=["POST"])
