@@ -17,8 +17,11 @@ def index():
         .all()
     )
     return render_template("index.html", recent_items=recent_items)
+from flask import render_template, current_app, abort
+from flask_login import current_user
 from app.models import ParsedContent
 from app import db
+from . import bp
 
 @bp.route('/')
 def index():
@@ -40,6 +43,11 @@ def index():
             return render_template('index.html')
     except Exception as e:
         current_app.logger.error(f"Error in index route: {str(e)}")
-        return render_error_page()
+        abort(500)  # Return a 500 Internal Server Error
 
 # Add other main routes here
+
+@bp.errorhandler(500)
+def internal_error(error):
+    current_app.logger.error('Server Error: %s', (error))
+    return render_template('errors/500.html'), 500
