@@ -3,7 +3,7 @@ import os
 from apscheduler.schedulers.background import BackgroundScheduler
 from app.models.relational import ParsedContent, RSSFeed
 from app.services.rss_feed_service import fetch_and_parse_feed
-from app.services.summary_service import SummaryEnhancer
+from app.services.summary_service import SummaryService
 from flask import current_app
 from sqlalchemy.orm import scoped_session, sessionmaker
 from logging import getLogger
@@ -78,11 +78,14 @@ class SchedulerService:
                     .all()
                 )
                 processed_count = 0
-                enhancer = SummaryEnhancer()
+                summary_service = SummaryService()
                 for content in empty_summaries:
                     try:
-                        await enhancer.enhance_summary(str(content.id))
-                        processed_count += 1
+                        success = await summary_service.enhance_summary(str(content.id))
+                        if success:
+                            processed_count += 1
+                        else:
+                            scheduler_logger.warning(f"Failed to generate summary for content {content.id}")
                     except Exception as e:
                         scheduler_logger.error(
                             f"Error generating summary for content {content.id}: {str(e)}"
