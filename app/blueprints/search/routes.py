@@ -5,7 +5,7 @@ from app.models import SearchParams, ParsedContent
 
 search_bp = Blueprint('search', __name__)
 from app.utils.search_utils import get_search_params, perform_search
-from app.services.summary_service import SummaryEnhancer
+from app.services.summary_service import SummaryService
 import uuid
 
 @search_bp.route("/search", methods=["GET", "POST"])
@@ -58,21 +58,18 @@ async def summarize_content():
 
     try:
         content_id = uuid.UUID(content_id)
-        document = ParsedContent.query.get(content_id)
-        if not document:
-            current_app.logger.error(f"Document not found for id: {content_id}")
-            return jsonify({"error": "Document not found"}), 404
-
-        summary = await current_app.ollama_api.generate(
-            "threat_intel_summary", document.content
-        )
-        document.summary = summary
-        current_app.db.session.commit()
-
-        current_app.logger.info(
-            f"Summary generated successfully for document id: {content_id}"
-        )
-        return jsonify({"summary": summary}), 200
+        summary_service = SummaryService()
+        success = await summary_service.enhance_summary(str(content_id))
+        
+        if success:
+            document = ParsedContent.query.get(content_id)
+            current_app.logger.info(
+                f"Summary generated successfully for document id: {content_id}"
+            )
+            return jsonify({"summary": document.summary}), 200
+        else:
+            current_app.logger.error(f"Failed to generate summary for document id: {content_id}")
+            return jsonify({"error": "Failed to generate summary"}), 500
     except ValueError:
         current_app.logger.error(
             f"Invalid UUID format for content_id: {content_id}"
