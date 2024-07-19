@@ -13,14 +13,14 @@ def rotator(source, dest):
             df.writelines(sf)
     os.remove(source)
 
-def setup_logger(app, log_file, level=logging.DEBUG):
+def setup_logger(name, log_file, level=logging.DEBUG):
     """Function to set up a logger with file and console handlers"""
     # Ensure logs directory exists
     logs_dir = 'logs'
     os.makedirs(logs_dir, exist_ok=True)
 
-    # Use Flask's built-in logger
-    logger = app.logger
+    # Create a logger
+    logger = logging.getLogger(name)
     logger.setLevel(level)
 
     # Create handlers
@@ -44,7 +44,7 @@ def setup_logger(app, log_file, level=logging.DEBUG):
     c_handler.setFormatter(formatter)
     f_handler.setFormatter(formatter)
 
-    # Add handlers to the Flask logger
+    # Add handlers to the logger
     logger.addHandler(c_handler)
     logger.addHandler(f_handler)
     logger.info("Logging setup complete.")

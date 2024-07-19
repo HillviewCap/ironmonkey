@@ -129,7 +129,7 @@ from datetime import datetime
 import httpx
 import feedparser
 from app.models import db, ParsedContent, RSSFeed
-from app.logging_config import setup_logger
+from logging_config import setup_logger
 
 logger = setup_logger('feed_parser_service', 'feed_parser_service.log')
 
