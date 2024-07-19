@@ -2,9 +2,9 @@ from flask import Blueprint, render_template, current_app, abort
 from flask_login import current_user, login_required
 from app.models.relational import db, ParsedContent
 
-main_bp = Blueprint('main', __name__)
+bp = Blueprint('main', __name__)
 
-@main_bp.route('/')
+@bp.route('/')
 def index():
     current_app.logger.info("Entering index route")
     try:
