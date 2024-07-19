@@ -34,16 +34,16 @@
 6. Implemented proper error handling and logging in refactored code.
 7. Ensured new code follows the project's conventions and uses type hints.
 8. Updated the ParsedContent model to include any missing fields that might be useful.
+9. Wrote unit tests for all new services and utility functions.
+10. Updated existing tests to accommodate the refactored code.
 
 ## Remaining Tasks
 
-1. Write unit tests for all new services and utility functions.
-2. Update existing tests to accommodate the refactored code.
-3. Document all new functions, methods, and routes using docstrings.
+1. Document all new functions, methods, and routes using docstrings.
 
 ## Next Steps
 
-1. Complete the remaining tasks listed above.
+1. Complete the remaining task listed above.
 2. Conduct a thorough code review to ensure all changes align with project conventions and best practices.
 3. Perform integration testing to verify the interaction between refactored components.
 4. Update project documentation to reflect the new architecture and usage of RSS feed management features.
