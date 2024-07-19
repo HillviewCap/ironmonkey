@@ -12,6 +12,7 @@ from app import db
 from .user import User
 from .search_params import SearchParams
 from .rss_feed import RSSFeed
+from .threat import Threat
 
 __all__ = ['User', 'SearchParams', 'RSSFeed', 'Threat', 'ParsedContent', 'Category', 'AwesomeThreatIntelBlog', 'SearchResult']
 
@@ -25,15 +26,6 @@ class SearchResult(BaseModel):
 
     class Config:
         arbitrary_types_allowed = True
-
-
-class Threat(db.Model):
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    title = Column(String(255), nullable=False)
-    description = Column(Text, nullable=False)
-    source_type = Column(String(100), nullable=False)
-    date = Column(DateTime, nullable=False)
-    url = Column(String(255), nullable=False)
 
 
 class ParsedContent(db.Model):
