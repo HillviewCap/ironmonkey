@@ -25,6 +25,16 @@ class AwesomeThreatIntelBlog(db.Model):
 
     rss_feeds = db.relationship('RSSFeed', back_populates='awesome_blog')
 
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'blog': self.blog,
+            'blog_category': self.blog_category,
+            'type': self.type,
+            'blog_link': self.blog_link,
+            'feed_link': self.feed_link
+        }
+
     @classmethod
     def link_with_rss_feed(cls) -> None:
         """
