@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block title %}400 - Bad Request Bonanza{% endblock %}
+
+{% block content %}
+<div class="container text-center">
+    <h1>🎭 400 - Bad Request Bonanza! 🎭</h1>
+    <p>Whoopsie! Your request just won the "Most Confusing Performance" award.</p>
+    <p>Our server is scratching its head, wondering what you're trying to do.</p>
+    <img src="{{ url_for('static', filename='images/confused-server.gif') }}" alt="Confused server" style="max-width: 300px;">
+    <p>Maybe try speaking a little slower? Our server is still learning human.</p>
+    <a href="{{ url_for('main.index') }}" class="btn btn-primary">Return to Sanity</a>
+</div>
+{% endblock %}

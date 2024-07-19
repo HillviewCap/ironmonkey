@@ -1,25 +1,19 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Error</title>
-</head>
-<body>
-    <h1>Error</h1>
-    <p>{{ error }}</p>
-    <a href="{{ url_for('index') }}">Return to Home</a>
-</body>
-</html>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Error</title>
-</head>
-<body>
-    <h1>An error occurred</h1>
-    <p>{{ error }}</p>
-</body>
-</html>
+{% extends "base.html" %}
+
+{% block title %}Oops! Error Fiesta{% endblock %}
+
+{% block content %}
+<div class="container text-center">
+    <h1>🎉 Congratulations! You've Found an Error! 🎉</h1>
+    <p>You've unlocked the secret "Error Fiesta" achievement. Here's your prize:</p>
+    <div style="font-size: 72px;">🏆</div>
+    <p>Error details for the curious:</p>
+    <div style="background-color: #f8d7da; border: 1px solid #f5c6cb; border-radius: 5px; padding: 10px;">
+        <code>{{ error }}</code>
+    </div>
+    <p>Don't worry, our team of error-eating gremlins is on the case!</p>
+    <img src="{{ url_for('static', filename='images/gremlin.gif') }}" alt="Error-eating gremlin" style="max-width: 200px;">
+    <p>While they work, why not take a trip back to safety?</p>
+    <a href="{{ url_for('main.index') }}" class="btn btn-primary">Escape the Error Dimension</a>
+</div>
+{% endblock %}

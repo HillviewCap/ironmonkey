@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block title %}404 - Page Not Found Party{% endblock %}
+
+{% block content %}
+<div class="container text-center">
+    <h1>🕵️ 404 - Page Not Found Party! 🕵️</h1>
+    <p>Congratulations! You've discovered our secret "Page Not Found" party!</p>
+    <p>Unfortunately, you're the only one here... and there's no cake.</p>
+    <img src="{{ url_for('static', filename='images/tumbleweed.gif') }}" alt="Tumbleweed rolling" style="max-width: 300px;">
+    <p>While we appreciate your adventurous spirit, perhaps it's time to head back to familiar territory?</p>
+    <a href="{{ url_for('main.index') }}" class="btn btn-primary">Find Your Way Home</a>
+</div>
+{% endblock %}

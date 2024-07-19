@@ -1,12 +1,14 @@
 {% extends "base.html" %}
 
-{% block title %}500 Internal Server Error{% endblock %}
+{% block title %}500 - Server Meltdown!{% endblock %}
 
 {% block content %}
-<div class="container">
-    <h1>500 Internal Server Error</h1>
-    <p>Oops! Something went wrong on our end. We're working to fix the issue.</p>
-    <p>Please try again later or contact support if the problem persists.</p>
-    <a href="{{ url_for('main.index') }}" class="btn btn-primary">Return to Home</a>
+<div class="container text-center">
+    <h1>🔥 500 - Server Meltdown! 🔥</h1>
+    <p>Oops! Our server decided to take an unexpected vacation to Silicon Valley.</p>
+    <p>Our team of cyber-monkeys is furiously typing to bring it back online.</p>
+    <img src="{{ url_for('static', filename='images/monkey-typing.gif') }}" alt="Monkey typing" style="max-width: 300px;">
+    <p>In the meantime, why not try turning it off and on again?</p>
+    <a href="{{ url_for('main.index') }}" class="btn btn-primary">Escape to Safety</a>
 </div>
 {% endblock %}
