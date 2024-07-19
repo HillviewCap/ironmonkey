@@ -92,9 +92,7 @@ async def fetch_and_parse_feed(feed: RSSFeed) -> int:
                             db.session.add(new_content)
                             db.session.flush()  # This will assign the UUID to new_content
 
-                            for category in entry.get('tags', []):
-                                db_category = Category.create_from_feedparser(category, new_content.id)
-                                db.session.add(db_category)
+                            # TODO: Implement category handling if needed
                             new_entries_count += 1
                             if current_app.debug:
                                 logger.debug(f"Added new entry: {url}")
