@@ -7,15 +7,15 @@ from models import db, User, RSSFeed, ParsedContent, Category, Threat, SearchPar
 from models.relational.diffbot_model import Base as DiffbotBase, Document, Entity, EntityMention, EntityType, EntityUri, Category as DiffbotCategory
 from models.relational.alltools import Base as AllToolsBase, AllTools, AllToolsValues, AllToolsValuesNames
 from models.relational.allgroups import Base as AllGroupsBase, AllGroups, AllGroupsValues, AllGroupsValuesNames
-from config import Config
 from sqlalchemy import create_engine, text, inspect
 from tgcapt import update_databases as update_databases_module
 import json
 import logging
+from dotenv import load_dotenv
 
 def create_app():
+    load_dotenv()  # Load environment variables from .env file
     app = Flask(__name__)
-    app.config.from_object(Config)
     
     # Ensure the instance folder exists
     try:
@@ -23,8 +23,8 @@ def create_app():
     except OSError:
         pass
     
-    # Set the database path to be in the instance folder
-    app.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite:///{os.path.join(app.instance_path, 'threats.db')}"
+    # Set the database URI from the environment variable
+    app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')
     
     db.init_app(app)
     return app
