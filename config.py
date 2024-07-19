@@ -1,47 +1,24 @@
 import os
-import logging
 from dotenv import load_dotenv
 
 load_dotenv()
 
 basedir = os.path.abspath(os.path.dirname(__file__))
-instance_path = os.path.join(basedir, 'instance')
 
 class Config:
-    SECRET_KEY = os.getenv('SECRET_KEY') or 'fallback-secret-key'
-    SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URL', f'sqlite:///{os.path.join(instance_path, "threats.db")}')
+    SECRET_KEY = os.environ.get('SECRET_KEY') or 'you-will-never-guess'
+    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
+        'sqlite:///' + os.path.join(basedir, 'app.db')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
-
-    @staticmethod
-    def init_app(app):
-        # Ensure the directory for the database file exists
-        db_path = app.config['SQLALCHEMY_DATABASE_URI'].replace('sqlite:///', '')
-        db_dir = os.path.dirname(db_path)
-        if not os.path.exists(db_dir):
-            try:
-                os.makedirs(db_dir, exist_ok=True)
-                logging.getLogger(__name__).info(f"Created directory for database file at {db_dir}")
-            except Exception as e:
-                logging.getLogger(__name__).error(f"Error creating directory for database file: {str(e)}")
-        else:
-            logging.getLogger(__name__).info(f"Directory for database file already exists at {db_dir}")
-
-class ProductionConfig(Config):
-    DEBUG = False
-    # Add any production-specific configurations here
-    # For example:
-    # SQLALCHEMY_DATABASE_URI = os.getenv('PRODUCTION_DATABASE_URL')
-
-class DevelopmentConfig(Config):
-    DEBUG = True
-
-class TestingConfig(Config):
-    TESTING = True
-    SQLALCHEMY_DATABASE_URI = 'sqlite:///:memory:'
-
-config = {
-    'development': DevelopmentConfig,
-    'testing': TestingConfig,
-    'production': ProductionConfig,
-    'default': DevelopmentConfig
-}
+    LOG_TO_STDOUT = os.environ.get('LOG_TO_STDOUT')
+    MAIL_SERVER = os.environ.get('MAIL_SERVER')
+    MAIL_PORT = int(os.environ.get('MAIL_PORT') or 25)
+    MAIL_USE_TLS = os.environ.get('MAIL_USE_TLS') is not None
+    MAIL_USERNAME = os.environ.get('MAIL_USERNAME')
+    MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD')
+    ADMINS = ['your-email@example.com']
+    LANGUAGES = ['en', 'es']
+    MS_TRANSLATOR_KEY = os.environ.get('MS_TRANSLATOR_KEY')
+    ELASTICSEARCH_URL = os.environ.get('ELASTICSEARCH_URL')
+    REDIS_URL = os.environ.get('REDIS_URL') or 'redis://'
+    POSTS_PER_PAGE = 25
