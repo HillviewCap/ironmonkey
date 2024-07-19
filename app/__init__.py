@@ -37,7 +37,7 @@ def create_app(env=None):
     app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')
     app.config['DEBUG'] = os.getenv('DEBUG', 'False').lower() == 'true'
     app.config['FLASK_ENV'] = os.getenv('FLASK_ENV', 'production')
-    app.config['FLASK_PORT'] = int(os.getenv('FLASK_PORT', 5000))
+    app.config['FLASK_PORT'] = int(os.getenv('FLASK_PORT', '5000'))
     app.config['RSS_CHECK_INTERVAL'] = int(os.getenv('RSS_CHECK_INTERVAL', 30))
     app.config['SUMMARY_CHECK_INTERVAL'] = int(os.getenv('SUMMARY_CHECK_INTERVAL', 60))
     app.config['SUMMARY_API_CHOICE'] = os.getenv('SUMMARY_API_CHOICE', 'groq')
