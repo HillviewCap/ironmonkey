@@ -46,7 +46,7 @@ def create_app(env=None):
     
     # Load configuration from environment variables
     app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
-    app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')
+    app.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite:///{os.path.join(app.instance_path, 'threats.db')}"
     app.config['DEBUG'] = os.getenv('DEBUG', 'False').lower() == 'true'
     app.config['FLASK_ENV'] = os.getenv('FLASK_ENV', 'production')
     app.config['FLASK_PORT'] = int(os.getenv('FLASK_PORT', '5000'))
