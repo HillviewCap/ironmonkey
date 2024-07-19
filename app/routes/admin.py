@@ -1,4 +1,8 @@
+from flask import flash, redirect, url_for
+from flask_login import login_required
 from app.services.awesome_threat_intel_service import AwesomeThreatIntelService
+from app.decorators import admin_required
+from app import admin
 
 @admin.route('/update_awesome_threat_intel', methods=['POST'])
 @login_required
