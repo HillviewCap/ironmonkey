@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import hashlib
+import html
+import re
 from datetime import datetime
 from typing import Optional
 
