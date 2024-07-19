@@ -4,7 +4,22 @@ import bleach
 from html import unescape
 
 
+from bs4 import BeautifulSoup
+
 def sanitize_html_content(html: str) -> str:
+    soup = BeautifulSoup(html, 'html.parser')
+    
+    # Remove script and iframe tags
+    for script in soup(["script", "iframe"]):
+        script.decompose()
+    
+    # Remove on* attributes
+    for tag in soup():
+        for attribute in list(tag.attrs):
+            if attribute.startswith('on'):
+                del tag.attrs[attribute]
+    
+    return str(soup)
     """
     Sanitize HTML content by removing potentially harmful tags and attributes.
 
