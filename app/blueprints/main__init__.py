@@ -2,5 +2,6 @@ from flask import Blueprint
 
 bp = Blueprint('main', __name__)
 
-# Import routes at the bottom to avoid circular imports
-from . import routes
+def init_app(app):
+    from . import routes
+    app.register_blueprint(bp)
