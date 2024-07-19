@@ -31,7 +31,10 @@ def create_app():
 
 def init_db(app):
     with app.app_context():
-        engine = create_engine(app.config['SQLALCHEMY_DATABASE_URI'])
+        database_url = os.getenv('DATABASE_URL')
+        if not database_url:
+            raise ValueError("DATABASE_URL is not set in the .env file")
+        engine = create_engine(database_url)
         
         try:
             # Create tables for models defined with Flask-SQLAlchemy
