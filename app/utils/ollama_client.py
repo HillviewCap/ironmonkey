@@ -1,4 +1,5 @@
 import os
+import os
 import yaml
 import asyncio
 from dotenv import load_dotenv
@@ -35,7 +36,8 @@ class OllamaAPI:
 
     @staticmethod
     def load_prompts():
-        with open("prompts.yaml", "r") as file:
+        prompts_path = os.path.join(current_app.root_path, 'static', 'yaml', 'prompts.yaml')
+        with open(prompts_path, "r") as file:
             return yaml.safe_load(file)
 
     async def generate(self, prompt_type: str, article: str) -> str:
