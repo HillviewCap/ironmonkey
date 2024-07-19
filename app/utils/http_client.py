@@ -1,7 +1,9 @@
 import aiohttp
 import asyncio
+import feedparser
+from typing import Dict
 
-async def fetch_feed_info(url: str) -> dict:
+async def fetch_feed_info(url: str) -> Dict[str, str]:
     """
     Fetch feed information from the given URL.
 
@@ -15,12 +17,15 @@ async def fetch_feed_info(url: str) -> dict:
         async with session.get(url) as response:
             if response.status == 200:
                 content = await response.text()
-                # Here you would parse the content and extract feed info
-                # For now, we'll return a placeholder dictionary
-                return {
-                    "title": "Placeholder Title",
-                    "description": "Placeholder Description",
-                    "last_build_date": "2023-01-01"
+                feed = feedparser.parse(content)
+                if feed.bozo:
+                    raise Exception(f"Failed to parse feed: {feed.bozo_exception}")
+                
+                feed_info = {
+                    "title": feed.feed.get("title", "No Title"),
+                    "description": feed.feed.get("description", "No Description"),
+                    "last_build_date": feed.feed.get("updated", "No Date")
                 }
+                return feed_info
             else:
                 raise Exception(f"Failed to fetch feed: HTTP {response.status}")
