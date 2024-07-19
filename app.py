@@ -730,10 +730,11 @@ if __name__ == "__main__":
         )
 from flask import Flask, render_template, redirect, url_for
 from flask_login import LoginManager, current_user
-from routes.apt_groups import apt_groups_bp
-from routes.admin import admin_bp
-from routes.search import search_bp
-from models import db, ParsedContent
+from app.blueprints.apt_groups.routes import apt_groups_bp
+from app.blueprints.admin.routes import admin_bp
+from app.blueprints.search.routes import search_bp
+from app.blueprints.api.routes import api_bp
+from app.models.relational import db, ParsedContent
 
 def create_app(config_name="default"):
     app = Flask(__name__, instance_relative_config=True, static_url_path="/static")
@@ -743,9 +744,10 @@ def create_app(config_name="default"):
     
     # ... (keep other configurations)
 
-    app.register_blueprint(apt_groups_bp)
-    app.register_blueprint(admin_bp)
-    app.register_blueprint(search_bp)
+    app.register_blueprint(apt_groups_bp, url_prefix='/apt_groups')
+    app.register_blueprint(admin_bp, url_prefix='/admin')
+    app.register_blueprint(search_bp, url_prefix='/search')
+    app.register_blueprint(api_bp, url_prefix='/api')
 
     # Initialize LoginManager
     login_manager = LoginManager()
