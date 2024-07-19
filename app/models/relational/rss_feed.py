@@ -8,6 +8,23 @@ from app.utils.http_client import fetch_feed_info
 class RSSFeed(db.Model):
     """Model for storing RSS feed information."""
 
+    def to_dict(self):
+        """
+        Convert the RSSFeed object to a dictionary.
+
+        Returns:
+            dict: A dictionary representation of the RSSFeed object.
+        """
+        return {
+            'id': str(self.id),
+            'url': self.url,
+            'title': self.title,
+            'description': self.description,
+            'last_updated': self.last_updated.isoformat() if self.last_updated else None,
+            'etag': self.etag,
+            'last_modified': self.last_modified
+        }
+
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     url = Column(String(255), unique=True, nullable=False)
     title = Column(String(255), nullable=False)
