@@ -91,6 +91,6 @@ def create_app(env=None):
             User: The User object if found, else None.
         """
         from app.models.relational.user import User
-        return User.query.get(user_id)
+        return User.get(user_id)
 
     return app
