@@ -1,6 +1,7 @@
 import uuid
 from typing import List, Dict
 from sqlalchemy.orm import Session
+from app.extensions import db
 
 from app.models import RSSFeed
 from app.utils.rss_validator import validate_rss_url, extract_feed_info
