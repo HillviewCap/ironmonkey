@@ -125,5 +125,9 @@ def edit_feed(feed_id):
 @rss_manager_bp.route('/rss/awesome_blogs', methods=['GET'])
 @login_required
 def get_awesome_blogs():
-    blogs = AwesomeThreatIntelBlog.query.all()
-    return jsonify([blog.to_dict() for blog in blogs])
+    try:
+        blogs = AwesomeThreatIntelBlog.query.all()
+        return jsonify([blog.to_dict() for blog in blogs])
+    except Exception as e:
+        current_app.logger.error(f"Error fetching awesome blogs: {str(e)}")
+        return jsonify({"error": "Failed to fetch awesome blogs"}), 500
