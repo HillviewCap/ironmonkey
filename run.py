@@ -28,11 +28,12 @@ def make_shell_context():
 
 def main():
     try:
-        os.environ['FLASK_ENV'] = os.getenv('FLASK_ENV', 'development')
+        os.environ['FLASK_ENV'] = 'development'
         app.run(
             host='0.0.0.0',
             port=int(os.getenv('FLASK_PORT', 5000)),
-            debug=True
+            debug=True,
+            use_reloader=True
         )
         logger.info("Application started")
     except Exception as e:
