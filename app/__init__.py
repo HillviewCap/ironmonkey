@@ -1,3 +1,4 @@
+import os
 from flask import Flask
 from flask_migrate import Migrate
 from flask_login import LoginManager
@@ -14,6 +15,9 @@ def create_app(config_class=Config):
 
     if app.config['TESTING']:
         app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
+    else:
+        app.config['SQLALCHEMY_DATABASE_URI'] = app.config.get('SQLALCHEMY_DATABASE_URI') or \
+            'sqlite:///' + os.path.join(app.instance_path, 'app.db')
 
     init_db(app)
     migrate.init_app(app, db)

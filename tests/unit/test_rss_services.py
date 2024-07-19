@@ -14,7 +14,6 @@ from app import create_app
 def app():
     app = create_app()
     app.config['TESTING'] = True
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
     return app
 
 @pytest.fixture(scope='module')
