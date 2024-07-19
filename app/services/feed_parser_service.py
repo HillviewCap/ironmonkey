@@ -59,10 +59,12 @@ async def fetch_and_parse_feed(feed: RSSFeed) -> int:
             feed_data = feedparser.parse(response.text)
             if current_app.debug:
                 logger.debug(f"Parsed feed data for {feed.url}")
-            # Update the feed title if available
+            # Update the feed title and description if available
             if 'title' in feed_data.feed:
                 feed.title = sanitize_html(feed_data.feed.title)
-                db.session.commit()
+            if 'description' in feed_data.feed:
+                feed.description = sanitize_html(feed_data.feed.description)
+            db.session.commit()
 
             for entry in feed_data.entries:
                 try:
