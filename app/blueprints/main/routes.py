@@ -1,9 +1,9 @@
 from flask import render_template, current_app
 from flask_login import current_user, login_required
-from . import main
 from app.models.relational import db, ParsedContent
+from . import bp
 
-@main.route('/')
+@bp.route('/')
 @login_required
 def index():
     recent_items = (
@@ -17,8 +17,6 @@ def index():
         .all()
     )
     return render_template("index.html", recent_items=recent_items)
-from flask import render_template, current_app
-from app.blueprints.main import bp
 from app.models import ParsedContent
 from app import db
 
