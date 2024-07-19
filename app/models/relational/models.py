@@ -1,26 +1,18 @@
 from __future__ import annotations
 
-from datetime import datetime, date
-from typing import List, Optional, Tuple
+from datetime import datetime
+from typing import Tuple, Optional
 from uuid import UUID as PyUUID, uuid4
 import hashlib
-from pydantic import BaseModel, Field
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy import Column, String, DateTime, Text, ForeignKey
 from app.utils.http_client import fetch_feed_info
 from app import db
 from .user import User
+from .search_params import SearchParams
 
 __all__ = ['User', 'SearchParams', 'RSSFeed', 'Threat', 'ParsedContent', 'Category', 'AwesomeThreatIntelBlog']
-
-class SearchParams(BaseModel):
-    query: str = ""
-    start_date: Optional[date] = None
-    end_date: Optional[date] = None
-    source_types: List[str] = Field(default_factory=list)
-    keywords: List[str] = Field(default_factory=list)
-
 
 class RSSFeed(db.Model):
     """Model for storing RSS feed information."""
