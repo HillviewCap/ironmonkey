@@ -29,3 +29,4 @@ def create_app(config_class=Config):
     return app
 
 from app import models
+# This file can be empty, it just needs to exist
