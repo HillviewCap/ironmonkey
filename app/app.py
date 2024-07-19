@@ -279,33 +279,7 @@ def register_routes(app):
         )
 
 
-def setup_scheduler(app):
-    rss_check_interval = int(os.getenv("RSS_CHECK_INTERVAL", 30))
-    summary_check_interval = int(os.getenv("SUMMARY_CHECK_INTERVAL", 31))
-
-    scheduler = BackgroundScheduler()
-    scheduler.add_job(
-        func=check_and_process_rss_feeds, trigger="interval", minutes=rss_check_interval
-    )
-    
-    summary_api_choice = os.getenv("SUMMARY_API_CHOICE", "ollama").lower()
-    if summary_api_choice == "ollama":
-        scheduler.add_job(
-            func=lambda: asyncio.run(start_check_empty_summaries()),
-            trigger="interval",
-            minutes=summary_check_interval,
-        )
-        logger.info(f"Scheduler started with Ollama API for summaries, check interval: {summary_check_interval} minutes")
-    elif summary_api_choice == "groq":
-        # Add Groq-specific job here if needed
-        logger.info("Scheduler started with Groq API for summaries, no automatic summary generation scheduled")
-    else:
-        logger.warning(f"Invalid SUMMARY_API_CHOICE: {summary_api_choice}. No summary generation scheduled.")
-
-    scheduler.start()
-    logger.info(f"Scheduler started successfully with RSS check interval: {rss_check_interval} minutes")
-    return scheduler
-
+from app.services.scheduler_service import SchedulerService
 
 def create_app(config_name: str = "default") -> Optional[Flask]:
     global app
@@ -317,7 +291,8 @@ def create_app(config_name: str = "default") -> Optional[Flask]:
         initialize_extensions(app)
         register_blueprints(app)
         setup_database(app)
-        setup_scheduler(app)
+        scheduler_service = SchedulerService(app)
+        scheduler_service.setup_scheduler()
         register_routes(app)
     except Exception as e:
         logger.error(f"Error during app initialization: {str(e)}")
