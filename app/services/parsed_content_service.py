@@ -7,7 +7,7 @@ from sqlalchemy import desc
 
 from app.models.relational import ParsedContent
 from app.utils.content_sanitizer import sanitize_html_content
-from app.logging_config import setup_logger
+from app.utils.logging_config import setup_logger
 
 logger = setup_logger('parsed_content_service', 'parsed_content_service.log')
 
