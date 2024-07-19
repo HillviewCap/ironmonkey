@@ -61,8 +61,12 @@ async def create_rss_feed():
 
         # Fetch and parse the feed to validate it and get the title
         feed_info = await fetch_and_parse_feed(data['url'])
-        feed_data['title'] = feed_info.get('title', 'No Title')
-        feed_data['description'] = feed_info.get('description', 'No Description')
+        feed_data = {
+            'url': data['url'],
+            'title': feed_info.get('title', 'No Title'),
+            'description': feed_info.get('description', 'No Description'),
+            'category': data.get('category', 'Uncategorized')
+        }
 
     try:
         # Check if the feed URL already exists
