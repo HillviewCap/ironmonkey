@@ -53,6 +53,14 @@
         </div>
     </div>
 
+    <div class="mb-4 flex space-x-4">
+        <form action="{{ url_for('rss_manager.update_awesome_threat_intel') }}" method="post" class="inline">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+            <button type="submit" class="bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded">
+                Update Awesome Threat Intel Blogs
+            </button>
+        </form>
+    </div>
     <h2 class="text-2xl font-bold mb-4">Awesome Threat Intel Blogs</h2>
     <button id="toggleAwesomeBlogs" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mb-4">
         Show Awesome Threat Intel Blogs

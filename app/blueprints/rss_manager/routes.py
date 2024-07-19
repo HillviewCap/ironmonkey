@@ -7,6 +7,7 @@ from app.utils.rss_validator import validate_rss_url, extract_feed_info
 from app.forms.rss_forms import AddRSSFeedForm, ImportCSVForm, EditRSSFeedForm
 from app.models.relational.awesome_threat_intel_blog import AwesomeThreatIntelBlog
 from app.models.relational.rss_feed import RSSFeed
+from app.services.awesome_threat_intel_service import AwesomeThreatIntelService
 from app import db
 
 rss_manager_bp = Blueprint('rss_manager', __name__)
@@ -95,7 +96,19 @@ def get_parsed_content(feed_id):
     content, total = parsed_content_service.get_parsed_content(filters, page, per_page)
     return render_template('parsed_content.html', content=content, total=total, page=page, per_page=per_page, feed_id=feed_id)
 
-@rss_manager_bp.route('/edit/<uuid:feed_id>', methods=['GET', 'POST'])
+@rss_manager_bp.route('/update_awesome_threat_intel', methods=['POST'])
+@login_required
+def update_awesome_threat_intel():
+    """
+    Update Awesome Threat Intel Blogs and redirect to RSS feed manager page.
+    """
+    try:
+        AwesomeThreatIntelService.update_from_csv()
+        flash("Awesome Threat Intel Blogs have been updated.", "success")
+    except Exception as e:
+        current_app.logger.error(f"Error updating Awesome Threat Intel Blogs: {str(e)}")
+        flash("An error occurred while updating Awesome Threat Intel Blogs.", "error")
+    return redirect(url_for("rss_manager.get_rss_feeds"))
 @login_required
 def edit_feed(feed_id):
     feed = RSSFeed.query.get_or_404(feed_id)
