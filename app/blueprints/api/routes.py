@@ -1,7 +1,11 @@
 from flask import Blueprint, jsonify, request
 from flask_login import login_required
 from app.models.relational import db, ParsedContent, RSSFeed, User
-from app.utils.ollama_client import OllamaAPI
+
+try:
+    from app.utils.ollama_client import OllamaAPI
+except ImportError:
+    OllamaAPI = None
 from typing import Dict, Any
 
 api_bp = Blueprint('api', __name__)
