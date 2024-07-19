@@ -7,6 +7,16 @@
         <button id="showAwesomeFeedsForm" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
             Add from Awesome Threat Intel Blogs
         </button>
+        <form action="{{ url_for('admin.update_awesome_threat_intel') }}" method="post" class="inline">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+            <button type="submit" class="bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded">
+                Update Awesome Threat Intel Blogs
+            </button>
+        </form>
+    </div>
+    <div class="mb-4">
+        <p>Last update: {{ update_status.last_updated or 'Never' }}</p>
+        <p>Status: {{ update_status.status }}</p>
     </div>
     <div id="addRSSForm" class="hidden mb-4 p-4 bg-gray-100 rounded">
         <h3 class="text-xl font-semibold mb-2">Add New RSS Feed</h3>
