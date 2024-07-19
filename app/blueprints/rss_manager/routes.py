@@ -102,7 +102,7 @@ def update_rss_feed(feed_id):
         current_app.logger.error(f"Error updating RSS feed: {str(e)}")
         return jsonify({"error": "Failed to update RSS feed"}), 500
 
-@rss_manager_bp.route('/rss/feed/<uuid:feed_id>', methods=['POST', 'DELETE'])
+@rss_manager_bp.route('/rss/feed/<uuid:feed_id>', methods=['DELETE'])
 @login_required
 def delete_rss_feed(feed_id):
     try:
