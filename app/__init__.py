@@ -1,11 +1,9 @@
 import os
-import logging
 from flask import Flask
 from flask_migrate import Migrate
 from flask_wtf.csrf import CSRFProtect
 from flask_login import LoginManager
 from dotenv import load_dotenv
-from apscheduler.schedulers.background import BackgroundScheduler
 
 from app.models.relational import db
 from app.utils.logging_config import setup_logger
@@ -25,7 +23,6 @@ load_dotenv()
 # Configure logging
 logger = setup_logger("app", "app.log")
 
-db = db
 migrate = Migrate()
 csrf = CSRFProtect()
 login_manager = LoginManager()
@@ -64,45 +61,5 @@ def create_app(config_name='default'):
     def load_user(user_id):
         from app.models.relational.user import User
         return User.query.get(user_id)
-
-    return app
-from flask import Flask
-from flask_migrate import Migrate
-from flask_wtf.csrf import CSRFProtect
-from app.models.relational import db
-from app.utils.logging_config import setup_logger
-from app.blueprints.main import main as main_bp
-from app.blueprints.auth.routes import auth
-from app.blueprints.rss_manager.routes import rss_manager
-from app.blueprints.admin.routes import admin_bp
-from app.blueprints.search.routes import search_bp
-from app.blueprints.api.routes import api_bp
-from app.utils.ollama_api import OllamaAPI
-from config import config
-
-def create_app(config_name='default'):
-    app = Flask(__name__, instance_relative_config=True, static_url_path="/static")
-    
-    app.config.from_object(config[config_name])
-    config[config_name].init_app(app)
-
-    # Initialize extensions
-    db.init_app(app)
-    CSRFProtect(app)
-    Migrate(app, db)
-
-    # Setup logging
-    setup_logger("app", "app.log")
-
-    # Register blueprints
-    app.register_blueprint(main_bp)
-    app.register_blueprint(auth)
-    app.register_blueprint(rss_manager)
-    app.register_blueprint(admin_bp, url_prefix='/admin')
-    app.register_blueprint(search_bp, url_prefix='/search')
-    app.register_blueprint(api_bp, url_prefix='/api')
-
-    # Initialize Ollama API
-    app.ollama_api = OllamaAPI()
 
     return app
