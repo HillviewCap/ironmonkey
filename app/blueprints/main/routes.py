@@ -20,7 +20,10 @@ def index():
                 .limit(10)
                 .all()
             )
+            current_app.logger.info(f"User {current_user.id} accessed index route.")
             return render_template('index.html', recent_items=recent_items)
+        else:
+            current_app.logger.warning("Unauthenticated access attempt to index route.")
         else:
             return render_template('index.html', recent_items=recent_items)
     except Exception as e:
