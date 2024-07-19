@@ -30,7 +30,7 @@ from rss_manager import rss_manager, fetch_and_parse_feed
 from nlp_tagging import DiffbotClient, DatabaseHandler, Document
 from ollama_api import OllamaAPI
 from summary_enhancer import SummaryEnhancer
-from init_db import init_db
+from app.models.init_db import init_db
 
 # Load environment variables
 load_dotenv()
