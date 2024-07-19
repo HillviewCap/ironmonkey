@@ -2,12 +2,13 @@ from __future__ import annotations
 
 import uuid
 from typing import List, Dict, Tuple
-from sqlalchemy.orm import Session
 from sqlalchemy import desc
+from flask import current_app
 
 from app.models.relational import ParsedContent
 from app.utils.content_sanitizer import sanitize_html_content
 from app.utils.logging_config import setup_logger
+from app.extensions import db
 
 logger = setup_logger('parsed_content_service', 'parsed_content_service.log')
 
@@ -25,17 +26,16 @@ class ParsedContentService:
         Returns:
             Tuple[List[ParsedContent], int]: A tuple containing the list of parsed content objects and the total count.
         """
-        with Session() as session:
-            query = session.query(ParsedContent)
+        query = ParsedContent.query
 
-            for field, value in filters.items():
-                if hasattr(ParsedContent, field):
-                    query = query.filter(getattr(ParsedContent, field) == value)
+        for field, value in filters.items():
+            if hasattr(ParsedContent, field):
+                query = query.filter(getattr(ParsedContent, field) == value)
 
-            total_count = query.count()
-            content = query.order_by(desc(ParsedContent.created_at)).offset((page - 1) * per_page).limit(per_page).all()
+        total_count = query.count()
+        content = query.order_by(desc(ParsedContent.created_at)).paginate(page=page, per_page=per_page, error_out=False)
 
-            return content, total_count
+        return content.items, total_count
 
     @staticmethod
     def get_content_by_id(content_id: uuid.UUID) -> ParsedContent:
@@ -48,8 +48,7 @@ class ParsedContentService:
         Returns:
             ParsedContent: The parsed content object with the given ID.
         """
-        with Session() as session:
-            return session.query(ParsedContent).get(content_id)
+        return ParsedContent.query.get(content_id)
 
     @staticmethod
     def create_parsed_content(content_data: Dict[str, any]) -> ParsedContent:
@@ -62,21 +61,20 @@ class ParsedContentService:
         Returns:
             ParsedContent: The newly created parsed content object.
         """
-        with Session() as session:
-            content = ParsedContent(
-                id=uuid.uuid4(),
-                title=content_data['title'],
-                url=content_data['url'],
-                content=sanitize_html_content(content_data['content']),
-                description=content_data.get('description'),
-                pub_date=content_data.get('pub_date'),
-                creator=content_data.get('creator'),
-                feed_id=content_data.get('feed_id')
-            )
-            session.add(content)
-            session.commit()
-            logger.info(f"Created new parsed content: {content.title}")
-            return content
+        content = ParsedContent(
+            id=uuid.uuid4(),
+            title=content_data['title'],
+            url=content_data['url'],
+            content=sanitize_html_content(content_data['content']),
+            description=content_data.get('description'),
+            pub_date=content_data.get('pub_date'),
+            creator=content_data.get('creator'),
+            feed_id=content_data.get('feed_id')
+        )
+        db.session.add(content)
+        db.session.commit()
+        logger.info(f"Created new parsed content: {content.title}")
+        return content
 
     @staticmethod
     def update_parsed_content(content_id: uuid.UUID, content_data: Dict[str, any]) -> ParsedContent:
@@ -90,21 +88,20 @@ class ParsedContentService:
         Returns:
             ParsedContent: The updated parsed content object.
         """
-        with Session() as session:
-            content = session.query(ParsedContent).get(content_id)
-            if not content:
-                raise ValueError(f"Parsed content with ID {content_id} not found.")
+        content = ParsedContent.query.get(content_id)
+        if not content:
+            raise ValueError(f"Parsed content with ID {content_id} not found.")
 
-            content.title = content_data.get('title', content.title)
-            content.url = content_data.get('url', content.url)
-            content.content = sanitize_html_content(content_data.get('content', content.content))
-            content.description = content_data.get('description', content.description)
-            content.pub_date = content_data.get('pub_date', content.pub_date)
-            content.creator = content_data.get('creator', content.creator)
+        content.title = content_data.get('title', content.title)
+        content.url = content_data.get('url', content.url)
+        content.content = sanitize_html_content(content_data.get('content', content.content))
+        content.description = content_data.get('description', content.description)
+        content.pub_date = content_data.get('pub_date', content.pub_date)
+        content.creator = content_data.get('creator', content.creator)
 
-            session.commit()
-            logger.info(f"Updated parsed content: {content.title}")
-            return content
+        db.session.commit()
+        logger.info(f"Updated parsed content: {content.title}")
+        return content
 
     @staticmethod
     def delete_parsed_content(content_id: uuid.UUID) -> None:
@@ -117,14 +114,13 @@ class ParsedContentService:
         Raises:
             ValueError: If the parsed content with the given ID is not found.
         """
-        with Session() as session:
-            content = session.query(ParsedContent).get(content_id)
-            if not content:
-                raise ValueError(f"Parsed content with ID {content_id} not found.")
+        content = ParsedContent.query.get(content_id)
+        if not content:
+            raise ValueError(f"Parsed content with ID {content_id} not found.")
 
-            session.delete(content)
-            session.commit()
-            logger.info(f"Deleted parsed content: {content.title}")
+        db.session.delete(content)
+        db.session.commit()
+        logger.info(f"Deleted parsed content: {content.title}")
 
     @staticmethod
     def delete_parsed_content_by_feed_id(feed_id: uuid.UUID) -> None:
@@ -134,7 +130,6 @@ class ParsedContentService:
         Args:
             feed_id (uuid.UUID): The unique identifier of the RSS feed.
         """
-        with Session() as session:
-            deleted = session.query(ParsedContent).filter(ParsedContent.feed_id == feed_id).delete()
-            session.commit()
-            logger.info(f"Deleted {deleted} parsed content items associated with feed ID {feed_id}")
+        deleted = ParsedContent.query.filter_by(feed_id=feed_id).delete()
+        db.session.commit()
+        logger.info(f"Deleted {deleted} parsed content items associated with feed ID {feed_id}")
