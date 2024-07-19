@@ -9,15 +9,20 @@ from typing import Optional, List, Dict, Any
 
 import bleach
 from dotenv import load_dotenv
-from flask import Flask, render_template, send_from_directory, redirect, url_for
+from flask import Flask, render_template, request, jsonify, current_app, abort, send_from_directory, redirect, url_for, flash
 from flask_migrate import Migrate
+from flask_wtf import FlaskForm
 from flask_wtf.csrf import CSRFProtect
-from flask_login import LoginManager, current_user
+from flask_login import LoginManager, login_required, current_user
+from sqlalchemy.exc import SQLAlchemyError
+from werkzeug.exceptions import BadRequest
 from apscheduler.schedulers.background import BackgroundScheduler
+import httpx
 
 from logging_config import setup_logger, logger
 from models import db, User, SearchParams, RSSFeed, ParsedContent, AwesomeThreatIntelBlog
 from models.diffbot_model import Entity, EntityMention, EntityType, EntityUri, Category
+from auth import init_auth, login, logout, register
 from config import config
 from app.blueprints.rss_manager.routes import rss_manager
 from app.blueprints.auth.routes import auth
@@ -184,84 +189,6 @@ async def start_check_empty_summaries():
 
 
 def register_routes(app):
-    @app.route("/admin")
-    @login_required
-    def admin():
-        users = User.query.all()
-        parsed_content = ParsedContent.query.all()
-        rss_feeds = RSSFeed.query.all()
-        return render_template(
-            "admin.html",
-            users=users,
-            parsed_content=parsed_content,
-            rss_feeds=rss_feeds,
-        )
-
-    @app.route("/admin/deduplicate", methods=["POST"])
-    @login_required
-    def deduplicate_parsed_content():
-        try:
-            deleted_count = ParsedContent.deduplicate()
-            flash(f"Successfully removed {deleted_count} duplicate entries.", "success")
-        except Exception as e:
-            current_app.logger.error(f"Error during deduplication: {str(e)}")
-            flash("An error occurred during deduplication.", "error")
-        return redirect(url_for("admin"))
-
-    @app.route("/add_parsed_content", methods=["POST"])
-    @login_required
-    def add_parsed_content():
-        try:
-            new_content = ParsedContent(
-                title=request.form["title"],
-                url=request.form["url"],
-                date=datetime.strptime(request.form["date"], "%Y-%m-%d").date(),
-                source_type=request.form["source_type"],
-            )
-            db.session.add(new_content)
-            db.session.commit()
-            flash("New content added successfully.", "success")
-        except Exception as e:
-            db.session.rollback()
-            current_app.logger.error(f"Error adding new content: {str(e)}")
-            flash("An error occurred while adding new content.", "error")
-        return redirect(url_for("admin"))
-
-    @app.route("/edit_parsed_content/<uuid:content_id>", methods=["GET", "POST"])
-    @login_required
-    def edit_parsed_content(content_id):
-        content = ParsedContent.query.get_or_404(content_id)
-        if request.method == "POST":
-            try:
-                content.title = request.form["title"]
-                content.url = request.form["url"]
-                content.date = datetime.strptime(
-                    request.form["date"], "%Y-%m-%d"
-                ).date()
-                content.source_type = request.form["source_type"]
-                db.session.commit()
-                flash("Content updated successfully.", "success")
-                return redirect(url_for("admin"))
-            except Exception as e:
-                db.session.rollback()
-                current_app.logger.error(f"Error updating content: {str(e)}")
-                flash("An error occurred while updating content.", "error")
-        return render_template("edit_parsed_content.html", content=content)
-
-    @app.route("/delete_parsed_content/<uuid:content_id>", methods=["POST"])
-    @login_required
-    def delete_parsed_content(content_id):
-        content = ParsedContent.query.get_or_404(content_id)
-        try:
-            db.session.delete(content)
-            db.session.commit()
-            flash("Content deleted successfully.", "success")
-        except Exception as e:
-            db.session.rollback()
-            current_app.logger.error(f"Error deleting content: {str(e)}")
-            flash("An error occurred while deleting content.", "error")
-        return redirect(url_for("admin"))
-
     @app.route("/")
     def index():
         current_app.logger.info("Entering index route")
@@ -279,15 +206,16 @@ def register_routes(app):
                 )
                 return render_template("index.html", recent_items=recent_items)
             else:
-                return redirect(url_for("login"))
+                return redirect(url_for("auth.login"))
         except Exception as e:
             current_app.logger.error(f"Error in index route: {str(e)}", exc_info=True)
             return render_error_page()
 
     app.add_url_rule("/", "index", index)
-    app.add_url_rule("/login", "login", login, methods=["GET", "POST"])
-    app.add_url_rule("/logout", "logout", logout)
-    app.add_url_rule("/register", "register", register, methods=["GET", "POST"])
+
+    # Move admin-related routes to a separate blueprint
+    from app.blueprints.admin.routes import admin_bp
+    app.register_blueprint(admin_bp, url_prefix="/admin")
 
     @app.route("/tag_content", methods=["POST"])
     @login_required
@@ -502,6 +430,7 @@ def create_app(config_name: str = "default") -> Optional[Flask]:
         register_blueprints(app)
         setup_database(app)
         setup_scheduler(app)
+        register_routes(app)
     except Exception as e:
         logger.error(f"Error during app initialization: {str(e)}")
         raise
