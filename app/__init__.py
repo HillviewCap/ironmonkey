@@ -14,7 +14,6 @@ from app.blueprints.admin.routes import admin_bp
 from app.blueprints.search.routes import search_bp
 from app.blueprints.api.routes import api_bp
 from app.utils.ollama_api import OllamaAPI
-from app.config import config
 from app.utils.scheduler import setup_scheduler
 
 # Load environment variables
@@ -28,11 +27,18 @@ csrf = CSRFProtect()
 login_manager = LoginManager()
 login_manager.login_view = 'auth.login'
 
-def create_app(config_name='default'):
+def create_app():
     app = Flask(__name__, instance_relative_config=True, static_url_path="/static")
     
-    app.config.from_object(config[config_name])
-    config[config_name].init_app(app)
+    # Load configuration from environment variables
+    app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
+    app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')
+    app.config['DEBUG'] = os.getenv('DEBUG', 'False').lower() == 'true'
+    app.config['FLASK_ENV'] = os.getenv('FLASK_ENV', 'production')
+    app.config['FLASK_PORT'] = int(os.getenv('FLASK_PORT', 5000))
+    app.config['RSS_CHECK_INTERVAL'] = int(os.getenv('RSS_CHECK_INTERVAL', 30))
+    app.config['SUMMARY_CHECK_INTERVAL'] = int(os.getenv('SUMMARY_CHECK_INTERVAL', 60))
+    app.config['SUMMARY_API_CHOICE'] = os.getenv('SUMMARY_API_CHOICE', 'groq')
 
     # Initialize extensions
     db.init_app(app)
