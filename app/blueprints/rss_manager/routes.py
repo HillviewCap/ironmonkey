@@ -20,8 +20,8 @@ def get_rss_feeds():
     feeds = rss_feed_service.get_all_feeds()
     form = AddRSSFeedForm()
     csv_form = ImportCSVForm()
-    categories = [blog.blog_category for blog in AwesomeThreatIntelBlog.query.distinct(AwesomeThreatIntelBlog.blog_category).all()]
-    types = [blog.type for blog in AwesomeThreatIntelBlog.query.distinct(AwesomeThreatIntelBlog.type).all()]
+    categories = [blog.blog_category for blog in db.session.query(AwesomeThreatIntelBlog.blog_category).distinct().all()]
+    types = [blog.type for blog in db.session.query(AwesomeThreatIntelBlog.type).distinct().all()]
     return render_template('rss_manager.html', feeds=feeds, form=form, csv_form=csv_form, categories=categories, types=types)
 
 @rss_manager_bp.route('/rss/feed/<uuid:feed_id>')
