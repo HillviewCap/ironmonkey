@@ -4,7 +4,7 @@ from datetime import datetime
 from uuid import UUID as PyUUID
 from pydantic import BaseModel, Field
 
-from app import db
+from ...extensions import db
 from app.models.relational.user import User
 from app.models.relational.search_params import SearchParams
 from app.models.relational.rss_feed import RSSFeed

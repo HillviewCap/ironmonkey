@@ -1,4 +1,5 @@
-from .models import db
+from ...extensions import db
+from .models import *  # Import all models
 from .user import User
 from .rss_feed import RSSFeed
 from .parsed_content import ParsedContent

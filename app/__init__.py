@@ -5,7 +5,7 @@ from flask_wtf.csrf import CSRFProtect
 from flask_login import LoginManager
 from dotenv import load_dotenv
 
-from app.models.relational import db
+from .extensions import db
 from app.utils.logging_config import setup_logger
 from app.blueprints.main import main as main_bp
 from app.blueprints.auth.routes import auth
