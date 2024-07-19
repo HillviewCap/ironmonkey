@@ -95,7 +95,7 @@ def get_parsed_content(feed_id):
     content, total = parsed_content_service.get_parsed_content(filters, page, per_page)
     return render_template('parsed_content.html', content=content, total=total, page=page, per_page=per_page, feed_id=feed_id)
 
-@rss_manager.route('/edit/<uuid:feed_id>', methods=['GET', 'POST'])
+@rss_manager_bp.route('/edit/<uuid:feed_id>', methods=['GET', 'POST'])
 @login_required
 def edit_feed(feed_id):
     feed = RSSFeed.query.get_or_404(feed_id)
