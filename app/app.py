@@ -1,46 +1,9 @@
-from __future__ import annotations
+from app import create_app
 
-import os
-import asyncio
-import uuid
-import logging
-from datetime import datetime
-from typing import Optional, List, Dict, Any
+app = create_app()
 
-import bleach
-from dotenv import load_dotenv
-from flask import Flask, render_template, request, jsonify, current_app, abort, send_from_directory, redirect, url_for, flash
-from flask_migrate import Migrate
-from flask_wtf import FlaskForm
-from flask_wtf.csrf import CSRFProtect
-from flask_login import LoginManager, login_required, current_user
-from sqlalchemy.exc import SQLAlchemyError
-from werkzeug.exceptions import BadRequest
-from apscheduler.schedulers.background import BackgroundScheduler
-import httpx
-
-from logging_config import setup_logger, logger
-from models import db, User, SearchParams, RSSFeed, ParsedContent, AwesomeThreatIntelBlog
-from models.diffbot_model import Entity, EntityMention, EntityType, EntityUri, Category
-from auth import init_auth, login, logout, register
-from config import config
-from app.blueprints.rss_manager.routes import rss_manager
-from app.blueprints.auth.routes import auth
-from rss_manager import rss_manager, fetch_and_parse_feed
-from nlp_tagging import DiffbotClient, DatabaseHandler, Document
-from ollama_api import OllamaAPI
-from summary_enhancer import SummaryEnhancer
-from app.models.init_db import init_db
-
-# Load environment variables
-load_dotenv()
-
-# Configure logging
-app_logger = setup_logger("app", "app.log")
-scheduler_logger = setup_logger("scheduler", "scheduler.log")
-
-# Initialize Flask application
-app: Optional[Flask] = None
+if __name__ == "__main__":
+    app.run()
 
 
 
