@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template
+from flask import Blueprint, render_template, abort
 from app.models.relational.parsed_content import ParsedContent
 
 parsed_content_bp = Blueprint('parsed_content', __name__)
