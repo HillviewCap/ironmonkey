@@ -26,3 +26,11 @@ class User(UserMixin, db.Model):
     def check_password(self, password: str) -> bool:
         """Check if the provided password matches the user's password."""
         return check_password_hash(self.password, password)
+
+    @classmethod
+    def get(cls, user_id):
+        """Retrieve a user by ID."""
+        try:
+            return cls.query.get(uuid4(user_id))
+        except ValueError:
+            return None
