@@ -16,7 +16,7 @@ def app():
     app.config.update({
         "TESTING": True,
     })
-    yield app
+    return app
 
 @pytest.fixture
 def client(app):
@@ -25,6 +25,11 @@ def client(app):
 @pytest.fixture
 def runner(app):
     return app.test_cli_runner()
+
+@pytest.fixture
+def app_context(app):
+    with app.app_context():
+        yield
 from app.models.relational import RSSFeed, ParsedContent
 
 @pytest.fixture
@@ -36,28 +41,27 @@ def parsed_content_service():
     return ParsedContentService()
 
 class TestRSSFeedService:
-    def test_get_all_feeds(self, app, rss_feed_service):
-        with app.app_context():
-            with patch('app.models.relational.RSSFeed.query') as mock_query:
-                mock_query.all.return_value = [
-                    RSSFeed(id=UUID('12345678-1234-5678-1234-567812345678'), url='http://example.com/feed1'),
-                    RSSFeed(id=UUID('87654321-4321-8765-4321-876543210987'), url='http://example.com/feed2')
-                ]
-                feeds = rss_feed_service.get_all_feeds()
-                assert len(feeds) == 2
-                assert feeds[0].url == 'http://example.com/feed1'
-                assert feeds[1].url == 'http://example.com/feed2'
+    def test_get_all_feeds(self, app_context, rss_feed_service):
+        with patch('app.models.relational.RSSFeed.query') as mock_query:
+            mock_query.all.return_value = [
+                RSSFeed(id=UUID('12345678-1234-5678-1234-567812345678'), url='https://grahamcluley.com/feed/'),
+                RSSFeed(id=UUID('87654321-4321-8765-4321-876543210987'), url='https://cyberscoop.com/feed/')
+            ]
+            feeds = rss_feed_service.get_all_feeds()
+            assert len(feeds) == 2
+            assert feeds[0].url == 'https://grahamcluley.com/feed/'
+            assert feeds[1].url == 'https://cyberscoop.com/feed/'
 
-    def test_get_feed_by_id(self, rss_feed_service):
+    def test_get_feed_by_id(self, app_context, rss_feed_service):
         feed_id = UUID('12345678-1234-5678-1234-567812345678')
         with patch('app.models.relational.RSSFeed.query') as mock_query:
-            mock_query.get.return_value = RSSFeed(id=feed_id, url='http://example.com/feed')
+            mock_query.get.return_value = RSSFeed(id=feed_id, url='https://grahamcluley.com/feed/')
             feed = rss_feed_service.get_feed_by_id(feed_id)
             assert feed.id == feed_id
-            assert feed.url == 'http://example.com/feed'
+            assert feed.url == 'https://grahamcluley.com/feed/'
 
     def test_get_feed_by_url(self, rss_feed_service):
-        url = 'http://example.com/feed'
+        url = 'https://grahamcluley.com/feed/'
         with patch('app.models.relational.RSSFeed.query') as mock_query:
             mock_query.filter_by.return_value.first.return_value = RSSFeed(id=UUID('12345678-1234-5678-1234-567812345678'), url=url)
             feed = rss_feed_service.get_feed_by_url(url)
@@ -66,7 +70,7 @@ class TestRSSFeedService:
     @pytest.mark.asyncio
     async def test_create_feed(self, app, rss_feed_service):
         feed_data = {
-            'url': 'http://example.com/newfeed',
+            'url': 'https://www.bellingcat.com/feed/',
             'title': 'New Feed',
             'category': 'News'
         }
@@ -82,13 +86,13 @@ class TestRSSFeedService:
     def test_update_feed(self, rss_feed_service):
         feed_id = UUID('12345678-1234-5678-1234-567812345678')
         feed_data = {
-            'url': 'http://example.com/updatedfeed',
+            'url': 'https://www.bellingcat.com/feed/',
             'title': 'Updated Feed',
             'category': 'Blog'
         }
         with patch('app.models.relational.RSSFeed.query') as mock_query, \
              patch('app.services.rss_feed_service.db.session.commit'):
-            mock_query.get.return_value = RSSFeed(id=feed_id, url='http://example.com/oldfeed')
+            mock_query.get.return_value = RSSFeed(id=feed_id, url='https://cyberscoop.com/feed/')
             updated_feed = rss_feed_service.update_feed(feed_id, feed_data)
             assert updated_feed.url == feed_data['url']
             assert updated_feed.title == feed_data['title']
@@ -99,7 +103,7 @@ class TestRSSFeedService:
         with patch('app.models.relational.RSSFeed.query') as mock_query, \
              patch('app.services.rss_feed_service.db.session.delete'), \
              patch('app.services.rss_feed_service.db.session.commit'):
-            mock_query.get.return_value = RSSFeed(id=feed_id, url='http://example.com/feed')
+            mock_query.get.return_value = RSSFeed(id=feed_id, url='https://cyberscoop.com/feed/')
             rss_feed_service.delete_feed(feed_id)
             mock_query.get.assert_called_once_with(feed_id)
 
@@ -109,12 +113,12 @@ class TestRSSFeedService:
         with patch('app.services.rss_feed_service.RSSFeed.query') as mock_query, \
              patch('app.services.rss_feed_service.feedparser.parse') as mock_parse, \
              patch('app.services.rss_feed_service.ParsedContentService.create_parsed_content', new_callable=AsyncMock) as mock_create_content:
-            mock_query.get.return_value = RSSFeed(id=feed_id, url='http://example.com/feed')
+            mock_query.get.return_value = RSSFeed(id=feed_id, url='https://cyberscoop.com/feed/')
             mock_parse.return_value = {
                 'feed': {'title': 'Test Feed', 'description': 'Test Description'},
                 'entries': [
-                    {'title': 'Entry 1', 'link': 'http://example.com/entry1', 'summary': 'Summary 1'},
-                    {'title': 'Entry 2', 'link': 'http://example.com/entry2', 'summary': 'Summary 2'}
+                    {'title': 'Entry 1', 'link': 'https://grahamcluley.com/feed/', 'summary': 'Summary 1'},
+                    {'title': 'Entry 2', 'link': 'https://cyberscoop.com/feed/', 'summary': 'Summary 2'}
                 ]
             }
             await rss_feed_service.parse_feed(feed_id)
@@ -151,7 +155,7 @@ class TestParsedContentService:
     def test_create_parsed_content(self, parsed_content_service):
         content_data = {
             'title': 'New Content',
-            'url': 'http://example.com/newcontent',
+            'url': 'https://grahamcluley.com/?p=16345023',
             'description': 'This is new content',
             'pub_date': datetime.now(),
             'feed_id': UUID('12345678-1234-5678-1234-567812345678')
