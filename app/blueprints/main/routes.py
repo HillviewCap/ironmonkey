@@ -36,7 +36,7 @@ def view_item(item_id):
 
 @bp.route('/favicon.ico')
 def favicon():
-    return send_from_directory(os.path.join(bp.root_path, '..', '..', 'static', 'images'),
+    return send_from_directory(os.path.join(current_app.root_path, 'static', 'images'),
                                'favicon.ico', mimetype='image/x-icon')
 
 @bp.errorhandler(500)
