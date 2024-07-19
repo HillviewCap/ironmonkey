@@ -1,4 +1,5 @@
 from flask import Blueprint, request, jsonify, current_app, abort, render_template, flash, redirect, url_for
+from uuid import UUID
 from flask_login import login_required
 from werkzeug.exceptions import BadRequest
 from app.services.rss_feed_service import RSSFeedService
