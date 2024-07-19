@@ -8,6 +8,7 @@ from . import bp
 def index():
     current_app.logger.info("Entering index route")
     try:
+        recent_items = []
         if current_user.is_authenticated:
             recent_items = (
                 ParsedContent.query
