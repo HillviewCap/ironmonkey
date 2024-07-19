@@ -11,26 +11,26 @@ from app.services.parsed_content_service import ParsedContentService
 from app import create_app
 from app.extensions import db
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope='function')
 def app():
     app = create_app()
     app.config['TESTING'] = True
-    instance_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), '..', '..', 'instance')
-    app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{os.path.join(instance_path, "threatstest.db")}'
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
     with app.app_context():
         db.create_all()
     yield app
+    with app.app_context():
+        db.session.remove()
+        db.drop_all()
 
 @pytest.fixture(scope='function')
 def app_context(app):
     with app.app_context():
         yield
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope='function')
 def db(app):
-    with app.app_context():
-        yield db
-        db.session.remove()
+    return db
 
 @pytest.fixture(scope='function')
 def session(db):
