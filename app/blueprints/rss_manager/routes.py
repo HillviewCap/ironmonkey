@@ -5,17 +5,17 @@ from app.services.rss_feed_service import RSSFeedService
 from app.services.parsed_content_service import ParsedContentService
 from app.utils.rss_validator import validate_rss_url, extract_feed_info
 
-rss_manager = Blueprint('rss_manager', __name__)
+rss_manager_bp = Blueprint('rss_manager', __name__)
 rss_feed_service = RSSFeedService()
 parsed_content_service = ParsedContentService()
 
-@rss_manager.route('/rss/feeds')
+@rss_manager_bp.route('/rss/feeds')
 @login_required
 def get_rss_feeds():
     feeds = rss_feed_service.get_all_feeds()
     return jsonify([feed.to_dict() for feed in feeds]), 200
 
-@rss_manager.route('/rss/feed/<uuid:feed_id>')
+@rss_manager_bp.route('/rss/feed/<uuid:feed_id>')
 @login_required
 def get_rss_feed(feed_id):
     feed = rss_feed_service.get_feed_by_id(feed_id)
@@ -23,7 +23,7 @@ def get_rss_feed(feed_id):
         abort(404, description="RSS feed not found")
     return jsonify(feed.to_dict()), 200
 
-@rss_manager.route('/rss/feed', methods=['POST'])
+@rss_manager_bp.route('/rss/feed', methods=['POST'])
 @login_required
 def create_rss_feed():
     data = request.get_json()
@@ -41,7 +41,7 @@ def create_rss_feed():
         current_app.logger.error(f"Error creating RSS feed: {str(e)}")
         return jsonify({"error": "Failed to create RSS feed"}), 500
 
-@rss_manager.route('/rss/feed/<uuid:feed_id>', methods=['PUT'])
+@rss_manager_bp.route('/rss/feed/<uuid:feed_id>', methods=['PUT'])
 @login_required
 def update_rss_feed(feed_id):
     data = request.get_json()
@@ -54,7 +54,7 @@ def update_rss_feed(feed_id):
         current_app.logger.error(f"Error updating RSS feed: {str(e)}")
         return jsonify({"error": "Failed to update RSS feed"}), 500
 
-@rss_manager.route('/rss/feed/<uuid:feed_id>', methods=['DELETE'])
+@rss_manager_bp.route('/rss/feed/<uuid:feed_id>', methods=['DELETE'])
 @login_required
 def delete_rss_feed(feed_id):
     try:
@@ -66,7 +66,7 @@ def delete_rss_feed(feed_id):
         current_app.logger.error(f"Error deleting RSS feed: {str(e)}")
         return jsonify({"error": "Failed to delete RSS feed"}), 500
 
-@rss_manager.route('/rss/parse/<uuid:feed_id>', methods=['POST'])
+@rss_manager_bp.route('/rss/parse/<uuid:feed_id>', methods=['POST'])
 @login_required
 def parse_rss_feed(feed_id):
     try:
@@ -76,7 +76,7 @@ def parse_rss_feed(feed_id):
         current_app.logger.error(f"Error parsing RSS feed: {str(e)}")
         return jsonify({"error": "Failed to parse RSS feed"}), 500
 
-@rss_manager.route('/rss/parsed_content')
+@rss_manager_bp.route('/rss/parsed_content')
 @login_required
 def get_parsed_content():
     page = request.args.get('page', 1, type=int)
