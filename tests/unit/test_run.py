@@ -36,7 +36,8 @@ class TestRun(unittest.TestCase):
         mock_getenv.side_effect = ['development', '5000']
 
         with patch('run.__name__', '__main__'):
-            import run
+            import importlib
+            importlib.reload(run)
             mock_app.run.assert_called_once_with(host='0.0.0.0', port=5000, debug=True)
 
 if __name__ == '__main__':
