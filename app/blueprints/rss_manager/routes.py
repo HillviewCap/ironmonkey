@@ -5,6 +5,7 @@ from werkzeug.exceptions import BadRequest
 from app.services.rss_feed_service import RSSFeedService
 from app.services.parsed_content_service import ParsedContentService
 from app.utils.rss_validator import validate_rss_url, extract_feed_info
+from app.services.feed_parser_service import fetch_and_parse_feed
 from app.forms.rss_forms import AddRSSFeedForm, ImportCSVForm, EditRSSFeedForm
 from app.models.relational.awesome_threat_intel_blog import AwesomeThreatIntelBlog
 from app.models.relational.rss_feed import RSSFeed
@@ -62,7 +63,12 @@ async def create_rss_feed():
         feed_data = {**data, **feed_info}
 
     try:
+        # Create the feed in the database
         new_feed = await rss_feed_service.create_feed(feed_data)
+        
+        # Fetch and parse the feed to validate it
+        await fetch_and_parse_feed(new_feed)
+        
         return jsonify(new_feed.to_dict()), 201
     except Exception as e:
         current_app.logger.error(f"Error creating RSS feed: {str(e)}")
