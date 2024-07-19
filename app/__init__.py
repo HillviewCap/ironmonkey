@@ -13,11 +13,11 @@ def create_app(config_class=Config):
     app = Flask(__name__)
     app.config.from_object(config_class)
 
+    app.config['SQLALCHEMY_DATABASE_URI'] = app.config.get('SQLALCHEMY_DATABASE_URI') or \
+        'sqlite:///' + os.path.join(app.instance_path, 'app.db')
+    
     if app.config['TESTING']:
         app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
-    else:
-        app.config['SQLALCHEMY_DATABASE_URI'] = app.config.get('SQLALCHEMY_DATABASE_URI') or \
-            'sqlite:///' + os.path.join(app.instance_path, 'app.db')
 
     init_db(app)
     migrate.init_app(app, db)

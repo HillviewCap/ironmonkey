@@ -14,6 +14,7 @@ from app import create_app
 def app():
     app = create_app()
     app.config['TESTING'] = True
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
     return app
 
 @pytest.fixture(scope='module')
@@ -24,6 +25,19 @@ def db(app):
         yield db
         db.session.remove()
         db.drop_all()
+
+@pytest.fixture(scope='function')
+def session(db, app):
+    with app.app_context():
+        connection = db.engine.connect()
+        transaction = connection.begin()
+        options = dict(bind=connection, binds={})
+        session = db.create_scoped_session(options=options)
+        db.session = session
+        yield session
+        transaction.rollback()
+        connection.close()
+        session.remove()
 
 @pytest.fixture(scope='module')
 def client(app):
