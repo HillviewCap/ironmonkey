@@ -26,10 +26,10 @@ def index():
         current_app.logger.error(f"Error in index route: {str(e)}")
         abort(500)  # Return a 500 Internal Server Error
 
-@main_bp.errorhandler(500)
+@bp.errorhandler(500)
 def internal_error(error):
     current_app.logger.error('Server Error: %s', (error))
     return render_template('errors/500.html'), 500
 
 def init_app(app):
-    app.register_blueprint(main_bp)
+    app.register_blueprint(bp)
