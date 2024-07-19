@@ -27,7 +27,7 @@ from flask import render_template, redirect, url_for, flash, request
 from flask_login import login_user, logout_user, current_user
 from app.blueprints.auth import bp
 from app.models import User
-from app.auth import LoginForm, RegisterForm
+from app.forms.auth_forms import LoginForm, RegisterForm
 from app import db
 
 @bp.route('/login', methods=['GET', 'POST'])
