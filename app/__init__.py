@@ -17,7 +17,7 @@ def create_app(config_class=Config):
     migrate.init_app(app, db)
     login.init_app(app)
 
-    from app.blueprints.main import bp as main_bp
+    from app.blueprints.main import main_bp
     app.register_blueprint(main_bp)
 
     from app.blueprints.auth import bp as auth_bp
