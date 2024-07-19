@@ -152,31 +152,22 @@
     </script>
     <script>
         function addAwesomeFeed(blogId) {
-            fetch(`/add_awesome_feed/${blogId}`, {
+            fetch(`/rss/feed`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'X-CSRFToken': '{{ csrf_token() }}'
                 },
+                body: JSON.stringify({ awesome_blog_id: blogId })
             })
             .then(response => response.json())
             .then(data => {
                 if (data.status === 'success') {
                     alert(data.message);
-                    // Update the button to show it's already added
-                    const button = document.querySelector(`button[onclick="addAwesomeFeed('${blogId}')"]`);
-                    button.textContent = 'Added';
-                    button.disabled = true;
-                    button.classList.remove('bg-green-500', 'hover:bg-green-700');
-                    button.classList.add('bg-gray-500', 'cursor-not-allowed');
+                    updateButton(blogId, 'Added');
                 } else if (data.status === 'exists') {
                     alert(data.message);
-                    // Update the button to show it's already added
-                    const button = document.querySelector(`button[onclick="addAwesomeFeed('${blogId}')"]`);
-                    button.textContent = 'Already Added';
-                    button.disabled = true;
-                    button.classList.remove('bg-green-500', 'hover:bg-green-700');
-                    button.classList.add('bg-gray-500', 'cursor-not-allowed');
+                    updateButton(blogId, 'Already Added');
                 } else {
                     alert(data.message);
                 }
@@ -185,6 +176,14 @@
                 console.error('Error:', error);
                 alert('An error occurred while adding the feed.');
             });
+        }
+
+        function updateButton(blogId, text) {
+            const button = document.querySelector(`button[onclick="addAwesomeFeed('${blogId}')"]`);
+            button.textContent = text;
+            button.disabled = true;
+            button.classList.remove('bg-green-500', 'hover:bg-green-700');
+            button.classList.add('bg-gray-500', 'cursor-not-allowed');
         }
     </script>
 
