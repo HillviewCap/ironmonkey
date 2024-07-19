@@ -4,9 +4,9 @@ import feedparser
 import hashlib
 from flask import Flask
 from models import db, RSSFeed, ParsedContent, Category
-from config import Config
 from logging_config import logger
 from sqlalchemy.exc import SQLAlchemyError
+from dotenv import load_dotenv
 
 def update_missing_hashes(app):
     with app.app_context():
@@ -36,17 +36,17 @@ def update_missing_hashes(app):
         print(f"Remaining items without hash after update: {remaining_items}")
 
 def create_app():
+    load_dotenv()  # Load environment variables from .env file
     app = Flask(__name__)
-    app.config.from_object(Config)
+    
+    # Set the database URI from the environment variable
+    app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')
     
     # Ensure the instance folder exists
     try:
         os.makedirs(app.instance_path)
     except OSError:
         pass
-    
-    # Set the database path to be in the instance folder, pointing to threats.db
-    app.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite:///{os.path.join(app.instance_path, 'threats.db')}"
     
     db.init_app(app)
     return app
