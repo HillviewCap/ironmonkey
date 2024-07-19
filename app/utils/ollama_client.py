@@ -25,7 +25,7 @@ class OllamaAPI:
             logger.error("OLLAMA_MODEL must be set in the .env file")
             raise ValueError("OLLAMA_MODEL must be set in the .env file")
         self.llm = Ollama(base_url=self.base_url, model=self.model, num_ctx=8200)
-        self.prompts = self.load_prompts()
+        self.prompts = None
         logger.info(f"Initialized OllamaAPI with base_url: {self.base_url} and model: {self.model}")
 
     @classmethod
@@ -34,16 +34,18 @@ class OllamaAPI:
             return cls()
         return None
 
-    @staticmethod
-    def load_prompts():
-        prompts_path = os.path.join(current_app.root_path, 'static', 'yaml', 'prompts.yaml')
-        with open(prompts_path, "r") as file:
-            return yaml.safe_load(file)
+    def load_prompts(self):
+        if self.prompts is None:
+            prompts_path = os.path.join(current_app.root_path, 'static', 'yaml', 'prompts.yaml')
+            with open(prompts_path, "r") as file:
+                self.prompts = yaml.safe_load(file)
+        return self.prompts
 
     async def generate(self, prompt_type: str, article: str) -> str:
         """Generate a response based on the prompt type and article."""
         try:
-            prompt_data = self.prompts.get(prompt_type, {})
+            prompts = self.load_prompts()
+            prompt_data = prompts.get(prompt_type, {})
             system_prompt = prompt_data.get("system_prompt", "")
             full_prompt = f"Human: {system_prompt}\n\n Article: {article}"
 
