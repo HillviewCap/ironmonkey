@@ -122,7 +122,7 @@ def edit_feed(feed_id):
         return redirect(url_for('rss_manager.get_rss_feeds'))
     
     return render_template('edit_rss_feed.html', form=form, feed=feed)
-@rss_manager_bp.route('/rss/awesome_blogs', methods=['GET'])
+@rss_manager_bp.route('/awesome_blogs', methods=['GET'])
 @login_required
 def get_awesome_blogs():
     try:
