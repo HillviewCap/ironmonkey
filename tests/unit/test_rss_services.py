@@ -19,8 +19,9 @@ def parsed_content_service():
     return ParsedContentService()
 
 class TestRSSFeedService:
-    def test_get_all_feeds(self, rss_feed_service):
-        with patch('app.models.relational.RSSFeed.query') as mock_query:
+    def test_get_all_feeds(self, app, rss_feed_service):
+        with app.app_context():
+            with patch('app.models.relational.RSSFeed.query') as mock_query:
             mock_query.all.return_value = [
                 RSSFeed(id=UUID('12345678-1234-5678-1234-567812345678'), url='http://example.com/feed1'),
                 RSSFeed(id=UUID('87654321-4321-8765-4321-876543210987'), url='http://example.com/feed2')
@@ -45,16 +46,19 @@ class TestRSSFeedService:
             feed = rss_feed_service.get_feed_by_url(url)
             assert feed.url == url
 
-    def test_create_feed(self, rss_feed_service):
+    @pytest.mark.asyncio
+    async def test_create_feed(self, app, rss_feed_service):
         feed_data = {
             'url': 'http://example.com/newfeed',
             'title': 'New Feed',
             'category': 'News'
         }
-        with patch('app.services.rss_feed_service.db.session.add'), \
-             patch('app.services.rss_feed_service.db.session.commit'):
-            new_feed = rss_feed_service.create_feed(feed_data)
-            assert new_feed.url == feed_data['url']
+        with app.app_context():
+            with patch('app.services.rss_feed_service.db.session.add'), \
+                 patch('app.services.rss_feed_service.db.session.commit'), \
+                 patch('app.services.rss_feed_service.fetch_feed_info', return_value={'title': 'New Feed', 'description': 'Description', 'last_build_date': datetime.now()}):
+                new_feed = await rss_feed_service.create_feed(feed_data)
+                assert new_feed.url == feed_data['url']
             assert new_feed.title == feed_data['title']
             assert new_feed.category == feed_data['category']
 
@@ -100,11 +104,12 @@ class TestRSSFeedService:
             assert mock_create_content.call_count == 2
 
 class TestParsedContentService:
-    def test_get_parsed_content(self, parsed_content_service):
+    def test_get_parsed_content(self, app, parsed_content_service):
         filters = {'search': 'test'}
         page = 1
         per_page = 10
-        with patch('app.models.relational.ParsedContent.query') as mock_query:
+        with app.app_context():
+            with patch('app.models.relational.ParsedContent.query') as mock_query:
             mock_query.filter.return_value.paginate.return_value = Mock(
                 items=[
                     ParsedContent(id=UUID('12345678-1234-5678-1234-567812345678'), title='Test Content 1'),
