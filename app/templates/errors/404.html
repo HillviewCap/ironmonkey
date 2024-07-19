@@ -3,12 +3,13 @@
 {% block title %}404 - Page Not Found Party{% endblock %}
 
 {% block content %}
-<div class="container text-center">
-    <h1>🕵️ 404 - Page Not Found Party! 🕵️</h1>
+<div class="error-container">
+    <div class="error-code">404</div>
+    <h1 class="error-message">🕵️ Page Not Found Party! 🕵️</h1>
     <p>Congratulations! You've discovered our secret "Page Not Found" party!</p>
     <p>Unfortunately, you're the only one here... and there's no cake.</p>
-    <img src="{{ url_for('static', filename='images/tumbleweed.gif') }}" alt="Tumbleweed rolling" style="max-width: 300px;">
+    <img src="{{ url_for('static', filename='images/tumbleweed.gif') }}" alt="Tumbleweed rolling" class="error-image">
     <p>While we appreciate your adventurous spirit, perhaps it's time to head back to familiar territory?</p>
-    <a href="{{ url_for('main.index') }}" class="btn btn-primary">Find Your Way Home</a>
+    <a href="{{ url_for('main.index') }}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mt-4 inline-block">Find Your Way Home</a>
 </div>
 {% endblock %}
