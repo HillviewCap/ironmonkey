@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, current_app
+from flask import Blueprint, render_template, current_app, abort
 from flask_login import current_user, login_required
 from app.models.relational import db, ParsedContent
 
