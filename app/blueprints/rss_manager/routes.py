@@ -1,10 +1,11 @@
-from flask import Blueprint, request, jsonify, current_app, abort, render_template
+from flask import Blueprint, request, jsonify, current_app, abort, render_template, flash, redirect, url_for
 from flask_login import login_required
 from werkzeug.exceptions import BadRequest
 from app.services.rss_feed_service import RSSFeedService
 from app.services.parsed_content_service import ParsedContentService
 from app.utils.rss_validator import validate_rss_url, extract_feed_info
 from app.forms.rss_forms import AddRSSFeedForm, ImportCSVForm
+from app.models.relational.awesome_threat_intel_blog import AwesomeThreatIntelBlog
 
 rss_manager_bp = Blueprint('rss_manager', __name__)
 rss_feed_service = RSSFeedService()
