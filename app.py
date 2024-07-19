@@ -460,9 +460,16 @@ def configure_app(app: Flask, config_name: str) -> None:
         logger.error(f"Invalid SUMMARY_API_CHOICE: {summary_api_choice}. Exiting.")
         return None
 
+    # Ensure instance folder exists
+    try:
+        os.makedirs(app.instance_path)
+    except OSError:
+        pass
+
     app.config["SQLALCHEMY_DATABASE_URI"] = (
         f"sqlite:///{os.path.join(app.instance_path, 'threats.db')}"
     )
+    app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
     
     if config_name == "production":
         app.logger.setLevel(logging.WARNING)

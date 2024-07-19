@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type, before_sleep_log
 from ratelimit import limits, sleep_and_retry
 import logging
-from logging_config import setup_logger
+from app.utils.logging_config import setup_logger
 from cachetools import TTLCache
 from functools import lru_cache
 
