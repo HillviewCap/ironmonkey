@@ -12,10 +12,10 @@ from flask import current_app
 from sqlalchemy.orm import Session
 
 from app.models import db, ParsedContent, RSSFeed
-from logging_config import setup_logger
+from logging_config import logger
 from jina_api import parse_content
 
-logger = setup_logger('feed_parser_service', 'feed_parser_service.log')
+# The logger is already set up in logging_config.py, so we can use it directly
 
 def sanitize_html(text: str) -> str:
     """
