@@ -4,6 +4,7 @@ from werkzeug.security import generate_password_hash
 from app.models.relational import db, User, ParsedContent, RSSFeed
 from datetime import datetime
 from typing import List
+import uuid
 
 admin_bp = Blueprint('admin', __name__)
 
