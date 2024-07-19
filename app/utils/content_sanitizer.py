@@ -7,25 +7,13 @@ from html import unescape
 from bs4 import BeautifulSoup
 
 def sanitize_html_content(html: str) -> str:
-    soup = BeautifulSoup(html, 'html.parser')
-    
-    # Remove script and iframe tags
-    for script in soup(["script", "iframe"]):
-        script.decompose()
-    
-    # Remove on* attributes
-    for tag in soup():
-        for attribute in list(tag.attrs):
-            if attribute.startswith('on'):
-                del tag.attrs[attribute]
-    
-    return str(soup)
     """
     Sanitize HTML content by removing potentially harmful tags and attributes.
 
-    This function uses the bleach library to clean the HTML content. It allows
-    a specific set of HTML tags and attributes that are considered safe, and
-    removes any others. It also unescapes HTML entities to prevent double-escaping.
+    This function uses both BeautifulSoup and bleach to clean the HTML content.
+    It removes script and iframe tags, on* attributes, and then applies bleach
+    to allow only specific safe tags and attributes. Finally, it unescapes HTML
+    entities to prevent double-escaping.
 
     Args:
         html (str): The HTML content to sanitize.
@@ -34,9 +22,24 @@ def sanitize_html_content(html: str) -> str:
         str: The sanitized HTML content with potentially harmful elements removed.
 
     Example:
-        >>> sanitize_html_content('<script>alert("XSS")</script><p>Safe content</p>')
+        >>> sanitize_html_content('<script>alert("XSS")</script><p onclick="evil()">Safe content</p>')
         '<p>Safe content</p>'
     """
+    # First pass: use BeautifulSoup to remove script, iframe, and on* attributes
+    soup = BeautifulSoup(html, 'html.parser')
+    
+    for script in soup(["script", "iframe"]):
+        script.decompose()
+    
+    for tag in soup():
+        for attribute in list(tag.attrs):
+            if attribute.startswith('on'):
+                del tag.attrs[attribute]
+    
+    # Convert back to string for bleach processing
+    html = str(soup)
+
+    # Second pass: use bleach to allow only specific tags and attributes
     allowed_tags = [
         'a', 'abbr', 'acronym', 'b', 'blockquote', 'code', 'em', 'i', 'li', 'ol', 'strong', 'ul',
         'p', 'br', 'span', 'div', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'pre', 'img'
