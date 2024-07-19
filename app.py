@@ -734,7 +734,8 @@ from app.blueprints.apt_groups.routes import apt_groups_bp
 from app.blueprints.admin.routes import admin_bp
 from app.blueprints.search.routes import search_bp
 from app.blueprints.api.routes import api_bp
-from app.models.relational import db, ParsedContent
+from app.blueprints.main import main as main_bp
+from app.models.relational import db, User
 
 def create_app(config_name="default"):
     app = Flask(__name__, instance_relative_config=True, static_url_path="/static")
@@ -744,6 +745,7 @@ def create_app(config_name="default"):
     
     # ... (keep other configurations)
 
+    app.register_blueprint(main_bp)
     app.register_blueprint(apt_groups_bp, url_prefix='/apt_groups')
     app.register_blueprint(admin_bp, url_prefix='/admin')
     app.register_blueprint(search_bp, url_prefix='/search')
@@ -752,28 +754,11 @@ def create_app(config_name="default"):
     # Initialize LoginManager
     login_manager = LoginManager()
     login_manager.init_app(app)
+    login_manager.login_view = 'auth.login'
 
     @login_manager.user_loader
     def load_user(user_id):
-        # Implement user loading logic here
-        pass
-
-    @app.route("/")
-    def index():
-        if current_user.is_authenticated:
-            recent_items = (
-                db.session.query(ParsedContent)
-                .filter(
-                    ParsedContent.title.isnot(None),
-                    ParsedContent.description.isnot(None),
-                )
-                .order_by(ParsedContent.created_at.desc())
-                .limit(6)
-                .all()
-            )
-            return render_template("index.html", recent_items=recent_items)
-        else:
-            return redirect(url_for("login"))
+        return User.query.get(user_id)
 
     # ... (keep other configurations and route registrations)
 
