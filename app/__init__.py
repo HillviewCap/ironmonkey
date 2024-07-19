@@ -93,7 +93,7 @@ def create_app(env=None):
         """
         from app.models.relational.user import User
         try:
-            return User.query.get(uuid4(user_id))
+            return User.query.get(user_id)
         except ValueError:
             return None
 
