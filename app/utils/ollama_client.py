@@ -1,13 +1,13 @@
 import os
 import yaml
+import asyncio
 from dotenv import load_dotenv
 from langchain_community.llms import Ollama
 from logging_config import setup_logger
+from functools import partial
 
 # Create a separate logger for Ollama API
 logger = setup_logger('ollama_api', 'ollama_api.log')
-import asyncio
-from functools import partial
 from flask import current_app
 
 load_dotenv()
