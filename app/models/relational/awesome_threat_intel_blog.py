@@ -57,7 +57,6 @@ class AwesomeThreatIntelBlog(db.Model):
             existing.type = type
             existing.feed_link = feed_link
             existing.feed_type = feed_type
-            existing.last_checked = datetime.utcnow()
         else:
             new_entry = cls(
                 blog=blog,
@@ -65,11 +64,9 @@ class AwesomeThreatIntelBlog(db.Model):
                 type=type,
                 blog_link=blog_link,
                 feed_link=feed_link,
-                feed_type=feed_type,
-                last_checked=datetime.utcnow()
+                feed_type=feed_type
             )
             db.session.add(new_entry)
-        db.session.commit()
 
     @classmethod
     def import_from_csv(cls, csv_file_path: str) -> str:
