@@ -5,6 +5,7 @@ from app.extensions import db
 
 from app.models import RSSFeed
 from app.models import ParsedContent
+import asyncio
 from app.utils.rss_validator import validate_rss_url
 from app.utils.http_client import fetch_feed_info
 from app.services.feed_parser_service import fetch_and_parse_feed
@@ -40,7 +41,7 @@ class RSSFeedService:
             return session.query(RSSFeed).get(feed_id)
 
     @staticmethod
-    def create_feed(feed_data: Dict[str, str]) -> RSSFeed:
+    async def create_feed(feed_data: Dict[str, str]) -> RSSFeed:
         """
         Create a new RSS feed.
 
@@ -54,7 +55,7 @@ class RSSFeedService:
         if not validate_rss_url(url):
             raise ValueError(f"Invalid RSS feed URL: {url}")
 
-        feed_info = extract_feed_info(url)
+        feed_info = await fetch_feed_info(url)
         feed = RSSFeed(
             id=uuid.uuid4(),
             url=url,
@@ -71,7 +72,7 @@ class RSSFeedService:
             return feed
 
     @staticmethod
-    def update_feed(feed_id: uuid.UUID, feed_data: Dict[str, str]) -> RSSFeed:
+    async def update_feed(feed_id: uuid.UUID, feed_data: Dict[str, str]) -> RSSFeed:
         """
         Update an existing RSS feed.
 
@@ -92,7 +93,7 @@ class RSSFeedService:
                 raise ValueError(f"Invalid RSS feed URL: {url}")
 
             if url != feed.url:
-                feed_info = extract_feed_info(url)
+                feed_info = await fetch_feed_info(url)
                 feed.url = url
                 feed.title = feed_info['title']
                 feed.description = feed_info['description']
