@@ -1,8 +1,11 @@
-from flask import render_template, request, current_app
+from flask import render_template, request, current_app, jsonify, abort
 from flask_wtf import FlaskForm
+from flask_login import login_required
 from app.models import SearchParams, ParsedContent
 from app.blueprints.search import bp
 from app.utils.search_utils import get_search_params, perform_search
+from app.utils.summary_enhancer import SummaryEnhancer
+import uuid
 
 @bp.route("/search", methods=["GET", "POST"])
 def search():
@@ -43,3 +46,47 @@ def search():
 def view_item(item_id):
     item = ParsedContent.query.get_or_404(item_id)
     return render_template("view_item.html", item=item)
+
+@bp.route("/summarize_content", methods=["POST"])
+@login_required
+async def summarize_content():
+    content_id = request.json.get("content_id")
+    if not content_id:
+        current_app.logger.error("content_id is missing in the request")
+        return jsonify({"error": "content_id is required"}), 400
+
+    try:
+        content_id = str(uuid.UUID(content_id))  # Ensure valid UUID and convert to string
+        enhancer = SummaryEnhancer()
+        success = await enhancer.enhance_summary(content_id)
+
+        if success:
+            document = ParsedContent.get_by_id(content_id)
+            if document and document.summary:
+                current_app.logger.info(f"Summary generated successfully for document id: {content_id}")
+                return jsonify({"summary": document.summary}), 200
+            else:
+                current_app.logger.error(f"Summary not found for document id: {content_id}")
+                return jsonify({"error": "Summary not found after generation"}), 500
+        else:
+            current_app.logger.error(f"Failed to generate summary for document id: {content_id}")
+            return jsonify({"error": "Failed to generate summary"}), 500
+
+    except ValueError:
+        current_app.logger.error(f"Invalid UUID format for content_id: {content_id}")
+        return jsonify({"error": "Invalid content_id format"}), 400
+    except Exception as e:
+        current_app.logger.exception(f"Error summarizing content: {str(e)}")
+        return jsonify({"error": f"Error summarizing content: {str(e)}"}), 500
+
+@bp.route("/clear_all_summaries", methods=["POST"])
+@login_required
+def clear_all_summaries():
+    try:
+        ParsedContent.query.update({ParsedContent.summary: None})
+        current_app.db.session.commit()
+        return jsonify({"message": "All summaries have been cleared"}), 200
+    except Exception as e:
+        current_app.db.session.rollback()
+        current_app.logger.error(f"Error clearing summaries: {str(e)}")
+        return jsonify({"error": "An error occurred while clearing summaries"}), 500
