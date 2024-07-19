@@ -29,10 +29,7 @@ def create_app():
     db.init_app(app)
     return app
 
-def init_db(app=None):
-    if app is None:
-        app = create_app()
-    
+def init_db(app):
     with app.app_context():
         engine = create_engine(app.config['SQLALCHEMY_DATABASE_URI'])
         
