@@ -16,7 +16,7 @@ def index():
                     ParsedContent.title.isnot(None),
                     ParsedContent.description.isnot(None),
                 )
-                .order_by(ParsedContent.published.desc())
+                .order_by(ParsedContent.pub_date.desc())
                 .limit(10)
                 .all()
             )
