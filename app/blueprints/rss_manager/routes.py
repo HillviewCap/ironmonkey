@@ -40,7 +40,8 @@ def create_rss_feed():
         raise BadRequest("Missing data in request")
 
     if 'awesome_blog_id' in data:
-        awesome_blog = AwesomeThreatIntelBlog.query.get(data['awesome_blog_id'])
+        awesome_blog_id = UUID(data['awesome_blog_id'])
+        awesome_blog = AwesomeThreatIntelBlog.query.get(awesome_blog_id)
         if not awesome_blog:
             raise BadRequest("Invalid awesome blog ID")
         feed_data = {
