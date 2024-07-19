@@ -17,18 +17,17 @@ login.login_view = 'auth.login'
 def create_app(config_name='default'):
     app = Flask(__name__)
     
+    app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY')
+    app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL') or \
+        f"sqlite:///{os.path.join(app.instance_path, 'threats.db')}"
+    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+    app.config['FLASK_ENV'] = os.environ.get('FLASK_ENV', 'default')
+    app.config['FLASK_PORT'] = int(os.environ.get('FLASK_PORT', 5000))
+    app.config['DEBUG'] = os.environ.get('DEBUG', 'false').lower() == 'true'
+
     if config_name == 'testing':
         app.config['TESTING'] = True
-        app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
         app.config['WTF_CSRF_ENABLED'] = False
-    else:
-        app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY')
-        app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL') or \
-            f"sqlite:///{os.path.join(app.instance_path, 'threats.db')}"
-        app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-        app.config['FLASK_ENV'] = os.environ.get('FLASK_ENV', 'default')
-        app.config['FLASK_PORT'] = int(os.environ.get('FLASK_PORT', 5000))
-        app.config['DEBUG'] = os.environ.get('DEBUG', 'false').lower() == 'true'
 
     db.init_app(app)
     migrate.init_app(app, db)
