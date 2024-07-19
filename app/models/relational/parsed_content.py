@@ -1,5 +1,6 @@
 from datetime import datetime
 from uuid import uuid4
+import hashlib
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy import Column, String, DateTime, Text, ForeignKey
 from app import db
