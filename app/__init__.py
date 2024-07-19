@@ -1,10 +1,9 @@
 from flask import Flask
-from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_login import LoginManager
 from config import Config
+from app.extensions import db
 
-db = SQLAlchemy()
 migrate = Migrate()
 login = LoginManager()
 login.login_view = 'auth.login'
@@ -29,4 +28,3 @@ def create_app(config_class=Config):
     return app
 
 from app import models
-# This file can be empty, it just needs to exist
