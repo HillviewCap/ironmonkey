@@ -4,8 +4,10 @@ from werkzeug.exceptions import BadRequest
 from app.services.rss_feed_service import RSSFeedService
 from app.services.parsed_content_service import ParsedContentService
 from app.utils.rss_validator import validate_rss_url, extract_feed_info
-from app.forms.rss_forms import AddRSSFeedForm, ImportCSVForm
+from app.forms.rss_forms import AddRSSFeedForm, ImportCSVForm, EditRSSFeedForm
 from app.models.relational.awesome_threat_intel_blog import AwesomeThreatIntelBlog
+from app.models.relational.rss_feed import RSSFeed
+from app import db
 
 rss_manager_bp = Blueprint('rss_manager', __name__)
 rss_feed_service = RSSFeedService()
