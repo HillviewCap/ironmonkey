@@ -13,8 +13,8 @@ from app.blueprints.rss_manager.routes import rss_manager
 from app.blueprints.admin.routes import admin_bp
 from app.blueprints.search.routes import search_bp
 from app.blueprints.api.routes import api_bp
-from app.utils.ollama_api import OllamaAPI
-from app.utils.scheduler import setup_scheduler
+from app.utils.ollama_client import OllamaAPI
+from app.services.scheduler_service import SchedulerService
 
 # Load environment variables
 load_dotenv()
@@ -58,7 +58,8 @@ def create_app():
     app.ollama_api = OllamaAPI()
 
     # Setup scheduler
-    app.scheduler = setup_scheduler(app)
+    app.scheduler = SchedulerService(app)
+    app.scheduler.setup_scheduler()
 
     # Ensure the instance folder exists
     os.makedirs(app.instance_path, exist_ok=True)
