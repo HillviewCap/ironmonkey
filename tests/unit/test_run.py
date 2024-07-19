@@ -66,6 +66,7 @@ class TestRun(unittest.TestCase):
         with patch('run.__name__', '__main__'):
             import importlib
             importlib.reload(run)
+            run.main()
             mock_app.run.assert_called_once_with(host='0.0.0.0', port=5000, debug=True)
 
 if __name__ == '__main__':

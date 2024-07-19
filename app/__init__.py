@@ -16,9 +16,6 @@ from app.blueprints.api.routes import api_bp
 from app.utils.ollama_client import OllamaAPI
 from app.services.scheduler_service import SchedulerService
 
-# Load environment variables
-load_dotenv()
-
 # Configure logging
 logger = setup_logger("app", "app.log")
 
@@ -28,6 +25,8 @@ login_manager = LoginManager()
 login_manager.login_view = 'auth.login'
 
 def create_app(env=None):
+    # Load environment variables
+    load_dotenv()
     if env is None:
         env = os.getenv('FLASK_ENV', 'development')
     app = Flask(__name__, instance_relative_config=True, static_url_path="/static", template_folder="templates")
