@@ -4,9 +4,9 @@ import feedparser
 import hashlib
 from flask import Flask
 from models import db, User, RSSFeed, ParsedContent, Category, Threat, SearchParams, AwesomeThreatIntelBlog
-from models.diffbot_model import Base as DiffbotBase, Document, Entity, EntityMention, EntityType, EntityUri, Category as DiffbotCategory
-from models.alltools import Base as AllToolsBase, AllTools, AllToolsValues, AllToolsValuesNames
-from models.allgroups import Base as AllGroupsBase, AllGroups, AllGroupsValues, AllGroupsValuesNames
+from models.relational.diffbot_model import Base as DiffbotBase, Document, Entity, EntityMention, EntityType, EntityUri, Category as DiffbotCategory
+from models.relational.alltools import Base as AllToolsBase, AllTools, AllToolsValues, AllToolsValuesNames
+from models.relational.allgroups import Base as AllGroupsBase, AllGroups, AllGroupsValues, AllGroupsValuesNames
 from config import Config
 from sqlalchemy import create_engine, text, inspect
 from tgcapt import update_databases as update_databases_module
