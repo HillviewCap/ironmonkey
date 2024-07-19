@@ -181,13 +181,6 @@
                 });
             }
 
-            fetch('/rss/awesome_blogs')
-                .then(response => response.json())
-                .then(data => {
-                    populateBlogs(data);
-                    filterBlogs();
-                })
-                .catch(error => console.error('Error fetching awesome blogs:', error));
 
             blogSearch.addEventListener('input', filterBlogs);
             categoryFilter.addEventListener('change', filterBlogs);
@@ -197,7 +190,13 @@
                 if (awesomeBlogsContainer.classList.contains('hidden')) {
                     awesomeBlogsContainer.classList.remove('hidden');
                     toggleButton.textContent = 'Hide Awesome Threat Intel Blogs';
-                } else {
+                    fetch('/rss/awesome_blogs')
+                        .then(response => response.json())
+                        .then(data => {
+                            populateBlogs(data);
+                            filterBlogs();
+                        })
+                        .catch(error => console.error('Error fetching awesome blogs:', error));
                     awesomeBlogsContainer.classList.add('hidden');
                     toggleButton.textContent = 'Show Awesome Threat Intel Blogs';
                 }
