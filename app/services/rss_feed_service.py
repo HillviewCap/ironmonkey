@@ -3,7 +3,7 @@ from typing import List, Dict
 from sqlalchemy.orm import Session
 from app.extensions import db
 
-from app.models import RSSFeed
+from app.models import RSSFeed, ParsedContent
 from app.utils.rss_validator import validate_rss_url, extract_feed_info
 from app.services.feed_parser_service import fetch_and_parse_feed
 from app.logging_config import setup_logger

@@ -2,6 +2,8 @@ from app import db
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import UserMixin
 from app import login
+import uuid
+from datetime import datetime
 
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -25,5 +27,15 @@ class ParsedContent(db.Model):
     description = db.Column(db.Text)
     published = db.Column(db.DateTime)
     # Add other fields as needed
+
+class RSSFeed(db.Model):
+    id = db.Column(db.UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    url = db.Column(db.String(500), unique=True, nullable=False)
+    title = db.Column(db.String(200), nullable=False)
+    description = db.Column(db.Text)
+    last_build_date = db.Column(db.DateTime, default=datetime.utcnow)
+    category = db.Column(db.String(100), default='Uncategorized')
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 # Add other models here
