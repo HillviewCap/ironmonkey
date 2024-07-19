@@ -63,13 +63,22 @@ async def create_rss_feed():
         feed_data = {**data, **feed_info}
 
     try:
-        # Create the feed in the database
-        new_feed = await rss_feed_service.create_feed(feed_data)
-        
-        # Fetch and parse the feed to validate it
-        await fetch_and_parse_feed(new_feed)
-        
-        return jsonify(new_feed.to_dict()), 201
+        # Check if the feed URL already exists
+        existing_feed = RSSFeed.query.filter_by(url=feed_data['url']).first()
+        if existing_feed:
+            return jsonify({"error": "RSS feed URL already exists"}), 400
+
+        try:
+            # Create the feed in the database
+            new_feed = await rss_feed_service.create_feed(feed_data)
+            
+            # Fetch and parse the feed to validate it
+            await fetch_and_parse_feed(new_feed)
+            
+            return jsonify(new_feed.to_dict()), 201
+        except Exception as e:
+            current_app.logger.error(f"Error creating RSS feed: {str(e)}")
+            return jsonify({"error": "Failed to create RSS feed"}), 500
     except Exception as e:
         current_app.logger.error(f"Error creating RSS feed: {str(e)}")
         return jsonify({"error": "Failed to create RSS feed"}), 500
