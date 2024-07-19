@@ -6,7 +6,7 @@ import hashlib
 import csv
 from io import TextIOWrapper
 from datetime import datetime
-from typing import TextIO, Tuple, List, Union, Optional
+from typing import Union, Optional
 
 import httpx
 import feedparser
@@ -23,6 +23,7 @@ from nlp_tagging import DiffbotClient, DatabaseHandler
 from jina_api import parse_content
 from logging_config import setup_logger
 from app.services.html_sanitizer_service import sanitize_html
+from app.services.csv_import_service import process_csv_file
 
 # Create a separate logger for RSS manager
 logger = setup_logger('rss_manager', 'rss_manager.log')
@@ -66,48 +67,6 @@ class EditRSSFeedForm(FlaskForm):
 
 # Helper functions
 from app.services.feed_parser_service import fetch_and_parse_feed
-
-
-from typing import TextIO, Tuple, List
-
-def process_csv_file(csv_file: TextIO) -> Tuple[int, int, List[str]]:
-    """Process the uploaded CSV file and return import statistics."""
-    imported_count, skipped_count = 0, 0
-    errors: List[str] = []
-    csv_file = TextIOWrapper(csv_file, encoding="utf-8")
-    csv_reader = csv.reader(csv_file)
-
-    # Skip the header row
-    next(csv_reader, None)
-
-    for row in csv_reader:
-        if len(row) >= 1:
-            url = row[0]
-            category = row[1] if len(row) > 1 else "Uncategorized"
-            try:
-                title, description, last_build_date = RSSFeed.fetch_feed_info(url)
-                new_feed = RSSFeed(
-                    url=url,
-                    title=title,
-                    category=category,
-                    description=description,
-                    last_build_date=last_build_date,
-                )
-                db.session.add(new_feed)
-                db.session.commit()
-                imported_count += 1
-                logger.info(f"RSS Feed added from CSV: {url}")
-            except IntegrityError:
-                db.session.rollback()
-                skipped_count += 1
-                logger.info(f"Skipped duplicate RSS Feed: {url}")
-            except Exception as e:
-                errors.append(f"Error processing RSS Feed {url}: {str(e)}")
-                logger.error(
-                    f"Error processing RSS Feed {url}: {str(e)}"
-                )
-
-    return imported_count, skipped_count, errors
 
 
 # Route handlers
