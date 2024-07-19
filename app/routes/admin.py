@@ -1,3 +1,5 @@
+from app.services.awesome_threat_intel_service import AwesomeThreatIntelService
+
 @admin.route('/update_awesome_threat_intel', methods=['POST'])
 @login_required
 @admin_required
