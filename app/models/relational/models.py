@@ -3,47 +3,32 @@ from __future__ import annotations
 from datetime import datetime, date
 from typing import List, Optional, Tuple
 from uuid import UUID as PyUUID, uuid4
-import uuid
-import uuid
 import hashlib
 from pydantic import BaseModel, Field
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin
 from werkzeug.security import check_password_hash
-import xml.etree.ElementTree as ET
-import httpx
-import feedparser
-from bs4 import BeautifulSoup
-import logging_config
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy import Column, String, DateTime
+from sqlalchemy import Column, String, DateTime, Text, ForeignKey
+from app.utils.http_client import fetch_feed_info
+from app import db
 
-db = SQLAlchemy()
+__all__ = ['User', 'SearchParams', 'RSSFeed', 'Threat', 'ParsedContent', 'Category', 'AwesomeThreatIntelBlog']
 
-__all__ = ['db', 'User', 'SearchParams', 'RSSFeed', 'Threat', 'ParsedContent', 'Category', 'AwesomeThreatIntelBlog']
-
-class SearchParams:
-    def __init__(
-        self,
-        query: str = "",
-        start_date: date = None,
-        end_date: date = None,
-        source_types: List[str] = None,
-        keywords: List[str] = None,
-    ):
-        self.query = query
-        self.start_date = start_date
-        self.end_date = end_date
-        self.source_types = source_types or []
-        self.keywords = keywords or []
+class SearchParams(BaseModel):
+    query: str = ""
+    start_date: Optional[date] = None
+    end_date: Optional[date] = None
+    source_types: List[str] = Field(default_factory=list)
+    keywords: List[str] = Field(default_factory=list)
 
 
 class User(UserMixin, db.Model):
     """User model for authentication and authorization."""
 
-    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    email = db.Column(db.String(120), unique=True, nullable=False)
-    password = db.Column(db.String(255), nullable=False)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    email = Column(String(120), unique=True, nullable=False)
+    password = Column(String(255), nullable=False)
 
     def get_id(self) -> str:
         """Return the user ID as a string."""
@@ -57,18 +42,18 @@ class User(UserMixin, db.Model):
 class RSSFeed(db.Model):
     """Model for storing RSS feed information."""
 
-    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    url = db.Column(db.String(255), unique=True, nullable=False)
-    title = db.Column(db.String(255), nullable=False)
-    category = db.Column(db.String(100), nullable=False)
-    description = db.Column(db.Text, nullable=True)
-    last_build_date = db.Column(db.String(100), nullable=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    url = Column(String(255), unique=True, nullable=False)
+    title = Column(String(255), nullable=False)
+    category = Column(String(100), nullable=False)
+    description = Column(Text, nullable=True)
+    last_build_date = Column(String(100), nullable=True)
     
     # Relationship with ParsedContent
     parsed_items = db.relationship('ParsedContent', back_populates='feed', cascade='all, delete-orphan')
     
     # Relationship with AwesomeThreatIntelBlog
-    awesome_blog_id = db.Column(UUID(as_uuid=True), db.ForeignKey('awesome_threat_intel_blog.id'), nullable=True)
+    awesome_blog_id = Column(UUID(as_uuid=True), ForeignKey('awesome_threat_intel_blog.id'), nullable=True)
     awesome_blog = db.relationship('AwesomeThreatIntelBlog', back_populates='rss_feeds')
 
     def __init__(self, **kwargs):
@@ -87,49 +72,7 @@ class RSSFeed(db.Model):
         Returns:
             Tuple[str, str, Optional[str]]: A tuple containing the title, description, and last build date.
         """
-        title, description, last_build_date = (
-            "Unknown Title",
-            "No description available",
-            None,
-        )
-
-        try:
-            feed = feedparser.parse(url)
-            title = feed.feed.get("title", "Unknown Title")
-            description = feed.feed.get("description", "No description available")
-            last_build_date = feed.feed.get("updated")
-        except Exception as e:
-            logging_config.logger.error(f"Error parsing feed with feedparser: {str(e)}")
-
-        if title == "Unknown Title" or description == "No description available":
-            try:
-                with httpx.Client() as client:
-                    response = client.get(url)
-                soup = BeautifulSoup(response.content, "lxml")
-                if title == "Unknown Title":
-                    title_tag = soup.find("title")
-                    title = title_tag.text if title_tag else "Unknown Title"
-                if description == "No description available":
-                    description_tag = soup.find("meta", attrs={"name": "description"})
-                    description = (
-                        description_tag["content"]
-                        if description_tag
-                        else "No description available"
-                    )
-            except Exception as e:
-                logging_config.logger.error(
-                    f"Error scraping feed with BeautifulSoup: {str(e)}"
-                )
-
-        return title, description, last_build_date
-
-
-class SearchParams(BaseModel):
-    query: str
-    start_date: Optional[datetime] = None
-    end_date: Optional[datetime] = None
-    source_types: Optional[List[str]] = None
-    keywords: Optional[List[str]] = None
+        return fetch_feed_info(url)
 
 
 class SearchResult(BaseModel):
@@ -145,16 +88,27 @@ class SearchResult(BaseModel):
 
 
 class Threat(db.Model):
-    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    title = db.Column(db.String(255), nullable=False)
-    description = db.Column(db.Text, nullable=False)
-    source_type = db.Column(db.String(100), nullable=False)
-    date = db.Column(db.DateTime, nullable=False)
-    url = db.Column(db.String(255), nullable=False)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    title = Column(String(255), nullable=False)
+    description = Column(Text, nullable=False)
+    source_type = Column(String(100), nullable=False)
+    date = Column(DateTime, nullable=False)
+    url = Column(String(255), nullable=False)
 
 
 class ParsedContent(db.Model):
-    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    title = Column(String(255), nullable=False)
+    url = Column(String(255), nullable=False)
+    description = Column(Text, nullable=True)
+    content = Column(Text, nullable=False)  # This will store the Jina summary from Ollama
+    summary = Column(Text, nullable=True)  # This will store the generated summary
+    feed_id = Column(UUID(as_uuid=True), ForeignKey("rss_feed.id"), nullable=False)
+    feed = db.relationship("RSSFeed", back_populates="parsed_items")
+    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    pub_date = Column(String(100), nullable=True)
+    creator = Column(String(255), nullable=True)
+    art_hash = Column(String(64), unique=True, index=True)
 
     @classmethod
     def deduplicate(cls):
@@ -163,7 +117,6 @@ class ParsedContent(db.Model):
         Keeps the earliest entry for each URL and deletes the rest.
         Returns the number of deleted entries.
         """
-        # Get all URLs and their earliest created_at dates
         url_earliest_dates = db.session.query(
             cls.url,
             db.func.min(cls.created_at).label('earliest_date')
@@ -172,13 +125,11 @@ class ParsedContent(db.Model):
         deleted_count = 0
 
         for url, earliest_date in url_earliest_dates:
-            # Find all entries for this URL except the earliest one
             duplicates = cls.query.filter(
                 cls.url == url,
                 cls.created_at > earliest_date
             ).all()
 
-            # Delete the duplicates
             for duplicate in duplicates:
                 db.session.delete(duplicate)
                 deleted_count += 1
@@ -192,37 +143,18 @@ class ParsedContent(db.Model):
             flash("No duplicate items found during deduplication.", "info")
 
         return deleted_count
-    title = db.Column(db.String(255), nullable=False)
-    url = db.Column(db.String(255), nullable=False)
-    description = db.Column(db.Text, nullable=True)
-    content = db.Column(db.Text, nullable=False)  # This will store the Jina summary from Ollama
-    summary = db.Column(db.Text, nullable=True)  # This will store the generated summary
-    feed_id = db.Column(
-        UUID(as_uuid=True), db.ForeignKey("rss_feed.id"), nullable=False
-    )
-    feed = db.relationship("RSSFeed", back_populates="parsed_items")
-    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-    pub_date = db.Column(db.String(100), nullable=True)
-    creator = db.Column(db.String(255), nullable=True)
-    art_hash = db.Column(db.String(64), unique=True, index=True)
 
     @classmethod
     def get_by_id(cls, content_id):
-        if isinstance(content_id, str):
-            try:
-                content_id = uuid.UUID(content_id)
-            except ValueError:
-                return None
-        return cls.query.filter(cls.id == content_id).first()
+        try: 
+            content_id = PyUUID(content_id) if isinstance(content_id, str) else content_id
+            return cls.query.filter(cls.id == content_id).first()
+        except ValueError:
+            return None
 
     @classmethod
     def get_document_by_id(cls, document_id):
-        if isinstance(document_id, str):
-            try:
-                document_id = uuid.UUID(document_id)
-            except ValueError:
-                return None
-        return cls.query.filter(cls.id == document_id).first()
+        return cls.get_by_id(document_id)
 
     @classmethod
     def hash_existing_articles(cls):
@@ -236,13 +168,11 @@ class ParsedContent(db.Model):
 
 
 class Category(db.Model):
-    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    name = db.Column(db.String(200), nullable=False)
-    scheme = db.Column(db.String(200), nullable=True)  # For feedparser category scheme
-    term = db.Column(db.String(200), nullable=True)  # For feedparser category term
-    parsed_content_id = db.Column(
-        UUID(as_uuid=True), db.ForeignKey("parsed_content.id")
-    )
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    name = Column(String(200), nullable=False)
+    scheme = Column(String(200), nullable=True)  # For feedparser category scheme
+    term = Column(String(200), nullable=True)  # For feedparser category term
+    parsed_content_id = Column(UUID(as_uuid=True), ForeignKey("parsed_content.id"))
     parsed_content = db.relationship("ParsedContent", backref=db.backref("categories", lazy=True))
 
     @classmethod
@@ -269,7 +199,6 @@ class AwesomeThreatIntelBlog(db.Model):
     feed_type = Column(String(50), nullable=True)
     last_checked = Column(DateTime, nullable=True)
 
-    # Relationship with RSSFeed
     rss_feeds = db.relationship('RSSFeed', back_populates='awesome_blog')
 
     @classmethod
