@@ -10,7 +10,7 @@ from app.services.rss_feed_service import RSSFeedService
 from app.services.parsed_content_service import ParsedContentService
 from app import create_app
 
-@pytest.fixture
+@pytest.fixture(scope='module')
 def app():
     app = create_app()
     app.config.update({
@@ -19,20 +19,7 @@ def app():
     })
     return app
 
-@pytest.fixture
-def client(app):
-    return app.test_client()
-
-@pytest.fixture
-def runner(app):
-    return app.test_cli_runner()
-
-@pytest.fixture
-def app_context(app):
-    with app.app_context():
-        yield
-
-@pytest.fixture
+@pytest.fixture(scope='module')
 def db(app):
     from app.extensions import db
     with app.app_context():
@@ -40,6 +27,25 @@ def db(app):
         yield db
         db.session.remove()
         db.drop_all()
+
+@pytest.fixture(scope='module')
+def client(app):
+    return app.test_client()
+
+@pytest.fixture(scope='module')
+def runner(app):
+    return app.test_cli_runner()
+
+@pytest.fixture(scope='function')
+def session(db):
+    connection = db.engine.connect()
+    transaction = connection.begin()
+    session = db.create_scoped_session(options={"bind": connection, "binds": {}})
+    db.session = session
+    yield session
+    transaction.rollback()
+    connection.close()
+    session.remove()
 
 from app.models.relational import RSSFeed, ParsedContent
 
