@@ -1,5 +1,6 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, current_app
 from flask_login import login_required
+from werkzeug.security import generate_password_hash
 from app.models import db, User, ParsedContent, RSSFeed
 from datetime import datetime
 
@@ -81,4 +82,86 @@ def delete_parsed_content(content_id):
         db.session.rollback()
         current_app.logger.error(f"Error deleting content: {str(e)}")
         flash("An error occurred while deleting content.", "error")
+    return redirect(url_for("admin.admin"))
+
+@admin_bp.route("/add_user", methods=["POST"])
+@login_required
+def add_user():
+    try:
+        new_user = User(
+            username=request.form["username"],
+            email=request.form["email"],
+            password=generate_password_hash(request.form["password"])
+        )
+        db.session.add(new_user)
+        db.session.commit()
+        flash("New user added successfully.", "success")
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"Error adding new user: {str(e)}")
+        flash("An error occurred while adding new user.", "error")
+    return redirect(url_for("admin.admin"))
+
+@admin_bp.route("/edit_user/<uuid:user_id>", methods=["GET", "POST"])
+@login_required
+def edit_user(user_id):
+    user = User.query.get_or_404(user_id)
+    if request.method == "POST":
+        try:
+            user.username = request.form["username"]
+            user.email = request.form["email"]
+            if request.form["password"]:
+                user.password = generate_password_hash(request.form["password"])
+            db.session.commit()
+            flash("User updated successfully.", "success")
+            return redirect(url_for("admin.admin"))
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.error(f"Error updating user: {str(e)}")
+            flash("An error occurred while updating user.", "error")
+    return render_template("edit_user.html", user=user)
+
+@admin_bp.route("/delete_user/<uuid:user_id>", methods=["POST"])
+@login_required
+def delete_user(user_id):
+    user = User.query.get_or_404(user_id)
+    try:
+        db.session.delete(user)
+        db.session.commit()
+        flash("User deleted successfully.", "success")
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"Error deleting user: {str(e)}")
+        flash("An error occurred while deleting user.", "error")
+    return redirect(url_for("admin.admin"))
+
+@admin_bp.route("/add_rss_feed", methods=["POST"])
+@login_required
+def add_rss_feed():
+    try:
+        new_feed = RSSFeed(
+            name=request.form["name"],
+            url=request.form["url"]
+        )
+        db.session.add(new_feed)
+        db.session.commit()
+        flash("New RSS feed added successfully.", "success")
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"Error adding new RSS feed: {str(e)}")
+        flash("An error occurred while adding new RSS feed.", "error")
+    return redirect(url_for("admin.admin"))
+
+@admin_bp.route("/delete_rss_feed/<uuid:feed_id>", methods=["POST"])
+@login_required
+def delete_rss_feed(feed_id):
+    feed = RSSFeed.query.get_or_404(feed_id)
+    try:
+        db.session.delete(feed)
+        db.session.commit()
+        flash("RSS feed deleted successfully.", "success")
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"Error deleting RSS feed: {str(e)}")
+        flash("An error occurred while deleting RSS feed.", "error")
     return redirect(url_for("admin.admin"))
