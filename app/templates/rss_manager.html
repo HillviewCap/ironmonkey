@@ -133,8 +133,8 @@
                     const type = item.dataset.type;
 
                     const matchesSearch = title.includes(searchTerm);
-                    const matchesCategory = !selectedCategory || category === selectedCategory;
-                    const matchesType = !selectedType || type === selectedType;
+                    const matchesCategory = selectedCategory === "" || category === selectedCategory;
+                    const matchesType = selectedType === "" || type === selectedType;
 
                     if (matchesSearch && matchesCategory && matchesType) {
                         item.style.display = '';
