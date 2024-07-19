@@ -34,6 +34,7 @@
     {% include "shared/navbar.html" ignore missing %}
     {% block navbar %}{% endblock %}
     <div class="container mx-auto mt-8 flex-grow">
+        {% include "shared/flash_messages.html" %}
         {% block content %}{% endblock %}
     </div>
     {% include "shared/footer.html" %}
