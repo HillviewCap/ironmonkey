@@ -14,7 +14,7 @@ scheduler_logger = getLogger('scheduler')
 class SchedulerService:
     def __init__(self, app):
         self.app = app
-        self.db = app.extensions['sqlalchemy'].db
+        self.db = app.extensions['sqlalchemy']
         self.scheduler = BackgroundScheduler()
 
     def setup_scheduler(self):
