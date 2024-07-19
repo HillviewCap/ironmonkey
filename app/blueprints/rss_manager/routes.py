@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, request, jsonify, current_app, abo
 from flask_login import login_required
 from sqlalchemy.exc import SQLAlchemyError
 from werkzeug.exceptions import BadRequest
-from app.models.relational import ParsedContent
+# No need to import from app.models.relational as ParsedContent is not directly used
 from app.services.data_processing import import_awesome_threat_intel_blogs
 from app.services.rss_feed_service import RSSFeedService
 from app.services.parsed_content_service import ParsedContentService
