@@ -1,4 +1,48 @@
 **conventions.md**
+**Project Structure**
+your_flask_project/
+├── app/
+│   ├── __init__.py  # Application factory
+│   ├── models/
+│   │   ├── __init__.py
+│   │   ├── relational/  # SQLAlchemy models
+│   │   │   └── __init__.py
+│   │   └── graph/  # PyGremlin models
+│   │       └── __init__.py
+│   ├── blueprints/
+│   │   ├── main/
+│   │   │   ├── __init__.py
+│   │   │   └── routes.py
+│   │   ├── auth/
+│   │   │   ├── __init__.py
+│   │   │   └── routes.py
+│   │   └── api/
+│   │       ├── __init__.py
+│   │       └── routes.py
+│   ├── static/
+│   │   ├── css/
+│   │   ├── js/
+│   │   └── images/
+│   ├── templates/
+│   ├── utils/
+│   │   ├── __init__.py
+│   │   ├── http_client.py  # httpx client
+│   │   └── ollama_client.py  # Ollama integration
+│   ├── services/
+│   │   ├── __init__.py
+│   │   └── data_processing.py
+│   └── config.py
+├── tests/
+│   ├── __init__.py
+│   ├── unit/
+│   └── integration/
+├── migrations/  # For database migrations
+├── .env  # Environment variables
+├── .gitignore
+├── requirements.txt
+├── README.md
+├── CONVENTIONS.md
+└── run.py  # Entry point for running the application
 
 **General**
 
@@ -13,6 +57,7 @@
 * Use `SQLAlchemy` as the ORM for interacting with the relational database.
 * Use `PyGremlin` for interacting with the graph database.
 * Use `Ollama` for local language model integration.
+* Use `langchain-community` for all AI/ML/NER/NLP functions.
 
 **Type Hints and Annotations**
 

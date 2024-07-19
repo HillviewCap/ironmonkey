@@ -42,3 +42,11 @@ def summarize_content() -> Dict[str, Any]:
     db.session.commit()
 
     return jsonify({'summary': summary})
+from flask import jsonify
+from app.blueprints.api import bp
+
+@bp.route('/example', methods=['GET'])
+def example():
+    return jsonify({"message": "This is an example API route"})
+
+# Add other API routes here
