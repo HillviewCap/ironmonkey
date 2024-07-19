@@ -13,7 +13,7 @@ def rotator(source, dest):
             df.writelines(sf)
     os.remove(source)
 
-def setup_logger(name, log_file, level=logging.DEBUG):
+def setup_logger(name, log_file, level=logging.INFO):
     """Function to set up a logger with file and console handlers"""
     # Ensure logs directory exists
     logs_dir = 'logs'

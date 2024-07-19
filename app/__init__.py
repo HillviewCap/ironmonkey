@@ -1,3 +1,7 @@
+"""
+This module initializes the Flask application and sets up all necessary configurations and extensions.
+"""
+
 import os
 from flask import Flask
 from flask_migrate import Migrate
@@ -25,6 +29,15 @@ login_manager = LoginManager()
 login_manager.login_view = 'auth.login'
 
 def create_app(env=None):
+    """
+    Create and configure an instance of the Flask application.
+
+    Args:
+        env (str, optional): The environment to use for configuration. Defaults to None.
+
+    Returns:
+        Flask: The configured Flask application instance.
+    """
     # Load environment variables
     load_dotenv()
     if env is None:
@@ -68,6 +81,15 @@ def create_app(env=None):
 
     @login_manager.user_loader
     def load_user(user_id):
+        """
+        Load a user given the user ID.
+
+        Args:
+            user_id (str): The ID of the user to load.
+
+        Returns:
+            User: The User object if found, else None.
+        """
         from app.models.relational.user import User
         return User.query.get(user_id)
 
