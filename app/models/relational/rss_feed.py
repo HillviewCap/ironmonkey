@@ -20,9 +20,8 @@ class RSSFeed(db.Model):
             'url': self.url,
             'title': self.title,
             'description': self.description,
-            'last_updated': self.last_updated.isoformat() if self.last_updated else None,
-            'etag': self.etag,
-            'last_modified': self.last_modified
+            'category': self.category,
+            'last_build_date': self.last_build_date
         }
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
