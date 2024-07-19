@@ -5,7 +5,7 @@ from app.models import SearchParams, ParsedContent
 
 search_bp = Blueprint('search', __name__)
 from app.utils.search_utils import get_search_params, perform_search
-from app.utils.summary_enhancer import SummaryEnhancer
+from app.services.summary_service import SummaryEnhancer
 import uuid
 
 @search_bp.route("/search", methods=["GET", "POST"])

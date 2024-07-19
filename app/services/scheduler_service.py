@@ -2,7 +2,7 @@ import asyncio
 import os
 from apscheduler.schedulers.background import BackgroundScheduler
 from app.models.relational import ParsedContent, RSSFeed
-from app.services.rss_service import fetch_and_parse_feed
+from app.services.rss_feed_service import fetch_and_parse_feed
 from app.services.summary_service import SummaryEnhancer
 from flask import current_app
 from sqlalchemy.orm import scoped_session, sessionmaker
