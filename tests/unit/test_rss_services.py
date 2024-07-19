@@ -23,9 +23,8 @@ def app():
     yield app
     os.remove(os.path.join(instance_path, "test.db"))
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope='function')
 def db(app):
-    from app.extensions import db
     with app.app_context():
         db.create_all()
         yield db
@@ -33,36 +32,24 @@ def db(app):
         db.drop_all()
 
 @pytest.fixture(scope='function')
-def session(db, app):
-    with app.app_context():
-        connection = db.engine.connect()
-        transaction = connection.begin()
-        options = dict(bind=connection, binds={})
-        session = db.create_scoped_session(options=options)
-        db.session = session
-        yield session
-        transaction.rollback()
-        connection.close()
-        session.remove()
-
-@pytest.fixture(scope='module')
-def client(app):
-    return app.test_client()
-
-@pytest.fixture(scope='module')
-def runner(app):
-    return app.test_cli_runner()
-
-@pytest.fixture(scope='function')
 def session(db):
     connection = db.engine.connect()
     transaction = connection.begin()
-    session = db.create_scoped_session(options={"bind": connection, "binds": {}})
+    options = dict(bind=connection, binds={})
+    session = db.create_scoped_session(options=options)
     db.session = session
     yield session
     transaction.rollback()
     connection.close()
     session.remove()
+
+@pytest.fixture(scope='function')
+def client(app):
+    return app.test_client()
+
+@pytest.fixture(scope='function')
+def runner(app):
+    return app.test_cli_runner()
 
 from app.models.relational import RSSFeed, ParsedContent
 
