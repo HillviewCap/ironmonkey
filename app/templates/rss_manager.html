@@ -199,7 +199,7 @@
                     <p class="text-sm text-gray-500 mt-2">Last Build Date: {{ feed.last_build_date or 'Not available' }}</p>
                 </div>
                 <div class="mt-4 flex flex-wrap space-x-2">
-                    <a href="{{ url_for('rss_manager.parsed_content', feed_id=feed.id) }}" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline mb-2">
+                    <a href="{{ url_for('rss_manager.get_parsed_content', feed_id=feed.id) }}" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline mb-2">
                         View Posts
                     </a>
                     <a href="{{ url_for('rss_manager.edit_feed', feed_id=feed.id) }}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline mb-2">

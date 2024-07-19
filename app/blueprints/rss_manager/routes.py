@@ -80,20 +80,16 @@ def parse_rss_feed(feed_id):
         current_app.logger.error(f"Error parsing RSS feed: {str(e)}")
         return jsonify({"error": "Failed to parse RSS feed"}), 500
 
-@rss_manager_bp.route('/rss/parsed_content')
+@rss_manager_bp.route('/rss/parsed_content/<uuid:feed_id>')
 @login_required
-def get_parsed_content():
+def get_parsed_content(feed_id):
     page = request.args.get('page', 1, type=int)
     per_page = request.args.get('per_page', 10, type=int)
     filters = request.args.to_dict()
     filters.pop('page', None)
     filters.pop('per_page', None)
+    filters['feed_id'] = feed_id
 
     content, total = parsed_content_service.get_parsed_content(filters, page, per_page)
-    return jsonify({
-        "content": [item.to_dict() for item in content],
-        "total": total,
-        "page": page,
-        "per_page": per_page
-    }), 200
+    return render_template('parsed_content.html', content=content, total=total, page=page, per_page=per_page, feed_id=feed_id)
 
