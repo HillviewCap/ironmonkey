@@ -14,7 +14,8 @@ class TestRun(unittest.TestCase):
 
     @patch('run.load_dotenv')
     @patch('run.os.getenv')
-    def test_create_app(self, mock_getenv, mock_load_dotenv):
+    @patch('app.utils.ollama_client.os.getenv')
+    def test_create_app(self, mock_ollama_getenv, mock_getenv, mock_load_dotenv):
         mock_getenv.side_effect = {
             'FLASK_ENV': 'testing',
             'SECRET_KEY': 'test_secret_key',
@@ -24,6 +25,10 @@ class TestRun(unittest.TestCase):
             'RSS_CHECK_INTERVAL': '30',
             'SUMMARY_CHECK_INTERVAL': '60',
             'SUMMARY_API_CHOICE': 'groq'
+        }.get
+        mock_ollama_getenv.side_effect = {
+            'OLLAMA_BASE_URL': 'http://localhost:11434',
+            'OLLAMA_MODEL': 'llama2'
         }.get
         app = create_app()
         self.assertIsNotNone(app)
@@ -41,7 +46,8 @@ class TestRun(unittest.TestCase):
 
     @patch('run.create_app')
     @patch('run.os.getenv')
-    def test_main_run(self, mock_getenv, mock_create_app):
+    @patch('app.utils.ollama_client.os.getenv')
+    def test_main_run(self, mock_ollama_getenv, mock_getenv, mock_create_app):
         mock_app = MagicMock()
         mock_create_app.return_value = mock_app
         mock_getenv.side_effect = {
@@ -53,6 +59,10 @@ class TestRun(unittest.TestCase):
             'RSS_CHECK_INTERVAL': '30',
             'SUMMARY_CHECK_INTERVAL': '60',
             'SUMMARY_API_CHOICE': 'groq'
+        }.get
+        mock_ollama_getenv.side_effect = {
+            'OLLAMA_BASE_URL': 'http://localhost:11434',
+            'OLLAMA_MODEL': 'llama2'
         }.get
 
         with patch('run.__name__', '__main__'):
