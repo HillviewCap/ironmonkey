@@ -109,6 +109,7 @@ def update_awesome_threat_intel():
         current_app.logger.error(f"Error updating Awesome Threat Intel Blogs: {str(e)}")
         flash("An error occurred while updating Awesome Threat Intel Blogs.", "error")
     return redirect(url_for("rss_manager.get_rss_feeds"))
+@rss_manager_bp.route('/rss/feed/edit/<uuid:feed_id>', methods=['GET', 'POST'])
 @login_required
 def edit_feed(feed_id):
     feed = RSSFeed.query.get_or_404(feed_id)
