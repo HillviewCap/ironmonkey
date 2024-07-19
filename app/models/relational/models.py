@@ -7,12 +7,13 @@ import hashlib
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy import Column, String, DateTime, Text, ForeignKey
+from pydantic import BaseModel, Field
 from app.utils.http_client import fetch_feed_info
 from app import db
 from .user import User
 from .search_params import SearchParams
 
-__all__ = ['User', 'SearchParams', 'RSSFeed', 'Threat', 'ParsedContent', 'Category', 'AwesomeThreatIntelBlog']
+__all__ = ['User', 'SearchParams', 'RSSFeed', 'Threat', 'ParsedContent', 'Category', 'AwesomeThreatIntelBlog', 'SearchResult']
 
 class RSSFeed(db.Model):
     """Model for storing RSS feed information."""
