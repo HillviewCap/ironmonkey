@@ -15,7 +15,7 @@ Workflow:
 from __future__ import annotations
 from app.utils.logging_config import setup_logger
 from sqlalchemy.orm import Session
-from models import ParsedContent, db, RSSFeed
+from app.models import ParsedContent, db, RSSFeed
 import os
 from typing import Optional, Union
 from ollama_api import OllamaAPI
