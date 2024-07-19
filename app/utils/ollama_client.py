@@ -3,7 +3,7 @@ import yaml
 import asyncio
 from dotenv import load_dotenv
 from langchain_community.llms import Ollama
-from logging_config import setup_logger
+from app.utils.logging_config import setup_logger
 from functools import partial
 
 # Create a separate logger for Ollama API
