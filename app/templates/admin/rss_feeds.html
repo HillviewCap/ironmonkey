@@ -36,6 +36,16 @@
         </form>
     </div>
     <div id="awesomeFeedsForm" class="hidden mb-4 p-4 bg-gray-100 rounded">
+        <h3 class="text-xl font-semibold mb-2">Awesome Threat Intel Blogs</h3>
+        <div class="mb-4">
+            {% for blog in awesome_threat_intel_blogs %}
+                <div class="mb-2 p-2 border rounded">
+                    <h4 class="text-lg font-semibold">{{ blog.name }}</h4>
+                    <p>{{ blog.description }}</p>
+                    <a href="{{ blog.url }}" target="_blank" class="text-blue-600 hover:underline">Visit Blog</a>
+                </div>
+            {% endfor %}
+        </div>
         <h3 class="text-xl font-semibold mb-2">Add from Awesome Threat Intel Blogs</h3>
         <form action="{{ url_for('admin.add_awesome_feeds') }}" method="post">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
