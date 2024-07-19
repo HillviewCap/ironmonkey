@@ -54,6 +54,52 @@ class EditRSSFeedForm(FlaskForm):
     last_build_date = StringField("Last Build Date")
     submit = SubmitField("Update Feed")
 
+@rss_manager.route("/rss/feeds", methods=["GET"])
+@login_required
+def list_rss_feeds():
+    """List all RSS feeds."""
+    feeds = rss_feed_service.get_all_feeds()
+    return jsonify([{
+        "id": str(feed.id),
+        "url": feed.url,
+        "title": feed.title,
+        "category": feed.category,
+        "last_build_date": feed.last_build_date.isoformat() if feed.last_build_date else None
+    } for feed in feeds]), 200
+
+@rss_manager.route("/rss/feed/<uuid:feed_id>", methods=["GET"])
+@login_required
+def get_rss_feed(feed_id):
+    """Get details of a specific RSS feed."""
+    try:
+        feed = rss_feed_service.get_feed_by_id(feed_id)
+        if not feed:
+            return jsonify({"error": "Feed not found"}), 404
+        return jsonify({
+            "id": str(feed.id),
+            "url": feed.url,
+            "title": feed.title,
+            "category": feed.category,
+            "description": feed.description,
+            "last_build_date": feed.last_build_date.isoformat() if feed.last_build_date else None
+        }), 200
+    except Exception as e:
+        logger.error(f"Error retrieving RSS feed: {str(e)}")
+        return jsonify({"error": "Internal server error"}), 500
+
+@rss_manager.route("/rss/feed/<uuid:feed_id>", methods=["DELETE"])
+@login_required
+def delete_rss_feed(feed_id):
+    """Delete an RSS feed."""
+    try:
+        rss_feed_service.delete_feed(feed_id)
+        return jsonify({"message": "RSS feed deleted successfully"}), 200
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 404
+    except Exception as e:
+        logger.error(f"Error deleting RSS feed: {str(e)}")
+        return jsonify({"error": "Internal server error"}), 500
+
 @rss_manager.route("/rss_manager", methods=["GET", "POST"])
 @login_required
 async def manage_rss() -> str:

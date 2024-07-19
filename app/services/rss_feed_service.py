@@ -108,6 +108,9 @@ class RSSFeedService:
 
         Args:
             feed_id (uuid.UUID): The unique identifier of the RSS feed.
+
+        Raises:
+            ValueError: If the RSS feed with the given ID is not found.
         """
         with Session(db.engine) as session:
             feed = session.query(RSSFeed).get(feed_id)
@@ -117,6 +120,9 @@ class RSSFeedService:
             session.delete(feed)
             session.commit()
             logger.info(f"Deleted RSS feed: {feed.title}")
+
+        # Delete associated parsed content
+        ParsedContentService.delete_parsed_content_by_feed_id(feed_id)
 
     @staticmethod
     async def parse_feed(feed_id: uuid.UUID) -> None:
