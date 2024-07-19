@@ -28,7 +28,7 @@ login_manager = LoginManager()
 login_manager.login_view = 'auth.login'
 
 def create_app():
-    app = Flask(__name__, instance_relative_config=True, static_url_path="/static")
+    app = Flask(__name__, instance_relative_config=True, static_url_path="/static", template_folder="templates")
     
     # Load configuration from environment variables
     app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
