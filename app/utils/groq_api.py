@@ -12,7 +12,7 @@ It requires a GROQ_API_KEY to be set in the .env file.
 """
 
 import os
-from logging_config import setup_logger
+from app.utils.logging_config import setup_logger
 from langchain_groq import ChatGroq
 from langchain.schema import HumanMessage
 
@@ -33,7 +33,6 @@ class GroqAPI:
             if prompt_type == "threat_intel_summary":
                 prompt = f"Please provide a concise summary of the following threat intelligence article, highlighting key points and potential impacts:\n\n{article}"
             elif prompt_type not in ["threat_intel_summary"]:
-                raise ValueError(f"Unsupported prompt type: {prompt_type}")
                 raise ValueError(f"Unsupported prompt type: {prompt_type}")
 
             messages = [HumanMessage(content=prompt)]
