@@ -5,7 +5,8 @@ from app.extensions import db
 
 from app.models import RSSFeed
 from app.models import ParsedContent
-from app.utils.rss_validator import validate_rss_url, extract_feed_info
+from app.utils.rss_validator import validate_rss_url
+from app.utils.http_client import fetch_feed_info
 from app.services.feed_parser_service import fetch_and_parse_feed
 from logging_config import setup_logger
 from app.services.parsed_content_service import ParsedContentService
