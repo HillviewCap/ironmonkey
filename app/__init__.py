@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 from .extensions import db
 from app.utils.logging_config import setup_logger
 from app.blueprints.main import main as main_bp, init_app as init_main_bp
-from app.blueprints.auth import auth
+from app.blueprints.auth.routes import bp as auth_bp
 from app.blueprints.rss_manager.routes import rss_manager
 from app.blueprints.admin.routes import admin_bp
 from app.blueprints.search.routes import search_bp
@@ -48,7 +48,7 @@ def create_app():
 
     # Register blueprints
     app.register_blueprint(main_bp)
-    app.register_blueprint(auth)
+    app.register_blueprint(auth_bp, url_prefix='/auth')
     app.register_blueprint(rss_manager)
     app.register_blueprint(admin_bp, url_prefix='/admin')
     app.register_blueprint(search_bp, url_prefix='/search')
@@ -57,12 +57,13 @@ def create_app():
     # Initialize Ollama API
     app.ollama_api = OllamaAPI()
 
-    # Setup scheduler
-    app.scheduler = SchedulerService(app)
-    app.scheduler.setup_scheduler()
-
     # Ensure the instance folder exists
     os.makedirs(app.instance_path, exist_ok=True)
+
+    with app.app_context():
+        # Setup scheduler
+        app.scheduler = SchedulerService(app)
+        app.scheduler.setup_scheduler()
 
     @login_manager.user_loader
     def load_user(user_id):
