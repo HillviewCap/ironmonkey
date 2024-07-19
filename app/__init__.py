@@ -7,9 +7,9 @@ from dotenv import load_dotenv
 
 from .extensions import db
 from app.utils.logging_config import setup_logger
-from app.blueprints.main import main as main_bp, init_app as init_main_bp
+from app.blueprints.main.routes import bp as main_bp
 from app.blueprints.auth.routes import bp as auth_bp
-from app.blueprints.rss_manager.routes import rss_manager
+from app.blueprints.rss_manager.routes import rss_manager_bp
 from app.blueprints.admin.routes import admin_bp
 from app.blueprints.search.routes import search_bp
 from app.blueprints.api.routes import api_bp
@@ -49,7 +49,7 @@ def create_app():
     # Register blueprints
     app.register_blueprint(main_bp)
     app.register_blueprint(auth_bp, url_prefix='/auth')
-    app.register_blueprint(rss_manager)
+    app.register_blueprint(rss_manager_bp, url_prefix='/rss')
     app.register_blueprint(admin_bp, url_prefix='/admin')
     app.register_blueprint(search_bp, url_prefix='/search')
     app.register_blueprint(api_bp, url_prefix='/api')
