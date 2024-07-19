@@ -1,9 +1,10 @@
-from flask import Blueprint, request, jsonify, current_app, abort
+from flask import Blueprint, request, jsonify, current_app, abort, render_template
 from flask_login import login_required
 from werkzeug.exceptions import BadRequest
 from app.services.rss_feed_service import RSSFeedService
 from app.services.parsed_content_service import ParsedContentService
 from app.utils.rss_validator import validate_rss_url, extract_feed_info
+from app.forms.rss_forms import AddRSSFeedForm, ImportCSVForm
 
 rss_manager_bp = Blueprint('rss_manager', __name__)
 rss_feed_service = RSSFeedService()
@@ -13,7 +14,9 @@ parsed_content_service = ParsedContentService()
 @login_required
 def get_rss_feeds():
     feeds = rss_feed_service.get_all_feeds()
-    return jsonify([feed.to_dict() for feed in feeds]), 200
+    form = AddRSSFeedForm()
+    csv_form = ImportCSVForm()
+    return render_template('rss_manager.html', feeds=feeds, form=form, csv_form=csv_form)
 
 @rss_manager_bp.route('/rss/feed/<uuid:feed_id>')
 @login_required
