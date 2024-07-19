@@ -24,6 +24,7 @@ from jina_api import parse_content
 from logging_config import setup_logger
 from app.services.html_sanitizer_service import sanitize_html
 from app.services.csv_import_service import process_csv_file
+from app.services.feed_parser_service import fetch_and_parse_feed
 
 # Create a separate logger for RSS manager
 logger = setup_logger('rss_manager', 'rss_manager.log')

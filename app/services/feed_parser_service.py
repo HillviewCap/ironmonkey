@@ -126,3 +126,49 @@ async def fetch_and_parse_feed(feed: RSSFeed) -> int:
         raise RuntimeError(f"Unexpected error: {str(e)}")
     finally:
         return new_entries_count
+from typing import Optional
+from datetime import datetime
+import httpx
+import feedparser
+from app.models import db, ParsedContent, RSSFeed
+from app.logging_config import setup_logger
+
+logger = setup_logger('feed_parser_service', 'feed_parser_service.log')
+
+async def fetch_and_parse_feed(feed: RSSFeed) -> None:
+    """Fetch and parse an RSS feed, storing new entries in the database."""
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.get(feed.url)
+            response.raise_for_status()
+            feed_data = feedparser.parse(response.text)
+
+        for entry in feed_data.entries:
+            content = entry.get("content", [{}])[0].get("value", "")
+            if not content:
+                content = entry.get("summary", "")
+
+            pub_date = entry.get("published_parsed")
+            if pub_date:
+                pub_date = datetime(*pub_date[:6])
+
+            existing_content = ParsedContent.query.filter_by(url=entry.link).first()
+            if existing_content:
+                continue
+
+            new_content = ParsedContent(
+                title=entry.get("title", ""),
+                url=entry.link,
+                content=content,
+                description=entry.get("summary", ""),
+                pub_date=pub_date,
+                creator=entry.get("author", ""),
+                feed_id=feed.id,
+            )
+            db.session.add(new_content)
+
+        db.session.commit()
+        logger.info(f"Successfully parsed feed: {feed.url}")
+    except Exception as e:
+        logger.error(f"Error parsing feed {feed.url}: {str(e)}", exc_info=True)
+        db.session.rollback()
