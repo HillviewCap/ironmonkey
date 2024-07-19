@@ -127,18 +127,18 @@ class TestParsedContentService:
         per_page = 10
         with app.app_context():
             with patch('app.models.relational.ParsedContent.query') as mock_query:
-            mock_query.filter.return_value.paginate.return_value = Mock(
-                items=[
-                    ParsedContent(id=UUID('12345678-1234-5678-1234-567812345678'), title='Test Content 1'),
-                    ParsedContent(id=UUID('87654321-4321-8765-4321-876543210987'), title='Test Content 2')
-                ],
-                total=2
-            )
-            content, total = parsed_content_service.get_parsed_content(filters, page, per_page)
-            assert len(content) == 2
-            assert content[0].title == 'Test Content 1'
-            assert content[1].title == 'Test Content 2'
-            assert total == 2
+                mock_query.filter.return_value.paginate.return_value = Mock(
+                    items=[
+                        ParsedContent(id=UUID('12345678-1234-5678-1234-567812345678'), title='Test Content 1'),
+                        ParsedContent(id=UUID('87654321-4321-8765-4321-876543210987'), title='Test Content 2')
+                    ],
+                    total=2
+                )
+                content, total = parsed_content_service.get_parsed_content(filters, page, per_page)
+                assert len(content) == 2
+                assert content[0].title == 'Test Content 1'
+                assert content[1].title == 'Test Content 2'
+                assert total == 2
 
     def test_get_content_by_id(self, parsed_content_service):
         content_id = UUID('12345678-1234-5678-1234-567812345678')
