@@ -18,6 +18,7 @@ from app.blueprints.rss_manager.routes import rss_manager_bp
 from app.blueprints.admin.routes import admin_bp
 from app.blueprints.search.routes import search_bp
 from app.blueprints.api.routes import api_bp
+from app.blueprints.parsed_content.routes import parsed_content_bp
 from app.utils.ollama_client import OllamaAPI
 from app.services.scheduler_service import SchedulerService
 
@@ -68,6 +69,7 @@ def create_app(env=None):
     app.register_blueprint(admin_bp, url_prefix='/admin')
     app.register_blueprint(search_bp, url_prefix='/search')
     app.register_blueprint(api_bp, url_prefix='/api')
+    app.register_blueprint(parsed_content_bp, url_prefix='/content')
 
     # Initialize Ollama API
     app.ollama_api = OllamaAPI()
