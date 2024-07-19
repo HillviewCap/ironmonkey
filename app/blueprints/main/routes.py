@@ -12,4 +12,4 @@ def index():
 @main.route('/favicon.ico')
 def favicon():
     return send_from_directory(os.path.join(main.root_path, '..', '..', 'static', 'images'),
-                               'favicon.ico', mimetype='image/vnd.microsoft.icon')
+                               'favicon.ico', mimetype='image/x-icon')
