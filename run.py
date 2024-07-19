@@ -8,7 +8,9 @@ from app.models.init_db import init_db
 load_dotenv()
 
 app = create_app()
-init_db(app)  # Initialize the database
+
+with app.app_context():
+    init_db(app)  # Initialize the database within the application context
 
 @app.shell_context_processor
 def make_shell_context():

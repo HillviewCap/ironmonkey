@@ -55,7 +55,7 @@ def init_db(app):
                 logging.info("AllGroups tables created successfully.")
 
             # Verify that all required tables were created
-            required_tables = ['alltools', 'alltools_values', 'alltools_values_names', 'allgroups', 'allgroups_values', 'allgroups_values_names']
+            required_tables = ['user', 'alltools', 'alltools_values', 'alltools_values_names', 'allgroups', 'allgroups_values', 'allgroups_values_names']
             for table_name in required_tables:
                 if not inspector.has_table(table_name):
                     print(f"Error: Table '{table_name}' was not created.")
