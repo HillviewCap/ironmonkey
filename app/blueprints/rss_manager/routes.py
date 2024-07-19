@@ -35,7 +35,7 @@ def get_rss_feed(feed_id):
 
 @rss_manager_bp.route('/feed', methods=['POST'])
 @login_required
-def create_rss_feed():
+async def create_rss_feed():
     data = request.get_json()
     if not data:
         raise BadRequest("Missing data in request")
@@ -62,7 +62,7 @@ def create_rss_feed():
         feed_data = {**data, **feed_info}
 
     try:
-        new_feed = rss_feed_service.create_feed(feed_data)
+        new_feed = await rss_feed_service.create_feed(feed_data)
         return jsonify(new_feed.to_dict()), 201
     except Exception as e:
         current_app.logger.error(f"Error creating RSS feed: {str(e)}")
