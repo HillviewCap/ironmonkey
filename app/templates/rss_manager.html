@@ -220,16 +220,18 @@
                 },
                 body: JSON.stringify({ awesome_blog_id: blogId })
             })
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
             .then(data => {
-                if (data.status === 'success') {
-                    alert(data.message);
-                    updateButton(blogId, 'Added');
-                } else if (data.status === 'exists') {
-                    alert(data.message);
-                    updateButton(blogId, 'Already Added');
+                if (data.error) {
+                    alert(data.error);
                 } else {
-                    alert(data.message);
+                    alert('Feed added successfully');
+                    updateButton(blogId, 'Added');
                 }
             })
             .catch((error) => {

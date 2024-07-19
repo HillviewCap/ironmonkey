@@ -60,7 +60,7 @@ async def create_rss_feed():
             raise BadRequest("Invalid RSS feed URL")
 
         # Fetch and parse the feed to validate it and get the title
-        feed_info = await fetch_and_parse_feed(feed_data['url'])
+        feed_info = await fetch_and_parse_feed(data['url'])
         feed_data['title'] = feed_info.get('title', 'No Title')
         feed_data['description'] = feed_info.get('description', 'No Description')
 
