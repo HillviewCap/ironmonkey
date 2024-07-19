@@ -25,7 +25,9 @@
             {% include "admin/parsed_content.html" %}
         </div>
     </div>
-
-    {% include "admin/scripts.html" %}
 </div>
+{% endblock %}
+
+{% block extra_scripts %}
+    {% include "admin/scripts.html" %}
 {% endblock %}
