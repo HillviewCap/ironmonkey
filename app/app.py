@@ -1,12 +1,69 @@
-from app import create_app
+import os
+from flask import Flask
+from flask_sqlalchemy import SQLAlchemy
+from flask_migrate import Migrate
+from flask_login import LoginManager
+from flask_wtf.csrf import CSRFProtect
+from app.utils.logging_config import setup_logger
+from app.services.scheduler_service import SchedulerService
+from app.utils.ollama_api import OllamaAPI
 
-app = create_app()
+db = SQLAlchemy()
+migrate = Migrate()
+login_manager = LoginManager()
+csrf = CSRFProtect()
 
-if __name__ == "__main__":
-    app.run()
+def create_app(config_name='default'):
+    app = Flask(__name__, instance_relative_config=True)
+    
+    # Load configuration
+    app.config.from_object(f'app.config.{config_name.capitalize()}Config')
+    app.config.from_pyfile('config.py', silent=True)
+    
+    # Initialize extensions
+    db.init_app(app)
+    migrate.init_app(app, db)
+    login_manager.init_app(app)
+    csrf.init_app(app)
+    
+    # Setup logging
+    setup_logger(app)
+    
+    # Initialize Ollama API
+    app.ollama_api = OllamaAPI()
+    
+    with app.app_context():
+        # Import and register blueprints
+        from app.blueprints.main import main as main_bp
+        from app.blueprints.auth import auth as auth_bp
+        from app.blueprints.admin import admin as admin_bp
+        from app.blueprints.api import api as api_bp
+        from app.blueprints.rss_manager import rss_manager as rss_manager_bp
+        from app.blueprints.search import search as search_bp
+        from app.blueprints.content import content as content_bp
+        
+        app.register_blueprint(main_bp)
+        app.register_blueprint(auth_bp, url_prefix='/auth')
+        app.register_blueprint(admin_bp, url_prefix='/admin')
+        app.register_blueprint(api_bp, url_prefix='/api')
+        app.register_blueprint(rss_manager_bp, url_prefix='/rss')
+        app.register_blueprint(search_bp, url_prefix='/search')
+        app.register_blueprint(content_bp, url_prefix='/content')
+        
+        # Initialize database
+        db.create_all()
+        
+        # Setup scheduler
+        scheduler_service = SchedulerService(app)
+        scheduler_service.setup_scheduler()
+        
+    return app
 
-if __name__ == "__main__":
-    app.run()
+# User loader for Flask-Login
+@login_manager.user_loader
+def load_user(user_id):
+    from app.models.relational import User
+    return User.query.get(int(user_id))
 
 
 
