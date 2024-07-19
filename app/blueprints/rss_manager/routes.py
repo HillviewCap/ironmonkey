@@ -36,15 +36,31 @@ def get_rss_feed(feed_id):
 @login_required
 def create_rss_feed():
     data = request.get_json()
-    if not data or 'url' not in data:
-        raise BadRequest("Missing URL in request data")
+    if not data:
+        raise BadRequest("Missing data in request")
 
-    if not validate_rss_url(data['url']):
-        raise BadRequest("Invalid RSS feed URL")
+    if 'awesome_blog_id' in data:
+        awesome_blog = AwesomeThreatIntelBlog.query.get(data['awesome_blog_id'])
+        if not awesome_blog:
+            raise BadRequest("Invalid awesome blog ID")
+        feed_data = {
+            'url': awesome_blog.feed_link,
+            'category': awesome_blog.blog_category,
+            'title': awesome_blog.blog,
+            'description': awesome_blog.blog,
+        }
+    else:
+        if 'url' not in data:
+            raise BadRequest("Missing URL in request data")
+
+        if not validate_rss_url(data['url']):
+            raise BadRequest("Invalid RSS feed URL")
+
+        feed_info = extract_feed_info(data['url'])
+        feed_data = {**data, **feed_info}
 
     try:
-        feed_info = extract_feed_info(data['url'])
-        new_feed = rss_feed_service.create_feed({**data, **feed_info})
+        new_feed = rss_feed_service.create_feed(feed_data)
         return jsonify(new_feed.to_dict()), 201
     except Exception as e:
         current_app.logger.error(f"Error creating RSS feed: {str(e)}")
