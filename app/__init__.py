@@ -3,6 +3,7 @@ This module initializes the Flask application and sets up all necessary configur
 """
 
 import os
+from uuid import uuid4
 from flask import Flask
 from flask_migrate import Migrate
 from flask_wtf.csrf import CSRFProtect
@@ -91,6 +92,9 @@ def create_app(env=None):
             User: The User object if found, else None.
         """
         from app.models.relational.user import User
-        return User.get(user_id)
+        try:
+            return User.query.get(uuid4(user_id))
+        except ValueError:
+            return None
 
     return app
