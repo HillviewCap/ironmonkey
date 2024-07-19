@@ -12,6 +12,9 @@ def create_app(config_class=Config):
     app = Flask(__name__)
     app.config.from_object(config_class)
 
+    if app.config['TESTING']:
+        app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
+
     init_db(app)
     migrate.init_app(app, db)
     login.init_app(app)

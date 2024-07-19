@@ -13,10 +13,7 @@ from app import create_app
 @pytest.fixture(scope='module')
 def app():
     app = create_app()
-    app.config.update({
-        "TESTING": True,
-        "SQLALCHEMY_DATABASE_URI": "sqlite:///:memory:",
-    })
+    app.config['TESTING'] = True
     return app
 
 @pytest.fixture(scope='module')
