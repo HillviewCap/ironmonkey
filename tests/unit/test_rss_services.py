@@ -8,6 +8,23 @@ from uuid import UUID
 from datetime import datetime
 from app.services.rss_feed_service import RSSFeedService
 from app.services.parsed_content_service import ParsedContentService
+from app import create_app
+
+@pytest.fixture
+def app():
+    app = create_app()
+    app.config.update({
+        "TESTING": True,
+    })
+    yield app
+
+@pytest.fixture
+def client(app):
+    return app.test_client()
+
+@pytest.fixture
+def runner(app):
+    return app.test_cli_runner()
 from app.models.relational import RSSFeed, ParsedContent
 
 @pytest.fixture
