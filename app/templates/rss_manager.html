@@ -159,7 +159,7 @@
                             <p class="text-sm text-gray-500 mb-2">Type: ${blog.type}</p>
                             <a href="${blog.blog_link}" target="_blank" class="text-blue-500 hover:text-blue-700 break-all">Blog Link</a>
                             ${blog.feed_link ? `
-                                <p class="text-sm text-gray-500 mt-2">Feed Type: ${blog.feed_type}</p>
+                                <p class="text-sm text-gray-500 mt-2">Feed Type: ${blog.feed_link ? 'RSS' : 'None'}</p>
                                 <a href="${blog.feed_link}" target="_blank" class="text-blue-500 hover:text-blue-700 break-all">Feed Link</a>
                             ` : ''}
                         </div>
