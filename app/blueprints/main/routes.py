@@ -24,8 +24,7 @@ def index():
             return render_template('index.html', recent_items=recent_items)
         else:
             current_app.logger.warning("Unauthenticated access attempt to index route.")
-        else:
-            return render_template('index.html', recent_items=recent_items)
+        return render_template('index.html', recent_items=recent_items)
     except Exception as e:
         current_app.logger.error(f"Error in index route: {str(e)}")
         abort(500)  # Return a 500 Internal Server Error
