@@ -15,10 +15,19 @@ class TestRun(unittest.TestCase):
     @patch('run.load_dotenv')
     @patch('run.os.getenv')
     def test_create_app(self, mock_getenv, mock_load_dotenv):
-        mock_getenv.return_value = 'testing'
+        mock_getenv.side_effect = {
+            'FLASK_ENV': 'testing',
+            'SECRET_KEY': 'test_secret_key',
+            'DATABASE_URL': 'sqlite:///:memory:',
+            'DEBUG': 'False',
+            'FLASK_PORT': '5000',
+            'RSS_CHECK_INTERVAL': '30',
+            'SUMMARY_CHECK_INTERVAL': '60',
+            'SUMMARY_API_CHOICE': 'groq'
+        }.get
         app = create_app()
         self.assertIsNotNone(app)
-        self.assertEqual(app.config['ENV'], 'testing')
+        self.assertEqual(app.config['FLASK_ENV'], 'testing')
         mock_load_dotenv.assert_called_once()
 
     @patch('run.db')
@@ -35,7 +44,16 @@ class TestRun(unittest.TestCase):
     def test_main_run(self, mock_getenv, mock_create_app):
         mock_app = MagicMock()
         mock_create_app.return_value = mock_app
-        mock_getenv.side_effect = ['development', '5000']
+        mock_getenv.side_effect = {
+            'FLASK_PORT': '5000',
+            'FLASK_ENV': 'development',
+            'SECRET_KEY': 'test_secret_key',
+            'DATABASE_URL': 'sqlite:///:memory:',
+            'DEBUG': 'True',
+            'RSS_CHECK_INTERVAL': '30',
+            'SUMMARY_CHECK_INTERVAL': '60',
+            'SUMMARY_API_CHOICE': 'groq'
+        }.get
 
         with patch('run.__name__', '__main__'):
             import importlib
