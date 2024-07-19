@@ -39,14 +39,14 @@ class TestRSSFeedService:
     def test_get_all_feeds(self, app, rss_feed_service):
         with app.app_context():
             with patch('app.models.relational.RSSFeed.query') as mock_query:
-            mock_query.all.return_value = [
-                RSSFeed(id=UUID('12345678-1234-5678-1234-567812345678'), url='http://example.com/feed1'),
-                RSSFeed(id=UUID('87654321-4321-8765-4321-876543210987'), url='http://example.com/feed2')
-            ]
-            feeds = rss_feed_service.get_all_feeds()
-            assert len(feeds) == 2
-            assert feeds[0].url == 'http://example.com/feed1'
-            assert feeds[1].url == 'http://example.com/feed2'
+                mock_query.all.return_value = [
+                    RSSFeed(id=UUID('12345678-1234-5678-1234-567812345678'), url='http://example.com/feed1'),
+                    RSSFeed(id=UUID('87654321-4321-8765-4321-876543210987'), url='http://example.com/feed2')
+                ]
+                feeds = rss_feed_service.get_all_feeds()
+                assert len(feeds) == 2
+                assert feeds[0].url == 'http://example.com/feed1'
+                assert feeds[1].url == 'http://example.com/feed2'
 
     def test_get_feed_by_id(self, rss_feed_service):
         feed_id = UUID('12345678-1234-5678-1234-567812345678')
