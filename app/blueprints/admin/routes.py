@@ -1,14 +1,18 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, current_app
 from flask_login import login_required
 from werkzeug.security import generate_password_hash
-from app.models import db, User, ParsedContent, RSSFeed
+from app.models.relational import db, User, ParsedContent, RSSFeed
 from datetime import datetime
+from typing import List
 
 admin_bp = Blueprint('admin', __name__)
 
 @admin_bp.route("/")
 @login_required
-def admin():
+def admin() -> str:
+    """
+    Render the admin page with users, parsed content, and RSS feeds.
+    """
     users = User.query.all()
     parsed_content = ParsedContent.query.all()
     rss_feeds = RSSFeed.query.all()
@@ -21,7 +25,10 @@ def admin():
 
 @admin_bp.route("/deduplicate", methods=["POST"])
 @login_required
-def deduplicate_parsed_content():
+def deduplicate_parsed_content() -> str:
+    """
+    Deduplicate parsed content and redirect to admin page.
+    """
     try:
         deleted_count = ParsedContent.deduplicate()
         flash(f"Successfully removed {deleted_count} duplicate entries.", "success")
@@ -32,7 +39,10 @@ def deduplicate_parsed_content():
 
 @admin_bp.route("/add_parsed_content", methods=["POST"])
 @login_required
-def add_parsed_content():
+def add_parsed_content() -> str:
+    """
+    Add new parsed content and redirect to admin page.
+    """
     try:
         new_content = ParsedContent(
             title=request.form["title"],
@@ -51,7 +61,10 @@ def add_parsed_content():
 
 @admin_bp.route("/edit_parsed_content/<uuid:content_id>", methods=["GET", "POST"])
 @login_required
-def edit_parsed_content(content_id):
+def edit_parsed_content(content_id: uuid.UUID) -> str:
+    """
+    Edit parsed content and redirect to admin page or render edit form.
+    """
     content = ParsedContent.query.get_or_404(content_id)
     if request.method == "POST":
         try:
@@ -72,7 +85,10 @@ def edit_parsed_content(content_id):
 
 @admin_bp.route("/delete_parsed_content/<uuid:content_id>", methods=["POST"])
 @login_required
-def delete_parsed_content(content_id):
+def delete_parsed_content(content_id: uuid.UUID) -> str:
+    """
+    Delete parsed content and redirect to admin page.
+    """
     content = ParsedContent.query.get_or_404(content_id)
     try:
         db.session.delete(content)
@@ -86,7 +102,10 @@ def delete_parsed_content(content_id):
 
 @admin_bp.route("/add_user", methods=["POST"])
 @login_required
-def add_user():
+def add_user() -> str:
+    """
+    Add new user and redirect to admin page.
+    """
     try:
         new_user = User(
             username=request.form["username"],
@@ -104,7 +123,10 @@ def add_user():
 
 @admin_bp.route("/edit_user/<uuid:user_id>", methods=["GET", "POST"])
 @login_required
-def edit_user(user_id):
+def edit_user(user_id: uuid.UUID) -> str:
+    """
+    Edit user and redirect to admin page or render edit form.
+    """
     user = User.query.get_or_404(user_id)
     if request.method == "POST":
         try:
@@ -123,7 +145,10 @@ def edit_user(user_id):
 
 @admin_bp.route("/delete_user/<uuid:user_id>", methods=["POST"])
 @login_required
-def delete_user(user_id):
+def delete_user(user_id: uuid.UUID) -> str:
+    """
+    Delete user and redirect to admin page.
+    """
     user = User.query.get_or_404(user_id)
     try:
         db.session.delete(user)
@@ -137,7 +162,10 @@ def delete_user(user_id):
 
 @admin_bp.route("/add_rss_feed", methods=["POST"])
 @login_required
-def add_rss_feed():
+def add_rss_feed() -> str:
+    """
+    Add new RSS feed and redirect to admin page.
+    """
     try:
         new_feed = RSSFeed(
             name=request.form["name"],
@@ -154,7 +182,10 @@ def add_rss_feed():
 
 @admin_bp.route("/delete_rss_feed/<uuid:feed_id>", methods=["POST"])
 @login_required
-def delete_rss_feed(feed_id):
+def delete_rss_feed(feed_id: uuid.UUID) -> str:
+    """
+    Delete RSS feed and redirect to admin page.
+    """
     feed = RSSFeed.query.get_or_404(feed_id)
     try:
         db.session.delete(feed)
