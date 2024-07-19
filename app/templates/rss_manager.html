@@ -269,6 +269,7 @@
                     </a>
                     <form action="{{ url_for('rss_manager.delete_rss_feed', feed_id=feed.id) }}" method="POST" class="inline mb-2">
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                        <input type="hidden" name="_method" value="DELETE">
                         <button type="submit" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
                             Delete
                         </button>
