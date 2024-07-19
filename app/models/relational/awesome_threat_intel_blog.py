@@ -135,6 +135,16 @@ class AwesomeThreatIntelBlog(db.Model):
         return query.all()
 
     @classmethod
+    def get_all_blogs(cls):
+        """
+        Get all Awesome Threat Intel Blogs.
+
+        Returns:
+            A list of all AwesomeThreatIntelBlog entries.
+        """
+        return cls.query.all()
+
+    @classmethod
     def add_to_rss_feeds(cls, feed_ids):
         """
         Add selected feeds to the RSSFeed table.
