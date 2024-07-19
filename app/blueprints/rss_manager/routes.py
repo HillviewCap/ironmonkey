@@ -127,7 +127,8 @@ def edit_feed(feed_id):
 def get_awesome_blogs():
     try:
         blogs = AwesomeThreatIntelBlog.query.all()
-        return jsonify([blog.to_dict() for blog in blogs])
+        return render_template('awesome_blogs.html', blogs=blogs)
     except Exception as e:
         current_app.logger.error(f"Error fetching awesome blogs: {str(e)}")
-        return jsonify({"error": "Failed to fetch awesome blogs"}), 500
+        flash("Failed to fetch awesome blogs", "error")
+        return redirect(url_for('rss_manager.get_rss_feeds'))
