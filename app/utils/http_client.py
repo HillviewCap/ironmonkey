@@ -24,7 +24,8 @@ async def fetch_feed_info(url: str) -> Dict[str, str]:
                 feed_info = {
                     "title": feed.feed.get("title", "No Title"),
                     "description": feed.feed.get("description", "No Description"),
-                    "last_build_date": feed.feed.get("updated", "No Date")
+                    "last_build_date": feed.feed.get("updated", "No Date"),
+                    "category": "Default Category"  # Set a default category
                 }
                 return feed_info
             else:
