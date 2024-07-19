@@ -12,7 +12,9 @@ from flask import current_app
 from sqlalchemy.orm import Session
 
 from app.models import db, ParsedContent, RSSFeed
-from logging_config import logger
+from app.utils.logging_config import setup_logger
+
+logger = setup_logger('feed_parser_service', 'feed_parser_service.log')
 from jina_api import parse_content
 
 # The logger is already set up in logging_config.py, so we can use it directly
