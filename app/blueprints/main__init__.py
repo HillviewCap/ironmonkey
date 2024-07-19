@@ -4,5 +4,6 @@ bp = Blueprint('main', __name__)
 
 def init_app(app):
     app.register_blueprint(bp)
-
-from . import routes
+    
+    # Import routes here to avoid circular imports
+    from . import routes
