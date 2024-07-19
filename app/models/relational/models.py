@@ -6,12 +6,11 @@ from uuid import UUID as PyUUID, uuid4
 import hashlib
 from pydantic import BaseModel, Field
 from flask_sqlalchemy import SQLAlchemy
-from flask_login import UserMixin
-from werkzeug.security import check_password_hash
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy import Column, String, DateTime, Text, ForeignKey
 from app.utils.http_client import fetch_feed_info
 from app import db
+from .user import User
 
 __all__ = ['User', 'SearchParams', 'RSSFeed', 'Threat', 'ParsedContent', 'Category', 'AwesomeThreatIntelBlog']
 
@@ -21,22 +20,6 @@ class SearchParams(BaseModel):
     end_date: Optional[date] = None
     source_types: List[str] = Field(default_factory=list)
     keywords: List[str] = Field(default_factory=list)
-
-
-class User(UserMixin, db.Model):
-    """User model for authentication and authorization."""
-
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    email = Column(String(120), unique=True, nullable=False)
-    password = Column(String(255), nullable=False)
-
-    def get_id(self) -> str:
-        """Return the user ID as a string."""
-        return str(self.id)
-
-    def check_password(self, password: str) -> bool:
-        """Check if the provided password matches the user's password."""
-        return check_password_hash(self.password, password)
 
 
 class RSSFeed(db.Model):
