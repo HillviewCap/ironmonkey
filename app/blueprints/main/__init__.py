@@ -39,4 +39,3 @@ def init_app(app):
     app.register_blueprint(main)
 
 from . import routes  # Import routes at the end to avoid circular imports
-    app.register_blueprint(bp)
