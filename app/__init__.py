@@ -29,6 +29,9 @@ def create_app(config_name='default'):
         app.config['TESTING'] = True
         app.config['WTF_CSRF_ENABLED'] = False
 
+    # Ensure the instance folder exists
+    os.makedirs(app.instance_path, exist_ok=True)
+
     db.init_app(app)
     migrate.init_app(app, db)
     login.init_app(app)
