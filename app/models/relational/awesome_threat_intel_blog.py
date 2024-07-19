@@ -97,3 +97,68 @@ class AwesomeThreatIntelBlog(db.Model):
                 )
         
         return "CSV import completed successfully."
+
+    @classmethod
+    def get_blog_categories(cls):
+        """
+        Get all unique blog categories.
+
+        Returns:
+            A list of unique blog categories.
+        """
+        return [category[0] for category in db.session.query(cls.blog_category).distinct().all()]
+
+    @classmethod
+    def get_feed_types(cls):
+        """
+        Get all unique feed types.
+
+        Returns:
+            A list of unique feed types.
+        """
+        return [feed_type[0] for feed_type in db.session.query(cls.feed_type).distinct().all()]
+
+    @classmethod
+    def filter_feeds(cls, blog_category=None, feed_type=None):
+        """
+        Filter feeds based on blog category and feed type.
+
+        Args:
+            blog_category: The blog category to filter by.
+            feed_type: The feed type to filter by.
+
+        Returns:
+            A list of filtered AwesomeThreatIntelBlog entries.
+        """
+        query = cls.query
+        if blog_category:
+            query = query.filter_by(blog_category=blog_category)
+        if feed_type:
+            query = query.filter_by(feed_type=feed_type)
+        return query.all()
+
+    @classmethod
+    def add_to_rss_feeds(cls, feed_ids):
+        """
+        Add selected feeds to the RSSFeed table.
+
+        Args:
+            feed_ids: A list of AwesomeThreatIntelBlog IDs to add to RSSFeed.
+
+        Returns:
+            The number of feeds added to RSSFeed.
+        """
+        feeds_to_add = cls.query.filter(cls.id.in_(feed_ids)).all()
+        added_count = 0
+        for feed in feeds_to_add:
+            existing_rss_feed = RSSFeed.query.filter_by(url=feed.feed_link).first()
+            if not existing_rss_feed:
+                new_rss_feed = RSSFeed(
+                    name=feed.blog,
+                    url=feed.feed_link,
+                    awesome_blog_id=feed.id
+                )
+                db.session.add(new_rss_feed)
+                added_count += 1
+        db.session.commit()
+        return added_count
