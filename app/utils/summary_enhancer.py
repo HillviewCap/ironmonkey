@@ -17,9 +17,11 @@ from app.utils.logging_config import setup_logger
 from sqlalchemy.orm import Session
 from app.models import ParsedContent, db, RSSFeed
 import os
+import uuid
+import asyncio
 from typing import Optional, Union
-from ollama_api import OllamaAPI
-from groq_api import GroqAPI
+from app.utils.ollama_client import OllamaAPI
+from app.utils.groq_api import GroqAPI
 
 logger = setup_logger('summary_enhancer', 'summary_enhancer.log')
 
