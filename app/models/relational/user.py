@@ -30,7 +30,4 @@ class User(UserMixin, db.Model):
     @classmethod
     def get(cls, user_id):
         """Retrieve a user by ID."""
-        try:
-            return cls.query.get(uuid4(user_id))
-        except ValueError:
-            return None
+        return cls.query.get(user_id)
