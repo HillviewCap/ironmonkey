@@ -1,6 +1,11 @@
 import os
+import sys
 import unittest
 from unittest.mock import patch, MagicMock
+
+# Add the project root directory to the Python path
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
+
 from run import create_app, make_shell_context
 
 class TestRun(unittest.TestCase):
