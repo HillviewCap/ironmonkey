@@ -9,21 +9,18 @@ from typing import Optional, List, Dict, Any
 
 import bleach
 from dotenv import load_dotenv
-from flask import Flask, render_template, request, jsonify, current_app, abort, send_from_directory, redirect, url_for, flash
+from flask import Flask, render_template, send_from_directory, redirect, url_for
 from flask_migrate import Migrate
-from flask_wtf import FlaskForm
 from flask_wtf.csrf import CSRFProtect
-from flask_login import LoginManager, login_required, current_user
-from sqlalchemy.exc import SQLAlchemyError
-from werkzeug.exceptions import BadRequest
+from flask_login import LoginManager, current_user
 from apscheduler.schedulers.background import BackgroundScheduler
-import httpx
 
 from logging_config import setup_logger, logger
 from models import db, User, SearchParams, RSSFeed, ParsedContent, AwesomeThreatIntelBlog
 from models.diffbot_model import Entity, EntityMention, EntityType, EntityUri, Category
-from auth import init_auth, login, logout, register
 from config import config
+from app.blueprints.rss_manager.routes import rss_manager
+from app.blueprints.auth.routes import auth
 from rss_manager import rss_manager, fetch_and_parse_feed
 from nlp_tagging import DiffbotClient, DatabaseHandler, Document
 from ollama_api import OllamaAPI
@@ -510,6 +507,10 @@ def create_app(config_name: str = "default") -> Optional[Flask]:
         raise
 
     return app
+
+def register_blueprints(app: Flask) -> None:
+    app.register_blueprint(rss_manager)
+    app.register_blueprint(auth)
 
 def configure_app(app: Flask, config_name: str) -> None:
     app.config.from_object(config[config_name])
