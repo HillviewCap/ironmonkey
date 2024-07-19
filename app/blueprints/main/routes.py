@@ -1,7 +1,7 @@
 from flask import render_template, current_app
 from flask_login import current_user, login_required
 from app.models.relational import db, ParsedContent
-from . import bp
+from app.blueprints.main import bp
 
 @bp.route('/')
 @login_required
