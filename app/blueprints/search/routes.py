@@ -1,13 +1,14 @@
-from flask import render_template, request, current_app, jsonify, abort
+from flask import Blueprint, render_template, request, current_app, jsonify, abort
 from flask_wtf import FlaskForm
 from flask_login import login_required
 from app.models import SearchParams, ParsedContent
-from app.blueprints.search import bp
+
+search_bp = Blueprint('search', __name__)
 from app.utils.search_utils import get_search_params, perform_search
 from app.utils.summary_enhancer import SummaryEnhancer
 import uuid
 
-@bp.route("/search", methods=["GET", "POST"])
+@search_bp.route("/search", methods=["GET", "POST"])
 def search():
     form = FlaskForm()
     search_params = SearchParams(query="")  # Initialize with an empty query
@@ -42,12 +43,12 @@ def search():
 
     return render_template("search.html", form=form, search_params=search_params)
 
-@bp.route("/view/<uuid:item_id>")
+@search_bp.route("/view/<uuid:item_id>")
 def view_item(item_id):
     item = ParsedContent.query.get_or_404(item_id)
     return render_template("view_item.html", item=item)
 
-@bp.route("/summarize_content", methods=["POST"])
+@search_bp.route("/summarize_content", methods=["POST"])
 @login_required
 async def summarize_content():
     content_id = request.json.get("content_id")
@@ -81,7 +82,7 @@ async def summarize_content():
         current_app.logger.exception(f"Error summarizing content: {str(e)}")
         return jsonify({"error": f"Error summarizing content: {str(e)}"}), 500
 
-@bp.route("/clear_all_summaries", methods=["POST"])
+@search_bp.route("/clear_all_summaries", methods=["POST"])
 @login_required
 def clear_all_summaries():
     try:
