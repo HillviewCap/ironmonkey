@@ -31,5 +31,12 @@ def internal_error(error):
     current_app.logger.error('Server Error: %s', (error))
     return render_template('errors/500.html'), 500
 
+from flask import Blueprint
+
+main = Blueprint('main', __name__)
+
 def init_app(app):
+    app.register_blueprint(main)
+
+from . import routes  # Import routes at the end to avoid circular imports
     app.register_blueprint(bp)
