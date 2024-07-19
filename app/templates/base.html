@@ -31,7 +31,7 @@
     {% block extra_head %}{% endblock %}
 </head>
 <body class="bg-gray-100 flex flex-col min-h-screen">
-    {% include "shared/navbar.html" %}
+    {% include "shared/navbar.html" ignore missing %}
     {% block navbar %}{% endblock %}
     <div class="container mx-auto mt-8 flex-grow">
         {% include "shared/flash_messages.html" %}
