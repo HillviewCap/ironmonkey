@@ -631,6 +631,7 @@ from app.blueprints.search.routes import search_bp
 from app.blueprints.api.routes import api_bp
 from app.blueprints.main import main as main_bp
 from app.models.relational import db, User
+from app.utils.search_utils import SearchParams, get_search_params, perform_search
 
 def create_app(config_name="default"):
     app = Flask(__name__, instance_relative_config=True, static_url_path="/static")
