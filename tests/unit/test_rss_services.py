@@ -1,5 +1,5 @@
 import pytest
-from unittest.mock import Mock, patch
+from unittest.mock import Mock, patch, AsyncMock
 from uuid import UUID
 from datetime import datetime
 from app.services.rss_feed_service import RSSFeedService
@@ -33,6 +33,13 @@ class TestRSSFeedService:
             feed = rss_feed_service.get_feed_by_id(feed_id)
             assert feed.id == feed_id
             assert feed.url == 'http://example.com/feed'
+
+    def test_get_feed_by_url(self, rss_feed_service):
+        url = 'http://example.com/feed'
+        with patch('app.models.relational.RSSFeed.query') as mock_query:
+            mock_query.filter_by.return_value.first.return_value = RSSFeed(id=UUID('12345678-1234-5678-1234-567812345678'), url=url)
+            feed = rss_feed_service.get_feed_by_url(url)
+            assert feed.url == url
 
     def test_create_feed(self, rss_feed_service):
         feed_data = {
@@ -70,6 +77,23 @@ class TestRSSFeedService:
             mock_query.get.return_value = RSSFeed(id=feed_id, url='http://example.com/feed')
             rss_feed_service.delete_feed(feed_id)
             mock_query.get.assert_called_once_with(feed_id)
+
+    @pytest.mark.asyncio
+    async def test_parse_feed(self, rss_feed_service):
+        feed_id = UUID('12345678-1234-5678-1234-567812345678')
+        with patch('app.services.rss_feed_service.RSSFeed.query') as mock_query, \
+             patch('app.services.rss_feed_service.feedparser.parse') as mock_parse, \
+             patch('app.services.rss_feed_service.ParsedContentService.create_parsed_content', new_callable=AsyncMock) as mock_create_content:
+            mock_query.get.return_value = RSSFeed(id=feed_id, url='http://example.com/feed')
+            mock_parse.return_value = {
+                'feed': {'title': 'Test Feed', 'description': 'Test Description'},
+                'entries': [
+                    {'title': 'Entry 1', 'link': 'http://example.com/entry1', 'summary': 'Summary 1'},
+                    {'title': 'Entry 2', 'link': 'http://example.com/entry2', 'summary': 'Summary 2'}
+                ]
+            }
+            await rss_feed_service.parse_feed(feed_id)
+            assert mock_create_content.call_count == 2
 
 class TestParsedContentService:
     def test_get_parsed_content(self, parsed_content_service):
