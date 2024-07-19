@@ -113,6 +113,9 @@ class ParsedContentService:
 
         Args:
             content_id (uuid.UUID): The unique identifier of the parsed content.
+
+        Raises:
+            ValueError: If the parsed content with the given ID is not found.
         """
         with Session() as session:
             content = session.query(ParsedContent).get(content_id)
@@ -122,3 +125,16 @@ class ParsedContentService:
             session.delete(content)
             session.commit()
             logger.info(f"Deleted parsed content: {content.title}")
+
+    @staticmethod
+    def delete_parsed_content_by_feed_id(feed_id: uuid.UUID) -> None:
+        """
+        Delete all parsed content associated with a specific RSS feed.
+
+        Args:
+            feed_id (uuid.UUID): The unique identifier of the RSS feed.
+        """
+        with Session() as session:
+            deleted = session.query(ParsedContent).filter(ParsedContent.feed_id == feed_id).delete()
+            session.commit()
+            logger.info(f"Deleted {deleted} parsed content items associated with feed ID {feed_id}")
