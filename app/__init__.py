@@ -92,9 +92,12 @@ def create_app(env=None):
             User: The User object if found, else None.
         """
         from app.models.relational.user import User
+        from uuid import UUID
         try:
-            return User.query.get(user_id)
-        except ValueError:
+            # Convert the string to a UUID object
+            uuid_obj = UUID(user_id)
+            return User.query.get(uuid_obj)
+        except (ValueError, AttributeError):
             return None
 
     return app
