@@ -4,8 +4,6 @@ import os
 import uuid
 import hashlib
 import csv
-import html
-import re
 from io import TextIOWrapper
 from datetime import datetime
 from typing import TextIO, Tuple, List, Union, Optional
@@ -24,24 +22,7 @@ from models import db, ParsedContent, RSSFeed, Category, AwesomeThreatIntelBlog
 from nlp_tagging import DiffbotClient, DatabaseHandler
 from jina_api import parse_content
 from logging_config import setup_logger
-
-def sanitize_html(text: str) -> str:
-    """
-    Remove HTML tags and unescape HTML entities.
-    
-    Args:
-        text (str): The input text containing HTML.
-    
-    Returns:
-        str: The sanitized text with HTML tags removed and entities unescaped.
-    """
-    # Unescape HTML entities
-    text = html.unescape(text)
-    # Remove HTML tags
-    text = re.sub(r'<[^>]+>', '', text)
-    # Remove extra whitespace
-    text = re.sub(r'\s+', ' ', text).strip()
-    return text
+from app.services.html_sanitizer_service import sanitize_html
 
 # Create a separate logger for RSS manager
 logger = setup_logger('rss_manager', 'rss_manager.log')
