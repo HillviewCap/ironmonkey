@@ -33,3 +33,6 @@ def internal_error(error):
 
 def init_app(app):
     app.register_blueprint(bp)
+
+# Explicitly export bp
+__all__ = ['bp']
