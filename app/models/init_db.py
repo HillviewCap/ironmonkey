@@ -31,9 +31,7 @@ def create_app():
 
 def init_db(app):
     with app.app_context():
-        database_url = os.getenv('DATABASE_URL')
-        if not database_url:
-            raise ValueError("DATABASE_URL is not set in the .env file")
+        database_url = f"sqlite:///{os.path.join(app.instance_path, 'threats.db')}"
         engine = create_engine(database_url)
         
         try:
