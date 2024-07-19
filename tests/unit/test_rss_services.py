@@ -24,6 +24,11 @@ def app():
     os.remove(os.path.join(instance_path, "test.db"))
 
 @pytest.fixture(scope='function')
+def app_context(app):
+    with app.app_context():
+        yield
+
+@pytest.fixture(scope='function')
 def db(app):
     with app.app_context():
         db.create_all()
