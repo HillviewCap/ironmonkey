@@ -9,15 +9,19 @@ from datetime import datetime
 from app.services.rss_feed_service import RSSFeedService
 from app.services.parsed_content_service import ParsedContentService
 from app import create_app
+from app.extensions import db
 
 @pytest.fixture(scope='function')
 def app():
     app = create_app()
     app.config['TESTING'] = True
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
+    instance_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), '..', '..', 'instance')
+    os.makedirs(instance_path, exist_ok=True)
+    app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{os.path.join(instance_path, "test.db")}'
     with app.app_context():
         db.create_all()
-    return app
+    yield app
+    os.remove(os.path.join(instance_path, "test.db"))
 
 @pytest.fixture(scope='module')
 def db(app):
