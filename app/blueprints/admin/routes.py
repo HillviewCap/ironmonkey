@@ -18,7 +18,15 @@ def admin() -> str:
     users = User.query.all()
     parsed_content = ParsedContent.query.all()
     rss_feeds = RSSFeed.query.all()
+    update_status = {
+        "last_updated": "Never"  # Replace with actual logic to get the last update status
+    }
     return render_template(
+        "admin.html",
+        users=users,
+        parsed_content=parsed_content,
+        rss_feeds=rss_feeds,
+        update_status=update_status,
         "admin.html",
         users=users,
         parsed_content=parsed_content,
