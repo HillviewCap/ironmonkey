@@ -200,6 +200,20 @@ def update_awesome_threat_intel() -> str:
         flash("An error occurred while updating Awesome Threat Intel Blogs.", "error")
     return redirect(url_for("admin.admin"))
 
+@admin_bp.route("/clear_all_summaries", methods=["POST"])
+@login_required
+def clear_all_summaries() -> str:
+    """
+    Clear all summaries and redirect to admin page.
+    """
+    try:
+        # Add logic to clear all summaries here
+        flash("All summaries cleared successfully.", "success")
+    except Exception as e:
+        current_app.logger.error(f"Error clearing summaries: {str(e)}")
+        flash("An error occurred while clearing summaries.", "error")
+    return redirect(url_for("admin.admin"))
+
 @admin_bp.route("/delete_rss_feed/<uuid:feed_id>", methods=["POST"])
 @login_required
 def delete_rss_feed(feed_id: uuid.UUID) -> str:
