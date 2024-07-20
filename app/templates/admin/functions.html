@@ -6,7 +6,7 @@
             Deduplicate Parsed Content
         </button>
     </form>
-    <form action="{{ url_for('search.clear_all_summaries') }}" method="post" class="mb-4">
+    <form action="{{ url_for('admin.clear_all_summaries') }}" method="post" class="mb-4">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
         <button type="submit" class="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded">
             Clear All Summaries
