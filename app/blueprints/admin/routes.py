@@ -26,11 +26,7 @@ def admin() -> str:
         users=users,
         parsed_content=parsed_content,
         rss_feeds=rss_feeds,
-        update_status=update_status,
-        "admin.html",
-        users=users,
-        parsed_content=parsed_content,
-        rss_feeds=rss_feeds,
+        update_status=update_status
     )
 
 @admin_bp.route("/deduplicate", methods=["POST"])
