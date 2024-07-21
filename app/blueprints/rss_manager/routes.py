@@ -217,7 +217,9 @@ def get_parsed_content(feed_id):
     filters['feed_id'] = feed_id
 
     content, total = parsed_content_service.get_parsed_content(filters, page, per_page)
-    return render_template('parsed_content.html', content=content, total=total, page=page, per_page=per_page, feed_id=feed_id)
+    
+    # Ensure feed_id is passed to the template for proper URL generation
+    return render_template('parsed_content.html', feed_id=feed_id, content=content, total=total, page=page, per_page=per_page)
 
 @rss_manager_bp.route('/update_awesome_threat_intel', methods=['POST'])
 @login_required
