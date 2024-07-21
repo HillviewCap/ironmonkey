@@ -111,3 +111,31 @@ def delete_parsed_content(content_id):
     """
     ParsedContentService.delete_parsed_content(content_id)
     return redirect(url_for('admin.manage_parsed_content'))
+from flask import jsonify, request
+
+@parsed_content_bp.route('/get_parsed_content/<uuid:feed_id>')
+def get_parsed_content(feed_id):
+    page = request.args.get('page', 0, type=int)
+    limit = request.args.get('limit', 10, type=int)
+    search = request.args.get('search', '')
+
+    # Fetch the data from your database
+    # This is a placeholder, replace with your actual data fetching logic
+    data = ParsedContentService.get_contents(page=page, limit=limit, search_query=search, feed_id=str(feed_id))
+
+    # Format the data for Grid.js
+    formatted_data = [
+        {
+            'id': str(item.id),
+            'title': item.title,
+            'summary': item.summary,
+            'url': item.url,
+            'pub_date': item.pub_date.strftime('%Y-%m-%d %H:%M:%S') if item.pub_date else ''
+        }
+        for item in data.items
+    ]
+
+    return jsonify({
+        'data': formatted_data,
+        'total': data.total
+    })
