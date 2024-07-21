@@ -1,3 +1,9 @@
+"""
+This module contains the authentication routes for the application.
+
+It defines routes for user login, logout, and registration.
+"""
+
 from flask import render_template, redirect, url_for, flash, request
 from flask_login import login_user, logout_user, current_user, login_required
 from urllib.parse import urlparse
@@ -10,6 +16,16 @@ from app import db
 
 @bp.route('/login', methods=['GET', 'POST'])
 def login():
+    """
+    Handle user login.
+
+    If the user is already authenticated, redirect to the main index.
+    Otherwise, process the login form and authenticate the user.
+
+    Returns:
+        A redirect to the next page or main index if login is successful,
+        or the login page with an error message if login fails.
+    """
     if current_user.is_authenticated:
         return redirect(url_for('main.index'))
     form = LoginForm()
@@ -28,12 +44,30 @@ def login():
 @bp.route('/logout')
 @login_required
 def logout():
+    """
+    Handle user logout.
+
+    Logs out the current user and redirects to the main index.
+
+    Returns:
+        A redirect to the main index with a logout confirmation message.
+    """
     logout_user()
     flash('You have been logged out.', 'info')
     return redirect(url_for('main.index'))
 
 @bp.route('/register', methods=['GET', 'POST'])
 def register():
+    """
+    Handle user registration.
+
+    If the user is already authenticated, redirect to the main index.
+    Otherwise, process the registration form and create a new user.
+
+    Returns:
+        A redirect to the login page if registration is successful,
+        or the registration page if the form is invalid or not submitted.
+    """
     if current_user.is_authenticated:
         return redirect(url_for('main.index'))
     form = RegisterForm()
