@@ -1,3 +1,10 @@
+"""
+This module provides services for importing RSS feeds from CSV files.
+
+It includes functionality for processing CSV files, adding new RSS feeds to the database,
+and handling errors during the import process.
+"""
+
 from typing import TextIO, Tuple, List
 from io import TextIOWrapper
 import csv
@@ -6,7 +13,22 @@ from sqlalchemy.exc import IntegrityError
 from app.models import db, RSSFeed
 
 def process_csv_file(csv_file: TextIO) -> Tuple[int, int, List[str]]:
-    """Process the uploaded CSV file and return import statistics."""
+    """
+    Process the uploaded CSV file and return import statistics.
+
+    This function reads a CSV file containing RSS feed information, attempts to add
+    each feed to the database, and keeps track of successful imports, skipped entries,
+    and any errors encountered.
+
+    Args:
+        csv_file (TextIO): A file-like object containing the CSV data.
+
+    Returns:
+        Tuple[int, int, List[str]]: A tuple containing:
+            - The number of successfully imported feeds
+            - The number of skipped feeds (due to duplicates)
+            - A list of error messages for any feeds that couldn't be processed
+    """
     imported_count, skipped_count = 0, 0
     errors: List[str] = []
     csv_file = TextIOWrapper(csv_file, encoding="utf-8")
