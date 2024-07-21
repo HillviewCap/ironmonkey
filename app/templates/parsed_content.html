@@ -21,18 +21,21 @@
                     id: 'title', 
                     name: 'Title',
                     width: '25%',
+                    resizable: true,
                     formatter: (cell, row) => gridjs.html(`<a href="/item/${row.cells[4].data}" class="text-blue-500 hover:underline">${cell}</a>`)
                 },
                 { 
                     id: 'summary', 
                     name: 'Summary', 
                     width: '35%',
+                    resizable: true,
                     formatter: (cell) => cell && cell.length > 200 ? cell.substring(0, 200) + '...' : cell
                 },
                 { 
                     id: 'url', 
                     name: 'URL',
                     width: '15%',
+                    resizable: true,
                     formatter: (cell) => {
                         if (!cell) return '';
                         return gridjs.html(`<a href="${cell}" target="_blank" class="text-blue-500 hover:underline" title="${cell}">Source</a>`);
@@ -42,6 +45,7 @@
                     id: 'pub_date', 
                     name: 'Published Date',
                     width: '15%',
+                    resizable: true,
                     formatter: (cell) => gridjs.html(`<span class="text-sm">${cell}</span>`),
                     sort: {
                         enabled: true,
@@ -56,6 +60,7 @@
                     id: 'actions',
                     name: 'Actions',
                     width: '10%',
+                    resizable: true,
                     formatter: (_, row) => gridjs.html(`
                         <button class="bg-green-500 hover:bg-green-700 text-white font-bold py-1 px-2 rounded text-xs summarize-btn" data-post-id="${row.cells[4].data}">
                             Summarize
@@ -86,8 +91,37 @@
             pagination: {
                 enabled: true,
                 limit: 10
+            },
+            fixedHeader: true,
+            height: '400px',
+            style: {
+                table: {
+                    'white-space': 'nowrap'
+                }
+            },
+            language: {
+                'search': {
+                    'placeholder': '🔍 Search...'
+                },
+                'pagination': {
+                    'previous': '⬅️',
+                    'next': '➡️',
+                    'showing': '👀 Displaying',
+                    'results': () => 'Records'
+                }
             }
         }).render(document.getElementById("parsed-content-table"));
+
+        // Add export button
+        const exportBtn = document.createElement('button');
+        exportBtn.textContent = 'Export to CSV';
+        exportBtn.className = 'bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mt-4';
+        exportBtn.addEventListener('click', () => {
+            grid.export('csv', {
+                filename: 'parsed_content_export'
+            });
+        });
+        document.getElementById("parsed-content-table").parentNode.insertBefore(exportBtn, document.getElementById("parsed-content-table"));
 
         document.addEventListener('click', function(event) {
             if (event.target.classList.contains('summarize-btn')) {
