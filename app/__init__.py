@@ -71,6 +71,10 @@ def create_app(config_object=None):
     app.register_blueprint(api_bp, url_prefix='/api')
     app.register_blueprint(parsed_content_bp, url_prefix='/content')
 
+    # Log registered blueprints
+    for blueprint in app.blueprints:
+        logger.info(f"Registered blueprint: {blueprint} with url_prefix: {app.blueprints[blueprint].url_prefix}")
+
     # Initialize Ollama API
     app.ollama_api = OllamaAPI()
 
