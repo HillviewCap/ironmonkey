@@ -27,19 +27,23 @@ class ParsedContentService:
     parsed content, including retrieval, creation, updating, and deletion.
     """
     @staticmethod
-    def get_contents(page: int = 0, limit: int = 10, search_query: str = '') -> Tuple[List[ParsedContent], int]:
+    def get_contents(page: int = 0, limit: int = 10, search_query: str = '', feed_id: str = None) -> Tuple[List[ParsedContent], int]:
         """
-        Retrieve a paginated list of parsed content, optionally filtered by a search query.
+        Retrieve a paginated list of parsed content, optionally filtered by a search query and feed_id.
 
         Args:
             page (int): The page number to retrieve (0-based).
             limit (int): The number of items to return per page.
             search_query (str): Optional search query to filter the content.
+            feed_id (str): Optional feed_id to filter the content.
 
         Returns:
             Tuple[List[ParsedContent], int]: A tuple containing the list of parsed content objects and the total count.
         """
         query = ParsedContent.query
+
+        if feed_id:
+            query = query.filter(ParsedContent.feed_id == feed_id)
 
         if search_query:
             search = f"%{search_query}%"

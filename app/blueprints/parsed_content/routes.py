@@ -10,8 +10,9 @@ def view_content():
     page = request.args.get('page', 1, type=int) - 1  # Grid.js uses 1-based indexing
     limit = request.args.get('limit', 10, type=int)
     search_query = request.args.get('search', '')
+    feed_id = request.args.get('feed_id')
     
-    contents, total = ParsedContentService.get_contents(page=page, limit=limit, search_query=search_query)
+    contents, total = ParsedContentService.get_contents(page=page, limit=limit, search_query=search_query, feed_id=feed_id)
     
     return jsonify({
         'data': [content.to_dict() for content in contents],
