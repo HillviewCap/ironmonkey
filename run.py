@@ -50,11 +50,12 @@ def main():
     """
     try:
         # Set debug mode explicitly
-        app.debug = True
+        app.config['DEBUG'] = True
         app.run(
             host='0.0.0.0',
             port=app.config['FLASK_PORT'],
-            use_reloader=True
+            use_reloader=True,
+            debug=True
         )
         logger.info("Application started in debug mode")
     except Exception as e:

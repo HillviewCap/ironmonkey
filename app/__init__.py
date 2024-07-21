@@ -49,6 +49,9 @@ def create_app(config_object=None):
     else:
         app.config.from_object(config_object)
 
+    # Ensure debug mode is set
+    app.config['DEBUG'] = True
+
     # Ensure the instance folder exists
     os.makedirs(app.instance_path, exist_ok=True)
 
