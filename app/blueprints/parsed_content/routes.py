@@ -132,7 +132,7 @@ def get_parsed_content(feed_id):
             'title': item.title,
             'summary': item.summary,
             'url': item.url,
-            'pub_date': item.pub_date.strftime('%Y-%m-%d %H:%M:%S') if item.pub_date else ''
+            'pub_date': item.pub_date if isinstance(item.pub_date, str) else (item.pub_date.strftime('%Y-%m-%d %H:%M:%S') if item.pub_date else '')
         }
         for item in items
     ]
