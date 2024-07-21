@@ -52,10 +52,6 @@ def create_app(config_object=None):
     # Ensure the instance folder exists
     os.makedirs(app.instance_path, exist_ok=True)
 
-    # Set the database URI to use the instance folder
-    db_path = os.path.join(app.instance_path, 'app.db')
-    app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{db_path}'
-
     # Log the instance path and database URI
     logger.debug(f"Instance path: {app.instance_path}")
     logger.debug(f"Database URI: {app.config['SQLALCHEMY_DATABASE_URI']}")
