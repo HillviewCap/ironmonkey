@@ -207,7 +207,11 @@
         });
     </script>
     <script>
-        function addAwesomeFeed(blogId) {
+        /**
+         * Adds an awesome feed to the RSS feeds list
+         * @param {string} blogId - The ID of the blog to add
+         */
+        function addAwesomeFeed(blogId: string): void {
             fetch(`{{ url_for('rss_manager.create_rss_feed_from_awesome') }}`, {
                 method: 'POST',
                 headers: {
@@ -236,7 +240,12 @@
             });
         }
 
-        function updateButton(blogId, text) {
+        /**
+         * Updates the button text and style after adding a feed
+         * @param {string} blogId - The ID of the blog whose button to update
+         * @param {string} text - The new text for the button
+         */
+        function updateButton(blogId: string, text: string): void {
             const button = document.querySelector(`button[onclick="addAwesomeFeed('${blogId}')"]`);
             button.textContent = text;
             button.disabled = true;
@@ -312,7 +321,7 @@ document.getElementById('addSingleFeedForm').addEventListener('submit', function
 
 {% block scripts %}
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', function(): void {
         const flashMessages = document.querySelectorAll('.alert');
         flashMessages.forEach(function(message) {
             setTimeout(function() {
