@@ -22,6 +22,12 @@ class AwesomeThreatIntelService:
     @staticmethod
     def update_from_csv():
         """
+        Update Awesome Threat Intel Blogs from CSV file.
+
+        This method reads the CSV file, compares it with existing entries in the database,
+        adds new entries, updates existing ones, and removes entries that are no longer in the CSV.
+        """
+        """
         Check the CSV file for new items and update the awesome_threat_intel_blog table.
 
         This method reads a CSV file containing Awesome Threat Intel Blog information,
