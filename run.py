@@ -57,7 +57,7 @@ def main():
             use_reloader=True,
             debug=True
         )
-        logger.info("Application started in debug mode")
+        logger.info(f"Application started in debug mode: {app.debug}")
     except Exception as e:
         logger.error(f"Error starting the application: {e}")
 
