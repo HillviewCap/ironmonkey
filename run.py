@@ -12,6 +12,7 @@ from app import create_app
 from app.extensions import db
 from app.models.relational.user import User
 from app.models.init_db import init_db
+from config import get_config
 
 load_dotenv()
 
@@ -20,7 +21,8 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 env = os.getenv('FLASK_ENV', 'development')
-app = create_app(env)
+config = get_config(env)
+app = create_app(config)
 logger.info("Application created")
 
 with app.app_context():
@@ -47,11 +49,10 @@ def main():
     This function sets up the environment and starts the Flask development server.
     """
     try:
-        os.environ['FLASK_ENV'] = 'development'
         app.run(
             host='0.0.0.0',
-            port=int(os.getenv('FLASK_PORT', 5000)),
-            debug=True,
+            port=app.config['FLASK_PORT'],
+            debug=app.config['DEBUG'],
             use_reloader=True
         )
         logger.info("Application started")
