@@ -62,8 +62,7 @@ async def create_rss_feed():
     """
     Create a new RSS feed.
 
-    This function handles the creation of a new RSS feed, either from an Awesome
-    Threat Intel Blog or from a provided URL.
+    This function handles the creation of a new RSS feed from a provided URL and category.
 
     Returns:
         tuple: A tuple containing a JSON response with the new feed data or error
@@ -73,16 +72,11 @@ async def create_rss_feed():
         BadRequest: If the request data is missing or invalid.
     """
     data = request.get_json()
-    if not data:
-        raise BadRequest("Missing data in request")
+    if not data or 'url' not in data or 'category' not in data:
+        raise BadRequest("Missing URL or category in request data")
 
     try:
-        if 'awesome_blog_id' in data:
-            new_feed = await rss_feed_service.create_feed_from_awesome_blog(UUID(data['awesome_blog_id']))
-        else:
-            if 'url' not in data:
-                raise BadRequest("Missing URL in request data")
-            new_feed = await rss_feed_service.create_feed(data)
+        new_feed = await rss_feed_service.create_feed(data)
 
         # Parse the feed after creation
         await rss_feed_service.parse_feed(new_feed.id)

@@ -213,14 +213,14 @@
         });
     </script>
     <script>
-        function addAwesomeFeed(blogId) {
+        function addAwesomeFeed(blogId, url, category) {
             fetch(`{{ url_for('rss_manager.create_rss_feed') }}`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'X-CSRFToken': '{{ csrf_token() }}'
                 },
-                body: JSON.stringify({ awesome_blog_id: blogId })
+                body: JSON.stringify({ url: url, category: category })
             })
             .then(response => {
                 if (!response.ok) {
