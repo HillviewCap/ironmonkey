@@ -73,10 +73,12 @@ def create_app(config_object=None):
         (parsed_content_bp, '/content')
     ]
 
+    registered_blueprints = set()
     for blueprint, url_prefix in blueprints:
-        if blueprint.name not in app.blueprints:
+        if blueprint.name not in registered_blueprints:
             app.register_blueprint(blueprint, url_prefix=url_prefix)
             logger.info(f"Registered blueprint: {blueprint.name} with url_prefix: {url_prefix}")
+            registered_blueprints.add(blueprint.name)
         else:
             logger.warning(f"Blueprint {blueprint.name} already registered, skipping.")
 
