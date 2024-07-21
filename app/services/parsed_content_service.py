@@ -28,13 +28,15 @@ class ParsedContentService:
     parsed content, including retrieval, creation, updating, and deletion.
     """
     @staticmethod
-    def get_all_contents(search_query: str = '', feed_id: Union[str, UUID] = None) -> List[ParsedContent]:
+    def get_all_contents(search_query: str = '', feed_id: Union[str, UUID] = None, order_by: str = 'pub_date', order: str = 'desc') -> List[ParsedContent]:
         """
-        Retrieve all parsed content, optionally filtered by a search query and feed_id.
+        Retrieve all parsed content, optionally filtered by a search query and feed_id, and ordered.
 
         Args:
             search_query (str): Optional search query to filter the content.
             feed_id (Union[str, UUID]): Optional feed_id to filter the content.
+            order_by (str): Field to order by. Defaults to 'pub_date'.
+            order (str): Order direction, 'asc' or 'desc'. Defaults to 'desc'.
 
         Returns:
             List[ParsedContent]: A list containing all parsed content objects.
@@ -58,8 +60,11 @@ class ParsedContentService:
                 (ParsedContent.content.ilike(search))
             )
 
-        # Default sorting
-        query = query.order_by(desc(ParsedContent.created_at))
+        # Apply ordering
+        if order == 'desc':
+            query = query.order_by(desc(getattr(ParsedContent, order_by)))
+        else:
+            query = query.order_by(getattr(ParsedContent, order_by))
 
         return query.all()
 
