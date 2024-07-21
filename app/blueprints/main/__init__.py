@@ -2,7 +2,6 @@ from flask import Blueprint
 
 bp = Blueprint('main', __name__)
 
-from . import routes  # Import routes at the end to avoid circular imports
+from . import routes
 
-# Explicitly export bp
 __all__ = ['bp']

@@ -9,7 +9,7 @@ def index():
     """
     Render the index page.
     
-    If the user is authenticated, display the 10 most recent parsed content items.
+    If the user is authenticated, display the 6 most recent parsed content items.
     Otherwise, display the index page without any items.
     
     Returns:
