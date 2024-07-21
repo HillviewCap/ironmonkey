@@ -66,6 +66,11 @@ def create_app(config_object=None):
     migrate.init_app(app, db)
     login_manager.init_app(app)
 
+    # Initialize database
+    with app.app_context():
+        db.create_all()
+        logger.info("Database tables created")
+
     # Register blueprints
     blueprints = [
         (main_bp, None),
@@ -88,10 +93,6 @@ def create_app(config_object=None):
 
     # Initialize services
     with app.app_context():
-        # Create database tables
-        db.create_all()
-        logger.info("Database tables created")
-
         # Initialize Ollama API
         app.ollama_api = OllamaAPI()
         
