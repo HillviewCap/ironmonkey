@@ -218,6 +218,16 @@ def get_parsed_content(feed_id):
 def update_awesome_threat_intel():
     """
     Update Awesome Threat Intel Blogs and redirect to RSS feed manager page.
+
+    This function triggers the update process for Awesome Threat Intel Blogs
+    from a CSV file. It uses the AwesomeThreatIntelService to perform the update.
+
+    Returns:
+        werkzeug.wrappers.Response: A redirect response to the RSS feed manager page.
+
+    Raises:
+        Exception: If an error occurs during the update process, it's logged
+                   and a flash message is displayed to the user.
     """
     try:
         AwesomeThreatIntelService.update_from_csv()
@@ -232,14 +242,22 @@ def edit_feed(feed_id):
     """
     Edit an existing RSS feed.
 
+    This function handles both GET and POST requests for editing an RSS feed.
+    For GET requests, it renders a form for editing. For POST requests, it
+    processes the form submission and updates the feed.
+
     Args:
         feed_id (uuid.UUID): The UUID of the RSS feed to edit.
 
     Returns:
-        str: Rendered HTML template for editing the feed or a redirect response.
+        str: Rendered HTML template for editing the feed (GET) or a redirect
+             response to the RSS feed manager page (POST).
 
     Raises:
         404: If the RSS feed with the given ID is not found.
+
+    Note:
+        This function uses Flask-WTF for form handling and validation.
     """
     feed = RSSFeed.query.get_or_404(feed_id)
     form = EditRSSFeedForm(obj=feed)
@@ -257,9 +275,21 @@ def get_awesome_blogs():
     """
     Retrieve all Awesome Threat Intel Blogs.
 
+    This function fetches all Awesome Threat Intel Blogs from the database
+    and returns them as a JSON response.
+
     Returns:
         tuple: A tuple containing a JSON response with the blogs data or error
                message, and an HTTP status code.
+
+    Note:
+        - The function requires the user to be logged in.
+        - It uses the AwesomeThreatIntelBlog model to fetch the data.
+        - Each blog is converted to a dictionary using the to_dict() method.
+
+    Raises:
+        Exception: If an error occurs during the database query or JSON conversion,
+                   it's logged and an error response is returned.
     """
     try:
         blogs = AwesomeThreatIntelBlog.query.all()
