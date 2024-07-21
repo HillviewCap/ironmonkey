@@ -119,9 +119,11 @@ def get_parsed_content(feed_id):
     limit = request.args.get('limit', 10, type=int)
     search = request.args.get('search', '')
 
+    # Convert feed_id to string
+    feed_id_str = str(feed_id)
+
     # Fetch the data from your database
-    # This is a placeholder, replace with your actual data fetching logic
-    data = ParsedContentService.get_contents(page=page, limit=limit, search_query=search, feed_id=str(feed_id))
+    data = ParsedContentService.get_contents(page=page, limit=limit, search_query=search, feed_id=feed_id_str)
 
     # Format the data for Grid.js
     formatted_data = [
