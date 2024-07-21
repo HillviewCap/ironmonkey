@@ -199,15 +199,9 @@
                             filterBlogs();
                         })
                         .catch(error => console.error('Error fetching awesome blogs:', error));
-                    awesomeBlogsContainer.classList.remove('hidden');
-                    toggleButton.textContent = 'Hide Awesome Threat Intel Blogs';
-                    fetch('/rss/awesome_blogs')
-                        .then(response => response.json())
-                        .then(data => {
-                            populateBlogs(data);
-                            filterBlogs();
-                        })
-                        .catch(error => console.error('Error fetching awesome blogs:', error));
+                } else {
+                    awesomeBlogsContainer.classList.add('hidden');
+                    toggleButton.textContent = 'Show Awesome Threat Intel Blogs';
                 }
             });
         });
