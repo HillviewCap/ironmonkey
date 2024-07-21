@@ -27,6 +27,7 @@ def get_or_create_category(name):
     if not category:
         category = Category(name=name)
         db.session.add(category)
+        db.session.flush()  # This will assign the id to the new category
     return category
 
 # The logger is already set up in logging_config.py, so we can use it directly

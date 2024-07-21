@@ -6,6 +6,14 @@ from sqlalchemy import Column, String, DateTime, Text, ForeignKey, Table
 from app import db
 from flask import flash
 
+from datetime import datetime
+from uuid import uuid4
+import hashlib
+from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy import Column, String, DateTime, Text, ForeignKey, Table
+from app import db
+from flask import flash
+
 parsed_content_categories = Table('parsed_content_categories', db.Model.metadata,
     Column('parsed_content_id', UUID(as_uuid=True), ForeignKey('parsed_content.id')),
     Column('category_id', UUID(as_uuid=True), ForeignKey('category.id'))
