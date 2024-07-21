@@ -207,8 +207,7 @@ async def create_rss_feed():
     Create a new RSS feed.
 
     This function handles the creation of a new RSS feed, either from an Awesome
-    Threat Intel Blog or from a provided URL. It validates the feed, fetches its
-    information, and stores it in the database.
+    Threat Intel Blog or from a provided URL.
 
     Returns:
         tuple: A tuple containing a JSON response with the new feed data or error
@@ -221,50 +220,20 @@ async def create_rss_feed():
     if not data:
         raise BadRequest("Missing data in request")
 
-    if 'awesome_blog_id' in data:
-        awesome_blog_id = UUID(data['awesome_blog_id'])
-        awesome_blog = AwesomeThreatIntelBlog.query.get(awesome_blog_id)
-        if not awesome_blog:
-            raise BadRequest("Invalid awesome blog ID")
-        feed_data = {
-            'url': awesome_blog.feed_link,
-            'category': awesome_blog.blog_category,
-            'title': awesome_blog.blog,
-            'description': awesome_blog.blog,
-        }
-    else:
-        if 'url' not in data:
-            raise BadRequest("Missing URL in request data")
-
-        if not validate_rss_url(data['url']):
-            raise BadRequest("Invalid RSS feed URL")
-
-        # Fetch and parse the feed to validate it and get the title
-        feed_info = await fetch_and_parse_feed(RSSFeed(url=data['url']))
-        feed_data = {
-            'url': data['url'],
-            'title': feed_info.get('title', 'No Title'),
-            'description': feed_info.get('description', 'No Description'),
-            'category': data.get('category', 'Uncategorized')
-        }
-
     try:
-        # Check if the feed URL already exists
-        existing_feed = RSSFeed.query.filter_by(url=feed_data['url']).first()
-        if existing_feed:
-            return jsonify({"error": "RSS feed URL already exists"}), 400
+        if 'awesome_blog_id' in data:
+            new_feed = await rss_feed_service.create_feed_from_awesome_blog(UUID(data['awesome_blog_id']))
+        else:
+            if 'url' not in data:
+                raise BadRequest("Missing URL in request data")
+            new_feed = await rss_feed_service.create_feed(data)
 
-        try:
-            # Create the feed in the database
-            new_feed = await rss_feed_service.create_feed(feed_data)
-            
-            # Fetch and parse the feed to validate it
-            await fetch_and_parse_feed(new_feed)
-            
-            return jsonify(new_feed.to_dict()), 201
-        except Exception as e:
-            current_app.logger.error(f"Error creating RSS feed: {str(e)}")
-            return jsonify({"error": "Failed to create RSS feed"}), 500
+        # Parse the feed after creation
+        await rss_feed_service.parse_feed(new_feed.id)
+
+        return jsonify(new_feed.to_dict()), 201
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
     except Exception as e:
         current_app.logger.error(f"Error creating RSS feed: {str(e)}")
         return jsonify({"error": "Failed to create RSS feed"}), 500
@@ -317,7 +286,7 @@ def delete_rss_feed(feed_id):
 
 @rss_manager_bp.route('/rss/parse/<uuid:feed_id>', methods=['POST'])
 @login_required
-def parse_rss_feed(feed_id):
+async def parse_rss_feed(feed_id):
     """
     Parse an RSS feed.
 
@@ -329,8 +298,10 @@ def parse_rss_feed(feed_id):
                error message, and an HTTP status code.
     """
     try:
-        parsed_content = rss_feed_service.parse_feed(feed_id)
+        parsed_content = await rss_feed_service.parse_feed(feed_id)
         return jsonify({"message": "RSS feed parsed successfully", "parsed_content": [content.to_dict() for content in parsed_content]}), 200
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 404
     except Exception as e:
         current_app.logger.error(f"Error parsing RSS feed: {str(e)}")
         return jsonify({"error": "Failed to parse RSS feed"}), 500

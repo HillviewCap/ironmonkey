@@ -8,7 +8,6 @@ retrieving the update status.
 import os
 from flask import current_app
 from app.models.relational.awesome_threat_intel_blog import AwesomeThreatIntelBlog
-from app.models.relational.awesome_threat_intel_blog import AwesomeThreatIntelBlog
 from app import db
 import csv
 from datetime import datetime

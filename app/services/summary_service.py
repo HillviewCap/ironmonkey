@@ -1,15 +1,6 @@
 """
 SummaryService: A service to enhance summaries of parsed content using OllamaAPI or GroqAPI.
 
-Workflow:
-1. Initialize SummaryService with OllamaAPI or GroqAPI
-2. Call summarize_feed() method for a specific feed
-3. For each ParsedContent without a summary:
-   a. Generate summary using the chosen API
-   b. Update ParsedContent with new summary
-   c. Commit changes to database
-4. Handle errors and retries
-5. Log process status and completion
 """
 
 from __future__ import annotations

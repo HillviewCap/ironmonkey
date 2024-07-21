@@ -4,7 +4,7 @@ import feedparser
 import hashlib
 from flask import Flask
 from models import db, RSSFeed, ParsedContent, Category
-from logging_config import logger
+from utils.logging_config import logger
 from sqlalchemy.exc import SQLAlchemyError
 from dotenv import load_dotenv
 
