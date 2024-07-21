@@ -4,41 +4,53 @@
 <div class="max-w-6xl mx-auto p-6">
     <h1 class="text-3xl font-bold mb-6">RSS Feed Manager</h1>
     
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-        <!-- Add Single Feed Form -->
-        <div class="bg-white shadow-md rounded px-8 pt-6 pb-8">
-            <h2 class="text-xl font-bold mb-4">Add Single Feed</h2>
-            <form id="addSingleFeedForm">
-                {{ form.hidden_tag() }}
-                <div class="mb-4">
-                    {{ form.url.label(class="block text-gray-700 text-sm font-bold mb-2") }}
-                    {{ form.url(class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline") }}
-                </div>
-                <div class="mb-4">
-                    {{ form.category.label(class="block text-gray-700 text-sm font-bold mb-2") }}
-                    {{ form.category(class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline") }}
-                </div>
-                <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
-                    Add Feed
-                </button>
-            </form>
-        </div>
+    <button id="toggleDrawer" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mb-4">
+        Open Add/Import Drawer
+    </button>
 
-        <!-- Import Feeds from CSV Form -->
-        <div class="bg-white shadow-md rounded px-8 pt-6 pb-8">
-            <h2 class="text-xl font-bold mb-4">Import Feeds from CSV</h2>
-            <form method="POST" enctype="multipart/form-data">
-                {{ csv_form.hidden_tag() }}
-                <div class="mb-4">
-                    {{ csv_form.file.label(class="block text-gray-700 text-sm font-bold mb-2") }}
-                    {{ csv_form.file(class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline") }}
+    <div id="formDrawer" class="fixed inset-y-0 right-0 w-96 bg-white shadow-lg transform translate-x-full transition-transform duration-300 ease-in-out overflow-y-auto">
+        <div class="p-6">
+            <button id="closeDrawer" class="absolute top-0 right-0 mt-4 mr-4 text-gray-600 hover:text-gray-800">
+                <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+            
+            <!-- Add Single Feed Form -->
+            <div class="mb-8">
+                <h2 class="text-xl font-bold mb-4">Add Single Feed</h2>
+                <form id="addSingleFeedForm">
+                    {{ form.hidden_tag() }}
+                    <div class="mb-4">
+                        {{ form.url.label(class="block text-gray-700 text-sm font-bold mb-2") }}
+                        {{ form.url(class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline") }}
+                    </div>
+                    <div class="mb-4">
+                        {{ form.category.label(class="block text-gray-700 text-sm font-bold mb-2") }}
+                        {{ form.category(class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline") }}
+                    </div>
+                    <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+                        Add Feed
+                    </button>
+                </form>
+            </div>
+
+            <!-- Import Feeds from CSV Form -->
+            <div>
+                <h2 class="text-xl font-bold mb-4">Import Feeds from CSV</h2>
+                <form method="POST" enctype="multipart/form-data">
+                    {{ csv_form.hidden_tag() }}
+                    <div class="mb-4">
+                        {{ csv_form.file.label(class="block text-gray-700 text-sm font-bold mb-2") }}
+                        {{ csv_form.file(class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline") }}
+                    </div>
+                    {{ csv_form.submit(class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline") }}
+                </form>
+                <div class="mt-4">
+                    <a href="{{ url_for('static', filename='import_template.csv') }}" class="text-blue-500 hover:text-blue-700">
+                        Download CSV Template
+                    </a>
                 </div>
-                {{ csv_form.submit(class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline") }}
-            </form>
-            <div class="mt-4">
-                <a href="{{ url_for('static', filename='import_template.csv') }}" class="text-blue-500 hover:text-blue-700">
-                    Download CSV Template
-                </a>
             </div>
         </div>
     </div>
@@ -310,6 +322,19 @@ document.getElementById('addSingleFeedForm').addEventListener('submit', function
                     message.remove();
                 }, 1000);
             }, 25000);
+        });
+
+        // Drawer functionality
+        const toggleDrawerButton = document.getElementById('toggleDrawer');
+        const closeDrawerButton = document.getElementById('closeDrawer');
+        const formDrawer = document.getElementById('formDrawer');
+
+        toggleDrawerButton.addEventListener('click', function() {
+            formDrawer.classList.toggle('translate-x-full');
+        });
+
+        closeDrawerButton.addEventListener('click', function() {
+            formDrawer.classList.add('translate-x-full');
         });
     });
 </script>
