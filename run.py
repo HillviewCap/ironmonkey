@@ -21,8 +21,8 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 env = os.getenv('FLASK_ENV', 'development')
-config = get_config(env)
-app = create_app(config)
+config_obj = get_config(env)
+app = create_app(config_obj)
 logger.info("Application created")
 
 with app.app_context():

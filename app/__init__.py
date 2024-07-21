@@ -31,20 +31,23 @@ csrf = CSRFProtect()
 login_manager = LoginManager()
 login_manager.login_view = 'auth.login'
 
-def create_app(config_object):
+def create_app(config_object=None):
     """
     Create and configure an instance of the Flask application.
 
     Args:
-        config_object: The configuration object to use.
+        config_object: The configuration object to use. If None, uses the default configuration.
 
     Returns:
         Flask: The configured Flask application instance.
     """
     app = Flask(__name__, instance_relative_config=True, static_url_path="/static", template_folder="templates")
 
-    # Load the config
-    app.config.from_object(config_object)
+    # Load the default config if no config_object is provided
+    if config_object is None:
+        app.config.from_object('config.DevelopmentConfig')
+    else:
+        app.config.from_object(config_object)
 
     # Ensure the instance folder exists
     os.makedirs(app.instance_path, exist_ok=True)
