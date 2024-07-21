@@ -330,11 +330,18 @@ document.getElementById('addSingleFeedForm').addEventListener('submit', function
         const formDrawer = document.getElementById('formDrawer');
 
         toggleDrawerButton.addEventListener('click', function() {
-            formDrawer.classList.toggle('translate-x-full');
+            formDrawer.classList.toggle('-translate-x-full');
         });
 
         closeDrawerButton.addEventListener('click', function() {
-            formDrawer.classList.add('translate-x-full');
+            formDrawer.classList.add('-translate-x-full');
+        });
+
+        // Close drawer when clicking outside
+        document.addEventListener('click', function(event) {
+            if (!formDrawer.contains(event.target) && !toggleDrawerButton.contains(event.target)) {
+                formDrawer.classList.add('-translate-x-full');
+            }
         });
     });
 </script>
