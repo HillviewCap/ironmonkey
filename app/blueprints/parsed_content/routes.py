@@ -5,8 +5,15 @@ from uuid import UUID
 
 parsed_content_bp = Blueprint('parsed_content', __name__)
 
-@parsed_content_bp.route('/view', methods=['GET'])
-def view_content():
+@parsed_content_bp.route('/item/<uuid:content_id>', methods=['GET'])
+def view_content(content_id):
+    content = ParsedContentService.get_content_by_id(content_id)
+    if not content:
+        abort(404)
+    return render_template('parsed_content/view.html', content=content)
+
+@parsed_content_bp.route('/list', methods=['GET'])
+def list_content():
     page = request.args.get('page', 1, type=int) - 1  # Grid.js uses 1-based indexing
     limit = request.args.get('limit', 10, type=int)
     search_query = request.args.get('search', '')
