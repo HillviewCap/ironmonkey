@@ -100,6 +100,10 @@ def create_app(config_object=None):
         app.scheduler = SchedulerService(app)
         app.scheduler.setup_scheduler()
 
+        # Initialize Awesome Threat Intel Blogs
+        from app.services.awesome_threat_intel_service import AwesomeThreatIntelService
+        AwesomeThreatIntelService.initialize_awesome_feeds()
+
     @login_manager.user_loader
     def load_user(user_id):
         """
