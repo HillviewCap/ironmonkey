@@ -1,3 +1,10 @@
+"""
+This module provides services for managing RSS feeds in the application.
+
+It includes functionality for creating, retrieving, updating, and deleting
+RSS feeds, as well as parsing feed content.
+"""
+
 import uuid
 from typing import List, Dict
 from sqlalchemy.orm import Session
@@ -15,6 +22,12 @@ from app.services.parsed_content_service import ParsedContentService
 logger = setup_logger('rss_feed_service', 'rss_feed_service.log')
 
 class RSSFeedService:
+    """
+    A service class for managing RSS feed operations.
+
+    This class provides static methods for various operations related to
+    RSS feeds, including retrieval, creation, updating, deletion, and parsing.
+    """
     @staticmethod
     def get_all_feeds() -> List[RSSFeed]:
         """
