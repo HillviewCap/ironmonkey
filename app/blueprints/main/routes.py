@@ -26,7 +26,7 @@ def index():
                     ParsedContent.description.isnot(None),
                 )
                 .order_by(ParsedContent.pub_date.desc())
-                .limit(10)
+                .limit(6)
                 .all()
             )
             current_app.logger.info(f"User {current_user.id} accessed index route.")

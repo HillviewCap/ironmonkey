@@ -31,7 +31,7 @@ def index():
                     ParsedContent.description.isnot(None),
                 )
                 .order_by(ParsedContent.published.desc())
-                .limit(10)
+                .limit(6)
                 .all()
             )
             return render_template('index.html', recent_items=recent_items)
