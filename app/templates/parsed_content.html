@@ -73,6 +73,11 @@
                     fetch('{{ url_for("parsed_content.get_parsed_content", feed_id=feed_id) }}')
                         .then(response => response.json())
                         .then(data => {
+                            if (!data || !data.data || !Array.isArray(data.data)) {
+                                console.error('Invalid data structure received:', data);
+                                resolve([]);
+                                return;
+                            }
                             resolve(data.data.map(post => [
                                 post.title || '',
                                 post.summary || '',
@@ -81,7 +86,10 @@
                                 post.id || ''
                             ]));
                         })
-                        .catch(error => reject(error));
+                        .catch(error => {
+                            console.error('Error fetching data:', error);
+                            reject(error);
+                        });
                 });
             },
             search: {
