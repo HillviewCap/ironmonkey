@@ -28,16 +28,15 @@ class ParsedContentService:
     parsed content, including retrieval, creation, updating, and deletion.
     """
     @staticmethod
-    def get_contents(page: int = 0, limit: int = 10, search_query: str = '', feed_id: Union[str, UUID] = None, sort: Dict[str, str] = None) -> Tuple[List[ParsedContent], int]:
+    def get_contents(page: int = 0, limit: int = 10, search_query: str = '', feed_id: Union[str, UUID] = None) -> Tuple[List[ParsedContent], int]:
         """
-        Retrieve a paginated list of parsed content, optionally filtered by a search query and feed_id, and sorted.
+        Retrieve a paginated list of parsed content, optionally filtered by a search query and feed_id.
 
         Args:
             page (int): The page number to retrieve (0-based).
             limit (int): The number of items to return per page.
             search_query (str): Optional search query to filter the content.
             feed_id (Union[str, UUID]): Optional feed_id to filter the content.
-            sort (Dict[str, str]): Optional sorting parameters. Example: {'pub_date': 'desc'}
 
         Returns:
             Tuple[List[ParsedContent], int]: A tuple containing the list of parsed content objects and the total count.
@@ -61,17 +60,8 @@ class ParsedContentService:
                 (ParsedContent.content.ilike(search))
             )
 
-        # Apply sorting
-        if sort:
-            for key, direction in sort.items():
-                column = getattr(ParsedContent, key)
-                if direction.lower() == 'desc':
-                    query = query.order_by(desc(column))
-                else:
-                    query = query.order_by(column)
-        else:
-            # Default sorting
-            query = query.order_by(desc(ParsedContent.created_at))
+        # Default sorting
+        query = query.order_by(desc(ParsedContent.created_at))
 
         total_count = query.count()
         content = query.offset(page * limit).limit(limit).all()

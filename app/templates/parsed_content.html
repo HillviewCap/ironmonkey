@@ -84,17 +84,7 @@
                     url: (prev, keyword) => `${prev}${prev.includes('?') ? '&' : '?'}search=${keyword}`
                 }
             },
-            sort: {
-                server: {
-                    url: (prev, columns) => {
-                        if (!columns.length) return prev;
-                        const col = columns[0];
-                        const dir = col.direction === 1 ? 'asc' : 'desc';
-                        let colName = ['title', 'summary', 'url', 'pub_date'][col.index];
-                        return `${prev}${prev.includes('?') ? '&' : '?'}sort[${colName}]=${dir}`;
-                    }
-                }
-            },
+            sort: true,
             pagination: {
                 limit: 10,
                 server: {

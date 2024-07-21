@@ -118,13 +118,12 @@ def get_parsed_content(feed_id):
     page = request.args.get('page', 0, type=int)
     limit = request.args.get('limit', 10, type=int)
     search = request.args.get('search', '')
-    sort = request.args.get('sort', {})
 
     # Convert feed_id to string
     feed_id_str = str(feed_id)
 
     # Fetch the data from your database
-    items, total = ParsedContentService.get_contents(page=page, limit=limit, search_query=search, feed_id=feed_id_str, sort=sort)
+    items, total = ParsedContentService.get_contents(page=page, limit=limit, search_query=search, feed_id=feed_id_str)
 
     # Format the data for Grid.js
     formatted_data = [
@@ -133,7 +132,7 @@ def get_parsed_content(feed_id):
             'title': item.title,
             'summary': item.summary,
             'url': item.url,
-            'pub_date': item.pub_date if isinstance(item.pub_date, str) else (item.pub_date.strftime('%Y-%m-%d %H:%M:%S') if item.pub_date else '')
+            'pub_date': item.pub_date.strftime('%Y-%m-%d %H:%M:%S') if item.pub_date else ''
         }
         for item in items
     ]
