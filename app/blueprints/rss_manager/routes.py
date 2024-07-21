@@ -9,6 +9,7 @@ from app.forms.rss_forms import AddRSSFeedForm, ImportCSVForm, EditRSSFeedForm
 from app.models.relational.awesome_threat_intel_blog import AwesomeThreatIntelBlog
 from app.models.relational.rss_feed import RSSFeed
 from app.services.awesome_threat_intel_service import AwesomeThreatIntelService
+from app.services.feed_parser_service import fetch_and_parse_feed
 from app import db
 
 rss_manager_bp = Blueprint('rss_manager', __name__)
@@ -239,7 +240,7 @@ async def create_rss_feed():
             raise BadRequest("Invalid RSS feed URL")
 
         # Fetch and parse the feed to validate it and get the title
-        feed_info = await fetch_and_parse_feed(data['url'])
+        feed_info = await fetch_and_parse_feed(RSSFeed(url=data['url']))
         feed_data = {
             'url': data['url'],
             'title': feed_info.get('title', 'No Title'),
