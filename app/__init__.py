@@ -63,17 +63,22 @@ def create_app(config_object=None):
     login_manager.init_app(app)
 
     # Register blueprints
-    app.register_blueprint(main_bp)
-    app.register_blueprint(auth_bp, url_prefix='/auth')
-    app.register_blueprint(rss_manager_bp, url_prefix='/rss')
-    app.register_blueprint(admin_bp, url_prefix='/admin')
-    app.register_blueprint(search_bp, url_prefix='/search')
-    app.register_blueprint(api_bp, url_prefix='/api')
-    app.register_blueprint(parsed_content_bp, url_prefix='/content')
+    blueprints = [
+        (main_bp, None),
+        (auth_bp, '/auth'),
+        (rss_manager_bp, '/rss'),
+        (admin_bp, '/admin'),
+        (search_bp, '/search'),
+        (api_bp, '/api'),
+        (parsed_content_bp, '/content')
+    ]
 
-    # Log registered blueprints
-    for blueprint in app.blueprints:
-        logger.info(f"Registered blueprint: {blueprint} with url_prefix: {app.blueprints[blueprint].url_prefix}")
+    for blueprint, url_prefix in blueprints:
+        if blueprint.name not in app.blueprints:
+            app.register_blueprint(blueprint, url_prefix=url_prefix)
+            logger.info(f"Registered blueprint: {blueprint.name} with url_prefix: {url_prefix}")
+        else:
+            logger.warning(f"Blueprint {blueprint.name} already registered, skipping.")
 
     # Initialize Ollama API
     app.ollama_api = OllamaAPI()
