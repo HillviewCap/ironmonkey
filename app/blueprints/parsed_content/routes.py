@@ -5,18 +5,18 @@ from uuid import UUID
 
 parsed_content_bp = Blueprint('parsed_content', __name__)
 
-@parsed_content_bp.route('/content/view/<uuid:content_id>', methods=['GET', 'POST'])
+@parsed_content_bp.route('/view/<uuid:content_id>', methods=['GET'])
 def view_content(content_id):
     page = request.args.get('page', 0, type=int)
     limit = request.args.get('limit', 10, type=int)
+    search_query = request.args.get('search', '')
     
-    content = ParsedContentService.get_content_by_id(content_id)
-    if not content:
-        abort(404)
+    contents = ParsedContentService.get_contents(page=page, limit=limit, search_query=search_query)
+    total = ParsedContentService.get_total_count(search_query=search_query)
     
     return jsonify({
-        'data': content.to_dict(),
-        'total': 1,
+        'data': [content.to_dict() for content in contents],
+        'total': total,
         'page': page,
         'limit': limit
     })

@@ -76,6 +76,11 @@
                 ]),
                 total: data => data.total
             },
+            search: {
+                server: {
+                    url: (prev, keyword) => `${prev}${prev.includes('?') ? '&' : '?'}search=${keyword}`
+                }
+            },
             search: true,
             sort: true,
             pagination: {
