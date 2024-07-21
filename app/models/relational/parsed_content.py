@@ -74,3 +74,18 @@ class ParsedContent(db.Model):
             hashed_count += 1
         db.session.commit()
         return hashed_count
+
+    def to_dict(self):
+        return {
+            'id': str(self.id),
+            'title': self.title,
+            'url': self.url,
+            'description': self.description,
+            'content': self.content,
+            'summary': self.summary,
+            'feed_id': str(self.feed_id),
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'pub_date': self.pub_date,
+            'creator': self.creator,
+            'art_hash': self.art_hash
+        }
