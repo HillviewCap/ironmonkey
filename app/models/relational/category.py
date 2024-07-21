@@ -9,12 +9,16 @@ class Category(db.Model):
     """
     Represents a category for parsed content.
     """
+    __tablename__ = 'category'
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    name = Column(String(200), nullable=False)
+    name = Column(String(255), nullable=False, unique=True)
     scheme = Column(String(200), nullable=True)  # For feedparser category scheme
     term = Column(String(200), nullable=True)  # For feedparser category term
     parsed_content_id = Column(UUID(as_uuid=True), ForeignKey("parsed_content.id"))
     parsed_content = db.relationship("ParsedContent", backref=db.backref("categories", lazy=True))
+
+    def __repr__(self):
+        return f"<Category {self.name}>"
 
     @classmethod
     def create_from_feedparser(cls, category: str | dict, parsed_content_id: UUID) -> Category:
@@ -42,14 +46,3 @@ class Category(db.Model):
             )
         else:
             raise ValueError("Unsupported category format")
-from uuid import uuid4
-from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy import Column, String
-from app import db
-
-class Category(db.Model):
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    name = Column(String(255), nullable=False, unique=True)
-
-    def __repr__(self):
-        return f"<Category {self.name}>"
