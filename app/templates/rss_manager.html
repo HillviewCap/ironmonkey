@@ -214,7 +214,7 @@
     </script>
     <script>
         function addAwesomeFeed(blogId) {
-            fetch(`{{ url_for('rss_manager_bp.create_rss_feed') }}`, {
+            fetch(`{{ url_for('rss_manager.create_rss_feed') }}`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
