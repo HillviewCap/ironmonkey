@@ -1,3 +1,10 @@
+"""
+This module provides services for managing parsed content in the application.
+
+It includes functionality for creating, retrieving, updating, and deleting
+parsed content items, as well as handling pagination and filtering.
+"""
+
 from __future__ import annotations
 
 import uuid
@@ -13,6 +20,12 @@ from app.extensions import db
 logger = setup_logger('parsed_content_service', 'parsed_content_service.log')
 
 class ParsedContentService:
+    """
+    A service class for managing parsed content operations.
+
+    This class provides static methods for various operations related to
+    parsed content, including retrieval, creation, updating, and deletion.
+    """
     @staticmethod
     def get_parsed_content(filters: Dict[str, any], page: int = 1, per_page: int = 20) -> Tuple[List[ParsedContent], int]:
         """
