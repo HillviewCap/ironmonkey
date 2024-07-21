@@ -3,7 +3,8 @@ from pathlib import Path
 
 class Config:
     SECRET_KEY = os.getenv('SECRET_KEY')
-    INSTANCE_PATH = os.getenv('INSTANCE_PATH', 'instance')
+    BASE_DIR = Path(__file__).resolve().parent
+    INSTANCE_PATH = os.getenv('INSTANCE_PATH', os.path.join(BASE_DIR, 'instance'))
     SQLALCHEMY_DATABASE_URI = f"sqlite:///{os.path.join(INSTANCE_PATH, 'threats.db')}"
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     RSS_CHECK_INTERVAL = int(os.getenv('RSS_CHECK_INTERVAL', 30))
