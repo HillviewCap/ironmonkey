@@ -5,7 +5,7 @@ from uuid import UUID
 
 parsed_content_bp = Blueprint('parsed_content', __name__)
 
-@parsed_content_bp.route('/view/<uuid:content_id>')
+@parsed_content_bp.route('/content/view/<uuid:content_id>')
 def view_content(content_id):
     page = request.args.get('page', 0, type=int)
     limit = request.args.get('limit', 10, type=int)
@@ -14,8 +14,6 @@ def view_content(content_id):
     if not content:
         abort(404)
     
-    # Here you would implement the logic to paginate the content
-    # For now, we'll just return all the content
     return jsonify({
         'data': content.to_dict(),
         'total': 1,
@@ -36,28 +34,6 @@ def clear_all_summaries():
     # For now, we'll just return a dummy response
     return jsonify({'message': 'All summaries have been cleared.'})
 
-@parsed_content_bp.route('/view/<uuid:content_id>')
-def view(content_id):
-    """
-    Render the view page for a specific parsed content item.
-
-    This function retrieves the parsed content with the given UUID and renders
-    a template to display it. If the content is not found, it returns a 404 error.
-
-    Args:
-        content_id (uuid.UUID): The UUID of the parsed content to display.
-
-    Returns:
-        str: Rendered HTML template for the parsed content view.
-
-    Raises:
-        404: If the parsed content with the given UUID is not found.
-    """
-    content = ParsedContentService.get_content_by_id(content_id)
-    if content:
-        return render_template('parsed_content/view.html', content=content)
-    else:
-        abort(404)
 
 @parsed_content_bp.route('/add', methods=['POST'])
 def add_parsed_content():
