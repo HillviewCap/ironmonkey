@@ -6,6 +6,15 @@ from . import bp
 
 @bp.route('/')
 def index():
+    """
+    Render the index page.
+    
+    If the user is authenticated, display the 10 most recent parsed content items.
+    Otherwise, display the index page without any items.
+    
+    Returns:
+        str: Rendered HTML template for the index page.
+    """
     current_app.logger.info("Entering index route")
     try:
         recent_items = []
@@ -32,6 +41,18 @@ def index():
 @bp.route('/item/<uuid:item_id>')
 @login_required
 def view_item(item_id):
+    """
+    Render the page for a specific parsed content item.
+    
+    Args:
+        item_id (uuid): The UUID of the parsed content item to display.
+    
+    Returns:
+        str: Rendered HTML template for the item view page.
+    
+    Raises:
+        404: If the item with the given UUID is not found.
+    """
     item = ParsedContent.query.get(item_id)
     if item is None:
         abort(404)
@@ -39,10 +60,25 @@ def view_item(item_id):
 
 @bp.route('/favicon.ico')
 def favicon():
+    """
+    Serve the favicon.ico file.
+    
+    Returns:
+        flask.Response: The favicon.ico file.
+    """
     return send_from_directory(os.path.join(current_app.root_path, 'static', 'images'),
                                'favicon.ico', mimetype='image/x-icon')
 
 @bp.errorhandler(500)
 def internal_error(error):
+    """
+    Handle 500 Internal Server Error.
+    
+    Args:
+        error: The error that caused the 500 status.
+    
+    Returns:
+        tuple: A tuple containing the rendered error template and the 500 status code.
+    """
     current_app.logger.error('Server Error: %s', (error))
     return render_template('errors/500.html'), 500
