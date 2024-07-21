@@ -20,7 +20,7 @@
         <!-- Add Single Feed Form -->
         <div class="bg-white shadow-md rounded px-8 pt-6 pb-8">
             <h2 class="text-xl font-bold mb-4">Add Single Feed</h2>
-            <form method="POST" action="{{ url_for('rss_manager.create_rss_feed') }}">
+            <form id="addSingleFeedForm">
                 {{ form.hidden_tag() }}
                 <div class="mb-4">
                     {{ form.url.label(class="block text-gray-700 text-sm font-bold mb-2") }}
@@ -30,7 +30,9 @@
                     {{ form.category.label(class="block text-gray-700 text-sm font-bold mb-2") }}
                     {{ form.category(class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline") }}
                 </div>
-                {{ form.submit(class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline") }}
+                <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+                    Add Feed
+                </button>
             </form>
         </div>
 
@@ -279,4 +281,38 @@
         {% endfor %}
     </div>
 </div>
+
+<script>
+document.getElementById('addSingleFeedForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const url = document.getElementById('url').value;
+    const category = document.getElementById('category').value;
+    
+    fetch('{{ url_for("rss_manager.create_rss_feed") }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token() }}'
+        },
+        body: JSON.stringify({
+            url: url,
+            category: category
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.error) {
+            alert(data.error);
+        } else {
+            alert('Feed added successfully');
+            location.reload();
+        }
+    })
+    .catch((error) => {
+        console.error('Error:', error);
+        alert('An error occurred while adding the feed.');
+    });
+});
+</script>
 {% endblock %}
