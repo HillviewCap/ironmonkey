@@ -69,28 +69,37 @@ class RSSFeedService:
             ValueError: If the RSS feed URL is invalid or already exists.
         """
         url = feed_data['url']
+        logger.info(f"Attempting to create feed with URL: {url}")
+        
         if not validate_rss_url(url):
+            logger.error(f"Invalid RSS feed URL: {url}")
             raise ValueError(f"Invalid RSS feed URL: {url}")
 
         with Session(db.engine) as session:
             existing_feed = session.query(RSSFeed).filter_by(url=url).first()
             if existing_feed:
+                logger.warning(f"RSS feed URL already exists: {url}")
                 raise ValueError("RSS feed URL already exists")
 
-            feed_info = await fetch_feed_info(url)
-            feed = RSSFeed(
-                id=uuid.uuid4(),
-                url=url,
-                title=feed_info['title'],
-                description=feed_info['description'],
-                last_build_date=feed_info['last_build_date'],
-                category=feed_data.get('category', 'Uncategorized')
-            )
+            try:
+                logger.info(f"Fetching feed info for URL: {url}")
+                feed_info = await fetch_feed_info(url)
+                feed = RSSFeed(
+                    id=uuid.uuid4(),
+                    url=url,
+                    title=feed_info['title'],
+                    description=feed_info['description'],
+                    last_build_date=feed_info['last_build_date'],
+                    category=feed_data.get('category', 'Uncategorized')
+                )
 
-            session.add(feed)
-            session.commit()
-            logger.info(f"Created new RSS feed: {feed.title}")
-            return feed
+                session.add(feed)
+                session.commit()
+                logger.info(f"Created new RSS feed: {feed.title}")
+                return feed
+            except Exception as e:
+                logger.error(f"Error creating RSS feed: {str(e)}")
+                raise ValueError(f"Error creating RSS feed: {str(e)}")
 
     @staticmethod
     async def parse_feed(feed_id: UUID) -> List[ParsedContent]:
