@@ -8,13 +8,12 @@ and storing new entries in the database.
 from __future__ import annotations
 
 import hashlib
-import html
-import re
 from datetime import datetime
 from typing import Optional
 
 import httpx
 import feedparser
+from app.utils.content_sanitizer import sanitize_html_content
 from flask import current_app
 from sqlalchemy.orm import Session
 
@@ -26,23 +25,6 @@ logger = setup_logger('feed_parser_service', 'feed_parser_service.log')
 
 # The logger is already set up in logging_config.py, so we can use it directly
 
-def sanitize_html(text: str) -> str:
-    """
-    Remove HTML tags and unescape HTML entities.
-    
-    Args:
-        text (str): The input text containing HTML.
-    
-    Returns:
-        str: The sanitized text with HTML tags removed and entities unescaped.
-    """
-    # Unescape HTML entities
-    text = html.unescape(text)
-    # Remove HTML tags
-    text = re.sub(r'<[^>]+>', '', text)
-    # Remove extra whitespace
-    text = re.sub(r'\s+', ' ', text).strip()
-    return text
 
 async def fetch_and_parse_feed(feed: RSSFeed) -> int:
     """
@@ -84,9 +66,9 @@ async def fetch_and_parse_feed(feed: RSSFeed) -> int:
                 logger.debug(f"Parsed feed data for {feed.url}")
             # Update the feed title and description if available
             if 'title' in feed_data.feed:
-                feed.title = sanitize_html(feed_data.feed.title)
+                feed.title = sanitize_html_content(feed_data.feed.title)
             if 'description' in feed_data.feed:
-                feed.description = sanitize_html(feed_data.feed.description)
+                feed.description = sanitize_html_content(feed_data.feed.description)
             db.session.commit()
 
             for entry in feed_data.entries:
@@ -115,10 +97,10 @@ async def fetch_and_parse_feed(feed: RSSFeed) -> int:
                                 content=parsed_content,
                                 feed_id=feed.id,
                                 url=url,
-                                title=sanitize_html(title),
-                                description=sanitize_html(entry.get('description', '')),
+                                title=sanitize_html_content(title),
+                                description=sanitize_html_content(entry.get('description', '')),
                                 pub_date=pub_date,
-                                creator=sanitize_html(entry.get('author', '')),
+                                creator=sanitize_html_content(entry.get('author', '')),
                                 art_hash=art_hash
                             )
                             db.session.add(new_content)
