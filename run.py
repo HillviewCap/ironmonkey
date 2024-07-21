@@ -1,3 +1,10 @@
+"""
+This module serves as the entry point for running the Flask application.
+
+It handles the initialization of the application, database setup, and provides
+a shell context for interactive sessions.
+"""
+
 import os
 import logging
 from dotenv import load_dotenv
@@ -25,9 +32,20 @@ with app.app_context():
 
 @app.shell_context_processor
 def make_shell_context():
+    """
+    Provide a shell context for Flask shell sessions.
+
+    Returns:
+        dict: A dictionary containing objects to be included in the shell context.
+    """
     return {'db': db, 'User': User}
 
 def main():
+    """
+    Main function to run the Flask application.
+
+    This function sets up the environment and starts the Flask development server.
+    """
     try:
         os.environ['FLASK_ENV'] = 'development'
         app.run(
