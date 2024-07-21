@@ -19,6 +19,16 @@ parsed_content_service = ParsedContentService()
 @rss_manager_bp.route('/rss/feeds')
 @login_required
 def get_rss_feeds():
+    """
+    Retrieve all RSS feeds and render the RSS manager page.
+
+    This function fetches all RSS feeds, prepares forms for adding new feeds
+    and importing CSV, and retrieves unique categories and types from the
+    AwesomeThreatIntelBlog table.
+
+    Returns:
+        str: Rendered HTML template for the RSS manager page.
+    """
     feeds = rss_feed_service.get_all_feeds()
     form = AddRSSFeedForm()
     csv_form = ImportCSVForm()
@@ -29,6 +39,18 @@ def get_rss_feeds():
 @rss_manager_bp.route('/rss/feed/<uuid:feed_id>')
 @login_required
 def get_rss_feed(feed_id):
+    """
+    Retrieve a specific RSS feed by its ID.
+
+    Args:
+        feed_id (uuid.UUID): The UUID of the RSS feed to retrieve.
+
+    Returns:
+        tuple: A tuple containing a JSON response with the feed data and HTTP status code.
+
+    Raises:
+        404: If the RSS feed with the given ID is not found.
+    """
     feed = rss_feed_service.get_feed_by_id(feed_id)
     if not feed:
         abort(404, description="RSS feed not found")
@@ -37,6 +59,20 @@ def get_rss_feed(feed_id):
 @rss_manager_bp.route('/feed', methods=['POST'])
 @login_required
 async def create_rss_feed():
+    """
+    Create a new RSS feed.
+
+    This function handles the creation of a new RSS feed, either from an Awesome
+    Threat Intel Blog or from a provided URL. It validates the feed, fetches its
+    information, and stores it in the database.
+
+    Returns:
+        tuple: A tuple containing a JSON response with the new feed data or error
+               message, and an HTTP status code.
+
+    Raises:
+        BadRequest: If the request data is missing or invalid.
+    """
     data = request.get_json()
     if not data:
         raise BadRequest("Missing data in request")
@@ -92,6 +128,19 @@ async def create_rss_feed():
 @rss_manager_bp.route('/rss/feed/<uuid:feed_id>', methods=['PUT'])
 @login_required
 def update_rss_feed(feed_id):
+    """
+    Update an existing RSS feed.
+
+    Args:
+        feed_id (uuid.UUID): The UUID of the RSS feed to update.
+
+    Returns:
+        tuple: A tuple containing a JSON response with the updated feed data or
+               error message, and an HTTP status code.
+
+    Raises:
+        404: If the RSS feed with the given ID is not found.
+    """
     data = request.get_json()
     try:
         updated_feed = rss_feed_service.update_feed(feed_id, data)
@@ -105,6 +154,16 @@ def update_rss_feed(feed_id):
 @rss_manager_bp.route('/rss/feed/<uuid:feed_id>', methods=['DELETE'])
 @login_required
 def delete_rss_feed(feed_id):
+    """
+    Delete an RSS feed.
+
+    Args:
+        feed_id (uuid.UUID): The UUID of the RSS feed to delete.
+
+    Returns:
+        tuple: A tuple containing a JSON response with a success or error
+               message, and an HTTP status code.
+    """
     try:
         rss_feed_service.delete_feed(feed_id)
         return jsonify({"message": "RSS feed deleted successfully"}), 200
@@ -115,6 +174,16 @@ def delete_rss_feed(feed_id):
 @rss_manager_bp.route('/rss/parse/<uuid:feed_id>', methods=['POST'])
 @login_required
 def parse_rss_feed(feed_id):
+    """
+    Parse an RSS feed.
+
+    Args:
+        feed_id (uuid.UUID): The UUID of the RSS feed to parse.
+
+    Returns:
+        tuple: A tuple containing a JSON response with the parsed content or
+               error message, and an HTTP status code.
+    """
     try:
         parsed_content = rss_feed_service.parse_feed(feed_id)
         return jsonify({"message": "RSS feed parsed successfully", "parsed_content": [content.to_dict() for content in parsed_content]}), 200
@@ -125,6 +194,15 @@ def parse_rss_feed(feed_id):
 @rss_manager_bp.route('/rss/parsed_content/<uuid:feed_id>')
 @login_required
 def get_parsed_content(feed_id):
+    """
+    Retrieve parsed content for a specific RSS feed.
+
+    Args:
+        feed_id (uuid.UUID): The UUID of the RSS feed to get parsed content for.
+
+    Returns:
+        str: Rendered HTML template with the parsed content.
+    """
     page = request.args.get('page', 1, type=int)
     per_page = request.args.get('per_page', 10, type=int)
     filters = request.args.to_dict()
@@ -151,6 +229,18 @@ def update_awesome_threat_intel():
 @rss_manager_bp.route('/rss/feed/edit/<uuid:feed_id>', methods=['GET', 'POST'])
 @login_required
 def edit_feed(feed_id):
+    """
+    Edit an existing RSS feed.
+
+    Args:
+        feed_id (uuid.UUID): The UUID of the RSS feed to edit.
+
+    Returns:
+        str: Rendered HTML template for editing the feed or a redirect response.
+
+    Raises:
+        404: If the RSS feed with the given ID is not found.
+    """
     feed = RSSFeed.query.get_or_404(feed_id)
     form = EditRSSFeedForm(obj=feed)
     
@@ -164,6 +254,13 @@ def edit_feed(feed_id):
 @rss_manager_bp.route('/awesome_blogs', methods=['GET'])
 @login_required
 def get_awesome_blogs():
+    """
+    Retrieve all Awesome Threat Intel Blogs.
+
+    Returns:
+        tuple: A tuple containing a JSON response with the blogs data or error
+               message, and an HTTP status code.
+    """
     try:
         blogs = AwesomeThreatIntelBlog.query.all()
         return jsonify([blog.to_dict() for blog in blogs]), 200
