@@ -8,7 +8,8 @@ parsed content items, as well as handling pagination and filtering.
 from __future__ import annotations
 
 import uuid
-from typing import List, Dict, Tuple
+from typing import List, Dict, Tuple, Union
+from uuid import UUID
 from sqlalchemy import desc
 from flask import current_app
 
@@ -27,7 +28,7 @@ class ParsedContentService:
     parsed content, including retrieval, creation, updating, and deletion.
     """
     @staticmethod
-    def get_contents(page: int = 0, limit: int = 10, search_query: str = '', feed_id: str = None) -> Tuple[List[ParsedContent], int]:
+    def get_contents(page: int = 0, limit: int = 10, search_query: str = '', feed_id: Union[str, UUID] = None) -> Tuple[List[ParsedContent], int]:
         """
         Retrieve a paginated list of parsed content, optionally filtered by a search query and feed_id.
 
@@ -35,7 +36,7 @@ class ParsedContentService:
             page (int): The page number to retrieve (0-based).
             limit (int): The number of items to return per page.
             search_query (str): Optional search query to filter the content.
-            feed_id (str): Optional feed_id to filter the content.
+            feed_id (Union[str, UUID]): Optional feed_id to filter the content.
 
         Returns:
             Tuple[List[ParsedContent], int]: A tuple containing the list of parsed content objects and the total count.
@@ -43,6 +44,12 @@ class ParsedContentService:
         query = ParsedContent.query
 
         if feed_id:
+            if isinstance(feed_id, str):
+                try:
+                    feed_id = UUID(feed_id)
+                except ValueError:
+                    # Handle invalid UUID string
+                    return [], 0
             query = query.filter(ParsedContent.feed_id == feed_id)
 
         if search_query:
