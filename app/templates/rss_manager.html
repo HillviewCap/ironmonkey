@@ -299,7 +299,7 @@ document.getElementById('addSingleFeedForm').addEventListener('submit', function
             alert(data.error);
         } else {
             alert('Feed added successfully');
-            location.reload();
+            window.location.reload();
         }
     })
     .catch((error) => {
