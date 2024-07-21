@@ -1,8 +1,21 @@
-from flask import Blueprint, render_template, abort, request, redirect, url_for
+from flask import Blueprint, render_template, abort, request, redirect, url_for, jsonify
 from app.models.relational.parsed_content import ParsedContent
 from app.services.parsed_content_service import ParsedContentService
 
 parsed_content_bp = Blueprint('parsed_content', __name__)
+
+@parsed_content_bp.route('/summarize_content', methods=['POST'])
+def summarize_content():
+    content_id = request.json.get('content_id')
+    # Implement your summarization logic here
+    # For now, we'll just return a dummy response
+    return jsonify({'summary': 'This is a dummy summary.'})
+
+@parsed_content_bp.route('/clear_all_summaries', methods=['POST'])
+def clear_all_summaries():
+    # Implement your logic to clear all summaries here
+    # For now, we'll just return a dummy response
+    return jsonify({'message': 'All summaries have been cleared.'})
 
 @parsed_content_bp.route('/view/<uuid:content_id>')
 def view(content_id):

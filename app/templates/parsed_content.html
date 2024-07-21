@@ -5,7 +5,7 @@
     <h1 class="text-2xl font-bold mb-4">Parsed Content</h1>
     
     <div class="mb-4 flex justify-between items-center">
-        <form action="{{ url_for('rss_manager.get_parsed_content', feed_id=feed_id) }}" method="get" class="flex items-center">
+        <form action="{{ url_for('parsed_content.view', content_id=feed_id) }}" method="get" class="flex items-center">
             <input type="text" name="search" value="{{ search_query }}" placeholder="Search..." class="border rounded-l px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
             <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded-r hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500">Search</button>
         </form>
@@ -66,7 +66,7 @@
                 }
             ],
             server: {
-                url: '{{ url_for("rss_manager.get_parsed_content_data", feed_id=feed_id) }}',
+                url: '{{ url_for("parsed_content.view", content_id=feed_id) }}',
                 then: data => data.data.map(post => [
                     post.title || '',
                     post.summary || '',
@@ -122,7 +122,7 @@
             button.textContent = 'Summarizing...';
             button.disabled = true;
 
-            fetch('{{ url_for("summarize_content") }}', {
+            fetch('{{ url_for("parsed_content.summarize_content") }}', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -157,7 +157,7 @@
         const clearSummariesBtn = document.getElementById('clear-summaries-btn');
         clearSummariesBtn.addEventListener('click', function() {
             if (confirm('Are you sure you want to clear all summaries? This action cannot be undone.')) {
-                fetch('/clear_all_summaries', {
+                fetch('{{ url_for("parsed_content.clear_all_summaries") }}', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
