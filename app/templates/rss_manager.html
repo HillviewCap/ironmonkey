@@ -338,30 +338,21 @@ document.getElementById('addSingleFeedForm').addEventListener('submit', function
         const closeDrawerButton = document.getElementById('closeDrawer');
         const formDrawer = document.getElementById('formDrawer');
 
-        toggleDrawerButton.addEventListener('click', function() {
-            if (formDrawer.classList.contains('hidden')) {
-                formDrawer.classList.remove('hidden');
-                formDrawer.classList.remove('translate-x-full');
-                toggleDrawerButton.textContent = 'Close Add/Import Drawer';
-            } else {
-                formDrawer.classList.add('hidden');
-                formDrawer.classList.add('translate-x-full');
-                toggleDrawerButton.textContent = 'Open Add/Import Drawer';
-            }
-        });
+        function toggleDrawer() {
+            formDrawer.classList.toggle('hidden');
+            formDrawer.classList.toggle('translate-x-full');
+            toggleDrawerButton.textContent = formDrawer.classList.contains('hidden') 
+                ? 'Open Add/Import Drawer' 
+                : 'Close Add/Import Drawer';
+        }
 
-        closeDrawerButton.addEventListener('click', function() {
-            formDrawer.classList.add('hidden');
-            formDrawer.classList.add('translate-x-full');
-            toggleDrawerButton.textContent = 'Open Add/Import Drawer';
-        });
+        toggleDrawerButton.addEventListener('click', toggleDrawer);
+        closeDrawerButton.addEventListener('click', toggleDrawer);
 
         // Close drawer when clicking outside
         document.addEventListener('click', function(event) {
-            if (!formDrawer.contains(event.target) && !toggleDrawerButton.contains(event.target)) {
-                formDrawer.classList.add('hidden');
-                formDrawer.classList.add('translate-x-full');
-                toggleDrawerButton.textContent = 'Open Add/Import Drawer';
+            if (!formDrawer.contains(event.target) && !toggleDrawerButton.contains(event.target) && !formDrawer.classList.contains('hidden')) {
+                toggleDrawer();
             }
         });
     });
