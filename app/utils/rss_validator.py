@@ -1,14 +1,16 @@
 from __future__ import annotations
 
 import feedparser
+import logging
 from typing import Dict, Optional
 from datetime import datetime
 from urllib.parse import urlparse
 
+logger = logging.getLogger(__name__)
 
 def validate_rss_url(url: str) -> bool:
     """
-    Validate if the given URL is a valid RSS feed.
+    Validate if the given URL is a potentially valid RSS feed.
 
     This function attempts to parse the given URL as an RSS feed using the
     feedparser library. It checks if the parsed result has a version and is not
@@ -18,7 +20,7 @@ def validate_rss_url(url: str) -> bool:
         url (str): The URL to validate.
 
     Returns:
-        bool: True if the URL is a valid RSS feed, False otherwise.
+        bool: True if the URL is potentially a valid RSS feed, False otherwise.
 
     Example:
         >>> validate_rss_url('http://example.com/valid_rss_feed.xml')
@@ -27,9 +29,20 @@ def validate_rss_url(url: str) -> bool:
         False
     """
     try:
+        parsed_url = urlparse(url)
+        if not all([parsed_url.scheme, parsed_url.netloc]):
+            logger.warning(f"Invalid URL format: {url}")
+            return False
+        
         parsed = feedparser.parse(url)
-        return parsed.version != '' and not parsed.bozo
-    except Exception:
+        if parsed.version != '' and not parsed.bozo:
+            logger.info(f"URL {url} passed RSS validation")
+            return True
+        else:
+            logger.warning(f"URL {url} failed RSS validation: version={parsed.version}, bozo={parsed.bozo}")
+            return False
+    except Exception as e:
+        logger.error(f"Error validating RSS feed URL {url}: {str(e)}")
         return False
 
 
