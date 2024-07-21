@@ -10,8 +10,7 @@ from typing import List, Dict
 from sqlalchemy.orm import Session
 from app.extensions import db
 
-from app.models import RSSFeed
-from app.models import ParsedContent
+from app.models import RSSFeed, ParsedContent, AwesomeThreatIntelBlog
 import asyncio
 from app.utils.rss_validator import validate_rss_url
 from app.utils.http_client import fetch_feed_info
@@ -20,6 +19,8 @@ from app.utils.logging_config import setup_logger
 from app.services.parsed_content_service import ParsedContentService
 
 logger = setup_logger('rss_feed_service', 'rss_feed_service.log')
+
+UUID = uuid.UUID
 
 class RSSFeedService:
     """
