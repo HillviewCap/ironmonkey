@@ -20,14 +20,14 @@
                 { 
                     id: 'title', 
                     name: 'Title',
-                    width: '25%',
+                    width: '20%',
                     resizable: true,
                     formatter: (cell, row) => gridjs.html(`<a href="/item/${row.cells[4].data}" class="text-blue-500 hover:underline">${cell}</a>`)
                 },
                 { 
                     id: 'summary', 
                     name: 'Summary', 
-                    width: '35%',
+                    width: '40%',
                     resizable: true,
                     formatter: (cell) => cell && cell.length > 200 ? cell.substring(0, 200) + '...' : cell
                 },
@@ -101,10 +101,13 @@
                 limit: 10
             },
             fixedHeader: true,
-            height: '400px',
             style: {
                 table: {
-                    'white-space': 'nowrap'
+                    width: '100%'
+                },
+                td: {
+                    'white-space': 'normal',
+                    'word-wrap': 'break-word'
                 }
             },
             language: {
