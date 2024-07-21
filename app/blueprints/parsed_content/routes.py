@@ -1,8 +1,27 @@
 from flask import Blueprint, render_template, abort, request, redirect, url_for, jsonify
 from app.models.relational.parsed_content import ParsedContent
 from app.services.parsed_content_service import ParsedContentService
+from uuid import UUID
 
 parsed_content_bp = Blueprint('parsed_content', __name__)
+
+@parsed_content_bp.route('/view/<uuid:content_id>')
+def view_content(content_id):
+    page = request.args.get('page', 0, type=int)
+    limit = request.args.get('limit', 10, type=int)
+    
+    content = ParsedContentService.get_content_by_id(content_id)
+    if not content:
+        abort(404)
+    
+    # Here you would implement the logic to paginate the content
+    # For now, we'll just return all the content
+    return jsonify({
+        'data': content.to_dict(),
+        'total': 1,
+        'page': page,
+        'limit': limit
+    })
 
 @parsed_content_bp.route('/summarize_content', methods=['POST'])
 def summarize_content():
