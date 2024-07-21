@@ -10,7 +10,7 @@ def view_content(content_id):
     content = ParsedContentService.get_content_by_id(content_id)
     if not content:
         abort(404)
-    return render_template('parsed_content/view.html', content=content)
+    return render_template('view_item.html', item=content)
 
 @parsed_content_bp.route('/list', methods=['GET'])
 def list_content():
