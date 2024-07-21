@@ -1,3 +1,10 @@
+"""
+This module provides services for parsing RSS feeds and storing their content.
+
+It includes functionality for fetching RSS feeds, parsing their content,
+and storing new entries in the database.
+"""
+
 from __future__ import annotations
 
 import hashlib
@@ -38,7 +45,23 @@ def sanitize_html(text: str) -> str:
     return text
 
 async def fetch_and_parse_feed(feed: RSSFeed) -> int:
-    """Fetch and parse a single RSS feed."""
+    """
+    Fetch and parse a single RSS feed.
+
+    This function retrieves the content of an RSS feed, parses it, and stores new entries
+    in the database. It handles redirects, updates feed metadata, and processes individual
+    entries.
+
+    Args:
+        feed (RSSFeed): The RSS feed object to fetch and parse.
+
+    Returns:
+        int: The number of new entries added to the database.
+
+    Raises:
+        ValueError: If there's an HTTP error, request error, or timeout.
+        RuntimeError: For unexpected errors during parsing.
+    """
     new_entries_count = 0
     try:
         if current_app.debug:
