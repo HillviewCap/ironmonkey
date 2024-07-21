@@ -80,13 +80,18 @@ def create_app(config_object=None):
         else:
             logger.warning(f"Blueprint {blueprint.name} already registered, skipping.")
 
-    # Initialize Ollama API
-    app.ollama_api = OllamaAPI()
-
+    # Initialize services
     with app.app_context():
+        # Initialize Ollama API
+        app.ollama_api = OllamaAPI()
+        
         # Setup scheduler
         app.scheduler = SchedulerService(app)
         app.scheduler.setup_scheduler()
+        
+        # Initialize other services (if needed)
+        from app.services.feed_parser_service import FeedParserService
+        app.feed_parser_service = FeedParserService()
 
     @login_manager.user_loader
     def load_user(user_id):
