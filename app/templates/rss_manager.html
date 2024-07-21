@@ -297,3 +297,20 @@ document.getElementById('addSingleFeedForm').addEventListener('submit', function
 });
 </script>
 {% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const flashMessages = document.querySelectorAll('.alert');
+        flashMessages.forEach(function(message) {
+            setTimeout(function() {
+                message.style.transition = 'opacity 1s';
+                message.style.opacity = '0';
+                setTimeout(function() {
+                    message.remove();
+                }, 1000);
+            }, 25000);
+        });
+    });
+</script>
+{% endblock %}
