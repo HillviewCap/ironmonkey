@@ -40,20 +40,40 @@ class AwesomeThreatIntelService:
         Returns:
             None
         """
-        csv_file_path = os.path.join(current_app.root_path, 'static', 'Awesome Threat Intel Blogs - MASTER.csv')
-        
+        existing_blogs = {blog.blog: blog for blog in AwesomeThreatIntelBlog.query.all()}
+        csv_blogs = set()
+
         with open(csv_file_path, 'r', encoding='utf-8') as csvfile:
             reader = csv.DictReader(csvfile)
             for row in reader:
-                AwesomeThreatIntelBlog.update_or_create(
-                    blog=row['Blog'],
-                    blog_category=row['Blog Category'],
-                    type=row['Type'],
-                    blog_link=row['Blog Link'],
-                    feed_link=row['Feed Link'],
-                    feed_type=row['Feed Type']
-                )
-        
+                blog_name = row['Blog']
+                csv_blogs.add(blog_name)
+                
+                if blog_name in existing_blogs:
+                    # Update existing blog
+                    blog = existing_blogs[blog_name]
+                    blog.blog_category = row['Blog Category']
+                    blog.type = row['Type']
+                    blog.blog_link = row['Blog Link']
+                    blog.feed_link = row['Feed Link']
+                    blog.feed_type = row['Feed Type']
+                else:
+                    # Add new blog
+                    blog = AwesomeThreatIntelBlog(
+                        blog=blog_name,
+                        blog_category=row['Blog Category'],
+                        type=row['Type'],
+                        blog_link=row['Blog Link'],
+                        feed_link=row['Feed Link'],
+                        feed_type=row['Feed Type']
+                    )
+                    db.session.add(blog)
+
+        # Remove blogs that are not in the CSV
+        for blog_name, blog in existing_blogs.items():
+            if blog_name not in csv_blogs:
+                db.session.delete(blog)
+
         # Update last_checked for all entries
         AwesomeThreatIntelBlog.query.update({AwesomeThreatIntelBlog.last_checked: datetime.utcnow()})
         db.session.commit()
