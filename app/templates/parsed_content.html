@@ -2,7 +2,7 @@
 
 {% block content %}
 <div class="container mx-auto px-4">
-    <h1 class="text-2xl font-bold mb-4">Parsed Content</h1>
+    <h1 class="text-2xl font-bold mb-4">Blog Posts</h1>
     
     <div class="mb-4 flex justify-between items-center">
         <form action="{{ url_for('parsed_content.view_content', content_id=feed_id) }}" method="get" class="flex items-center">
