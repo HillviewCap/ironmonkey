@@ -341,9 +341,6 @@ document.getElementById('addSingleFeedForm').addEventListener('submit', function
         function toggleDrawer() {
             formDrawer.classList.toggle('hidden');
             formDrawer.classList.toggle('translate-x-full');
-            toggleDrawerButton.textContent = formDrawer.classList.contains('hidden') 
-                ? 'Open Add/Import Drawer' 
-                : 'Close Add/Import Drawer';
         }
 
         toggleDrawerButton.addEventListener('click', toggleDrawer);
