@@ -108,7 +108,8 @@ async def create_rss_feed_from_awesome():
         raise BadRequest("Missing blog_id in request data")
 
     try:
-        awesome_blog = AwesomeThreatIntelBlog.query.get(data['blog_id'])
+        blog_id = UUID(data['blog_id'])
+        awesome_blog = AwesomeThreatIntelBlog.query.get(blog_id)
         if not awesome_blog:
             raise ValueError("Awesome Threat Intel Blog not found")
 
