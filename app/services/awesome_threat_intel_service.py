@@ -1,3 +1,10 @@
+"""
+This module provides services for managing Awesome Threat Intel Blogs.
+
+It includes functionality for updating the database from a CSV file and
+retrieving the update status.
+"""
+
 import os
 from flask import current_app
 from app.models.relational.awesome_threat_intel_blog import AwesomeThreatIntelBlog
@@ -7,10 +14,26 @@ import csv
 from datetime import datetime
 
 class AwesomeThreatIntelService:
+    """
+    A service class for managing Awesome Threat Intel Blogs.
+
+    This class provides static methods for updating the database from a CSV file
+    and retrieving the update status.
+    """
     @staticmethod
     def update_from_csv():
         """
         Check the CSV file for new items and update the awesome_threat_intel_blog table.
+
+        This method reads a CSV file containing Awesome Threat Intel Blog information,
+        updates existing entries, and adds new ones to the database. It also updates
+        the last_checked timestamp for all entries.
+
+        The CSV file is expected to be located at:
+        [app_root_path]/static/Awesome Threat Intel Blogs - MASTER.csv
+
+        Returns:
+            None
         """
         csv_file_path = os.path.join(current_app.root_path, 'static', 'Awesome Threat Intel Blogs - MASTER.csv')
         
@@ -33,10 +56,18 @@ class AwesomeThreatIntelService:
     @staticmethod
     def get_update_status():
         """
-        Get the status of the last update.
+        Get the status of the last update for Awesome Threat Intel Blogs.
+
+        This method queries the database to find the most recent last_checked
+        timestamp among all Awesome Threat Intel Blog entries.
 
         Returns:
             dict: A dictionary containing the update status and timestamp.
+                  The dictionary has two keys:
+                  - 'last_updated': ISO formatted timestamp of the last update,
+                                    or None if never updated.
+                  - 'status': Either "Up to date" if there's a last_checked timestamp,
+                              or "Never updated" if there isn't.
         """
         last_checked = db.session.query(db.func.max(AwesomeThreatIntelBlog.last_checked)).scalar()
         return {
