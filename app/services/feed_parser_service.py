@@ -16,11 +16,18 @@ from app.utils.content_sanitizer import sanitize_html_content
 from flask import current_app
 from sqlalchemy.orm import Session
 
-from app.models import db, ParsedContent, RSSFeed
+from app.models import db, ParsedContent, RSSFeed, Category
 from app.utils.logging_config import setup_logger
 from app.utils.jina_api import parse_content
 
 logger = setup_logger('feed_parser_service', 'feed_parser_service.log')
+
+def get_or_create_category(name):
+    category = Category.query.filter_by(name=name).first()
+    if not category:
+        category = Category(name=name)
+        db.session.add(category)
+    return category
 
 # The logger is already set up in logging_config.py, so we can use it directly
 
@@ -103,7 +110,13 @@ async def fetch_and_parse_feed(feed: RSSFeed) -> int:
                             db.session.add(new_content)
                             db.session.flush()  # This will assign the UUID to new_content
 
-                            # TODO: Implement category handling if needed
+                            # Handle categories
+                            categories = entry.get('tags', [])
+                            for category in categories:
+                                cat_name = sanitize_html_content(category.get('term', ''))
+                                if cat_name:
+                                    cat_obj = get_or_create_category(cat_name)
+                                    new_content.categories.append(cat_obj)
                             new_entries_count += 1
                             if current_app.debug:
                                 logger.debug(f"Added new entry: {url}")

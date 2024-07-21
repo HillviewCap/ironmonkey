@@ -42,3 +42,14 @@ class Category(db.Model):
             )
         else:
             raise ValueError("Unsupported category format")
+from uuid import uuid4
+from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy import Column, String
+from app import db
+
+class Category(db.Model):
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    name = Column(String(255), nullable=False, unique=True)
+
+    def __repr__(self):
+        return f"<Category {self.name}>"
