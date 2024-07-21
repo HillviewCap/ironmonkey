@@ -3,12 +3,12 @@ This module initializes the Flask application and sets up all necessary configur
 """
 
 import os
-from uuid import uuid4
+import logging
+from dotenv import load_dotenv
 from flask import Flask
 from flask_migrate import Migrate
 from flask_wtf.csrf import CSRFProtect
 from flask_login import LoginManager
-from dotenv import load_dotenv
 
 from .extensions import db
 from app.utils.logging_config import setup_logger
@@ -21,6 +21,8 @@ from app.blueprints.api.routes import api_bp
 from app.blueprints.parsed_content.routes import parsed_content_bp
 from app.utils.ollama_client import OllamaAPI
 from app.services.scheduler_service import SchedulerService
+
+load_dotenv()
 
 # Configure logging
 logger = setup_logger("app", "app.log")
@@ -40,27 +42,39 @@ def create_app(env=None):
     Returns:
         Flask: The configured Flask application instance.
     """
+    # Configure logging
+    logger = setup_logger("app", "app.log")
+
     # Load environment variables
     load_dotenv()
     if env is None:
         env = os.getenv('FLASK_ENV', 'development')
     app = Flask(__name__, instance_relative_config=True, static_url_path="/static", template_folder="templates")
-    
-    # Load configuration from environment variables
+
+    # Ensure the instance folder exists
+    os.makedirs(app.instance_path, exist_ok=True)
+
+    # Log the instance path
+    logger.debug(f"Instance path: {app.instance_path}")
+
     app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
     app.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite:///{os.path.join(app.instance_path, 'threats.db')}"
-    app.config['DEBUG'] = os.getenv('DEBUG', 'False').lower() == 'true'
-    app.config['FLASK_ENV'] = os.getenv('FLASK_ENV', 'production')
-    app.config['FLASK_PORT'] = int(os.getenv('FLASK_PORT', '5000'))
+    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     app.config['RSS_CHECK_INTERVAL'] = int(os.getenv('RSS_CHECK_INTERVAL', 30))
     app.config['SUMMARY_CHECK_INTERVAL'] = int(os.getenv('SUMMARY_CHECK_INTERVAL', 60))
     app.config['SUMMARY_API_CHOICE'] = os.getenv('SUMMARY_API_CHOICE', 'groq')
+    app.config['DEBUG'] = os.getenv('FLASK_ENV') == 'development'
+    app.config['FLASK_ENV'] = os.getenv('FLASK_ENV', 'development')
+    app.config['FLASK_PORT'] = int(os.getenv('FLASK_PORT', '5000'))
+    app.config['LOG_LEVEL'] = 'DEBUG' if app.config['DEBUG'] else 'INFO'
 
-    # Initialize extensions
+    # Log the database URI
+    logger.debug(f"Database URI: {app.config['SQLALCHEMY_DATABASE_URI']}")
     db.init_app(app)
     csrf.init_app(app)
     migrate.init_app(app, db)
     login_manager.init_app(app)
+
 
     # Register blueprints
     app.register_blueprint(main_bp)
