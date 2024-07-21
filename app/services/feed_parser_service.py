@@ -7,7 +7,6 @@ and storing new entries in the database.
 
 from __future__ import annotations
 
-import hashlib
 from datetime import datetime
 from typing import Optional
 
@@ -77,9 +76,8 @@ async def fetch_and_parse_feed(feed: RSSFeed) -> int:
                     title = entry.get('title', '')
                     if current_app.debug:
                         logger.debug(f"Processing entry: {url} - {title}")
-                    art_hash = hashlib.sha256(f"{url}{title}".encode()).hexdigest()
 
-                    existing_content = ParsedContent.query.filter_by(art_hash=art_hash).first()
+                    existing_content = ParsedContent.query.filter_by(url=url, feed_id=feed.id).first()
                     if not existing_content:
                         if current_app.debug:
                             logger.debug(f"New content found: {url}")
@@ -100,8 +98,7 @@ async def fetch_and_parse_feed(feed: RSSFeed) -> int:
                                 title=sanitize_html_content(title),
                                 description=sanitize_html_content(entry.get('description', '')),
                                 pub_date=pub_date,
-                                creator=sanitize_html_content(entry.get('author', '')),
-                                art_hash=art_hash
+                                creator=sanitize_html_content(entry.get('author', ''))
                             )
                             db.session.add(new_content)
                             db.session.flush()  # This will assign the UUID to new_content
