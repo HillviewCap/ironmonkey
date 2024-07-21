@@ -11,8 +11,7 @@ def view_content():
     limit = request.args.get('limit', 10, type=int)
     search_query = request.args.get('search', '')
     
-    contents = ParsedContentService.get_contents(page=page, limit=limit, search_query=search_query)
-    total = ParsedContentService.get_total_count(search_query=search_query)
+    contents, total = ParsedContentService.get_contents(page=page, limit=limit, search_query=search_query)
     
     return jsonify({
         'data': [content.to_dict() for content in contents],

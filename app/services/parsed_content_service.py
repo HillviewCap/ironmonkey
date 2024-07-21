@@ -27,28 +27,55 @@ class ParsedContentService:
     parsed content, including retrieval, creation, updating, and deletion.
     """
     @staticmethod
-    def get_parsed_content(filters: Dict[str, any], page: int = 1, per_page: int = 20) -> Tuple[List[ParsedContent], int]:
+    def get_contents(page: int = 0, limit: int = 10, search_query: str = '') -> Tuple[List[ParsedContent], int]:
         """
-        Retrieve a paginated list of parsed content based on the provided filters.
+        Retrieve a paginated list of parsed content, optionally filtered by a search query.
 
         Args:
-            filters (Dict[str, any]): A dictionary of filters to apply to the query.
-            page (int): The page number to retrieve.
-            per_page (int): The number of items to return per page.
+            page (int): The page number to retrieve (0-based).
+            limit (int): The number of items to return per page.
+            search_query (str): Optional search query to filter the content.
 
         Returns:
             Tuple[List[ParsedContent], int]: A tuple containing the list of parsed content objects and the total count.
         """
         query = ParsedContent.query
 
-        for field, value in filters.items():
-            if hasattr(ParsedContent, field):
-                query = query.filter(getattr(ParsedContent, field) == value)
+        if search_query:
+            search = f"%{search_query}%"
+            query = query.filter(
+                (ParsedContent.title.ilike(search)) |
+                (ParsedContent.description.ilike(search)) |
+                (ParsedContent.content.ilike(search))
+            )
 
         total_count = query.count()
-        content = query.order_by(desc(ParsedContent.created_at)).paginate(page=page, per_page=per_page, error_out=False)
+        content = query.order_by(desc(ParsedContent.created_at)).offset(page * limit).limit(limit).all()
 
-        return content.items, total_count
+        return content, total_count
+
+    @staticmethod
+    def get_total_count(search_query: str = '') -> int:
+        """
+        Get the total count of parsed content, optionally filtered by a search query.
+
+        Args:
+            search_query (str): Optional search query to filter the content.
+
+        Returns:
+            int: The total count of parsed content items.
+        """
+        query = ParsedContent.query
+
+        if search_query:
+            search = f"%{search_query}%"
+            query = query.filter(
+                (ParsedContent.title.ilike(search)) |
+                (ParsedContent.description.ilike(search)) |
+                (ParsedContent.content.ilike(search))
+            )
+
+        return query.count()
 
     @staticmethod
     def get_content_by_id(content_id: uuid.UUID) -> ParsedContent:
