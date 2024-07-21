@@ -27,19 +27,7 @@ class AwesomeThreatIntelService:
         This method reads the CSV file, compares it with existing entries in the database,
         adds new entries, updates existing ones, and removes entries that are no longer in the CSV.
         """
-        """
-        Check the CSV file for new items and update the awesome_threat_intel_blog table.
-
-        This method reads a CSV file containing Awesome Threat Intel Blog information,
-        updates existing entries, and adds new ones to the database. It also updates
-        the last_checked timestamp for all entries.
-
-        The CSV file is expected to be located at:
-        [app_root_path]/static/Awesome Threat Intel Blogs - MASTER.csv
-
-        Returns:
-            None
-        """
+        csv_file_path = os.path.join(current_app.root_path, 'static', 'Awesome Threat Intel Blogs - MASTER.csv')
         existing_blogs = {blog.blog: blog for blog in AwesomeThreatIntelBlog.query.all()}
         csv_blogs = set()
 
