@@ -68,7 +68,7 @@
                             <div class="text-xs text-gray-500">{{ result.pub_date if result.pub_date else _('N/A') }}</div>
                         </td>
                         <td class="py-3 px-6 text-center">
-                            <a href="{{ url_for('parsed_content.view', content_id=result.id) }}" class="text-blue-600 hover:text-blue-900 underline">{{ _('View Details') }}</a>
+                            <a href="{{ url_for('parsed_content.view_content', content_id=result.id) }}" class="text-blue-600 hover:text-blue-900 underline">{{ _('View Details') }}</a>
                         </td>
                     </tr>
                     {% endfor %}
