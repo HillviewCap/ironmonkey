@@ -209,6 +209,20 @@ def get_parsed_content(feed_id):
     Returns:
         str: Rendered HTML template with the parsed content.
     """
+    return render_template('parsed_content.html', feed_id=feed_id)
+
+@rss_manager_bp.route('/rss/parsed_content_data/<uuid:feed_id>')
+@login_required
+def get_parsed_content_data(feed_id):
+    """
+    Retrieve parsed content data for a specific RSS feed.
+
+    Args:
+        feed_id (uuid.UUID): The UUID of the RSS feed to get parsed content for.
+
+    Returns:
+        json: JSON response with parsed content data.
+    """
     page = request.args.get('page', 1, type=int)
     per_page = request.args.get('per_page', 10, type=int)
     filters = request.args.to_dict()
@@ -218,8 +232,10 @@ def get_parsed_content(feed_id):
 
     content, total = parsed_content_service.get_parsed_content(filters, page, per_page)
     
-    # Ensure feed_id is passed to the template for proper URL generation
-    return render_template('parsed_content.html', feed_id=feed_id, content=content, total=total, page=page, per_page=per_page)
+    return jsonify({
+        'data': [item.to_dict() for item in content],
+        'total': total
+    })
 
 @rss_manager_bp.route('/update_awesome_threat_intel', methods=['POST'])
 @login_required

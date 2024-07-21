@@ -66,7 +66,7 @@
                 }
             ],
             server: {
-                url: '{{ url_for("rss_manager.parsed_content_data") }}',
+                url: '{{ url_for("rss_manager.get_parsed_content_data", feed_id=feed_id) }}',
                 then: data => data.data.map(post => [
                     post.title || '',
                     post.summary || '',
