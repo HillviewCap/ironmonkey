@@ -165,15 +165,15 @@ def delete_rss_feed(feed_id):
         feed_id (uuid.UUID): The UUID of the RSS feed to delete.
 
     Returns:
-        tuple: A tuple containing a JSON response with a success or error
-               message, and an HTTP status code.
+        werkzeug.wrappers.Response: A redirect response to the RSS feed manager page.
     """
     try:
         rss_feed_service.delete_feed(feed_id)
-        return jsonify({"message": "RSS feed deleted successfully"}), 200
+        flash("RSS feed deleted successfully", "success")
     except Exception as e:
         current_app.logger.error(f"Error deleting RSS feed: {str(e)}")
-        return jsonify({"error": "Failed to delete RSS feed"}), 500
+        flash("Failed to delete RSS feed", "error")
+    return redirect(url_for('rss_manager.get_rss_feeds'))
 
 @rss_manager_bp.route('/rss/parse/<uuid:feed_id>', methods=['POST'])
 @login_required
