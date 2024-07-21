@@ -123,7 +123,7 @@ def get_parsed_content(feed_id):
     feed_id_str = str(feed_id)
 
     # Fetch the data from your database
-    data = ParsedContentService.get_contents(page=page, limit=limit, search_query=search, feed_id=feed_id_str)
+    items, total = ParsedContentService.get_contents(page=page, limit=limit, search_query=search, feed_id=feed_id_str)
 
     # Format the data for Grid.js
     formatted_data = [
@@ -134,10 +134,10 @@ def get_parsed_content(feed_id):
             'url': item.url,
             'pub_date': item.pub_date.strftime('%Y-%m-%d %H:%M:%S') if item.pub_date else ''
         }
-        for item in data.items
+        for item in items
     ]
 
     return jsonify({
         'data': formatted_data,
-        'total': data.total
+        'total': total
     })
