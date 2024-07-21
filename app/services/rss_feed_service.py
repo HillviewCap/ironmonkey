@@ -93,38 +93,6 @@ class RSSFeedService:
             return feed
 
     @staticmethod
-    async def create_feed_from_awesome_blog(awesome_blog_id: UUID) -> RSSFeed:
-        """
-        Create a new RSS feed from an Awesome Threat Intel Blog.
-
-        Args:
-            awesome_blog_id (UUID): The ID of the Awesome Threat Intel Blog.
-
-        Returns:
-            RSSFeed: The newly created RSS feed object.
-
-        Raises:
-            ValueError: If the Awesome Threat Intel Blog is not found or the RSS feed URL already exists.
-        """
-        with Session(db.engine) as session:
-            awesome_blog = session.query(AwesomeThreatIntelBlog).get(awesome_blog_id)
-            if not awesome_blog:
-                raise ValueError("Invalid awesome blog ID")
-
-            existing_feed = session.query(RSSFeed).filter_by(url=awesome_blog.feed_link).first()
-            if existing_feed:
-                raise ValueError("RSS feed URL already exists")
-
-            feed_data = {
-                'url': awesome_blog.feed_link,
-                'category': awesome_blog.blog_category,
-                'title': awesome_blog.blog,
-                'description': awesome_blog.blog,
-            }
-
-            return await RSSFeedService.create_feed(feed_data)
-
-    @staticmethod
     async def parse_feed(feed_id: UUID) -> List[ParsedContent]:
         """
         Parse an RSS feed and store the parsed content.
