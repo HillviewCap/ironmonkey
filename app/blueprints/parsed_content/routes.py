@@ -5,7 +5,7 @@ from uuid import UUID
 
 parsed_content_bp = Blueprint('parsed_content', __name__)
 
-@parsed_content_bp.route('/content/view/<uuid:content_id>')
+@parsed_content_bp.route('/content/view/<uuid:content_id>', methods=['GET', 'POST'])
 def view_content(content_id):
     page = request.args.get('page', 0, type=int)
     limit = request.args.get('limit', 10, type=int)
