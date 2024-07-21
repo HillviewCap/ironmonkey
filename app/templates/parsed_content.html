@@ -52,7 +52,10 @@
                     id: 'pub_date', 
                     name: 'Published Date',
                     width: '15%',
-                    formatter: (cell) => gridjs.html(`<span class="text-sm">${cell}</span>`)
+                    formatter: (cell) => gridjs.html(`<span class="text-sm">${cell}</span>`),
+                    sort: {
+                        enabled: true
+                    }
                 },
                 {
                     id: 'actions',
@@ -81,8 +84,17 @@
                     url: (prev, keyword) => `${prev}${prev.includes('?') ? '&' : '?'}search=${keyword}`
                 }
             },
-            search: true,
-            sort: true,
+            sort: {
+                server: {
+                    url: (prev, columns) => {
+                        if (!columns.length) return prev;
+                        const col = columns[0];
+                        const dir = col.direction === 1 ? 'asc' : 'desc';
+                        let colName = ['title', 'summary', 'url', 'pub_date'][col.index];
+                        return `${prev}${prev.includes('?') ? '&' : '?'}sort[${colName}]=${dir}`;
+                    }
+                }
+            },
             pagination: {
                 limit: 10,
                 server: {
