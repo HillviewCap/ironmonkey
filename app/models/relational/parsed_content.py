@@ -18,7 +18,8 @@ class ParsedContent(db.Model):
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
     pub_date = Column(String(100), nullable=True)
     creator = Column(String(255), nullable=True)
-    art_hash = Column(String(64), unique=True, index=True)
+
+    __table_args__ = (db.UniqueConstraint('url', 'feed_id', name='uix_url_feed'),)
 
     @classmethod
     def deduplicate(cls):
