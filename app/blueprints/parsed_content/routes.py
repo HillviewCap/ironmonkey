@@ -115,15 +115,13 @@ from flask import jsonify, request
 
 @parsed_content_bp.route('/get_parsed_content/<uuid:feed_id>')
 def get_parsed_content(feed_id):
-    page = request.args.get('page', 0, type=int)
-    limit = request.args.get('limit', 10, type=int)
     search = request.args.get('search', '')
 
     # Convert feed_id to string
     feed_id_str = str(feed_id)
 
-    # Fetch the data from your database
-    items, total = ParsedContentService.get_contents(page=page, limit=limit, search_query=search, feed_id=feed_id_str)
+    # Fetch all data from your database
+    items = ParsedContentService.get_all_contents(search_query=search, feed_id=feed_id_str)
 
     # Format the data for Grid.js
     formatted_data = [
@@ -139,5 +137,5 @@ def get_parsed_content(feed_id):
 
     return jsonify({
         'data': formatted_data,
-        'total': total
+        'total': len(formatted_data)
     })

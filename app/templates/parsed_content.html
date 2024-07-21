@@ -68,28 +68,29 @@
                     `)
                 }
             ],
-            server: {
-                url: '{{ url_for("parsed_content.get_parsed_content", feed_id=feed_id) }}',
-                then: data => data.data.map(post => [
-                    post.title || '',
-                    post.summary || '',
-                    post.url || '',
-                    post.pub_date || '',
-                    post.id || ''
-                ]),
-                total: data => data.total
+            data: () => {
+                return new Promise((resolve, reject) => {
+                    fetch('{{ url_for("parsed_content.get_parsed_content", feed_id=feed_id) }}')
+                        .then(response => response.json())
+                        .then(data => {
+                            resolve(data.data.map(post => [
+                                post.title || '',
+                                post.summary || '',
+                                post.url || '',
+                                post.pub_date || '',
+                                post.id || ''
+                            ]));
+                        })
+                        .catch(error => reject(error));
+                });
             },
             search: {
-                server: {
-                    url: (prev, keyword) => `${prev}${prev.includes('?') ? '&' : '?'}search=${keyword}`
-                }
+                enabled: true
             },
             sort: true,
             pagination: {
-                limit: 10,
-                server: {
-                    url: (prev, page, limit) => `${prev}${prev.includes('?') ? '&' : '?'}page=${page}&limit=${limit}`
-                }
+                enabled: true,
+                limit: 10
             }
         }).render(document.getElementById("parsed-content-table"));
 
