@@ -5,9 +5,9 @@ from uuid import UUID
 
 parsed_content_bp = Blueprint('parsed_content', __name__)
 
-@parsed_content_bp.route('/view/<uuid:content_id>', methods=['GET'])
-def view_content(content_id):
-    page = request.args.get('page', 0, type=int)
+@parsed_content_bp.route('/view', methods=['GET'])
+def view_content():
+    page = request.args.get('page', 1, type=int) - 1  # Grid.js uses 1-based indexing
     limit = request.args.get('limit', 10, type=int)
     search_query = request.args.get('search', '')
     
@@ -17,7 +17,7 @@ def view_content(content_id):
     return jsonify({
         'data': [content.to_dict() for content in contents],
         'total': total,
-        'page': page,
+        'page': page + 1,  # Return 1-based page number
         'limit': limit
     })
 
