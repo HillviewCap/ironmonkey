@@ -3,7 +3,6 @@ This module initializes the Flask application and sets up all necessary configur
 """
 
 import os
-import logging
 from dotenv import load_dotenv
 from flask import Flask
 from flask_migrate import Migrate
@@ -32,49 +31,33 @@ csrf = CSRFProtect()
 login_manager = LoginManager()
 login_manager.login_view = 'auth.login'
 
-def create_app(env=None):
+def create_app(config_object):
     """
     Create and configure an instance of the Flask application.
 
     Args:
-        env (str, optional): The environment to use for configuration. Defaults to None.
+        config_object: The configuration object to use.
 
     Returns:
         Flask: The configured Flask application instance.
     """
-    # Configure logging
-    logger = setup_logger("app", "app.log")
-
-    # Load environment variables
-    load_dotenv()
-    if env is None:
-        env = os.getenv('FLASK_ENV', 'development')
     app = Flask(__name__, instance_relative_config=True, static_url_path="/static", template_folder="templates")
+
+    # Load the config
+    app.config.from_object(config_object)
 
     # Ensure the instance folder exists
     os.makedirs(app.instance_path, exist_ok=True)
 
-    # Log the instance path
+    # Log the instance path and database URI
     logger.debug(f"Instance path: {app.instance_path}")
-
-    app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
-    app.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite:///{os.path.join(app.instance_path, 'threats.db')}"
-    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-    app.config['RSS_CHECK_INTERVAL'] = int(os.getenv('RSS_CHECK_INTERVAL', 30))
-    app.config['SUMMARY_CHECK_INTERVAL'] = int(os.getenv('SUMMARY_CHECK_INTERVAL', 60))
-    app.config['SUMMARY_API_CHOICE'] = os.getenv('SUMMARY_API_CHOICE', 'groq')
-    app.config['DEBUG'] = os.getenv('FLASK_ENV') == 'development'
-    app.config['FLASK_ENV'] = os.getenv('FLASK_ENV', 'development')
-    app.config['FLASK_PORT'] = int(os.getenv('FLASK_PORT', '5000'))
-    app.config['LOG_LEVEL'] = 'DEBUG' if app.config['DEBUG'] else 'INFO'
-
-    # Log the database URI
     logger.debug(f"Database URI: {app.config['SQLALCHEMY_DATABASE_URI']}")
+
+    # Initialize extensions
     db.init_app(app)
     csrf.init_app(app)
     migrate.init_app(app, db)
     login_manager.init_app(app)
-
 
     # Register blueprints
     app.register_blueprint(main_bp)
@@ -87,9 +70,6 @@ def create_app(env=None):
 
     # Initialize Ollama API
     app.ollama_api = OllamaAPI()
-
-    # Ensure the instance folder exists
-    os.makedirs(app.instance_path, exist_ok=True)
 
     with app.app_context():
         # Setup scheduler
