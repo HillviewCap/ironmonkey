@@ -1,14 +1,19 @@
-from sqlalchemy import Column, String, Text, ForeignKey
-from sqlalchemy.orm import relationship, declarative_base
+from __future__ import annotations
+
+from sqlalchemy import Column, String, Text, ForeignKey, Index
+from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.postgresql import UUID
+from app import db
+from typing import List
 import uuid
 
-Base = declarative_base()
-
-class AllTools(Base):
+class AllTools(db.Model):
+    """
+    Represents the AllTools table in the database.
+    """
     __tablename__ = 'alltools'
 
-    uuid = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    uuid = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     authors = Column(Text)
     category = Column(String)
     name = Column(String)
@@ -19,33 +24,38 @@ class AllTools(Base):
     license = Column(String)
     last_db_change = Column(String)
 
-    values = relationship("AllToolsValues", back_populates="alltool")
+    values: List[AllToolsValues] = relationship("AllToolsValues", back_populates="alltool")
 
-class AllToolsValues(Base):
+    __table_args__ = (Index('idx_alltools_uuid', uuid),)
+
+class AllToolsValues(db.Model):
+    """
+    Represents the AllToolsValues table in the database.
+    """
     __tablename__ = 'alltools_values'
 
-    uuid = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    uuid = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     tool = Column(String)
     description = Column(Text)
     category = Column(String)
     type = Column(String)
     information = Column(Text)
     last_card_change = Column(String)
-    alltools_uuid = Column(String(36), ForeignKey('alltools.uuid'))
+    alltools_uuid = Column(UUID(as_uuid=True), ForeignKey('alltools.uuid'))
 
-    alltool = relationship("AllTools", back_populates="values")
-    names = relationship("AllToolsValuesNames", back_populates="alltools_value")
+    alltool: AllTools = relationship("AllTools", back_populates="values")
+    names: List[AllToolsValuesNames] = relationship("AllToolsValuesNames", back_populates="alltools_value")
 
-class AllToolsValuesNames(Base):
+    __table_args__ = (Index('idx_alltools_values_uuid', uuid),)
+
+class AllToolsValuesNames(db.Model):
+    """
+    Represents the AllToolsValuesNames table in the database.
+    """
     __tablename__ = 'alltools_values_names'
 
-    uuid = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    uuid = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     name = Column(String)
-    alltools_values_uuid = Column(String(36), ForeignKey('alltools_values.uuid'))
+    alltools_values_uuid = Column(UUID(as_uuid=True), ForeignKey('alltools_values.uuid'))
 
-    alltools_value = relationship("AllToolsValues", back_populates="names")
-
-# Add indexes for frequently queried columns
-from sqlalchemy import Index
-Index('idx_alltools_uuid', AllTools.uuid)
-Index('idx_alltools_values_uuid', AllToolsValues.uuid)
+    alltools_value: AllToolsValues = relationship("AllToolsValues", back_populates="names")
