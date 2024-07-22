@@ -1,91 +1,82 @@
-from flask import Blueprint, request, jsonify, current_app, abort, render_template, flash, redirect, url_for
+from __future__ import annotations
+
 from uuid import UUID
+from typing import Tuple, Dict, Any, List
+
+from flask import Blueprint, request, jsonify, current_app, abort, render_template, flash, redirect, url_for
 from flask_login import login_required
 from werkzeug.exceptions import BadRequest
+from werkzeug.wrappers import Response
+
+from app import db
 from app.services.rss_feed_service import RSSFeedService
 from app.services.parsed_content_service import ParsedContentService
-from app.utils.rss_validator import validate_rss_url
 from app.forms.rss_forms import AddRSSFeedForm, ImportCSVForm, EditRSSFeedForm
 from app.models.relational.awesome_threat_intel_blog import AwesomeThreatIntelBlog
 from app.models.relational.rss_feed import RSSFeed
 from app.services.awesome_threat_intel_service import AwesomeThreatIntelService
-from app.services.feed_parser_service import fetch_and_parse_feed
-from app import db
 
-rss_manager_bp = Blueprint('rss_manager', __name__)
-rss_feed_service = RSSFeedService()
-parsed_content_service = ParsedContentService()
+rss_manager_bp: Blueprint = Blueprint('rss_manager', __name__)
+rss_feed_service: RSSFeedService = RSSFeedService()
+parsed_content_service: ParsedContentService = ParsedContentService()
 
 @rss_manager_bp.route('/rss/feeds')
 @login_required
-def get_rss_feeds():
+def get_rss_feeds() -> str:
     """
     Retrieve all RSS feeds and render the RSS manager page.
-
-    This function fetches all RSS feeds, prepares forms for adding new feeds
-    and importing CSV, and retrieves unique categories and types from the
-    AwesomeThreatIntelBlog table.
 
     Returns:
         str: Rendered HTML template for the RSS manager page.
     """
-    feeds = rss_feed_service.get_all_feeds()
-    form = AddRSSFeedForm()
-    csv_form = ImportCSVForm()
-    categories = [blog.blog_category for blog in db.session.query(AwesomeThreatIntelBlog.blog_category).distinct().all()]
-    types = [blog.type for blog in db.session.query(AwesomeThreatIntelBlog.type).distinct().all()]
+    feeds: List[RSSFeed] = rss_feed_service.get_all_feeds()
+    form: AddRSSFeedForm = AddRSSFeedForm()
+    csv_form: ImportCSVForm = ImportCSVForm()
+    categories: List[str] = [blog.blog_category for blog in db.session.query(AwesomeThreatIntelBlog.blog_category).distinct()]
+    types: List[str] = [blog.type for blog in db.session.query(AwesomeThreatIntelBlog.type).distinct()]
     return render_template('rss_manager.html', feeds=feeds, form=form, csv_form=csv_form, categories=categories, types=types)
 
 @rss_manager_bp.route('/rss/feed/<uuid:feed_id>')
 @login_required
-def get_rss_feed(feed_id):
+def get_rss_feed(feed_id: UUID) -> Tuple[Response, int]:
     """
     Retrieve a specific RSS feed by its ID.
 
     Args:
-        feed_id (uuid.UUID): The UUID of the RSS feed to retrieve.
+        feed_id (UUID): The UUID of the RSS feed to retrieve.
 
     Returns:
-        tuple: A tuple containing a JSON response with the feed data and HTTP status code.
+        Tuple[Response, int]: A tuple containing a JSON response with the feed data and HTTP status code.
 
     Raises:
         404: If the RSS feed with the given ID is not found.
     """
-    feed = rss_feed_service.get_feed_by_id(feed_id)
+    feed: RSSFeed = rss_feed_service.get_feed_by_id(feed_id)
     if not feed:
         abort(404, description="RSS feed not found")
     return jsonify(feed.to_dict()), 200
 
-@rss_manager_bp.route('/feed', methods=['POST', 'GET'])
+@rss_manager_bp.route('/feed', methods=['POST'])
 @login_required
-async def create_rss_feed():
+async def create_rss_feed() -> Tuple[Response, int]:
     """
     Create a new RSS feed.
 
-    This function handles the creation of a new RSS feed from a provided URL and category.
-
     Returns:
-        tuple: A tuple containing a JSON response with the new feed data or error
-               message, and an HTTP status code.
+        Tuple[Response, int]: A tuple containing a JSON response with the new feed data or error
+                              message, and an HTTP status code.
 
     Raises:
         BadRequest: If the request data is missing or invalid.
     """
-    data = request.get_json()
+    data: Dict[str, Any] = request.get_json()
     if not data or 'url' not in data or 'category' not in data:
         raise BadRequest("Missing URL or category in request data")
 
     try:
-        new_feed = await rss_feed_service.create_feed(data)
-
-        # Parse the feed after creation
+        new_feed: RSSFeed = await rss_feed_service.create_feed(data)
         await rss_feed_service.parse_feed(new_feed.id)
-
-        # Parse the feed after creation
-        await rss_feed_service.parse_feed(new_feed.id)
-
-        # Add the new feed to the existing feeds list
-        feeds = rss_feed_service.get_all_feeds()
+        feeds: List[RSSFeed] = rss_feed_service.get_all_feeds()
         return jsonify({"feed": new_feed.to_dict(), "feeds": [feed.to_dict() for feed in feeds]}), 201
     except ValueError as e:
         return jsonify({"error": str(e)}), 400
