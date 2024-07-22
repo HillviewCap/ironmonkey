@@ -7,7 +7,7 @@ from flask import url_for
 from app.models.relational.rss_feed import RSSFeed
 from app import db
 
-def test_add_single_feed(client, app):
+def test_add_single_feed(client, app, csrf_token):
     # Prepare test data
     feed_data = {
         'url': 'https://feeds.feedburner.com/TheHackersNews',
@@ -15,7 +15,7 @@ def test_add_single_feed(client, app):
     }
 
     # Send POST request to create_rss_feed endpoint
-    response = client.post('/rss/', json=feed_data)
+    response = client.post('/rss/', json=feed_data, headers={'X-CSRFToken': csrf_token})
 
     # Check response
     print(f"Response status code: {response.status_code}")
