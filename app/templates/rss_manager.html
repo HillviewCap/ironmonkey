@@ -40,7 +40,7 @@
         <!-- Add Single Feed Form -->
         <div class="flex-1 p-6 bg-white shadow-md rounded-lg">
             <h2 class="text-xl font-bold mb-4">Add Single Feed</h2>
-            <form id="addSingleFeedForm">
+            <form id="addSingleFeedForm" onsubmit="return addFeed(event);">
                 {{ form.hidden_tag() }}
                 <div class="mb-4">
                     {{ form.url.label(class="block text-gray-700 text-sm font-bold mb-2") }}
@@ -135,6 +135,57 @@
     </div>
 
     <script>
+        async function addFeed(event) {
+            event.preventDefault();
+            const form = document.getElementById('addSingleFeedForm');
+            const formData = new FormData(form);
+            const data = {
+                url: formData.get('url'),
+                category: formData.get('category')
+            };
+
+            try {
+                const response = await fetch('/feed', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data),
+                });
+
+                const result = await response.json();
+                if (response.ok) {
+                    // Clear the form
+                    form.reset();
+                    // Update the feeds list
+                    updateFeedsList(result.feeds);
+                } else {
+                    alert(result.error);
+                }
+            } catch (error) {
+                console.error('Error adding feed:', error);
+            }
+        }
+
+        function updateFeedsList(feeds) {
+            const feedsTableBody = document.querySelector('tbody');
+            feedsTableBody.innerHTML = ''; // Clear existing feeds
+            feeds.forEach(feed => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="py-2 px-4 border-b">${feed.url}</td>
+                    <td class="py-2 px-4 border-b">${feed.category}</td>
+                    <td class="py-2 px-4 border-b">
+                        <a href="{{ url_for('rss_manager.edit_feed', feed_id='${feed.id}') }}" class="text-blue-500 hover:text-blue-700">Edit</a>
+                        <form action="{{ url_for('rss_manager.delete_rss_feed', feed_id='${feed.id}') }}" method="POST" class="inline">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                            <button type="submit" class="text-red-500 hover:text-red-700 ml-2">Delete</button>
+                        </form>
+                    </td>
+                `;
+                feedsTableBody.appendChild(row);
+            });
+        }
         document.addEventListener('DOMContentLoaded', function() {
             const blogSearch = document.getElementById('blogSearch');
             const categoryFilter = document.getElementById('categoryFilter');
