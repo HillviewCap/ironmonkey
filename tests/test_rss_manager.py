@@ -15,7 +15,7 @@ def test_add_single_feed(client, app):
     }
 
     # Send POST request to create_rss_feed endpoint
-    response = client.post('/feed', json=feed_data)
+    response = client.post('/rss/', json=feed_data)
 
     # Check response
     assert response.status_code == 201
