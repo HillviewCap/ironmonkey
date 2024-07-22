@@ -17,10 +17,10 @@ def authenticated_client(client, app):
         db.session.add(user)
         db.session.commit()
 
-    # Log in the user
-    with client.session_transaction() as session:
-        session['user_id'] = user.id
-        session['_fresh'] = True
+        # Log in the user
+        with client.session_transaction() as session:
+            session['user_id'] = str(user.id)  # Convert UUID to string
+            session['_fresh'] = True
 
     return client
 
