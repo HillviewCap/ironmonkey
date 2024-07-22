@@ -5,7 +5,7 @@
     <h1 class="text-3xl font-bold mb-6">RSS Feed Manager</h1>
 
     <!-- Existing Feeds Section -->
-    <div class="mb-8">
+    <div class="mb-8 p-6 bg-white shadow-md rounded-lg">
         <h2 class="text-xl font-bold mb-4">Existing Feeds</h2>
         <div class="overflow-x-auto">
             <table class="min-w-full bg-white">
@@ -36,7 +36,7 @@
     </div>
 
     <!-- Add Single Feed Form -->
-    <div class="mb-8">
+    <div class="mb-8 p-6 bg-white shadow-md rounded-lg">
         <h2 class="text-xl font-bold mb-4">Add Single Feed</h2>
         <form id="addSingleFeedForm">
             {{ form.hidden_tag() }}
@@ -55,7 +55,7 @@
     </div>
 
     <!-- Import Feeds from CSV Form -->
-    <div>
+    <div class="p-6 bg-white shadow-md rounded-lg">
         <h2 class="text-xl font-bold mb-4">Import Feeds from CSV</h2>
         <form method="POST" enctype="multipart/form-data">
             {{ csv_form.hidden_tag() }}
@@ -84,7 +84,7 @@
             </button>
         </form>
     </div>
-    <div id="awesomeBlogsContainer" class="hidden">
+    <div id="awesomeBlogsContainer" class="hidden p-6 bg-white shadow-md rounded-lg">
         <div class="mb-4">
             <input type="text" id="blogSearch" placeholder="Search blogs..." class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
             <select id="categoryFilter" class="mt-2 shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
