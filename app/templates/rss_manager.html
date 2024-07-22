@@ -166,48 +166,6 @@
                 });
             }
 
-            function populateBlogs(blogs) {
-                awesomeBlogsList.innerHTML = '';
-                blogs.forEach(blog => {
-                    const blogItem = document.createElement('div');
-                    blogItem.classList.add('blog-item', 'bg-white', 'shadow-md', 'rounded', 'px-6', 'py-4', 'flex', 'flex-col', 'h-full', 'items-center', 'text-center');
-                    blogItem.dataset.category = blog.blog_category;
-                    blogItem.dataset.type = blog.type;
-
-                    blogItem.innerHTML = `
-                        <div class="flex-grow flex flex-col items-center justify-center">
-                            <h3 class="text-lg font-semibold mb-2">${blog.blog}</h3>
-                            <p class="text-sm text-gray-600 mb-2">Category: ${blog.blog_category}</p>
-                            <p class="text-sm text-gray-500 mb-2">Type: ${blog.type}</p>
-                            <a href="${blog.blog_link}" target="_blank" class="text-blue-500 hover:text-blue-700 break-all">Blog Link</a>
-                            ${blog.feed_link ? `
-                                <p class="text-sm text-gray-500 mt-2">Feed Type: RSS</p>
-                                <a href="${blog.feed_link}" target="_blank" class="text-blue-500 hover:text-blue-700 break-all">Feed Link</a>
-                            ` : '<p class="text-sm text-gray-500 mt-2">Feed Type: None</p>'}
-                        </div>
-                        <div class="mt-4 w-full">
-                            ${blog.feed_link ? `
-                                ${blog.is_in_rss_feeds ? `
-                                    <p class="text-sm text-green-500 font-bold">Already in RSS Feeds</p>
-                                ` : `
-                                    <button onclick="addAwesomeFeed('${blog.id}')" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline add-feed-btn">
-                                        Add Feed
-                                    </button>
-                                `}
-                            ` : `
-                                <p class="text-sm text-gray-500">No RSS feed available</p>
-                            `}
-                        </div>
-                    `;
-                    awesomeBlogsList.appendChild(blogItem);
-                });
-            }
-
-
-            blogSearch.addEventListener('input', filterBlogs);
-            categoryFilter.addEventListener('change', filterBlogs);
-            typeFilter.addEventListener('change', filterBlogs);
-
             toggleButton.addEventListener('click', function() {
                 if (awesomeBlogsContainer.classList.contains('hidden')) {
                     awesomeBlogsContainer.classList.remove('hidden');
