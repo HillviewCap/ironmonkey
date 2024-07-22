@@ -1,13 +1,19 @@
-from sqlalchemy import Column, String, Text, ForeignKey
-from sqlalchemy.orm import relationship, declarative_base
+from __future__ import annotations
+
+from sqlalchemy import Column, String, Text, ForeignKey, Index
+from sqlalchemy.orm import relationship
+from sqlalchemy.dialects.postgresql import UUID
+from app import db
+from typing import List
 import uuid
 
-Base = declarative_base()
-
-class AllGroups(Base):
+class AllGroups(db.Model):
+    """
+    Represents the AllGroups table in the database.
+    """
     __tablename__ = 'allgroups'
 
-    uuid = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    uuid = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     authors = Column(Text)
     category = Column(String)
     name = Column(String)
@@ -18,12 +24,17 @@ class AllGroups(Base):
     license = Column(String)
     last_db_change = Column(String)
 
-    values = relationship("AllGroupsValues", back_populates="allgroup")
+    values: List[AllGroupsValues] = relationship("AllGroupsValues", back_populates="allgroup")
 
-class AllGroupsValues(Base):
+    __table_args__ = (Index('idx_allgroups_uuid', uuid),)
+
+class AllGroupsValues(db.Model):
+    """
+    Represents the AllGroupsValues table in the database.
+    """
     __tablename__ = 'allgroups_values'
 
-    uuid = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    uuid = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     actor = Column(String)
     country = Column(Text)
     description = Column(Text)
@@ -39,22 +50,22 @@ class AllGroupsValues(Base):
     counter_operations = Column(Text)
     mitre_attack = Column(Text)
     playbook = Column(Text)
-    allgroups_uuid = Column(String(36), ForeignKey('allgroups.uuid'))
+    allgroups_uuid = Column(UUID(as_uuid=True), ForeignKey('allgroups.uuid'))
 
-    allgroup = relationship("AllGroups", back_populates="values")
-    names = relationship("AllGroupsValuesNames", back_populates="allgroups_value")
+    allgroup: AllGroups = relationship("AllGroups", back_populates="values")
+    names: List[AllGroupsValuesNames] = relationship("AllGroupsValuesNames", back_populates="allgroups_value")
 
-class AllGroupsValuesNames(Base):
+    __table_args__ = (Index('idx_allgroups_values_uuid', uuid),)
+
+class AllGroupsValuesNames(db.Model):
+    """
+    Represents the AllGroupsValuesNames table in the database.
+    """
     __tablename__ = 'allgroups_values_names'
 
-    uuid = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    uuid = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     name = Column(String)
     name_giver = Column(String)
-    allgroups_values_uuid = Column(String(36), ForeignKey('allgroups_values.uuid'))
+    allgroups_values_uuid = Column(UUID(as_uuid=True), ForeignKey('allgroups_values.uuid'))
 
-    allgroups_value = relationship("AllGroupsValues", back_populates="names")
-
-# Add indexes for frequently queried columns
-from sqlalchemy import Index
-Index('idx_allgroups_uuid', AllGroups.uuid)
-Index('idx_allgroups_values_uuid', AllGroupsValues.uuid)
+    allgroups_value: AllGroupsValues = relationship("AllGroupsValues", back_populates="names")
