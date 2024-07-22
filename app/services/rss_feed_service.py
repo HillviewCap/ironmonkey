@@ -71,7 +71,7 @@ class RSSFeedService:
         url = feed_data['url']
         logger.info(f"Attempting to create feed with URL: {url}")
         
-        if not validate_rss_url(url):
+        if not await validate_rss_url(url):
             logger.error(f"Invalid RSS feed URL: {url}")
             raise ValueError(f"Invalid RSS feed URL: {url}")
 
