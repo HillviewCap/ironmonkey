@@ -15,6 +15,7 @@ from app.forms.rss_forms import AddRSSFeedForm, ImportCSVForm, EditRSSFeedForm
 from app.models.relational.awesome_threat_intel_blog import AwesomeThreatIntelBlog
 from app.models.relational.rss_feed import RSSFeed
 from app.services.awesome_threat_intel_service import AwesomeThreatIntelService
+from sqlalchemy.exc import IntegrityError
 
 rss_manager_bp: Blueprint = Blueprint('rss_manager', __name__)
 rss_feed_service: RSSFeedService = RSSFeedService()
@@ -270,6 +271,57 @@ def update_awesome_threat_intel():
         current_app.logger.error(f"Error updating Awesome Threat Intel Blogs: {str(e)}")
         flash("An error occurred while updating Awesome Threat Intel Blogs.", "error")
     return redirect(url_for("rss_manager.get_rss_feeds"))
+
+@rss_manager_bp.route('/add_awesome_feed', methods=['POST'])
+@login_required
+def add_awesome_feed():
+    """
+    Add an Awesome Threat Intel Blog as an RSS feed.
+
+    This function handles the addition of an Awesome Threat Intel Blog to the user's RSS feeds.
+    It checks if the blog exists, has a feed link, and is not already in the user's feeds.
+
+    Returns:
+        tuple: A tuple containing a JSON response with the result of the operation
+               and an HTTP status code.
+
+    Raises:
+        BadRequest: If the blog ID is missing or invalid.
+        Exception: For any other unexpected errors during the process.
+    """
+    try:
+        data = request.get_json()
+        if not data or 'blog_id' not in data:
+            raise BadRequest("Missing blog_id in request data")
+
+        blog_id = UUID(data['blog_id'])
+        awesome_blog = AwesomeThreatIntelBlog.query.get(blog_id)
+        if not awesome_blog:
+            return jsonify({'error': 'Awesome blog not found'}), 404
+
+        if not awesome_blog.feed_link:
+            return jsonify({'error': 'This blog does not have an RSS feed'}), 400
+
+        existing_feed = RSSFeed.query.filter_by(url=awesome_blog.feed_link).first()
+        if existing_feed:
+            return jsonify({'error': 'This feed already exists in your RSS feeds'}), 400
+
+        new_feed = RSSFeed(url=awesome_blog.feed_link, category=awesome_blog.blog_category)
+        db.session.add(new_feed)
+        db.session.commit()
+
+        feeds = RSSFeed.query.all()
+        return jsonify({'message': 'Awesome feed added successfully', 'feeds': [feed.to_dict() for feed in feeds]}), 200
+    except BadRequest as e:
+        return jsonify({'error': str(e)}), 400
+    except ValueError as e:
+        return jsonify({'error': 'Invalid blog ID'}), 400
+    except IntegrityError:
+        db.session.rollback()
+        return jsonify({'error': 'This feed already exists in your RSS feeds'}), 400
+    except Exception as e:
+        current_app.logger.error(f"Error adding awesome feed: {str(e)}")
+        return jsonify({'error': 'An unexpected error occurred while adding the awesome feed'}), 500
 
 @rss_manager_bp.route('/rss/feed/edit/<uuid:feed_id>', methods=['GET', 'POST'])
 @login_required
