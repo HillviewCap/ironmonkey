@@ -18,10 +18,9 @@ def authenticated_client(client, app):
         db.session.commit()
 
     # Log in the user
-    client.post('/auth/login', data={
-        'username': 'testuser',
-        'password': 'testpassword'
-    }, follow_redirects=True)
+    with client.session_transaction() as session:
+        session['user_id'] = user.id
+        session['_fresh'] = True
 
     return client
 
@@ -33,7 +32,7 @@ def test_add_single_feed(authenticated_client, app, csrf_token):
     }
 
     # Send POST request to create_rss_feed endpoint
-    response = authenticated_client.post('/rss/', json=feed_data, headers={'X-CSRFToken': csrf_token})
+    response = authenticated_client.post('/rss/feed', json=feed_data, headers={'X-CSRFToken': csrf_token})
 
     # Check response
     print(f"Response status code: {response.status_code}")
