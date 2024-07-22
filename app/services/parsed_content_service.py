@@ -13,7 +13,7 @@ from uuid import UUID
 from sqlalchemy import desc
 from flask import current_app
 
-from app.models.relational import ParsedContent
+from app.models.relational import ParsedContent, Category
 from app.utils.content_sanitizer import sanitize_html_content
 from app.utils.logging_config import setup_logger
 from app.extensions import db
