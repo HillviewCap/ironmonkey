@@ -35,40 +35,43 @@
         </div>
     </div>
 
-    <!-- Add Single Feed Form -->
-    <div class="mb-8 p-6 bg-white shadow-md rounded-lg">
-        <h2 class="text-xl font-bold mb-4">Add Single Feed</h2>
-        <form id="addSingleFeedForm">
-            {{ form.hidden_tag() }}
-            <div class="mb-4">
-                {{ form.url.label(class="block text-gray-700 text-sm font-bold mb-2") }}
-                {{ form.url(class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline") }}
-            </div>
-            <div class="mb-4">
-                {{ form.category.label(class="block text-gray-700 text-sm font-bold mb-2") }}
-                {{ form.category(class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline") }}
-            </div>
-            <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
-                Add Feed
-            </button>
-        </form>
-    </div>
+    <!-- Add Single Feed and Import Feeds from CSV Forms -->
+    <div class="flex space-x-4 mb-8">
+        <!-- Add Single Feed Form -->
+        <div class="flex-1 p-6 bg-white shadow-md rounded-lg">
+            <h2 class="text-xl font-bold mb-4">Add Single Feed</h2>
+            <form id="addSingleFeedForm">
+                {{ form.hidden_tag() }}
+                <div class="mb-4">
+                    {{ form.url.label(class="block text-gray-700 text-sm font-bold mb-2") }}
+                    {{ form.url(class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline") }}
+                </div>
+                <div class="mb-4">
+                    {{ form.category.label(class="block text-gray-700 text-sm font-bold mb-2") }}
+                    {{ form.category(class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline") }}
+                </div>
+                <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+                    Add Feed
+                </button>
+            </form>
+        </div>
 
-    <!-- Import Feeds from CSV Form -->
-    <div class="p-6 bg-white shadow-md rounded-lg">
-        <h2 class="text-xl font-bold mb-4">Import Feeds from CSV</h2>
-        <form method="POST" enctype="multipart/form-data">
-            {{ csv_form.hidden_tag() }}
-            <div class="mb-4">
-                {{ csv_form.file.label(class="block text-gray-700 text-sm font-bold mb-2") }}
-                {{ csv_form.file(class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline") }}
+        <!-- Import Feeds from CSV Form -->
+        <div class="flex-1 p-6 bg-white shadow-md rounded-lg">
+            <h2 class="text-xl font-bold mb-4">Import Feeds from CSV</h2>
+            <form method="POST" enctype="multipart/form-data">
+                {{ csv_form.hidden_tag() }}
+                <div class="mb-4">
+                    {{ csv_form.file.label(class="block text-gray-700 text-sm font-bold mb-2") }}
+                    {{ csv_form.file(class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline") }}
+                </div>
+                {{ csv_form.submit(class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline") }}
+            </form>
+            <div class="mt-4">
+                <a href="{{ url_for('static', filename='import_template.csv') }}" class="text-blue-500 hover:text-blue-700">
+                    Download CSV Template
+                </a>
             </div>
-            {{ csv_form.submit(class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline") }}
-        </form>
-        <div class="mt-4">
-            <a href="{{ url_for('static', filename='import_template.csv') }}" class="text-blue-500 hover:text-blue-700">
-                Download CSV Template
-            </a>
         </div>
     </div>
 
