@@ -7,8 +7,8 @@ from app import db
 async def test_add_single_feed(client, app):
     # Prepare test data
     feed_data = {
-        'url': 'https://example.com/rss',
-        'category': 'Test Category'
+        'url': 'https://feeds.feedburner.com/TheHackersNews',
+        'category': 'News'
     }
 
     # Send POST request to create_rss_feed endpoint
