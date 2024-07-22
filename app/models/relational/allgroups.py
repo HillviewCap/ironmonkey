@@ -4,7 +4,8 @@ from sqlalchemy import Column, String, Text, ForeignKey, Index
 from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.postgresql import UUID
 from app import db
-from typing import List
+from typing import List, Optional
+from sqlalchemy.orm import Mapped, mapped_column
 import uuid
 
 class AllGroups(db.Model):
@@ -24,7 +25,7 @@ class AllGroups(db.Model):
     license = Column(String)
     last_db_change = Column(String)
 
-    values: List[AllGroupsValues] = relationship("AllGroupsValues", back_populates="allgroup")
+    values: Mapped[List["AllGroupsValues"]] = relationship("AllGroupsValues", back_populates="allgroup")
 
     __table_args__ = (Index('idx_allgroups_uuid', uuid),)
 
@@ -52,8 +53,8 @@ class AllGroupsValues(db.Model):
     playbook = Column(Text)
     allgroups_uuid = Column(UUID(as_uuid=True), ForeignKey('allgroups.uuid'))
 
-    allgroup: AllGroups = relationship("AllGroups", back_populates="values")
-    names: List[AllGroupsValuesNames] = relationship("AllGroupsValuesNames", back_populates="allgroups_value")
+    allgroup: Mapped["AllGroups"] = relationship("AllGroups", back_populates="values")
+    names: Mapped[List["AllGroupsValuesNames"]] = relationship("AllGroupsValuesNames", back_populates="allgroups_value")
 
     __table_args__ = (Index('idx_allgroups_values_uuid', uuid),)
 
@@ -68,4 +69,4 @@ class AllGroupsValuesNames(db.Model):
     name_giver = Column(String)
     allgroups_values_uuid = Column(UUID(as_uuid=True), ForeignKey('allgroups_values.uuid'))
 
-    allgroups_value: AllGroupsValues = relationship("AllGroupsValues", back_populates="names")
+    allgroups_value: Mapped["AllGroupsValues"] = relationship("AllGroupsValues", back_populates="names")
