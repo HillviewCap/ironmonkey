@@ -125,9 +125,16 @@ class ParsedContentService:
             creator=content_data.get('creator'),
             feed_id=content_data.get('feed_id')
         )
+
+        # Handle categories
+        categories = content_data.get('categories', [])
+        for category_data in categories:
+            category = Category.create_from_feedparser(category_data)
+            content.categories.append(category)
+
         db.session.add(content)
         db.session.commit()
-        logger.info(f"Created new parsed content: {content.title}")
+        logger.info(f"Created new parsed content: {content.title} with {len(content.categories)} categories")
         return content
 
     @staticmethod
