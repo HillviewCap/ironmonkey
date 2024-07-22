@@ -56,7 +56,7 @@ def get_rss_feed(feed_id):
         abort(404, description="RSS feed not found")
     return jsonify(feed.to_dict()), 200
 
-@rss_manager_bp.route('/feed', methods=['POST'])
+@rss_manager_bp.route('/feed', methods=['POST', 'GET'])
 @login_required
 async def create_rss_feed():
     """
