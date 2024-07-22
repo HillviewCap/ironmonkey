@@ -1,3 +1,4 @@
+from __future__ import annotations
 from datetime import datetime
 from uuid import uuid4
 import hashlib
@@ -5,14 +6,7 @@ from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy import Column, String, DateTime, Text, ForeignKey, Table
 from app import db
 from flask import flash
-
-from datetime import datetime
-from uuid import uuid4
-import hashlib
-from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy import Column, String, DateTime, Text, ForeignKey, Table
-from app import db
-from flask import flash
+from .category import Category
 
 parsed_content_categories = Table('parsed_content_categories', db.Model.metadata,
     Column('parsed_content_id', UUID(as_uuid=True), ForeignKey('parsed_content.id')),
@@ -32,6 +26,7 @@ class ParsedContent(db.Model):
     pub_date = Column(String(100), nullable=True)
     creator = Column(String(255), nullable=True)
     categories = db.relationship('Category', secondary=parsed_content_categories, backref=db.backref('parsed_contents', lazy='dynamic'))
+    art_hash = Column(String(64), nullable=True)
 
     __table_args__ = (db.UniqueConstraint('url', 'feed_id', name='uix_url_feed'),)
 
