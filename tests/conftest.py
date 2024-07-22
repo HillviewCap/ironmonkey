@@ -8,6 +8,7 @@ sys.path.insert(0, str(project_root))
 
 import pytest
 from app import create_app, db
+from app.models.relational.user import User
 from config import TestingConfig
 from flask_wtf.csrf import generate_csrf
 
@@ -29,3 +30,14 @@ def csrf_token(app):
 @pytest.fixture
 def client(app):
     return app.test_client()
+
+@pytest.fixture
+def test_user(app):
+    with app.app_context():
+        user = User(username='testuser', email='test@example.com')
+        user.set_password('testpassword')
+        db.session.add(user)
+        db.session.commit()
+        yield user
+        db.session.delete(user)
+        db.session.commit()

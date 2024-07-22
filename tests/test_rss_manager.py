@@ -5,9 +5,27 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 import pytest
 from flask import url_for
 from app.models.relational.rss_feed import RSSFeed
+from app.models.relational.user import User
 from app import db
 
-def test_add_single_feed(client, app, csrf_token):
+@pytest.fixture
+def authenticated_client(client, app):
+    with app.app_context():
+        # Create a test user
+        user = User(username='testuser', email='test@example.com')
+        user.set_password('testpassword')
+        db.session.add(user)
+        db.session.commit()
+
+    # Log in the user
+    client.post('/auth/login', data={
+        'username': 'testuser',
+        'password': 'testpassword'
+    }, follow_redirects=True)
+
+    return client
+
+def test_add_single_feed(authenticated_client, app, csrf_token):
     # Prepare test data
     feed_data = {
         'url': 'https://feeds.feedburner.com/TheHackersNews',
@@ -15,7 +33,7 @@ def test_add_single_feed(client, app, csrf_token):
     }
 
     # Send POST request to create_rss_feed endpoint
-    response = client.post('/rss/', json=feed_data, headers={'X-CSRFToken': csrf_token})
+    response = authenticated_client.post('/rss/', json=feed_data, headers={'X-CSRFToken': csrf_token})
 
     # Check response
     print(f"Response status code: {response.status_code}")
@@ -35,7 +53,8 @@ def test_add_single_feed(client, app, csrf_token):
     # Check that the new feed is in the returned list of feeds
     assert any(feed['url'] == feed_data['url'] for feed in data['feeds'])
 
-    # Clean up: remove the test feed from the database
+    # Clean up: remove the test feed and user from the database
     with app.app_context():
         db.session.delete(new_feed)
+        User.query.filter_by(username='testuser').delete()
         db.session.commit()
