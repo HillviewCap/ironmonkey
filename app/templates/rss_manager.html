@@ -146,7 +146,7 @@
 
             try {
                 console.log('Sending request to add feed:', data);
-                const response = await fetch('/feed', {
+                const response = await fetch('{{ url_for("rss_manager.create_rss_feed") }}', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
