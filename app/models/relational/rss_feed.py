@@ -1,28 +1,15 @@
-from uuid import UUID as PyUUID, uuid4
-from typing import Tuple, Optional
+from __future__ import annotations
+from uuid import uuid4
+from typing import Dict, Any, Tuple, Optional
 from sqlalchemy import Column, String, Text, ForeignKey
 from sqlalchemy.dialects.postgresql import UUID
-from app import db
+from app.extensions import db
 from app.utils.http_client import fetch_feed_info
 
 class RSSFeed(db.Model):
     """Model for storing RSS feed information."""
 
-    def to_dict(self):
-        """
-        Convert the RSSFeed object to a dictionary.
-
-        Returns:
-            dict: A dictionary representation of the RSSFeed object.
-        """
-        return {
-            'id': str(self.id),
-            'url': self.url,
-            'title': self.title,
-            'description': self.description,
-            'category': self.category,
-            'last_build_date': self.last_build_date
-        }
+    __tablename__ = 'rss_feed'
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     url = Column(String(255), unique=True, nullable=False)
@@ -38,10 +25,26 @@ class RSSFeed(db.Model):
     awesome_blog_id = Column(UUID(as_uuid=True), ForeignKey('awesome_threat_intel_blog.id'), nullable=True)
     awesome_blog = db.relationship('AwesomeThreatIntelBlog', back_populates='rss_feeds')
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs: Any) -> None:
         super(RSSFeed, self).__init__(**kwargs)
         if not self.id:
             self.id = uuid4()
+
+    def to_dict(self) -> Dict[str, Any]:
+        """
+        Convert the RSSFeed object to a dictionary.
+
+        Returns:
+            Dict[str, Any]: A dictionary representation of the RSSFeed object.
+        """
+        return {
+            'id': str(self.id),
+            'url': self.url,
+            'title': self.title,
+            'description': self.description,
+            'category': self.category,
+            'last_build_date': self.last_build_date
+        }
 
     @staticmethod
     def fetch_feed_info(url: str) -> Tuple[str, str, Optional[str]]:
