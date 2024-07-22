@@ -81,7 +81,12 @@ async def create_rss_feed():
         # Parse the feed after creation
         await rss_feed_service.parse_feed(new_feed.id)
 
-        return jsonify(new_feed.to_dict()), 201
+        # Parse the feed after creation
+        await rss_feed_service.parse_feed(new_feed.id)
+
+        # Add the new feed to the existing feeds list
+        feeds = rss_feed_service.get_all_feeds()
+        return jsonify({"feed": new_feed.to_dict(), "feeds": [feed.to_dict() for feed in feeds]}), 201
     except ValueError as e:
         return jsonify({"error": str(e)}), 400
     except Exception as e:
@@ -122,7 +127,8 @@ async def create_rss_feed_from_awesome():
         # Parse the feed after creation
         await rss_feed_service.parse_feed(new_feed.id)
 
-        return jsonify(new_feed.to_dict()), 201
+        # Parse the feed after creation
+        await rss_feed_service.parse_feed(new_feed.id)
     except ValueError as e:
         return jsonify({"error": str(e)}), 400
     except Exception as e:
