@@ -301,11 +301,25 @@
                         if (addButton) {
                             addButton.parentNode.innerHTML = '<p class="text-sm text-green-500 font-bold">Already in RSS Feeds</p>';
                         }
+                        // Refresh the awesome blogs list to reflect the changes
+                        await fetchAndPopulateAwesomeBlogs();
                     } else {
                         showNotification('Error adding awesome feed: ' + result.error, 'error');
                     }
                 } catch (error) {
                     showNotification('An unexpected error occurred while adding the awesome feed', 'error');
+                }
+            }
+
+            async function fetchAndPopulateAwesomeBlogs() {
+                try {
+                    const response = await fetch('{{ url_for("rss_manager.get_awesome_blogs") }}');
+                    const data = await response.json();
+                    populateBlogs(data);
+                    filterBlogs();
+                } catch (error) {
+                    console.error('Error fetching awesome blogs:', error);
+                    showNotification('Error fetching awesome blogs', 'error');
                 }
             }
 
