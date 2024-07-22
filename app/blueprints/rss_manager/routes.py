@@ -79,10 +79,11 @@ async def create_rss_feed() -> Tuple[Response, int]:
         feeds: List[RSSFeed] = rss_feed_service.get_all_feeds()
         return jsonify({"feed": new_feed.to_dict(), "feeds": [feed.to_dict() for feed in feeds]}), 201
     except ValueError as e:
+        current_app.logger.error(f"ValueError in create_rss_feed: {str(e)}")
         return jsonify({"error": str(e)}), 400
     except Exception as e:
-        current_app.logger.error(f"Error creating RSS feed: {str(e)}")
-        return jsonify({"error": "Failed to create RSS feed"}), 500
+        current_app.logger.error(f"Unexpected error in create_rss_feed: {str(e)}", exc_info=True)
+        return jsonify({"error": f"An unexpected error occurred: {str(e)}"}), 500
 
 @rss_manager_bp.route('/feed/awesome', methods=['POST'])
 @login_required
