@@ -9,8 +9,6 @@ from app import db
 class User(UserMixin, db.Model):
     """User model for authentication and authorization."""
 
-    username = db.Column(db.String(64), index=True, unique=True)
-
     __tablename__ = 'user'
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
