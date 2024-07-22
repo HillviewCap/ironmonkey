@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 from datetime import datetime
-from uuid import UUID as PyUUID
+from uuid import UUID
 from pydantic import BaseModel, Field
 
-from ...extensions import db
+from app.extensions import db
 from app.models.relational.user import User
 from app.models.relational.search_params import SearchParams
 from app.models.relational.rss_feed import RSSFeed
@@ -24,16 +24,14 @@ __all__ = [
 
 
 class SearchResult(BaseModel):
-    """
-    Represents a search result.
-    """
+    """Represents a search result."""
 
-    id: PyUUID = Field(..., alias="id")
-    title: str
-    description: str
-    source_type: str
-    date: datetime
-    url: str
+    id: UUID = Field(..., description="Unique identifier for the search result")
+    title: str = Field(..., description="Title of the search result")
+    description: str = Field(..., description="Description of the search result")
+    source_type: str = Field(..., description="Type of the source (e.g., 'blog', 'news')")
+    date: datetime = Field(..., description="Date of the search result")
+    url: str = Field(..., description="URL of the search result")
 
     class Config:
-        arbitrary_types_allowed = True
+        orm_mode = True
