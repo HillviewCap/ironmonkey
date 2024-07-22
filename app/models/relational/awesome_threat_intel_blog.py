@@ -6,7 +6,7 @@ import csv
 import os
 from flask import current_app
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy import Column, String, DateTime
+from sqlalchemy import String, DateTime
 from app import db
 from app.models.relational.rss_feed import RSSFeed
 
@@ -14,18 +14,18 @@ class AwesomeThreatIntelBlog(db.Model):
     """
     Represents an Awesome Threat Intel Blog entry.
     """
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    blog = Column(String(255), nullable=False)
-    blog_category = Column(String(100), nullable=False)
-    type = Column(String(50), nullable=False)
-    blog_link = Column(String(255), nullable=False)
-    feed_link = Column(String(255), nullable=True)
-    feed_type = Column(String(50), nullable=True)
-    last_checked = Column(DateTime, nullable=True)
+    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    blog = db.Column(String(255), nullable=False)
+    blog_category = db.Column(String(100), nullable=False)
+    type = db.Column(String(50), nullable=False)
+    blog_link = db.Column(String(255), nullable=False, index=True)
+    feed_link = db.Column(String(255), nullable=True)
+    feed_type = db.Column(String(50), nullable=True)
+    last_checked = db.Column(DateTime, nullable=True)
 
     rss_feeds = db.relationship('RSSFeed', back_populates='awesome_blog')
 
-    def to_dict(self):
+    def to_dict(self) -> dict:
         return {
             'id': self.id,
             'blog': self.blog,
@@ -106,7 +106,7 @@ class AwesomeThreatIntelBlog(db.Model):
         return "CSV import completed successfully."
 
     @classmethod
-    def get_blog_categories(cls):
+    def get_blog_categories(cls) -> list[str]:
         """
         Get all unique blog categories.
 
@@ -116,7 +116,7 @@ class AwesomeThreatIntelBlog(db.Model):
         return [category[0] for category in db.session.query(cls.blog_category).distinct().all()]
 
     @classmethod
-    def get_feed_types(cls):
+    def get_feed_types(cls) -> list[str]:
         """
         Get all unique feed types.
 
@@ -126,7 +126,7 @@ class AwesomeThreatIntelBlog(db.Model):
         return [feed_type[0] for feed_type in db.session.query(cls.feed_type).distinct().all()]
 
     @classmethod
-    def filter_feeds(cls, blog_category=None, feed_type=None):
+    def filter_feeds(cls, blog_category: str | None = None, feed_type: str | None = None) -> list[AwesomeThreatIntelBlog]:
         """
         Filter feeds based on blog category and feed type.
 
@@ -145,7 +145,7 @@ class AwesomeThreatIntelBlog(db.Model):
         return query.all()
 
     @classmethod
-    def get_all_blogs(cls):
+    def get_all_blogs(cls) -> list[AwesomeThreatIntelBlog]:
         """
         Get all Awesome Threat Intel Blogs.
 
@@ -155,7 +155,7 @@ class AwesomeThreatIntelBlog(db.Model):
         return cls.query.all()
 
     @classmethod
-    def add_to_rss_feeds(cls, feed_ids):
+    def add_to_rss_feeds(cls, feed_ids: list[UUID]) -> int:
         """
         Add selected feeds to the RSSFeed table.
 
