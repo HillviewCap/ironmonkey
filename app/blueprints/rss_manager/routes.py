@@ -59,7 +59,7 @@ def get_rss_feed(feed_id: UUID) -> Tuple[Response, int]:
 
 @rss_manager_bp.route('/rss/feed', methods=['POST'])
 @login_required
-async def create_rss_feed() -> Tuple[Response, int]:
+def create_rss_feed() -> Tuple[Response, int]:
     """
     Create a new RSS feed.
 

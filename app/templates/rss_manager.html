@@ -40,7 +40,7 @@
         <!-- Add Single Feed Form -->
         <div class="flex-1 p-6 bg-white shadow-md rounded-lg">
             <h2 class="text-xl font-bold mb-4">Add Single Feed</h2>
-            <form id="addSingleFeedForm" onsubmit="addFeed(event);">
+            <form id="addSingleFeedForm" onsubmit="return addFeed(event);">
                 {{ form.hidden_tag() }}
                 <div class="mb-4">
                     {{ form.url.label(class="block text-gray-700 text-sm font-bold mb-2") }}
