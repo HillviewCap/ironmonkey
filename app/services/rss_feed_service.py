@@ -116,7 +116,7 @@ class RSSFeedService:
             ValueError: If the RSS feed is not found.
         """
         with Session(db.engine) as session:
-            feed = session.query(RSSFeed).get(feed_id)
+            feed = session.get(RSSFeed, feed_id)
             if not feed:
                 raise ValueError(f"RSS feed with ID {feed_id} not found.")
 
