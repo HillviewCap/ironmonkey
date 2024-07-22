@@ -113,8 +113,9 @@ def delete_parsed_content(content_id):
     return redirect(url_for('admin.manage_parsed_content'))
 from flask import jsonify, request
 
+@parsed_content_bp.route('/get_parsed_content/')
 @parsed_content_bp.route('/get_parsed_content/<uuid:feed_id>')
-def get_parsed_content(feed_id):
+def get_parsed_content(feed_id=None):
     search = request.args.get('search', '')
 
     # Convert feed_id to string
