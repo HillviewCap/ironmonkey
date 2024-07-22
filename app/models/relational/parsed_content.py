@@ -4,22 +4,27 @@ from uuid import uuid4
 import hashlib
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy import Column, String, DateTime, Text, ForeignKey, Table
-from app import db
+from app.extensions import db
 from flask import flash
 from .category import Category
+from typing import List, Dict, Any, Optional
 
-parsed_content_categories = Table('parsed_content_categories', db.Model.metadata,
+parsed_content_categories = Table(
+    'parsed_content_categories',
+    db.Model.metadata,
     Column('parsed_content_id', UUID(as_uuid=True), ForeignKey('parsed_content.id')),
     Column('category_id', UUID(as_uuid=True), ForeignKey('category.id'))
 )
 
 class ParsedContent(db.Model):
+    """Model representing parsed content from RSS feeds."""
+
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     title = Column(String(255), nullable=False)
     url = Column(String(255), nullable=False)
     description = Column(Text, nullable=True)
-    content = Column(Text, nullable=False)  # This will store the Jina summary from Ollama
-    summary = Column(Text, nullable=True)  # This will store the generated summary
+    content = Column(Text, nullable=False)  # Jina summary from Ollama
+    summary = Column(Text, nullable=True)  # Generated summary
     feed_id = Column(UUID(as_uuid=True), ForeignKey("rss_feed.id"), nullable=False)
     feed = db.relationship("RSSFeed", back_populates="parsed_items")
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
@@ -31,9 +36,10 @@ class ParsedContent(db.Model):
     __table_args__ = (db.UniqueConstraint('url', 'feed_id', name='uix_url_feed'),)
 
     @classmethod
-    def deduplicate(cls):
+    def deduplicate(cls) -> int:
         """
-        Deduplicates the parsed articles based on the URL.
+        Deduplicate parsed articles based on URL.
+
         Keeps the earliest entry for each URL and deletes the rest.
         Returns the number of deleted entries.
         """
@@ -64,7 +70,8 @@ class ParsedContent(db.Model):
         return deleted_count
 
     @classmethod
-    def get_by_id(cls, content_id):
+    def get_by_id(cls, content_id: str) -> Optional[ParsedContent]:
+        """Retrieve a ParsedContent instance by its ID."""
         try: 
             content_id = UUID(content_id) if isinstance(content_id, str) else content_id
             return cls.query.filter(cls.id == content_id).first()
@@ -72,11 +79,13 @@ class ParsedContent(db.Model):
             return None
 
     @classmethod
-    def get_document_by_id(cls, document_id):
+    def get_document_by_id(cls, document_id: str) -> Optional[ParsedContent]:
+        """Alias for get_by_id method."""
         return cls.get_by_id(document_id)
 
     @classmethod
-    def hash_existing_articles(cls):
+    def hash_existing_articles(cls) -> int:
+        """Hash existing articles and return the count of hashed articles."""
         articles = cls.query.all()
         hashed_count = 0
         for article in articles:
@@ -85,7 +94,8 @@ class ParsedContent(db.Model):
         db.session.commit()
         return hashed_count
 
-    def to_dict(self):
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert the ParsedContent instance to a dictionary."""
         return {
             'id': str(self.id),
             'title': self.title,
