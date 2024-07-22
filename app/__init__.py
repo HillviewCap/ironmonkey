@@ -3,6 +3,7 @@ This module initializes the Flask application and sets up all necessary configur
 """
 
 import os
+import warnings
 from dotenv import load_dotenv
 from flask import Flask
 from flask_migrate import Migrate
@@ -11,6 +12,9 @@ from flask_login import LoginManager
 
 from .extensions import db
 from app.utils.logging_config import setup_logger
+
+# Suppress Pydantic deprecation warning
+warnings.filterwarnings("ignore", category=DeprecationWarning, module="pydantic")
 from app.blueprints.main.routes import bp as main_bp
 from app.blueprints.auth.routes import bp as auth_bp
 from app.blueprints.rss_manager.routes import rss_manager_bp
