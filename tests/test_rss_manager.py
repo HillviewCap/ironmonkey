@@ -7,8 +7,7 @@ from flask import url_for
 from app.models.relational.rss_feed import RSSFeed
 from app import db
 
-@pytest.mark.asyncio
-async def test_add_single_feed(client, app):
+def test_add_single_feed(client, app):
     # Prepare test data
     feed_data = {
         'url': 'https://feeds.feedburner.com/TheHackersNews',
@@ -16,7 +15,7 @@ async def test_add_single_feed(client, app):
     }
 
     # Send POST request to create_rss_feed endpoint
-    response = await client.post('/feed', json=feed_data)
+    response = client.post('/feed', json=feed_data)
 
     # Check response
     assert response.status_code == 201
