@@ -71,9 +71,13 @@ class RSSFeedService:
         url = feed_data['url']
         logger.info(f"Attempting to create feed with URL: {url}")
         
-        if not await validate_rss_url(url):
-            logger.error(f"Invalid RSS feed URL: {url}")
-            raise ValueError(f"Invalid RSS feed URL: {url}")
+        try:
+            if not await validate_rss_url(url):
+                logger.error(f"Invalid RSS feed URL: {url}")
+                raise ValueError(f"Invalid RSS feed URL: {url}")
+        except Exception as e:
+            logger.error(f"Error validating RSS feed URL: {url}, {str(e)}")
+            raise ValueError(f"Error validating RSS feed URL: {url}, {str(e)}")
 
         with Session(db.engine) as session:
             existing_feed = session.query(RSSFeed).filter_by(url=url).first()
