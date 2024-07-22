@@ -305,7 +305,7 @@
                 if (awesomeBlogsContainer.classList.contains('hidden')) {
                     awesomeBlogsContainer.classList.remove('hidden');
                     toggleButton.textContent = 'Hide Awesome Threat Intel Blogs';
-                    fetch('/rss/awesome_blogs')
+                    fetch('{{ url_for("rss_manager.get_awesome_blogs") }}')
                         .then(response => response.json())
                         .then(data => {
                             populateBlogs(data);
