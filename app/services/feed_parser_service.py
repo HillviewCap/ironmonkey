@@ -63,12 +63,12 @@ async def fetch_and_parse_feed(feed: RSSFeed) -> int:
             response.raise_for_status()
 
             # Check if the URL has been redirected
-            if response.url != feed.url:
+            if str(response.url) != feed.url:
                 logger.info(f"Feed URL redirected from {feed.url} to {response.url}")
                 feed.url = str(response.url)
                 db.session.commit()
 
-            feed_data = feedparser.parse(response.text)
+            feed_data = feedparser.parse(response.content)
             if current_app.debug:
                 logger.debug(f"Parsed feed data for {feed.url}")
             # Update the feed title and description if available
