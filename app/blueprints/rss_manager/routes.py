@@ -57,7 +57,7 @@ def get_rss_feed(feed_id: UUID) -> Tuple[Response, int]:
         abort(404, description="RSS feed not found")
     return jsonify(feed.to_dict()), 200
 
-@rss_manager_bp.route('/feed', methods=['POST'])
+@rss_manager_bp.route('/rss/feed', methods=['POST'])
 @login_required
 async def create_rss_feed() -> Tuple[Response, int]:
     """
@@ -86,11 +86,11 @@ async def create_rss_feed() -> Tuple[Response, int]:
 
     try:
         current_app.logger.info(f"Attempting to create feed with URL: {data['url']} and category: {data['category']}")
-        new_feed: RSSFeed = await rss_feed_service.create_feed(data)
+        new_feed: RSSFeed = rss_feed_service.create_feed(data)
         current_app.logger.info(f"Created new feed: {new_feed.id}")
         
         current_app.logger.info(f"Attempting to parse new feed: {new_feed.id}")
-        await rss_feed_service.parse_feed(new_feed.id)
+        rss_feed_service.parse_feed(new_feed.id)
         current_app.logger.info(f"Successfully parsed new feed: {new_feed.id}")
         
         current_app.logger.info("Fetching all feeds")
