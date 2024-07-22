@@ -4,54 +4,40 @@
 <div class="max-w-6xl mx-auto p-6">
     <h1 class="text-3xl font-bold mb-6">RSS Feed Manager</h1>
     
-    <button id="toggleDrawer" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mb-4" aria-label="Open Add/Import Drawer">
-        Open Add/Import Drawer
-    </button>
-
-    <div id="formDrawer" class="fixed inset-y-0 right-0 w-96 bg-white shadow-lg transform translate-x-full transition-transform duration-300 ease-in-out overflow-y-auto z-50 hidden">
-        <div class="p-6">
-            <button id="closeDrawer" class="absolute top-0 right-0 mt-4 mr-4 text-gray-600 hover:text-gray-800" aria-label="Close Drawer">
-                <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                </svg>
+    <!-- Add Single Feed Form -->
+    <div class="mb-8">
+        <h2 class="text-xl font-bold mb-4">Add Single Feed</h2>
+        <form id="addSingleFeedForm">
+            {{ form.hidden_tag() }}
+            <div class="mb-4">
+                {{ form.url.label(class="block text-gray-700 text-sm font-bold mb-2") }}
+                {{ form.url(class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline") }}
+            </div>
+            <div class="mb-4">
+                {{ form.category.label(class="block text-gray-700 text-sm font-bold mb-2") }}
+                {{ form.category(class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline") }}
+            </div>
+            <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+                Add Feed
             </button>
-            
-            <!-- Add Single Feed Form -->
-            <div class="mb-8">
-                <h2 class="text-xl font-bold mb-4">Add Single Feed</h2>
-                <form id="addSingleFeedForm">
-                    {{ form.hidden_tag() }}
-                    <div class="mb-4">
-                        {{ form.url.label(class="block text-gray-700 text-sm font-bold mb-2") }}
-                        {{ form.url(class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline") }}
-                    </div>
-                    <div class="mb-4">
-                        {{ form.category.label(class="block text-gray-700 text-sm font-bold mb-2") }}
-                        {{ form.category(class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline") }}
-                    </div>
-                    <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
-                        Add Feed
-                    </button>
-                </form>
-            </div>
+        </form>
+    </div>
 
-            <!-- Import Feeds from CSV Form -->
-            <div>
-                <h2 class="text-xl font-bold mb-4">Import Feeds from CSV</h2>
-                <form method="POST" enctype="multipart/form-data">
-                    {{ csv_form.hidden_tag() }}
-                    <div class="mb-4">
-                        {{ csv_form.file.label(class="block text-gray-700 text-sm font-bold mb-2") }}
-                        {{ csv_form.file(class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline") }}
-                    </div>
-                    {{ csv_form.submit(class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline") }}
-                </form>
-                <div class="mt-4">
-                    <a href="{{ url_for('static', filename='import_template.csv') }}" class="text-blue-500 hover:text-blue-700">
-                        Download CSV Template
-                    </a>
-                </div>
+    <!-- Import Feeds from CSV Form -->
+    <div>
+        <h2 class="text-xl font-bold mb-4">Import Feeds from CSV</h2>
+        <form method="POST" enctype="multipart/form-data">
+            {{ csv_form.hidden_tag() }}
+            <div class="mb-4">
+                {{ csv_form.file.label(class="block text-gray-700 text-sm font-bold mb-2") }}
+                {{ csv_form.file(class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline") }}
             </div>
+            {{ csv_form.submit(class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline") }}
+        </form>
+        <div class="mt-4">
+            <a href="{{ url_for('static', filename='import_template.csv') }}" class="text-blue-500 hover:text-blue-700">
+                Download CSV Template
+            </a>
         </div>
     </div>
 
@@ -206,152 +192,5 @@
             });
         });
     </script>
-    <script>
-        /**
-         * Adds an awesome feed to the RSS feeds list
-         * @param {string} blogId - The ID of the blog to add
-         */
-        function addAwesomeFeed(blogId: string): void {
-            fetch(`{{ url_for('rss_manager.create_rss_feed_from_awesome') }}`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': '{{ csrf_token() }}'
-                },
-                body: JSON.stringify({ blog_id: blogId })
-            })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
-                return response.json();
-            })
-            .then(data => {
-                if (data.error) {
-                    alert(data.error);
-                } else {
-                    alert('Feed added successfully');
-                    updateButton(blogId, 'Added');
-                }
-            })
-            .catch((error) => {
-                console.error('Error:', error);
-                alert('An error occurred while adding the feed.');
-            });
-        }
-
-        /**
-         * Updates the button text and style after adding a feed
-         * @param {string} blogId - The ID of the blog whose button to update
-         * @param {string} text - The new text for the button
-         */
-        function updateButton(blogId: string, text: string): void {
-            const button = document.querySelector(`button[onclick="addAwesomeFeed('${blogId}')"]`);
-            button.textContent = text;
-            button.disabled = true;
-            button.classList.remove('bg-green-500', 'hover:bg-green-700');
-            button.classList.add('bg-gray-500', 'cursor-not-allowed');
-        }
-    </script>
-
-    <h2 class="text-2xl font-bold mb-4">Existing RSS Feeds</h2>
-    <div id="existingFeedsContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        {% for feed in feeds %}
-            <div class="bg-white shadow-md rounded px-6 py-4 flex flex-col h-full">
-                <div class="flex-grow">
-                    <h3 class="text-lg font-semibold mb-2">{{ feed.title }}</h3>
-                    <p class="text-sm text-gray-600 mb-2">Category: {{ feed.category }}</p>
-                    <p class="text-sm text-gray-500 mb-2">{{ feed.description }}</p>
-                    <a href="{{ feed.url }}" target="_blank" class="text-blue-500 hover:text-blue-700 break-all">{{ feed.url }}</a>
-                    <p class="text-sm text-gray-500 mt-2">Last Build Date: {{ feed.last_build_date or 'Not available' }}</p>
-                </div>
-                <div class="mt-4 flex flex-wrap space-x-2">
-                    <a href="{{ url_for('rss_manager.get_parsed_content', feed_id=feed.id) }}" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline mb-2">
-                        View Posts
-                    </a>
-                    <a href="{{ url_for('rss_manager.edit_feed', feed_id=feed.id) }}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline mb-2">
-                        Edit
-                    </a>
-                    <form action="{{ url_for('rss_manager.delete_rss_feed', feed_id=feed.id) }}" method="POST" class="inline mb-2">
-                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                        <button type="submit" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
-                            Delete
-                        </button>
-                    </form>
-                </div>
-            </div>
-        {% endfor %}
-    </div>
-</div>
-
-<script>
-document.getElementById('addSingleFeedForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-    
-    const url = document.getElementById('url').value;
-    const category = document.getElementById('category').value;
-    
-    fetch('{{ url_for("rss_manager.create_rss_feed") }}', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': '{{ csrf_token() }}'
-        },
-        body: JSON.stringify({
-            url: url,
-            category: category
-        })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.error) {
-            alert(data.error);
-        } else {
-            alert('Feed added successfully');
-            window.location.reload();
-        }
-    })
-    .catch((error) => {
-        console.error('Error:', error);
-        alert('An error occurred while adding the feed.');
-    });
-});
-</script>
 {% endblock %}
-
-{% block scripts %}
-<script>
-    document.addEventListener('DOMContentLoaded', function(): void {
-        const flashMessages = document.querySelectorAll('.alert');
-        flashMessages.forEach(function(message) {
-            setTimeout(function() {
-                message.style.transition = 'opacity 1s';
-                message.style.opacity = '0';
-                setTimeout(function() {
-                    message.remove();
-                }, 1000);
-            }, 25000);
-        });
-
-        // Drawer functionality
-        const toggleDrawerButton = document.getElementById('toggleDrawer');
-        const closeDrawerButton = document.getElementById('closeDrawer');
-        const formDrawer = document.getElementById('formDrawer');
-
-        function toggleDrawer() {
-            formDrawer.classList.toggle('hidden');
-            formDrawer.classList.toggle('translate-x-full');
-        }
-
-        toggleDrawerButton.addEventListener('click', toggleDrawer);
-        closeDrawerButton.addEventListener('click', toggleDrawer);
-
-        // Close drawer when clicking outside
-        document.addEventListener('click', function(event) {
-            if (!formDrawer.contains(event.target) && !toggleDrawerButton.contains(event.target) && !formDrawer.classList.contains('hidden')) {
-                toggleDrawer();
-            }
-        });
-    });
-</script>
 {% endblock %}
