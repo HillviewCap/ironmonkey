@@ -145,7 +145,6 @@
             };
 
             try {
-                console.log('Sending request to add feed:', data);
                 const response = await fetch('{{ url_for("rss_manager.create_rss_feed") }}', {
                     method: 'POST',
                     headers: {
@@ -155,29 +154,23 @@
                     body: JSON.stringify(data),
                 });
 
-                console.log('Response status:', response.status);
                 const result = await response.json();
-                console.log('Response data:', result);
 
                 if (response.ok) {
-                    console.log('Feed added successfully');
-                    // Clear the form
                     form.reset();
-                    // Update the feeds list
                     updateFeedsList(result.feeds);
+                    showNotification('Feed added successfully', 'success');
                 } else {
-                    console.error('Error adding feed:', result.error);
-                    alert('Error adding feed: ' + result.error);
+                    showNotification('Error adding feed: ' + result.error, 'error');
                 }
             } catch (error) {
-                console.error('Error adding feed:', error);
-                alert('An unexpected error occurred while adding the feed. Please try again.');
+                showNotification('An unexpected error occurred while adding the feed. Please try again.', 'error');
             }
         }
 
         function updateFeedsList(feeds) {
             const feedsTableBody = document.querySelector('tbody');
-            feedsTableBody.innerHTML = ''; // Clear existing feeds
+            feedsTableBody.innerHTML = '';
             feeds.forEach(feed => {
                 const row = document.createElement('tr');
                 row.innerHTML = `
@@ -185,66 +178,44 @@
                     <td class="py-2 px-4 border-b">${feed.category}</td>
                     <td class="py-2 px-4 border-b">
                         <a href="{{ url_for('rss_manager.edit_feed', feed_id='${feed.id}') }}" class="text-blue-500 hover:text-blue-700">Edit</a>
-                        <form action="{{ url_for('rss_manager.delete_rss_feed', feed_id='${feed.id}') }}" method="POST" class="inline">
-                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                            <button type="submit" class="text-red-500 hover:text-red-700 ml-2">Delete</button>
-                        </form>
+                        <button onclick="deleteFeed('${feed.id}')" class="text-red-500 hover:text-red-700 ml-2">Delete</button>
                     </td>
                 `;
                 feedsTableBody.appendChild(row);
             });
         }
-        document.addEventListener('DOMContentLoaded', function() {
-            const blogSearch = document.getElementById('blogSearch');
-            const categoryFilter = document.getElementById('categoryFilter');
-            const typeFilter = document.getElementById('typeFilter');
-            const toggleButton = document.getElementById('toggleAwesomeBlogs');
-            const awesomeBlogsContainer = document.getElementById('awesomeBlogsContainer');
-            const awesomeBlogsList = document.getElementById('awesomeBlogsList');
 
-            function filterBlogs() {
-                const searchTerm = blogSearch.value.toLowerCase();
-                const selectedCategory = categoryFilter.value;
-                const selectedType = typeFilter.value;
+        async function deleteFeed(feedId) {
+            if (confirm('Are you sure you want to delete this feed?')) {
+                try {
+                    const response = await fetch(`{{ url_for('rss_manager.delete_rss_feed', feed_id='') }}${feedId}`, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRFToken': '{{ csrf_token() }}'
+                        }
+                    });
 
-                const blogItems = document.querySelectorAll('.blog-item');
-                blogItems.forEach(item => {
-                    const title = item.querySelector('h3').textContent.toLowerCase();
-                    const category = item.dataset.category;
-                    const type = item.dataset.type;
-
-                    const matchesSearch = title.includes(searchTerm);
-                    const matchesCategory = selectedCategory === "" || category === selectedCategory;
-                    const matchesType = selectedType === "" || type === selectedType;
-
-                    if (matchesSearch && matchesCategory && matchesType) {
-                        item.style.display = '';
+                    if (response.ok) {
+                        const result = await response.json();
+                        updateFeedsList(result.feeds);
+                        showNotification('Feed deleted successfully', 'success');
                     } else {
-                        item.style.display = 'none';
+                        showNotification('Error deleting feed', 'error');
                     }
-                });
-            }
-
-            toggleButton.addEventListener('click', function() {
-                if (awesomeBlogsContainer.classList.contains('hidden')) {
-                    awesomeBlogsContainer.classList.remove('hidden');
-                    toggleButton.textContent = 'Hide Awesome Threat Intel Blogs';
-                    fetch('{{ url_for("rss_manager.get_awesome_blogs") }}')
-                        .then(response => response.json())
-                        .then(data => {
-                            populateBlogs(data);
-                            filterBlogs();
-                        })
-                        .catch(error => console.error('Error fetching awesome blogs:', error));
-                } else {
-                    awesomeBlogsContainer.classList.add('hidden');
-                    toggleButton.textContent = 'Show Awesome Threat Intel Blogs';
+                } catch (error) {
+                    showNotification('An unexpected error occurred while deleting the feed', 'error');
                 }
-            });
-        });
-    </script>
+            }
+        }
 
-    <script>
+        function showNotification(message, type) {
+            const notification = document.createElement('div');
+            notification.textContent = message;
+            notification.className = `fixed top-4 right-4 p-4 rounded-md ${type === 'success' ? 'bg-green-500' : 'bg-red-500'} text-white`;
+            document.body.appendChild(notification);
+            setTimeout(() => notification.remove(), 3000);
+        }
+
         document.addEventListener('DOMContentLoaded', function() {
             const blogSearch = document.getElementById('blogSearch');
             const categoryFilter = document.getElementById('categoryFilter');
@@ -268,11 +239,7 @@
                     const matchesCategory = selectedCategory === "" || category === selectedCategory;
                     const matchesType = selectedType === "" || type === selectedType;
 
-                    if (matchesSearch && matchesCategory && matchesType) {
-                        item.style.display = '';
-                    } else {
-                        item.style.display = 'none';
-                    }
+                    item.style.display = (matchesSearch && matchesCategory && matchesType) ? '' : 'none';
                 });
             }
 
@@ -313,6 +280,34 @@
                 });
             }
 
+            async function addAwesomeFeed(blogId) {
+                try {
+                    const response = await fetch('{{ url_for("rss_manager.add_awesome_feed") }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': '{{ csrf_token() }}'
+                        },
+                        body: JSON.stringify({ blog_id: blogId })
+                    });
+
+                    const result = await response.json();
+
+                    if (response.ok) {
+                        showNotification('Awesome feed added successfully', 'success');
+                        updateFeedsList(result.feeds);
+                        // Update the button to show it's already added
+                        const addButton = document.querySelector(`button[onclick="addAwesomeFeed('${blogId}')"]`);
+                        if (addButton) {
+                            addButton.parentNode.innerHTML = '<p class="text-sm text-green-500 font-bold">Already in RSS Feeds</p>';
+                        }
+                    } else {
+                        showNotification('Error adding awesome feed: ' + result.error, 'error');
+                    }
+                } catch (error) {
+                    showNotification('An unexpected error occurred while adding the awesome feed', 'error');
+                }
+            }
 
             blogSearch.addEventListener('input', filterBlogs);
             categoryFilter.addEventListener('change', filterBlogs);
@@ -328,7 +323,10 @@
                             populateBlogs(data);
                             filterBlogs();
                         })
-                        .catch(error => console.error('Error fetching awesome blogs:', error));
+                        .catch(error => {
+                            console.error('Error fetching awesome blogs:', error);
+                            showNotification('Error fetching awesome blogs', 'error');
+                        });
                 } else {
                     awesomeBlogsContainer.classList.add('hidden');
                     toggleButton.textContent = 'Show Awesome Threat Intel Blogs';
