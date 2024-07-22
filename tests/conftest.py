@@ -1,10 +1,14 @@
 import sys
 import os
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+from pathlib import Path
+
+# Add the project root directory to the Python path
+project_root = Path(__file__).parent.parent
+sys.path.insert(0, str(project_root))
 
 import pytest
 from app import create_app, db
-from app.config import TestingConfig
+from config import TestingConfig
 
 @pytest.fixture
 def app():
