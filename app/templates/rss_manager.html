@@ -145,6 +145,7 @@
             };
 
             try {
+                console.log('Sending request to add feed:', data);
                 const response = await fetch('/feed', {
                     method: 'POST',
                     headers: {
@@ -153,17 +154,23 @@
                     body: JSON.stringify(data),
                 });
 
+                console.log('Response status:', response.status);
                 const result = await response.json();
+                console.log('Response data:', result);
+
                 if (response.ok) {
+                    console.log('Feed added successfully');
                     // Clear the form
                     form.reset();
                     // Update the feeds list
                     updateFeedsList(result.feeds);
                 } else {
-                    alert(result.error);
+                    console.error('Error adding feed:', result.error);
+                    alert('Error adding feed: ' + result.error);
                 }
             } catch (error) {
                 console.error('Error adding feed:', error);
+                alert('An unexpected error occurred while adding the feed. Please try again.');
             }
         }
 
