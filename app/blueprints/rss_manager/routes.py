@@ -69,13 +69,25 @@ async def create_rss_feed() -> Tuple[Response, int]:
     Raises:
         BadRequest: If the request data is missing or invalid.
     """
+    current_app.logger.info("Received request to create RSS feed")
     data: Dict[str, Any] = request.get_json()
-    if not data or 'url' not in data or 'category' not in data:
-        raise BadRequest("Missing URL or category in request data")
+    current_app.logger.debug(f"Received data: {data}")
+
+    if not data:
+        current_app.logger.error("No JSON data received")
+        return jsonify({"error": "No JSON data received"}), 400
+    if 'url' not in data:
+        current_app.logger.error("Missing URL in request data")
+        return jsonify({"error": "Missing URL in request data"}), 400
+    if 'category' not in data:
+        current_app.logger.error("Missing category in request data")
+        return jsonify({"error": "Missing category in request data"}), 400
 
     try:
         new_feed: RSSFeed = await rss_feed_service.create_feed(data)
+        current_app.logger.info(f"Created new feed: {new_feed.id}")
         await rss_feed_service.parse_feed(new_feed.id)
+        current_app.logger.info(f"Parsed new feed: {new_feed.id}")
         feeds: List[RSSFeed] = rss_feed_service.get_all_feeds()
         return jsonify({"feed": new_feed.to_dict(), "feeds": [feed.to_dict() for feed in feeds]}), 201
     except ValueError as e:
