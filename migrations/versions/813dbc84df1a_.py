@@ -79,6 +79,18 @@ def upgrade():
             existing_nullable=False,
         )
 
+    # Remove duplicate entries in the "awesome_threat_intel_blog" table
+    conn.execute(
+        """
+        DELETE FROM awesome_threat_intel_blog
+        WHERE rowid NOT IN (
+            SELECT MIN(rowid)
+            FROM awesome_threat_intel_blog
+            GROUP BY id
+        )
+        """
+    )
+
     with op.batch_alter_table("awesome_threat_intel_blog", schema=None) as batch_op:
         batch_op.alter_column(
             "id", existing_type=sa.NUMERIC(), type_=sa.UUID(), existing_nullable=False
