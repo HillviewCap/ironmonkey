@@ -56,7 +56,7 @@ def get_rss_feed(feed_id: UUID) -> Tuple[Response, int]:
         abort(404, description="RSS feed not found")
     return jsonify(feed.to_dict()), 200
 
-@rss_manager_bp.route('/', methods=['POST'])
+@rss_manager_bp.route('/feed', methods=['POST'])
 @login_required
 async def create_rss_feed() -> Tuple[Response, int]:
     """

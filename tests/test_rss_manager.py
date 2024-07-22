@@ -32,7 +32,7 @@ def test_add_single_feed(authenticated_client, app, csrf_token):
     }
 
     # Send POST request to create_rss_feed endpoint
-    response = authenticated_client.post('/rss/feed', json=feed_data, headers={'X-CSRFToken': csrf_token})
+    response = authenticated_client.post('/rss/feed', json=feed_data)
 
     # Check response
     print(f"Response status code: {response.status_code}")
