@@ -18,10 +18,13 @@ def test_add_single_feed(client, app):
     response = client.post('/rss/', json=feed_data)
 
     # Check response
-    assert response.status_code == 201
+    print(f"Response status code: {response.status_code}")
+    print(f"Response content: {response.data.decode()}")
+    
+    assert response.status_code == 201, f"Expected 201, got {response.status_code}. Response: {response.data.decode()}"
     data = response.get_json()
-    assert 'feed' in data
-    assert 'feeds' in data
+    assert 'feed' in data, f"'feed' not in response data. Got: {data}"
+    assert 'feeds' in data, f"'feeds' not in response data. Got: {data}"
 
     # Verify the new feed is in the database
     with app.app_context():
