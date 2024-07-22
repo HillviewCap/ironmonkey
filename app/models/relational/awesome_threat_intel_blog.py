@@ -35,6 +35,9 @@ class AwesomeThreatIntelBlog(db.Model):
             'feed_link': self.feed_link
         }
 
+    def __repr__(self) -> str:
+        return f"<AwesomeThreatIntelBlog {self.blog}>"
+
     @classmethod
     def link_with_rss_feed(cls) -> None:
         """
