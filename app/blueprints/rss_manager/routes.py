@@ -109,7 +109,7 @@ async def create_rss_feed() -> Tuple[Response, int]:
 
 @rss_manager_bp.route('/feed/awesome', methods=['POST'])
 @login_required
-async def create_rss_feed_from_awesome():
+async def create_rss_feed_from_awesome() -> Tuple[Response, int]:
     """
     Create a new RSS feed from an Awesome Threat Intel Blog.
 
@@ -138,11 +138,9 @@ async def create_rss_feed_from_awesome():
         }
         new_feed = await rss_feed_service.create_feed(feed_data)
 
-        # Parse the feed after creation
-        await rss_feed_service.parse_feed(new_feed.id)
+        feeds = rss_feed_service.get_all_feeds()
+        return jsonify({'message': 'Awesome feed added successfully', 'feeds': [feed.to_dict() for feed in feeds]}), 200
 
-        # Parse the feed after creation
-        await rss_feed_service.parse_feed(new_feed.id)
     except ValueError as e:
         return jsonify({"error": str(e)}), 400
     except Exception as e:
