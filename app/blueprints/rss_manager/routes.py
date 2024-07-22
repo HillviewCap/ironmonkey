@@ -85,12 +85,21 @@ async def create_rss_feed() -> Tuple[Response, int]:
         return jsonify({"error": "Missing category in request data"}), 400
 
     try:
+        current_app.logger.info(f"Attempting to create feed with URL: {data['url']} and category: {data['category']}")
         new_feed: RSSFeed = await rss_feed_service.create_feed(data)
         current_app.logger.info(f"Created new feed: {new_feed.id}")
+        
+        current_app.logger.info(f"Attempting to parse new feed: {new_feed.id}")
         await rss_feed_service.parse_feed(new_feed.id)
-        current_app.logger.info(f"Parsed new feed: {new_feed.id}")
+        current_app.logger.info(f"Successfully parsed new feed: {new_feed.id}")
+        
+        current_app.logger.info("Fetching all feeds")
         feeds: List[RSSFeed] = rss_feed_service.get_all_feeds()
-        return jsonify({"feed": new_feed.to_dict(), "feeds": [feed.to_dict() for feed in feeds]}), 201
+        current_app.logger.info(f"Fetched {len(feeds)} feeds")
+        
+        response_data = {"feed": new_feed.to_dict(), "feeds": [feed.to_dict() for feed in feeds]}
+        current_app.logger.info(f"Sending response with new feed and {len(feeds)} total feeds")
+        return jsonify(response_data), 201
     except ValueError as e:
         current_app.logger.error(f"ValueError in create_rss_feed: {str(e)}")
         return jsonify({"error": str(e)}), 400
