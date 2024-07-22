@@ -22,13 +22,20 @@ def authenticated_client(client, app):
             session['user_id'] = str(user.id)  # Convert UUID to string
             session['_fresh'] = True
 
+        # Perform a login request
+        client.post('/auth/login', data={
+            'email': 'test@example.com',
+            'password': 'testpassword'
+        }, follow_redirects=True)
+
     return client
 
 def test_add_single_feed(authenticated_client, app, csrf_token):
     # Prepare test data
     feed_data = {
         'url': 'https://feeds.feedburner.com/TheHackersNews',
-        'category': 'News'
+        'category': 'News',
+        'csrf_token': csrf_token
     }
 
     # Send POST request to create_rss_feed endpoint
