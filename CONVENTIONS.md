@@ -58,6 +58,7 @@ your_flask_project/
 * Use `PyGremlin` for interacting with the graph database.
 * Use `Ollama` for local language model integration.
 * Use `langchain-community` for all AI/ML/NER/NLP functions.
+* Use  `flask_migrade` for all database changes.
 
 **Type Hints and Annotations**
 

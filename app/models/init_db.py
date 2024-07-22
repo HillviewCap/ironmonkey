@@ -13,15 +13,6 @@ from models import (
     SearchParams,
     AwesomeThreatIntelBlog,
 )
-from models.relational.diffbot_model import (
-    Base as DiffbotBase,
-    Document,
-    Entity,
-    EntityMention,
-    EntityType,
-    EntityUri,
-    Category as DiffbotCategory,
-)
 from models.relational.alltools import (
     Base as AllToolsBase,
     AllTools,
@@ -66,9 +57,6 @@ def init_db(app):
         try:
             # Create tables for models defined with Flask-SQLAlchemy
             db.create_all()
-
-            # Create tables for models defined with SQLAlchemy (diffbot_model)
-            DiffbotBase.metadata.create_all(engine)
 
             # Check if AllTools and AllGroups tables exist, create them if they don't
             inspector = inspect(engine)
