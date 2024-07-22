@@ -2,24 +2,23 @@ from __future__ import annotations
 
 from uuid import uuid4
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy import Column, String
 from app import db
 
 class Category(db.Model):
-    """
-    Represents a category for parsed content.
-    """
-    __tablename__ = 'category'
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    name = Column(String(255), nullable=False, unique=True)
-    scheme = Column(String(200), nullable=True)  # For feedparser category scheme
-    term = Column(String(200), nullable=True)  # For feedparser category term
+    """Represents a category for parsed content."""
 
-    def __repr__(self):
+    __tablename__ = 'category'
+
+    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    name = db.Column(db.String(255), nullable=False, unique=True)
+    scheme = db.Column(db.String(200), nullable=True)  # For feedparser category scheme
+    term = db.Column(db.String(200), nullable=True)  # For feedparser category term
+
+    def __repr__(self) -> str:
         return f"<Category {self.name}>"
 
     @classmethod
-    def create_from_feedparser(cls, category: str | dict) -> Category:
+    def create_from_feedparser(cls, category: str | dict) -> 'Category':
         """
         Create a Category instance from feedparser data.
 
