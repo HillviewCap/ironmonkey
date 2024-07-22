@@ -136,35 +136,34 @@
 
     <script>
         async function addFeed(event) {
-            event.preventDefault();
-            const form = document.getElementById('addSingleFeedForm');
-            const formData = new FormData(form);
-            const data = {
-                url: formData.get('url'),
-                category: formData.get('category')
-            };
-
+        async function addAwesomeFeed(blogId) {
             try {
-                const response = await fetch('{{ url_for("rss_manager.create_rss_feed") }}', {
+                const response = await fetch('{{ url_for("rss_manager.add_awesome_feed") }}', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'X-CSRFToken': '{{ csrf_token() }}'
                     },
-                    body: JSON.stringify(data),
+                    body: JSON.stringify({ blog_id: blogId })
                 });
 
                 const result = await response.json();
 
                 if (response.ok) {
-                    form.reset();
+                    showNotification('Awesome feed added successfully', 'success');
                     updateFeedsList(result.feeds);
-                    showNotification('Feed added successfully', 'success');
+                    // Update the button to show it's already added
+                    const addButton = document.querySelector(`button[onclick="addAwesomeFeed('${blogId}')"]`);
+                    if (addButton) {
+                        addButton.parentNode.innerHTML = '<p class="text-sm text-green-500 font-bold">Already in RSS Feeds</p>';
+                    }
+                    // Refresh the awesome blogs list to reflect the changes
+                    await fetchAndPopulateAwesomeBlogs();
                 } else {
-                    showNotification('Error adding feed: ' + result.error, 'error');
+                    showNotification('Error adding awesome feed: ' + result.error, 'error');
                 }
             } catch (error) {
-                showNotification('An unexpected error occurred while adding the feed. Please try again.', 'error');
+                showNotification('An unexpected error occurred while adding the awesome feed', 'error');
             }
         }
 
