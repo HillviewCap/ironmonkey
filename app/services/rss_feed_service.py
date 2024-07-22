@@ -52,7 +52,7 @@ class RSSFeedService:
             RSSFeed: The RSS feed object with the given ID.
         """
         with Session(db.engine) as session:
-            return session.query(RSSFeed).get(feed_id)
+            return session.get(RSSFeed, feed_id)
 
     @staticmethod
     async def create_feed(feed_data: Dict[str, str]) -> RSSFeed:
@@ -169,7 +169,7 @@ class RSSFeedService:
             ValueError: If the RSS feed with the given ID is not found.
         """
         with Session(db.engine) as session:
-            feed = session.query(RSSFeed).get(feed_id)
+            feed = session.get(RSSFeed, feed_id)
             if not feed:
                 raise ValueError(f"RSS feed with ID {feed_id} not found.")
 
@@ -189,7 +189,7 @@ class RSSFeedService:
             feed_id (uuid.UUID): The unique identifier of the RSS feed.
         """
         with Session(db.engine) as session:
-            feed = session.query(RSSFeed).get(feed_id)
+            feed = session.get(RSSFeed, feed_id)
             if not feed:
                 raise ValueError(f"RSS feed with ID {feed_id} not found.")
 

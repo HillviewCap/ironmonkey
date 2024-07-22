@@ -120,7 +120,7 @@ def create_app(config_object=None):
         try:
             # Convert the string to a UUID object
             uuid_obj = UUID(user_id)
-            return User.query.get(uuid_obj)
+            return db.session.get(User, uuid_obj)
         except (ValueError, AttributeError):
             return None
 
