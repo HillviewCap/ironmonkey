@@ -89,14 +89,17 @@
     </div>
     <div id="awesomeBlogsContainer" class="hidden p-6 bg-white shadow-md rounded-lg">
         <div class="mb-4">
+            <label for="blogSearch" class="sr-only">Search blogs</label>
             <input type="text" id="blogSearch" placeholder="Search blogs..." class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-            <select id="categoryFilter" class="mt-2 shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+            <label for="categoryFilter" class="sr-only">Filter by category</label>
+            <select id="categoryFilter" class="mt-2 shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" aria-label="Filter by category">
                 <option value="">All Categories</option>
                 {% for category in categories %}
                     <option value="{{ category }}">{{ category }}</option>
                 {% endfor %}
             </select>
-            <select id="typeFilter" class="mt-2 shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+            <label for="typeFilter" class="sr-only">Filter by type</label>
+            <select id="typeFilter" class="mt-2 shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" aria-label="Filter by type">
                 <option value="">All Types</option>
                 {% for type in types %}
                     <option value="{{ type }}">{{ type }}</option>
