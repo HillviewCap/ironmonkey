@@ -240,7 +240,7 @@
             setTimeout(() => notification.remove(), 3000);
         }
 
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', async function() {
             const blogSearch = document.getElementById('blogSearch');
             const categoryFilter = document.getElementById('categoryFilter');
             const typeFilter = document.getElementById('typeFilter');
@@ -323,6 +323,7 @@
 
             // Initial fetch of awesome blogs
             fetchAndPopulateAwesomeBlogs();
+            await fetchAndPopulateAwesomeBlogs();
         });
 
         // Call fetchAndPopulateAwesomeBlogs when the page loads
