@@ -166,6 +166,7 @@
                     showNotification('Error adding awesome feed: ' + result.error, 'error');
                 }
             } catch (error) {
+                console.error('Error adding awesome feed:', error);
                 showNotification('An unexpected error occurred while adding the awesome feed', 'error');
             }
         }
