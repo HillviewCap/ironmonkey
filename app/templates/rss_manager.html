@@ -139,37 +139,6 @@
 
     <script>
         async function addFeed(event) {
-        async function addAwesomeFeed(blogId) {
-            try {
-                const response = await fetch('{{ url_for("rss_manager.add_awesome_feed") }}', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': '{{ csrf_token() }}'
-                    },
-                    body: JSON.stringify({ blog_id: blogId })
-                });
-
-                const result = await response.json();
-
-                if (response.ok) {
-                    showNotification('Awesome feed added successfully', 'success');
-                    updateFeedsList(result.feeds);
-                    // Update the button to show it's already added
-                    const addButton = document.querySelector(`button[onclick="addAwesomeFeed('${blogId}')"]`);
-                    if (addButton) {
-                        addButton.parentNode.innerHTML = '<p class="text-sm text-green-500 font-bold">Already in RSS Feeds</p>';
-                    }
-                    // Refresh the awesome blogs list to reflect the changes
-                    await fetchAndPopulateAwesomeBlogs();
-                } else {
-                    showNotification('Error adding awesome feed: ' + result.error, 'error');
-                }
-            } catch (error) {
-                console.error('Error adding awesome feed:', error);
-                showNotification('An unexpected error occurred while adding the awesome feed', 'error');
-            }
-        }
             event.preventDefault();
             const form = document.getElementById('addSingleFeedForm');
             const formData = new FormData(form);
@@ -199,6 +168,38 @@
                 }
             } catch (error) {
                 showNotification('An unexpected error occurred while adding the feed. Please try again.', 'error');
+            }
+        }
+
+        async function addAwesomeFeed(blogId) {
+            try {
+                const response = await fetch('{{ url_for("rss_manager.add_awesome_feed") }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token() }}'
+                    },
+                    body: JSON.stringify({ blog_id: blogId })
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    showNotification('Awesome feed added successfully', 'success');
+                    updateFeedsList(result.feeds);
+                    // Update the button to show it's already added
+                    const addButton = document.querySelector(`button[onclick="addAwesomeFeed('${blogId}')"]`);
+                    if (addButton) {
+                        addButton.parentNode.innerHTML = '<p class="text-sm text-green-500 font-bold">Already in RSS Feeds</p>';
+                    }
+                    // Refresh the awesome blogs list to reflect the changes
+                    await fetchAndPopulateAwesomeBlogs();
+                } else {
+                    showNotification('Error adding awesome feed: ' + result.error, 'error');
+                }
+            } catch (error) {
+                console.error('Error adding awesome feed:', error);
+                showNotification('An unexpected error occurred while adding the awesome feed', 'error');
             }
         }
 
@@ -232,16 +233,8 @@
                     if (response.ok) {
                         const result = await response.json();
                         updateFeedsList(result.feeds);
-                        showNotification('Feed deleted successfully', 'success');
-                    } else {
-                        showNotification('Error deleting feed', 'error');
-                    }
-                } catch (error) {
-                    showNotification('An unexpected error occurred while deleting the feed', 'error');
-                }
-            }
-        }
-
+                        showNot
+{% endblock %}
         function showNotification(message, type) {
             const notification = document.createElement('div');
             notification.textContent = message;
@@ -314,37 +307,6 @@
                 });
             }
 
-            async function addAwesomeFeed(blogId) {
-                try {
-                    const response = await fetch('{{ url_for("rss_manager.add_awesome_feed") }}', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRFToken': '{{ csrf_token() }}'
-                        },
-                        body: JSON.stringify({ blog_id: blogId })
-                    });
-
-                    const result = await response.json();
-
-                    if (response.ok) {
-                        showNotification('Awesome feed added successfully', 'success');
-                        updateFeedsList(result.feeds);
-                        // Update the button to show it's already added
-                        const addButton = document.querySelector(`button[onclick="addAwesomeFeed('${blogId}')"]`);
-                        if (addButton) {
-                            addButton.parentNode.innerHTML = '<p class="text-sm text-green-500 font-bold">Already in RSS Feeds</p>';
-                        }
-                        // Refresh the awesome blogs list to reflect the changes
-                        await fetchAndPopulateAwesomeBlogs();
-                    } else {
-                        showNotification('Error adding awesome feed: ' + result.error, 'error');
-                    }
-                } catch (error) {
-                    showNotification('An unexpected error occurred while adding the awesome feed', 'error');
-                }
-            }
-
             async function fetchAndPopulateAwesomeBlogs() {
                 try {
                     const response = await fetch('{{ url_for("rss_manager.get_awesome_blogs") }}');
@@ -365,16 +327,7 @@
                 if (awesomeBlogsContainer.classList.contains('hidden')) {
                     awesomeBlogsContainer.classList.remove('hidden');
                     toggleButton.textContent = 'Hide Awesome Threat Intel Blogs';
-                    fetch('{{ url_for("rss_manager.get_awesome_blogs") }}')
-                        .then(response => response.json())
-                        .then(data => {
-                            populateBlogs(data);
-                            filterBlogs();
-                        })
-                        .catch(error => {
-                            console.error('Error fetching awesome blogs:', error);
-                            showNotification('Error fetching awesome blogs', 'error');
-                        });
+                    fetchAndPopulateAwesomeBlogs();
                 } else {
                     awesomeBlogsContainer.classList.add('hidden');
                     toggleButton.textContent = 'Show Awesome Threat Intel Blogs';
@@ -382,4 +335,3 @@
             });
         });
     </script>
-{% endblock %}
