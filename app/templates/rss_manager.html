@@ -324,4 +324,7 @@
             // Initial fetch of awesome blogs
             fetchAndPopulateAwesomeBlogs();
         });
+
+        // Call fetchAndPopulateAwesomeBlogs when the page loads
+        document.addEventListener('DOMContentLoaded', fetchAndPopulateAwesomeBlogs);
     </script>
