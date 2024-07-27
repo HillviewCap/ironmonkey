@@ -310,6 +310,9 @@
             async function fetchAndPopulateAwesomeBlogs() {
                 try {
                     const response = await fetch('{{ url_for("rss_manager.get_awesome_blogs") }}');
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
                     const data = await response.json();
                     populateBlogs(data);
                     filterBlogs();
@@ -333,5 +336,8 @@
                     toggleButton.textContent = 'Show Awesome Threat Intel Blogs';
                 }
             });
+
+            // Initial fetch of awesome blogs
+            fetchAndPopulateAwesomeBlogs();
         });
     </script>
