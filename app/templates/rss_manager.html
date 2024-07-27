@@ -103,34 +103,47 @@
                 {% endfor %}
             </select>
         </div>
-        <div id="awesomeBlogsList" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
-        {% for blog in awesome_blogs %}
-            <div class="blog-item bg-white shadow-md rounded px-6 py-4 flex flex-col h-full items-center text-center" data-category="{{ blog.blog_category }}" data-type="{{ blog.type }}">
-                <div class="flex-grow flex flex-col items-center justify-center">
-                    <h3 class="text-lg font-semibold mb-2">{{ blog.blog }}</h3>
-                    <p class="text-sm text-gray-600 mb-2">Category: {{ blog.blog_category }}</p>
-                    <p class="text-sm text-gray-500 mb-2">Type: {{ blog.type }}</p>
-                    <a href="{{ blog.blog_link }}" target="_blank" class="text-blue-500 hover:text-blue-700 break-all">Blog Link</a>
-                    {% if blog.feed_link %}
-                        <p class="text-sm text-gray-500 mt-2">Feed Type: {{ blog.feed_type }}</p>
-                        <a href="{{ blog.feed_link }}" target="_blank" class="text-blue-500 hover:text-blue-700 break-all">Feed Link</a>
-                    {% endif %}
-                </div>
-                <div class="mt-4 w-full">
-                    {% if blog.feed_link %}
-                        {% if blog.is_in_rss_feeds %}
-                            <p class="text-sm text-green-500 font-bold">Already in RSS Feeds</p>
-                        {% else %}
-                            <button onclick="addAwesomeFeed('{{ blog.id|string }}')" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline add-feed-btn">
-                                Add Feed
-                            </button>
-                        {% endif %}
-                    {% else %}
-                        <p class="text-sm text-gray-500">No RSS feed available</p>
-                    {% endif %}
-                </div>
-            </div>
-        {% endfor %}
+        <div class="overflow-x-auto">
+            <table class="min-w-full bg-white">
+                <thead>
+                    <tr>
+                        <th class="py-2 px-4 border-b">Blog</th>
+                        <th class="py-2 px-4 border-b">Category</th>
+                        <th class="py-2 px-4 border-b">Type</th>
+                        <th class="py-2 px-4 border-b">Blog Link</th>
+                        <th class="py-2 px-4 border-b">Feed Link</th>
+                        <th class="py-2 px-4 border-b">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="awesomeBlogsList">
+                {% for blog in awesome_blogs %}
+                    <tr class="blog-item" data-category="{{ blog.blog_category }}" data-type="{{ blog.type }}">
+                        <td class="py-2 px-4 border-b">{{ blog.blog }}</td>
+                        <td class="py-2 px-4 border-b">{{ blog.blog_category }}</td>
+                        <td class="py-2 px-4 border-b">{{ blog.type }}</td>
+                        <td class="py-2 px-4 border-b"><a href="{{ blog.blog_link }}" target="_blank" class="text-blue-500 hover:text-blue-700 break-all">Blog Link</a></td>
+                        <td class="py-2 px-4 border-b">
+                            {% if blog.feed_link %}
+                                <a href="{{ blog.feed_link }}" target="_blank" class="text-blue-500 hover:text-blue-700 break-all">Feed Link</a>
+                            {% else %}
+                                <p class="text-sm text-gray-500">No RSS feed available</p>
+                            {% endif %}
+                        </td>
+                        <td class="py-2 px-4 border-b">
+                            {% if blog.feed_link %}
+                                {% if blog.is_in_rss_feeds %}
+                                    <p class="text-sm text-green-500 font-bold">Already in RSS Feeds</p>
+                                {% else %}
+                                    <button onclick="addAwesomeFeed('{{ blog.id|string }}')" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline add-feed-btn">
+                                        Add Feed
+                                    </button>
+                                {% endif %}
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
         </div>
     </div>
 
