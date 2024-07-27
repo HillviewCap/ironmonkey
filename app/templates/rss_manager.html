@@ -322,7 +322,7 @@
                         throw new Error(`HTTP error! status: ${response.status}`);
                     }
                     const data = await response.json();
-                    populateBlogs(data);
+                    populateAwesomeBlogs(data);
                     filterBlogs();
                 } catch (error) {
                     console.error('Error fetching awesome blogs:', error);
