@@ -77,9 +77,6 @@
 
     <h2 class="text-2xl font-bold mb-4">Awesome Threat Intel Blogs</h2>
     <div class="mb-4 flex space-x-4">
-        <button id="toggleAwesomeBlogs" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-            Show Awesome Threat Intel Blogs
-        </button>
         <form action="{{ url_for('rss_manager.update_awesome_threat_intel') }}" method="POST" class="inline" onsubmit="return confirm('Are you sure you want to update Awesome Threat Intel Blogs?');">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
             <button type="submit" class="bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded">
@@ -87,7 +84,7 @@
             </button>
         </form>
     </div>
-    <div id="awesomeBlogsContainer" class="hidden p-6 bg-white shadow-md rounded-lg">
+    <div id="awesomeBlogsContainer" class="p-6 bg-white shadow-md rounded-lg">
         <div class="mb-4">
             <label for="blogSearch" class="sr-only">Search blogs</label>
             <input type="text" id="blogSearch" placeholder="Search blogs..." class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
@@ -247,8 +244,6 @@
             const blogSearch = document.getElementById('blogSearch');
             const categoryFilter = document.getElementById('categoryFilter');
             const typeFilter = document.getElementById('typeFilter');
-            const toggleButton = document.getElementById('toggleAwesomeBlogs');
-            const awesomeBlogsContainer = document.getElementById('awesomeBlogsContainer');
             const awesomeBlogsList = document.getElementById('awesomeBlogsList');
 
             function filterBlogs() {
@@ -325,17 +320,6 @@
             blogSearch.addEventListener('input', filterBlogs);
             categoryFilter.addEventListener('change', filterBlogs);
             typeFilter.addEventListener('change', filterBlogs);
-
-            toggleButton.addEventListener('click', function() {
-                if (awesomeBlogsContainer.classList.contains('hidden')) {
-                    awesomeBlogsContainer.classList.remove('hidden');
-                    toggleButton.textContent = 'Hide Awesome Threat Intel Blogs';
-                    fetchAndPopulateAwesomeBlogs();
-                } else {
-                    awesomeBlogsContainer.classList.add('hidden');
-                    toggleButton.textContent = 'Show Awesome Threat Intel Blogs';
-                }
-            });
 
             // Initial fetch of awesome blogs
             fetchAndPopulateAwesomeBlogs();
