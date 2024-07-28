@@ -69,7 +69,44 @@ class ParsedContentService:
         return query.all()
 
     @staticmethod
-    def get_total_count(search_query: str = '') -> int:
+    def get_contents(page: int = 0, limit: int = 10, search_query: str = '', feed_id: Union[str, UUID, None] = None) -> Tuple[List[ParsedContent], int]:
+        """
+        Retrieve paginated parsed content, optionally filtered by a search query and feed_id.
+
+        Args:
+            page (int): The page number (0-based).
+            limit (int): The number of items per page.
+            search_query (str): Optional search query to filter the content.
+            feed_id (Union[str, UUID, None]): Optional feed_id to filter the content. If None, return all content.
+
+        Returns:
+            Tuple[List[ParsedContent], int]: A tuple containing the list of parsed content objects and the total count.
+        """
+        query = ParsedContent.query
+
+        if feed_id is not None:
+            if isinstance(feed_id, str):
+                try:
+                    feed_id = UUID(feed_id)
+                except ValueError:
+                    # Handle invalid UUID string
+                    return [], 0
+            query = query.filter(ParsedContent.feed_id == feed_id)
+
+        if search_query:
+            search = f"%{search_query}%"
+            query = query.filter(
+                (ParsedContent.title.ilike(search)) |
+                (ParsedContent.description.ilike(search)) |
+                (ParsedContent.content.ilike(search))
+            )
+
+        total = query.count()
+
+        # Apply pagination
+        query = query.offset(page * limit).limit(limit)
+
+        return query.all(), total
         """
         Get the total count of parsed content, optionally filtered by a search query.
 
