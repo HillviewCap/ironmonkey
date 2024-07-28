@@ -309,10 +309,13 @@ async def add_awesome_feed():
         # Convert blog_id to UUID if it's a string
         if isinstance(blog_id, str):
             try:
-                blog_id = UUID(blog_id)
+                blog_id = UUID(blog_id.strip())  # Strip any whitespace
             except ValueError as e:
                 current_app.logger.error(f"Invalid blog_id format: {str(e)}")
                 return jsonify({'error': f'Invalid blog_id format: {str(e)}'}), 400
+        elif not isinstance(blog_id, UUID):
+            current_app.logger.error(f"Invalid blog_id type: {type(blog_id)}")
+            return jsonify({'error': f'Invalid blog_id type: {type(blog_id)}'}), 400
 
         current_app.logger.debug(f"Converted blog_id: {blog_id}")
 
