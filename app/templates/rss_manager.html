@@ -259,6 +259,9 @@
             const typeFilter = document.getElementById('typeFilter');
             const awesomeBlogsList = document.getElementById('awesomeBlogsList');
 
+            // Call fetchAndPopulateAwesomeBlogs when the page loads
+            await fetchAndPopulateAwesomeBlogs();
+
             function filterBlogs() {
                 const searchTerm = blogSearch.value.toLowerCase();
                 const selectedCategory = categoryFilter.value;
@@ -339,6 +342,4 @@
             await fetchAndPopulateAwesomeBlogs();
         });
 
-        // Call fetchAndPopulateAwesomeBlogs when the page loads
-        document.addEventListener('DOMContentLoaded', fetchAndPopulateAwesomeBlogs);
     </script>
