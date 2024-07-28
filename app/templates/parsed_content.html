@@ -6,6 +6,7 @@
     
     <div class="mb-6 flex justify-end">
         <button id="clear-summaries-btn" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 transition duration-300">Clear All Summaries</button>
+        <button id="export-csv-btn" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500 transition duration-300">Export to CSV</button>
     </div>
 
     <div id="parsed-content-table" class="bg-white shadow-md rounded-lg overflow-hidden"></div>
@@ -54,6 +55,14 @@
                 }
             }).render(document.getElementById('parsed-content-table'));
         });
+        document.getElementById('export-csv-btn').addEventListener('click', function () {
+            const searchParams = new URLSearchParams(window.location.search);
+            const search = searchParams.get('search') || '';
+            const feed_id = searchParams.get('feed_id') || '';
+            const url = `${exportCsvUrl}?search=${search}&feed_id=${feed_id}`;
+            window.location.href = url;
+        });
+        const exportCsvUrl = "{{ url_for('parsed_content.export_csv') }}";
     </script>
 
     <script src="{{ url_for('static', filename='js/node_modules/gridjs/dist/gridjs.umd.js') }}"></script>

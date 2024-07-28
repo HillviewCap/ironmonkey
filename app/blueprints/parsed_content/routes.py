@@ -1,4 +1,5 @@
-from flask import Blueprint, render_template, abort, request, redirect, url_for, jsonify
+from flask import Blueprint, render_template, abort, request, redirect, url_for, jsonify, Response
+import csv
 from app.models.relational.parsed_content import ParsedContent
 from app.services.parsed_content_service import ParsedContentService
 from uuid import UUID
@@ -39,11 +40,37 @@ def summarize_content():
     # For now, we'll just return a dummy response
     return jsonify({'summary': 'This is a dummy summary.'})
 
-@parsed_content_bp.route('/clear_all_summaries', methods=['POST'])
-def clear_all_summaries():
-    # Implement your logic to clear all summaries here
-    # For now, we'll just return a dummy response
-    return jsonify({'message': 'All summaries have been cleared.'})
+@parsed_content_bp.route('/export_csv', methods=['GET'])
+def export_csv():
+    search = request.args.get('search', '')
+    feed_id = request.args.get('feed_id')
+    
+    # Convert feed_id to UUID if it's provided
+    if feed_id:
+        try:
+            feed_id = UUID(feed_id)
+        except ValueError:
+            return jsonify({'error': 'Invalid feed_id'}), 400
+
+    # Fetch data from your database
+    items, _ = ParsedContentService.get_contents(
+        page=0,  # Fetch all items
+        limit=0,  # No limit
+        search_query=search,
+        feed_id=feed_id
+    )
+
+    # Create a CSV response
+    def generate():
+        data = [content.to_dict() for content in items]
+        fieldnames = data[0].keys() if data else []
+        writer = csv.DictWriter(Response(), fieldnames=fieldnames)
+        writer.writeheader()
+        for row in data:
+            writer.writerow(row)
+        yield writer
+
+    return Response(generate(), mimetype='text/csv', headers={"Content-Disposition": "attachment;filename=parsed_content.csv"})
 
 
 @parsed_content_bp.route('/add', methods=['POST'])
