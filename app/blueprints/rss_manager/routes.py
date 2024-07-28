@@ -316,7 +316,8 @@ async def add_awesome_feed():
 
         feed_data = {
             'url': awesome_blog.feed_link,
-            'category': awesome_blog.blog_category
+            'category': awesome_blog.blog_category,
+            'name': awesome_blog.blog  # Add the blog name to the feed data
         }
         new_feed = await rss_feed_service.create_feed(feed_data)
         
