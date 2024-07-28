@@ -20,7 +20,7 @@
                     },
                     {
                         name: 'Title',
-                        formatter: (cell, row) => gridjs.html(`<a href="/item/${row.cells[0].data}" class="text-blue-600 hover:underline">${cell}</a>`)
+                        formatter: (cell, row) => gridjs.html(`<a href="/content/item/${row.cells[0].data}" class="text-blue-600 hover:underline">${cell}</a>`)
                     },
                     'Description',
                     'Published Date',
@@ -37,7 +37,7 @@
                 pagination: {
                     limit: 10,
                     server: {
-                        url: (prev, page, limit) => `${prev}${prev.includes('?') ? '&' : '?'}limit=${limit}&page=${page+1}`
+                        url: (prev, page, limit) => `${prev}${prev.includes('?') ? '&' : '?'}limit=${limit}&page=${page}`
                     }
                 },
                 search: {

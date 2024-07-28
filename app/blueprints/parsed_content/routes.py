@@ -133,7 +133,7 @@ def get_parsed_content():
 
     # Fetch data from your database
     items, total = ParsedContentService.get_contents(
-        page=page-1,  # Convert to 0-based index
+        page=page,  # Keep as 1-based index
         limit=limit,
         search_query=search,
         feed_id=feed_id
@@ -144,7 +144,7 @@ def get_parsed_content():
         [
             str(item.id),
             item.title,
-            item.description,
+            item.description[:100] + '...' if len(item.description) > 100 else item.description,
             item.pub_date.strftime('%Y-%m-%d %H:%M:%S') if item.pub_date else ''
         ]
         for item in items
