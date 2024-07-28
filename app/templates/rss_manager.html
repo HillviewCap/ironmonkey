@@ -257,9 +257,9 @@
                         id: 'actions',
                         name: 'Actions',
                         formatter: (_, row) => {
-                            const feedLink = row.cells[4].data;
-                            const blogId = row.cells[5].data;
-                            const isInRssFeeds = row.cells[6].data;
+                            const feedLink = row.cells.find(cell => cell.data.id === 'feed_link').data;
+                            const blogId = row.cells.find(cell => cell.data.id === 'id').data;
+                            const isInRssFeeds = row.cells.find(cell => cell.data.id === 'is_in_rss_feeds').data;
                             if (feedLink && !isInRssFeeds) {
                                 return gridjs.html(`<button onclick="addAwesomeFeed('${blogId}')" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline add-feed-btn">Add Feed</button>`);
                             } else if (isInRssFeeds) {
@@ -273,15 +273,15 @@
                 ],
                 server: {
                     url: '{{ url_for("rss_manager.get_awesome_blogs") }}',
-                    then: data => data.map(blog => [
-                        blog.blog,
-                        blog.blog_category,
-                        blog.type,
-                        blog.blog_link,
-                        blog.feed_link,
-                        blog.id,
-                        blog.is_in_rss_feeds
-                    ])
+                    then: response => response.data.map(blog => ({
+                        blog: blog.blog,
+                        blog_category: blog.blog_category,
+                        type: blog.type,
+                        blog_link: blog.blog_link,
+                        feed_link: blog.feed_link,
+                        id: blog.id,
+                        is_in_rss_feeds: blog.is_in_rss_feeds
+                    }))
                 },
                 search: true,
                 sort: true,
