@@ -145,7 +145,7 @@ def get_parsed_content():
             str(item.id),
             item.title,
             item.description[:100] + '...' if len(item.description) > 100 else item.description,
-            item.pub_date if item.pub_date else ''
+            item.pub_date.split(' ')[0] if item.pub_date else ''
         ]
         for item in items
     ]
