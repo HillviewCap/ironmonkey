@@ -381,7 +381,7 @@ def get_awesome_blogs():
     Retrieve all Awesome Threat Intel Blogs.
 
     This function fetches all Awesome Threat Intel Blogs from the database
-    and returns them as a JSON response.
+    and returns them as a JSON response, formatted for GridJS.
 
     Returns:
         tuple: A tuple containing a JSON response with the blogs data or error
@@ -391,6 +391,7 @@ def get_awesome_blogs():
         - The function requires the user to be logged in.
         - It uses the AwesomeThreatIntelBlog model to fetch the data.
         - Each blog is converted to a dictionary using the to_dict() method.
+        - The response includes a 'data' key with the blog information.
 
     Raises:
         Exception: If an error occurs during the database query or JSON conversion,
@@ -398,7 +399,14 @@ def get_awesome_blogs():
     """
     try:
         blogs = AwesomeThreatIntelBlog.query.all()
-        return jsonify([blog.to_dict() for blog in blogs]), 200
+        blog_data = [blog.to_dict() for blog in blogs]
+        
+        # Check if each blog is in RSS feeds
+        rss_feed_urls = set(RSSFeed.query.with_entities(RSSFeed.url).all())
+        for blog in blog_data:
+            blog['is_in_rss_feeds'] = blog['feed_link'] in rss_feed_urls if blog['feed_link'] else False
+
+        return jsonify(blog_data), 200
     except Exception as e:
         current_app.logger.error(f"Error fetching awesome blogs: {str(e)}")
         return jsonify({"error": "Failed to fetch awesome blogs"}), 500

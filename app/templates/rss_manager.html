@@ -85,165 +85,15 @@
         </form>
     </div>
     <div id="awesomeBlogsContainer" class="p-6 bg-white shadow-md rounded-lg">
-        <div class="mb-4">
-            <label for="blogSearch" class="sr-only">Search blogs</label>
-            <input type="text" id="blogSearch" placeholder="Search blogs..." class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-            <label for="categoryFilter" class="sr-only">Filter by category</label>
-            <select id="categoryFilter" class="mt-2 shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" aria-label="Filter by category">
-                <option value="">All Categories</option>
-                {% for category in categories %}
-                    <option value="{{ category }}">{{ category }}</option>
-                {% endfor %}
-            </select>
-            <label for="typeFilter" class="sr-only">Filter by type</label>
-            <select id="typeFilter" class="mt-2 shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" aria-label="Filter by type">
-                <option value="">All Types</option>
-                {% for type in types %}
-                    <option value="{{ type }}">{{ type }}</option>
-                {% endfor %}
-            </select>
-        </div>
-        <div class="overflow-x-auto">
-            <table class="min-w-full bg-white">
-                <thead>
-                    <tr>
-                        <th class="py-2 px-4 border-b">Blog</th>
-                        <th class="py-2 px-4 border-b">Category</th>
-                        <th class="py-2 px-4 border-b">Type</th>
-                        <th class="py-2 px-4 border-b">Blog Link</th>
-                        <th class="py-2 px-4 border-b">Feed Link</th>
-                        <th class="py-2 px-4 border-b">Actions</th>
-                    </tr>
-                </thead>
-                <tbody id="awesomeBlogsList">
-                {% for blog in awesome_blogs %}
-                    <tr class="blog-item" data-category="{{ blog.blog_category }}" data-type="{{ blog.type }}">
-                        <td class="py-2 px-4 border-b">{{ blog.blog }}</td>
-                        <td class="py-2 px-4 border-b">{{ blog.blog_category }}</td>
-                        <td class="py-2 px-4 border-b">{{ blog.type }}</td>
-                        <td class="py-2 px-4 border-b"><a href="{{ blog.blog_link }}" target="_blank" class="text-blue-500 hover:text-blue-700 break-all">Blog Link</a></td>
-                        <td class="py-2 px-4 border-b">
-                            {% if blog.feed_link %}
-                                <a href="{{ blog.feed_link }}" target="_blank" class="text-blue-500 hover:text-blue-700 break-all">Feed Link</a>
-                            {% else %}
-                                <p class="text-sm text-gray-500">No RSS feed available</p>
-                            {% endif %}
-                        </td>
-                        <td class="py-2 px-4 border-b">
-                            {% if blog.feed_link %}
-                                {% if blog.is_in_rss_feeds %}
-                                    <p class="text-sm text-green-500 font-bold">Already in RSS Feeds</p>
-                                {% else %}
-                                    <button onclick="addAwesomeFeed('{{ blog.id|string }}')" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline add-feed-btn">
-                                        Add Feed
-                                    </button>
-                                {% endif %}
-                            {% endif %}
-                        </td>
-                    </tr>
-                {% endfor %}
-                </tbody>
-            </table>
-        </div>
+        <div id="awesomeBlogsGrid"></div>
     </div>
 
+    <script src="https://unpkg.com/gridjs/dist/gridjs.umd.js"></script>
+    <link href="https://unpkg.com/gridjs/dist/theme/mermaid.min.css" rel="stylesheet" />
     <script>
         async function addFeed(event) {
             event.preventDefault();
-            const form = document.getElementById('addSingleFeedForm');
-            const formData = new FormData(form);
-            const data = {
-                url: formData.get('url'),
-                category: formData.get('category')
-            };
-
-            try {
-                const response = await fetch('{{ url_for("rss_manager.create_rss_feed") }}', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': '{{ csrf_token() }}'
-                    },
-                    body: JSON.stringify(data),
-                });
-
-                const result = await response.json();
-
-                if (response.ok) {
-                    form.reset();
-                    updateFeedsList(result.feeds);
-                    showNotification('Feed added successfully', 'success');
-                } else {
-                    showNotification('Error adding feed: ' + result.error, 'error');
-                }
-            } catch (error) {
-                showNotification('An unexpected error occurred while adding the feed. Please try again.', 'error');
-            }
-        }
-
-        async function addAwesomeFeed(blogId) {
-            try {
-                const response = await fetch('{{ url_for("rss_manager.add_awesome_feed") }}', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': '{{ csrf_token() }}'
-                    },
-                    body: JSON.stringify({ blog_id: blogId })
-                });
-
-                const result = await response.json();
-
-                if (response.ok) {
-                    showNotification('Awesome feed added successfully', 'success');
-                    updateFeedsList(result.feeds);
-                    // Update the button to show it's already added
-                    const addButton = document.querySelector(`button[onclick="addAwesomeFeed('${blogId}')"]`);
-                    if (addButton) {
-                        addButton.parentNode.innerHTML = '<p class="text-sm text-green-500 font-bold">Already in RSS Feeds</p>';
-                    }
-                    // Refresh the awesome blogs list to reflect the changes
-                    await fetchAndPopulateAwesomeBlogs();
-                } else {
-                    showNotification('Error adding awesome feed: ' + result.error, 'error');
-                }
-            } catch (error) {
-                console.error('Error adding awesome feed:', error);
-                showNotification('An unexpected error occurred while adding the awesome feed', 'error');
-            }
-        }
-
-        function updateFeedsList(feeds) {
-            const feedsTableBody = document.querySelector('tbody');
-            feedsTableBody.innerHTML = '';
-            feeds.forEach(feed => {
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td class="py-2 px-4 border-b">${feed.url}</td>
-                    <td class="py-2 px-4 border-b">${feed.category}</td>
-                    <td class="py-2 px-4 border-b">
-                        <a href="{{ url_for('rss_manager.edit_feed', feed_id='${feed.id}') }}" class="text-blue-500 hover:text-blue-700">Edit</a>
-                        <button onclick="deleteFeed('${feed.id}')" class="text-red-500 hover:text-red-700 ml-2">Delete</button>
-                    </td>
-                `;
-                feedsTableBody.appendChild(row);
-            });
-        }
-
-        async function deleteFeed(feedId) {
-            if (confirm('Are you sure you want to delete this feed?')) {
-                try {
-                    const response = await fetch(`{{ url_for('rss_manager.delete_rss_feed', feed_id='') }}${feedId}`, {
-                        method: 'POST',
-                        headers: {
-                            'X-CSRFToken': '{{ csrf_token() }}'
-                        }
-                    });
-
-                    if (response.ok) {
-                        const result = await response.json();
-                        updateFeedsList(result.feeds);
-                        showNot
+            const form = document.getElementById('addS
 {% endblock %}
         function showNotification(message, type) {
             const notification = document.createElement('div');
@@ -254,92 +104,81 @@
         }
 
         document.addEventListener('DOMContentLoaded', async function() {
-            const blogSearch = document.getElementById('blogSearch');
-            const categoryFilter = document.getElementById('categoryFilter');
-            const typeFilter = document.getElementById('typeFilter');
-            const awesomeBlogsList = document.getElementById('awesomeBlogsList');
+            const grid = new gridjs.Grid({
+                columns: [
+                    { id: 'blog', name: 'Blog' },
+                    { id: 'blog_category', name: 'Category' },
+                    { id: 'type', name: 'Type' },
+                    { 
+                        id: 'blog_link', 
+                        name: 'Blog Link',
+                        formatter: (cell) => gridjs.html(`<a href="${cell}" target="_blank" class="text-blue-500 hover:text-blue-700">Blog Link</a>`)
+                    },
+                    { 
+                        id: 'feed_link', 
+                        name: 'Feed Link',
+                        formatter: (cell) => cell ? gridjs.html(`<a href="${cell}" target="_blank" class="text-blue-500 hover:text-blue-700">Feed Link</a>`) : 'No RSS feed available'
+                    },
+                    {
+                        id: 'actions',
+                        name: 'Actions',
+                        formatter: (_, row) => {
+                            if (row.cells[4].data && !row.cells[6].data) {
+                                return gridjs.html(`<button onclick="addAwesomeFeed('${row.cells[5].data}')" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline add-feed-btn">Add Feed</button>`);
+                            } else if (row.cells[6].data) {
+                                return gridjs.html('<p class="text-sm text-green-500 font-bold">Already in RSS Feeds</p>');
+                            }
+                            return '';
+                        }
+                    },
+                    { id: 'id', name: 'ID', hidden: true },
+                    { id: 'is_in_rss_feeds', name: 'Is In RSS Feeds', hidden: true }
+                ],
+                server: {
+                    url: '{{ url_for("rss_manager.get_awesome_blogs") }}',
+                    then: data => data.map(blog => [
+                        blog.blog,
+                        blog.blog_category,
+                        blog.type,
+                        blog.blog_link,
+                        blog.feed_link,
+                        blog.id,
+                        blog.is_in_rss_feeds
+                    ])
+                },
+                search: true,
+                sort: true,
+                pagination: {
+                    limit: 10
+                },
+                className: {
+                    table: 'min-w-full bg-white'
+                }
+            }).render(document.getElementById("awesomeBlogsGrid"));
 
-            // Call fetchAndPopulateAwesomeBlogs when the page loads
-            await fetchAndPopulateAwesomeBlogs();
-
-            function filterBlogs() {
-                const searchTerm = blogSearch.value.toLowerCase();
-                const selectedCategory = categoryFilter.value;
-                const selectedType = typeFilter.value;
-
-                const blogItems = document.querySelectorAll('.blog-item');
-                blogItems.forEach(item => {
-                    const title = item.querySelector('h3').textContent.toLowerCase();
-                    const category = item.dataset.category;
-                    const type = item.dataset.type;
-
-                    const matchesSearch = title.includes(searchTerm);
-                    const matchesCategory = selectedCategory === "" || category === selectedCategory;
-                    const matchesType = selectedType === "" || type === selectedType;
-
-                    item.style.display = (matchesSearch && matchesCategory && matchesType) ? '' : 'none';
-                });
-            }
-
-            function populateAwesomeBlogs(blogs) {
-                awesomeBlogsList.innerHTML = '';
-                blogs.forEach(blog => {
-                    const blogItem = document.createElement('div');
-                    blogItem.classList.add('blog-item', 'bg-white', 'shadow-md', 'rounded', 'px-6', 'py-4', 'flex', 'flex-col', 'h-full', 'items-center', 'text-center');
-                    blogItem.dataset.category = blog.blog_category;
-                    blogItem.dataset.type = blog.type;
-
-                    blogItem.innerHTML = `
-                        <div class="flex-grow flex flex-col items-center justify-center">
-                            <h3 class="text-lg font-semibold mb-2">${blog.blog}</h3>
-                            <p class="text-sm text-gray-600 mb-2">Category: ${blog.blog_category}</p>
-                            <p class="text-sm text-gray-500 mb-2">Type: ${blog.type}</p>
-                            <a href="${blog.blog_link}" target="_blank" class="text-blue-500 hover:text-blue-700 break-all">Blog Link</a>
-                            ${blog.feed_link ? `
-                                <p class="text-sm text-gray-500 mt-2">Feed Type: RSS</p>
-                                <a href="${blog.feed_link}" target="_blank" class="text-blue-500 hover:text-blue-700 break-all">Feed Link</a>
-                            ` : '<p class="text-sm text-gray-500 mt-2">Feed Type: None</p>'}
-                        </div>
-                        <div class="mt-4 w-full">
-                            ${blog.feed_link ? `
-                                ${blog.is_in_rss_feeds ? `
-                                    <p class="text-sm text-green-500 font-bold">Already in RSS Feeds</p>
-                                ` : `
-                                    <button onclick="addAwesomeFeed('${blog.id}')" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline add-feed-btn">
-                                        Add Feed
-                                    </button>
-                                `}
-                            ` : `
-                                <p class="text-sm text-gray-500">No RSS feed available</p>
-                            `}
-                        </div>
-                    `;
-                    awesomeBlogsList.appendChild(blogItem);
-                });
-            }
-
-            async function fetchAndPopulateAwesomeBlogs() {
+            async function addAwesomeFeed(blogId) {
                 try {
-                    const response = await fetch('/awesome_blogs');
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
+                    const response = await fetch('{{ url_for("rss_manager.add_awesome_feed") }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': '{{ csrf_token() }}'
+                        },
+                        body: JSON.stringify({ blog_id: blogId })
+                    });
+
+                    const result = await response.json();
+
+                    if (response.ok) {
+                        showNotification('Awesome feed added successfully', 'success');
+                        grid.forceRender();
+                    } else {
+                        showNotification('Error adding awesome feed: ' + result.error, 'error');
                     }
-                    const data = await response.json();
-                    populateAwesomeBlogs(data);
-                    filterBlogs();
                 } catch (error) {
-                    console.error('Error fetching awesome blogs:', error);
-                    showNotification('Error fetching awesome blogs', 'error');
+                    console.error('Error adding awesome feed:', error);
+                    showNotification('An unexpected error occurred while adding the awesome feed', 'error');
                 }
             }
-
-            blogSearch.addEventListener('input', filterBlogs);
-            categoryFilter.addEventListener('change', filterBlogs);
-            typeFilter.addEventListener('change', filterBlogs);
-
-            // Initial fetch of awesome blogs
-            fetchAndPopulateAwesomeBlogs();
-            await fetchAndPopulateAwesomeBlogs();
         });
-
     </script>
