@@ -5,6 +5,10 @@ from uuid import UUID
 
 parsed_content_bp = Blueprint('parsed_content', __name__)
 
+@parsed_content_bp.route('/', methods=['GET'])
+def parsed_content_list():
+    return render_template('parsed_content.html')
+
 @parsed_content_bp.route('/item/<uuid:content_id>', methods=['GET'])
 def view_content(content_id):
     content = ParsedContentService.get_content_by_id(content_id)
