@@ -419,7 +419,9 @@ def get_awesome_blogs():
                    it's logged and an error response is returned.
     """
     try:
+        current_app.logger.info("Fetching all Awesome Threat Intel Blogs")
         blogs = AwesomeThreatIntelBlog.query.all()
+        current_app.logger.info(f"Fetched {len(blogs)} blogs")
         
         # Fetch all RSS feed URLs in one query
         rss_feed_urls = set(feed.url for feed in RSSFeed.query.with_entities(RSSFeed.url).all())
@@ -430,6 +432,7 @@ def get_awesome_blogs():
             blog_dict['is_in_rss_feeds'] = blog.feed_link in rss_feed_urls if blog.feed_link else False
             blog_data.append(blog_dict)
 
+        current_app.logger.info(f"Returning {len(blog_data)} blogs")
         return jsonify({"data": blog_data}), 200
     except Exception as e:
         current_app.logger.error(f"Error fetching awesome blogs: {str(e)}")
