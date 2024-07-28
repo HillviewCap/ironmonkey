@@ -115,13 +115,6 @@
 
         async function addAwesomeFeed(blogId) {
             try {
-                // Ensure the blogId is a valid UUID string
-                const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-                if (!uuidRegex.test(blogId)) {
-                    showNotification('Invalid blog ID format', 'error');
-                    return;
-                }
-
                 const response = await fetch('{{ url_for("rss_manager.add_awesome_feed") }}', {
                     method: 'POST',
                     headers: {
