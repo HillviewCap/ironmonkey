@@ -391,7 +391,7 @@ def get_awesome_blogs():
         - The function requires the user to be logged in.
         - It uses the AwesomeThreatIntelBlog model to fetch the data.
         - Each blog is converted to a dictionary using the to_dict() method.
-        - The response includes a 'data' key with the blog information.
+        - The response includes the blog information.
 
     Raises:
         Exception: If an error occurs during the database query or JSON conversion,
@@ -399,12 +399,15 @@ def get_awesome_blogs():
     """
     try:
         blogs = AwesomeThreatIntelBlog.query.all()
-        blog_data = [blog.to_dict() for blog in blogs]
         
-        # Check if each blog is in RSS feeds
-        rss_feed_urls = set(RSSFeed.query.with_entities(RSSFeed.url).all())
-        for blog in blog_data:
-            blog['is_in_rss_feeds'] = blog['feed_link'] in rss_feed_urls if blog['feed_link'] else False
+        # Fetch all RSS feed URLs in one query
+        rss_feed_urls = set(feed.url for feed in RSSFeed.query.with_entities(RSSFeed.url).all())
+        
+        blog_data = []
+        for blog in blogs:
+            blog_dict = blog.to_dict()
+            blog_dict['is_in_rss_feeds'] = blog.feed_link in rss_feed_urls if blog.feed_link else False
+            blog_data.append(blog_dict)
 
         return jsonify(blog_data), 200
     except Exception as e:
