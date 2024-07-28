@@ -210,6 +210,11 @@
                 console.error('Error in Grid:', err);
                 showNotification('An error occurred while fetching data. Please try again later.', 'error');
             });
+
+            grid.on('error', (err) => {
+                console.error('Error in Grid:', err);
+                showNotification('An error occurred while fetching data. Please try again later.', 'error');
+            });
         });
     </script>
 {% endblock %}
@@ -223,6 +228,13 @@
 
         async function addAwesomeFeed(blogId) {
             try {
+                // Ensure the blogId is a valid UUID string
+                const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+                if (!uuidRegex.test(blogId)) {
+                    showNotification('Invalid blog ID format', 'error');
+                    return;
+                }
+
                 const response = await fetch('{{ url_for("rss_manager.add_awesome_feed") }}', {
                     method: 'POST',
                     headers: {
@@ -238,7 +250,7 @@
                     showNotification('Awesome feed added successfully', 'success');
                     grid.forceRender();
                 } else {
-                    showNotification(`Error adding awesome feed: ${result.error}`, 'error');
+                    showNotification('Error adding awesome feed: ' + result.error, 'error');
                 }
             } catch (error) {
                 console.error('Error adding awesome feed:', error);
@@ -246,9 +258,8 @@
             }
         }
 
-        let grid;
         document.addEventListener('DOMContentLoaded', function() {
-            grid = new gridjs.Grid({
+            const grid = new gridjs.Grid({
                 columns: [
                     { id: 'blog', name: 'Blog' },
                     { id: 'blog_category', name: 'Category' },
