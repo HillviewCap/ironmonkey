@@ -136,9 +136,7 @@ def get_parsed_content():
         page=page-1,  # Convert to 0-based index
         limit=limit,
         search_query=search,
-        feed_id=feed_id,
-        order_by='pub_date',
-        order='desc'
+        feed_id=feed_id
     )
 
     # Format the data for Grid.js
