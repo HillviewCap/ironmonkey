@@ -288,7 +288,7 @@ async def add_awesome_feed():
 
     This function handles the addition of an Awesome Threat Intel Blog to the user's RSS feeds.
     It checks if the blog exists, has a feed link, and is not already in the user's feeds.
-    It then uses the rss_feed_service to create and parse the feed.
+    It then creates a new RSSFeed entry and parses the feed.
 
     Returns:
         tuple: A tuple containing a JSON response with the result of the operation
@@ -333,12 +333,14 @@ async def add_awesome_feed():
             current_app.logger.info(f"Feed already exists for blog {blog_id}")
             return jsonify({'error': f'Feed already exists for blog {blog_id}'}), 400
 
-        feed_data = {
-            'url': awesome_blog.feed_link,
-            'category': awesome_blog.blog_category,
-            'name': awesome_blog.blog
-        }
-        new_feed = await rss_feed_service.create_feed(feed_data)
+        # Create a new RSSFeed entry
+        new_feed = RSSFeed(
+            url=awesome_blog.feed_link,
+            category=awesome_blog.blog_category,
+            name=awesome_blog.blog
+        )
+        db.session.add(new_feed)
+        db.session.commit()
         current_app.logger.info(f"Created new feed: {new_feed.id}")
 
         # Parse the new feed
