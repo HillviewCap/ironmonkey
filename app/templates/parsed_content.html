@@ -12,6 +12,8 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
+            const container = document.getElementById('parsed-content-table');
+            container.innerHTML = ''; // Clear the container before rendering
             new gridjs.Grid({
                 columns: [
                     {
