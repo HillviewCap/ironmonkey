@@ -118,11 +118,8 @@ from flask import jsonify, request
 def get_parsed_content(feed_id=None):
     search = request.args.get('search', '')
 
-    # Convert feed_id to string
-    feed_id_str = str(feed_id)
-
     # Fetch all data from your database in descending order of pub_date
-    items = ParsedContentService.get_all_contents(search_query=search, feed_id=feed_id_str, order_by='pub_date', order='desc')
+    items = ParsedContentService.get_all_contents(search_query=search, feed_id=feed_id, order_by='pub_date', order='desc')
 
     # Format the data for Grid.js
     formatted_data = [

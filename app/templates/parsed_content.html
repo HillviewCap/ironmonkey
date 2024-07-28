@@ -10,6 +10,30 @@
 
     <div id="parsed-content-table" class="bg-white shadow-md rounded-lg overflow-hidden"></div>
 
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            new gridjs.Grid({
+                columns: [
+                    {
+                        name: 'Title',
+                        formatter: (cell, row) => gridjs.html(`<a href="/item/${row.cells[0].data}">${cell}</a>`)
+                    },
+                    'Description',
+                    'Published Date'
+                ],
+                server: {
+                    url: parsedContentUrl,
+                    then: data => data.data.map(item => [item.id, item.title, item.description, item.pub_date])
+                },
+                pagination: {
+                    limit: 10
+                },
+                search: true,
+                sort: true
+            }).render(document.getElementById('parsed-content-table'));
+        });
+    </script>
+
     <script src="{{ url_for('static', filename='js/node_modules/gridjs/dist/gridjs.umd.js') }}"></script>
     <link href="{{ url_for('static', filename='js/node_modules/gridjs/dist/theme/mermaid.min.css') }}" rel="stylesheet" />
 
