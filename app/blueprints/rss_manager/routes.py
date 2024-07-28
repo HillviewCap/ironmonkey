@@ -304,34 +304,44 @@ async def add_awesome_feed():
             raise BadRequest("Missing blog_id in request data")
 
         blog_id = data['blog_id']
+        current_app.logger.debug(f"Received blog_id: {blog_id}")
+
         # Convert blog_id to UUID if it's a string
         if isinstance(blog_id, str):
             try:
                 blog_id = UUID(blog_id)
-            except ValueError:
+            except ValueError as e:
+                current_app.logger.error(f"Invalid blog_id format: {str(e)}")
                 return jsonify({'error': 'Invalid blog_id format'}), 400
+
+        current_app.logger.debug(f"Converted blog_id: {blog_id}")
 
         awesome_blog = AwesomeThreatIntelBlog.query.get(blog_id)
         if not awesome_blog:
+            current_app.logger.error(f"Awesome blog not found for id: {blog_id}")
             return jsonify({'error': 'Awesome blog not found'}), 404
 
         if not awesome_blog.feed_link:
+            current_app.logger.error(f"Blog {blog_id} does not have an RSS feed")
             return jsonify({'error': 'This blog does not have an RSS feed'}), 400
 
         existing_feed = RSSFeed.query.filter_by(url=awesome_blog.feed_link).first()
         if existing_feed:
+            current_app.logger.info(f"Feed already exists for blog {blog_id}")
             return jsonify({'error': 'This feed already exists in your RSS feeds'}), 400
 
         feed_data = {
             'url': awesome_blog.feed_link,
             'category': awesome_blog.blog_category,
-            'name': awesome_blog.blog  # Add the blog name to the feed data
+            'name': awesome_blog.blog
         }
         new_feed = await rss_feed_service.create_feed(feed_data)
-        
+        current_app.logger.info(f"Created new feed: {new_feed.id}")
+
         # Parse the new feed
         try:
             await rss_feed_service.parse_feed(new_feed.id)
+            current_app.logger.info(f"Successfully parsed new feed: {new_feed.id}")
         except Exception as parse_error:
             current_app.logger.error(f"Error parsing new feed: {str(parse_error)}")
             # Even if parsing fails, we keep the feed
@@ -339,12 +349,14 @@ async def add_awesome_feed():
         feeds = RSSFeed.query.all()
         return jsonify({'message': 'Awesome feed added successfully', 'feeds': [feed.to_dict() for feed in feeds]}), 200
     except BadRequest as e:
+        current_app.logger.error(f"BadRequest error: {str(e)}")
         return jsonify({'error': str(e)}), 400
     except IntegrityError:
+        current_app.logger.error("IntegrityError: Feed already exists")
         db.session.rollback()
         return jsonify({'error': 'This feed already exists in your RSS feeds'}), 400
     except Exception as e:
-        current_app.logger.error(f"Error adding awesome feed: {str(e)}")
+        current_app.logger.error(f"Unexpected error adding awesome feed: {str(e)}", exc_info=True)
         return jsonify({'error': 'An unexpected error occurred while adding the awesome feed'}), 500
 
 @rss_manager_bp.route('/rss/feed/edit/<uuid:feed_id>', methods=['GET', 'POST'])
