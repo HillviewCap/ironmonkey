@@ -309,10 +309,14 @@ async def add_awesome_feed():
         # Convert blog_id to UUID if it's a string
         if isinstance(blog_id, str):
             try:
+                # Remove any non-hexadecimal characters
+                blog_id = ''.join(c for c in blog_id if c in '0123456789abcdefABCDEF')
+                
                 # If the blog_id is a 32-character hex string, add hyphens to make it a valid UUID
-                if len(blog_id) == 32 and all(c in '0123456789abcdefABCDEF' for c in blog_id):
+                if len(blog_id) == 32:
                     blog_id = f"{blog_id[:8]}-{blog_id[8:12]}-{blog_id[12:16]}-{blog_id[16:20]}-{blog_id[20:]}"
-                blog_id = UUID(blog_id.strip())  # Strip any whitespace
+                
+                blog_id = UUID(blog_id)
             except ValueError as e:
                 current_app.logger.error(f"Invalid blog_id format: {str(e)}")
                 return jsonify({'error': f'Invalid blog_id format: {str(e)}'}), 400
