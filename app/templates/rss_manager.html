@@ -131,11 +131,19 @@
                     body: JSON.stringify({ blog_id: blogId })
                 });
 
+                const result = await response.json();
+
                 if (response.ok) {
-                    showNotification('Awesome feed added successfully', 'success');
+                    if (response.status === 200) {
+                        showNotification('Awesome feed added and parsed successfully', 'success');
+                        console.log('Parsed content:', result.parsed_content);
+                        // You can update the UI here with the parsed content if needed
+                    } else if (response.status === 202) {
+                        showNotification('Awesome feed added successfully, but parsing failed', 'warning');
+                        console.error('Parse error:', result.parse_error);
+                    }
                     grid.forceRender();
                 } else {
-                    const result = await response.json();
                     showNotification('Error adding awesome feed: ' + result.error, 'error');
                 }
             } catch (error) {
