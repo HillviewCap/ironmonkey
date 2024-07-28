@@ -262,12 +262,10 @@
                         id: 'actions',
                         name: 'Actions',
                         formatter: (_, row) => {
-                            const feedLink = row.cells.find(cell => cell.data.id === 'feed_link').data;
-                            const blogId = row.cells.find(cell => cell.data.id === 'id').data;
-                            const isInRssFeeds = row.cells.find(cell => cell.data.id === 'is_in_rss_feeds').data;
-                            if (feedLink && !isInRssFeeds) {
-                                return gridjs.html(`<button onclick="addAwesomeFeed('${blogId}')" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline add-feed-btn">Add Feed</button>`);
-                            } else if (isInRssFeeds) {
+                            const { feed_link, id, is_in_rss_feeds } = row.cells.reduce((acc, cell) => ({ ...acc, [cell.data.id]: cell.data }), {});
+                            if (feed_link && !is_in_rss_feeds) {
+                                return gridjs.html(`<button onclick="addAwesomeFeed('${id}')" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline add-feed-btn">Add Feed</button>`);
+                            } else if (is_in_rss_feeds) {
                                 return gridjs.html('<p class="text-sm text-green-500 font-bold">Already in RSS Feeds</p>');
                             }
                             return '';
