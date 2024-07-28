@@ -397,7 +397,7 @@ def get_awesome_blogs():
                    it's logged and an error response is returned.
     """
     try:
-        blogs = db.session.query(AwesomeThreatIntelBlog).all()
+        blogs = AwesomeThreatIntelBlog.query.all()
         return jsonify([blog.to_dict() for blog in blogs]), 200
     except Exception as e:
         current_app.logger.error(f"Error fetching awesome blogs: {str(e)}")
