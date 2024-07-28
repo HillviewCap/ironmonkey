@@ -14,6 +14,7 @@ build/
 # Flask
 instance/
 .webassets-cache
+app/static/js/node_modules
 
 # SQLite
 *.sqlite

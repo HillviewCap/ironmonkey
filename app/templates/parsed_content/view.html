@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>{{ content.title }}</h1>
+    <p><strong>Published:</strong> {{ content.pub_date }}</p>
+    <p><strong>Source:</strong> <a href="{{ content.url }}" target="_blank">{{ content.url }}</a></p>
+    <div class="mt-4">
+        {{ content.content|safe }}
+    </div>
+</div>
+{% endblock %}

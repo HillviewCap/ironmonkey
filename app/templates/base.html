@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+{% macro _(text) %}{{ text }}{% endmacro %}
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{{ _('IronMonkey Threat Research') }}{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="shortcut icon" href="{{ url_for('static', filename='images/favicon.ico') }}" type="image/x-icon">
+    <link rel="icon" href="{{ url_for('static', filename='images/favicon.ico') }}" type="image/x-icon">
+    <style>
+        .error-container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            text-align: center;
+        }
+        .error-image {
+            max-width: 300px;
+            margin: 20px auto;
+        }
+        .error-code {
+            font-size: 48px;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+        .error-message {
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+    </style>
+    {% block extra_head %}{% endblock %}
+</head>
+<body class="bg-gray-100 flex flex-col min-h-screen">
+    {% include "shared/navbar.html" %}
+    <div class="container mx-auto mt-8 flex-grow">
+        {% include "shared/flash_messages.html" %}
+        {% block content %}{% endblock %}
+    </div>
+    {% include "shared/footer.html" %}
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>

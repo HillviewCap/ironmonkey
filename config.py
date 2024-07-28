@@ -1,47 +1,40 @@
 import os
-import logging
-from dotenv import load_dotenv
-
-load_dotenv()
-
-basedir = os.path.abspath(os.path.dirname(__file__))
-instance_path = os.path.join(basedir, 'instance')
+from pathlib import Path
 
 class Config:
-    SECRET_KEY = os.getenv('SECRET_KEY') or 'fallback-secret-key'
-    SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URL', f'sqlite:///{os.path.join(instance_path, "threats.db")}')
+    SECRET_KEY = os.getenv('SECRET_KEY')
+    BASE_DIR = Path(__file__).resolve().parent
+    INSTANCE_PATH = os.getenv('INSTANCE_PATH', os.path.join(BASE_DIR, 'instance'))
+    SQLALCHEMY_DATABASE_URI = f"sqlite:///{os.path.join(INSTANCE_PATH, 'threats.db')}"
     SQLALCHEMY_TRACK_MODIFICATIONS = False
-
-    @staticmethod
-    def init_app(app):
-        # Ensure the directory for the database file exists
-        db_path = app.config['SQLALCHEMY_DATABASE_URI'].replace('sqlite:///', '')
-        db_dir = os.path.dirname(db_path)
-        if not os.path.exists(db_dir):
-            try:
-                os.makedirs(db_dir, exist_ok=True)
-                logging.getLogger(__name__).info(f"Created directory for database file at {db_dir}")
-            except Exception as e:
-                logging.getLogger(__name__).error(f"Error creating directory for database file: {str(e)}")
-        else:
-            logging.getLogger(__name__).info(f"Directory for database file already exists at {db_dir}")
-
-class ProductionConfig(Config):
-    DEBUG = False
-    # Add any production-specific configurations here
-    # For example:
-    # SQLALCHEMY_DATABASE_URI = os.getenv('PRODUCTION_DATABASE_URL')
+    RSS_CHECK_INTERVAL = int(os.getenv('RSS_CHECK_INTERVAL', 30))
+    SUMMARY_CHECK_INTERVAL = int(os.getenv('SUMMARY_CHECK_INTERVAL', 60))
+    SUMMARY_API_CHOICE = os.getenv('SUMMARY_API_CHOICE', 'groq')
+    FLASK_PORT = int(os.getenv('FLASK_PORT', '5000'))
 
 class DevelopmentConfig(Config):
     DEBUG = True
+    FLASK_ENV = 'development'
+    LOG_LEVEL = 'DEBUG'
+
+class ProductionConfig(Config):
+    DEBUG = False
+    FLASK_ENV = 'production'
+    LOG_LEVEL = 'INFO'
 
 class TestingConfig(Config):
     TESTING = True
     SQLALCHEMY_DATABASE_URI = 'sqlite:///:memory:'
+    LOG_LEVEL = 'DEBUG'
 
 config = {
     'development': DevelopmentConfig,
-    'testing': TestingConfig,
     'production': ProductionConfig,
+    'testing': TestingConfig,
     'default': DevelopmentConfig
 }
+
+def get_config(config_name=None):
+    if config_name is None:
+        config_name = os.getenv('FLASK_ENV', 'default')
+    return config.get(config_name, config['default'])
