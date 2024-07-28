@@ -200,6 +200,11 @@
                     table: 'min-w-full bg-white'
                 }
             }).render(document.getElementById("awesomeBlogsGrid"));
+
+            grid.on('error', (err) => {
+                console.error('Error in Grid:', err);
+                showNotification('An error occurred while fetching data. Please try again later.', 'error');
+            });
         });
     </script>
 {% endblock %}
@@ -281,12 +286,20 @@
                         feed_link: blog.feed_link,
                         id: blog.id,
                         is_in_rss_feeds: blog.is_in_rss_feeds
-                    }))
+                    })),
+                    total: response => response.total
                 },
-                search: true,
+                search: {
+                    server: {
+                        url: (prev, keyword) => `${prev}${prev.includes('?') ? '&' : '?'}search=${keyword}`
+                    }
+                },
                 sort: true,
                 pagination: {
-                    limit: 10
+                    limit: 10,
+                    server: {
+                        url: (prev, page, limit) => `${prev}${prev.includes('?') ? '&' : '?'}page=${page}&limit=${limit}`
+                    }
                 },
                 className: {
                     table: 'min-w-full bg-white'
