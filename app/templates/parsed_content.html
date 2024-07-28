@@ -38,9 +38,6 @@
                         url: (prev, page, limit) => `${prev}${prev.includes('?') ? '&' : '?'}limit=${limit}&page=${page}`
                     }
                 },
-                header: {
-                    export: true
-                },
                 search: {
                     server: {
                         url: (prev, keyword) => `${prev}${prev.includes('?') ? '&' : '?'}search=${keyword}`
