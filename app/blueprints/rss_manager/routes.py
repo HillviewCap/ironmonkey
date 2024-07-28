@@ -400,7 +400,7 @@ def edit_feed(feed_id):
 @login_required
 def get_awesome_blogs():
     """
-    Retrieve all Awesome Threat Intel Blogs with pagination and search support.
+    Retrieve all Awesome Threat Intel Blogs.
 
     This function fetches Awesome Threat Intel Blogs from the database
     and returns them as a JSON response, formatted for GridJS.
@@ -411,26 +411,15 @@ def get_awesome_blogs():
 
     Note:
         - The function requires the user to be logged in.
-        - It supports pagination and search functionality.
         - Each blog is converted to a dictionary using the to_dict() method.
-        - The response includes the blog information, total count, and pagination details.
+        - The response includes the blog information.
 
     Raises:
         Exception: If an error occurs during the database query or JSON conversion,
                    it's logged and an error response is returned.
     """
     try:
-        page = request.args.get('page', 1, type=int)
-        per_page = request.args.get('limit', 10, type=int)
-        search = request.args.get('search', '')
-
-        query = AwesomeThreatIntelBlog.query
-
-        if search:
-            query = query.filter(AwesomeThreatIntelBlog.blog.ilike(f'%{search}%'))
-
-        pagination = query.paginate(page=page, per_page=per_page, error_out=False)
-        blogs = pagination.items
+        blogs = AwesomeThreatIntelBlog.query.all()
         
         # Fetch all RSS feed URLs in one query
         rss_feed_urls = set(feed.url for feed in RSSFeed.query.with_entities(RSSFeed.url).all())
@@ -441,11 +430,7 @@ def get_awesome_blogs():
             blog_dict['is_in_rss_feeds'] = blog.feed_link in rss_feed_urls if blog.feed_link else False
             blog_data.append(blog_dict)
 
-        return jsonify({
-            "data": blog_data,
-            "total": pagination.total,
-            "last_page": pagination.pages
-        }), 200
+        return jsonify({"data": blog_data}), 200
     except Exception as e:
         current_app.logger.error(f"Error fetching awesome blogs: {str(e)}")
         return jsonify({"error": "Failed to fetch awesome blogs"}), 500
