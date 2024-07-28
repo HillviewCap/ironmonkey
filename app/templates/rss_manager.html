@@ -211,8 +211,34 @@
             setTimeout(() => notification.remove(), 3000);
         }
 
+        async function addAwesomeFeed(blogId) {
+            try {
+                const response = await fetch('{{ url_for("rss_manager.add_awesome_feed") }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token() }}'
+                    },
+                    body: JSON.stringify({ blog_id: blogId })
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    showNotification('Awesome feed added successfully', 'success');
+                    grid.forceRender();
+                } else {
+                    showNotification('Error adding awesome feed: ' + result.error, 'error');
+                }
+            } catch (error) {
+                console.error('Error adding awesome feed:', error);
+                showNotification('An unexpected error occurred while adding the awesome feed', 'error');
+            }
+        }
+
+        let grid;
         document.addEventListener('DOMContentLoaded', async function() {
-            const grid = new gridjs.Grid({
+            grid = new gridjs.Grid({
                 columns: [
                     { id: 'blog', name: 'Blog' },
                     { id: 'blog_category', name: 'Category' },
@@ -266,30 +292,5 @@
                     table: 'min-w-full bg-white'
                 }
             }).render(document.getElementById("awesomeBlogsGrid"));
-
-            async function addAwesomeFeed(blogId) {
-                try {
-                    const response = await fetch('{{ url_for("rss_manager.add_awesome_feed") }}', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRFToken': '{{ csrf_token() }}'
-                        },
-                        body: JSON.stringify({ blog_id: blogId })
-                    });
-
-                    const result = await response.json();
-
-                    if (response.ok) {
-                        showNotification('Awesome feed added successfully', 'success');
-                        grid.forceRender();
-                    } else {
-                        showNotification('Error adding awesome feed: ' + result.error, 'error');
-                    }
-                } catch (error) {
-                    console.error('Error adding awesome feed:', error);
-                    showNotification('An unexpected error occurred while adding the awesome feed', 'error');
-                }
-            }
         });
     </script>
