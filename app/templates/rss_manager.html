@@ -228,7 +228,7 @@
                     showNotification('Awesome feed added successfully', 'success');
                     grid.forceRender();
                 } else {
-                    showNotification('Error adding awesome feed: ' + result.error, 'error');
+                    showNotification(`Error adding awesome feed: ${result.error}`, 'error');
                 }
             } catch (error) {
                 console.error('Error adding awesome feed:', error);
@@ -237,7 +237,7 @@
         }
 
         let grid;
-        document.addEventListener('DOMContentLoaded', async function() {
+        document.addEventListener('DOMContentLoaded', function() {
             grid = new gridjs.Grid({
                 columns: [
                     { id: 'blog', name: 'Blog' },
