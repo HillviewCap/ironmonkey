@@ -317,7 +317,7 @@
 
             async function fetchAndPopulateAwesomeBlogs() {
                 try {
-                    const response = await fetch('{{ url_for("rss_manager.get_awesome_blogs") }}');
+                    const response = await fetch('/awesome_blogs');
                     if (!response.ok) {
                         throw new Error(`HTTP error! status: ${response.status}`);
                     }
