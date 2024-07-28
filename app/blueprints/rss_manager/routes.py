@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from uuid import UUID
 from typing import Tuple, Dict, Any, List
+from typing import Tuple, Dict, Any, List
 
 from flask import Blueprint, request, jsonify, current_app, abort, render_template, flash, redirect, url_for
 from flask_login import login_required
@@ -303,6 +304,13 @@ async def add_awesome_feed():
             raise BadRequest("Missing blog_id in request data")
 
         blog_id = data['blog_id']
+        # Convert blog_id to UUID if it's a string
+        if isinstance(blog_id, str):
+            try:
+                blog_id = UUID(blog_id)
+            except ValueError:
+                return jsonify({'error': 'Invalid blog_id format'}), 400
+
         awesome_blog = AwesomeThreatIntelBlog.query.get(blog_id)
         if not awesome_blog:
             return jsonify({'error': 'Awesome blog not found'}), 404
