@@ -15,6 +15,10 @@
             new gridjs.Grid({
                 columns: [
                     {
+                        name: 'ID',
+                        hidden: true
+                    },
+                    {
                         name: 'Title',
                         formatter: (cell, row) => gridjs.html(`<a href="/item/${row.cells[0].data}" class="text-blue-600 hover:underline">${cell}</a>`)
                     },
@@ -27,12 +31,20 @@
                 ],
                 server: {
                     url: parsedContentUrl,
-                    then: data => data.data.map(item => [item.id, item.title, item.description, item.pub_date])
+                    then: data => data.data,
+                    total: data => data.total
                 },
                 pagination: {
-                    limit: 10
+                    limit: 10,
+                    server: {
+                        url: (prev, page, limit) => `${prev}${prev.includes('?') ? '&' : '?'}limit=${limit}&page=${page+1}`
+                    }
                 },
-                search: true,
+                search: {
+                    server: {
+                        url: (prev, keyword) => `${prev}${prev.includes('?') ? '&' : '?'}search=${keyword}`
+                    }
+                },
                 sort: true,
                 className: {
                     table: 'w-full',

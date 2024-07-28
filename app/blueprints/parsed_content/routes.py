@@ -117,27 +117,42 @@ def delete_parsed_content(content_id):
     return redirect(url_for('admin.manage_parsed_content'))
 from flask import jsonify, request
 
-@parsed_content_bp.route('/get_parsed_content/')
-@parsed_content_bp.route('/get_parsed_content/<uuid:feed_id>')
-def get_parsed_content(feed_id=None):
+@parsed_content_bp.route('/get_parsed_content')
+def get_parsed_content():
     search = request.args.get('search', '')
+    feed_id = request.args.get('feed_id')
+    page = request.args.get('page', 1, type=int)
+    limit = request.args.get('limit', 10, type=int)
 
-    # Fetch all data from your database in descending order of pub_date
-    items = ParsedContentService.get_all_contents(search_query=search, feed_id=feed_id, order_by='pub_date', order='desc')
+    # Convert feed_id to UUID if it's provided
+    if feed_id:
+        try:
+            feed_id = UUID(feed_id)
+        except ValueError:
+            return jsonify({'error': 'Invalid feed_id'}), 400
+
+    # Fetch data from your database
+    items, total = ParsedContentService.get_contents(
+        page=page-1,  # Convert to 0-based index
+        limit=limit,
+        search_query=search,
+        feed_id=feed_id,
+        order_by='pub_date',
+        order='desc'
+    )
 
     # Format the data for Grid.js
     formatted_data = [
-        {
-            'id': str(item.id),
-            'title': item.title,
-            'summary': item.summary,
-            'url': item.url,
-            'pub_date': item.pub_date if isinstance(item.pub_date, str) else (item.pub_date.strftime('%Y-%m-%d %H:%M:%S') if item.pub_date else '')
-        }
+        [
+            str(item.id),
+            item.title,
+            item.description,
+            item.pub_date.strftime('%Y-%m-%d %H:%M:%S') if item.pub_date else ''
+        ]
         for item in items
     ]
 
     return jsonify({
         'data': formatted_data,
-        'total': len(formatted_data)
+        'total': total
     })
