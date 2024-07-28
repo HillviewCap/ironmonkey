@@ -286,20 +286,12 @@
                         feed_link: blog.feed_link,
                         id: blog.id,
                         is_in_rss_feeds: blog.is_in_rss_feeds
-                    })),
-                    total: response => response.total
+                    }))
                 },
-                search: {
-                    server: {
-                        url: (prev, keyword) => `${prev}${prev.includes('?') ? '&' : '?'}search=${keyword}`
-                    }
-                },
+                search: true,
                 sort: true,
                 pagination: {
-                    limit: 10,
-                    server: {
-                        url: (prev, page, limit) => `${prev}${prev.includes('?') ? '&' : '?'}page=${page}&limit=${limit}`
-                    }
+                    limit: 10
                 },
                 className: {
                     table: 'min-w-full bg-white'
