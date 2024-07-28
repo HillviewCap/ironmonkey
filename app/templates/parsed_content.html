@@ -4,9 +4,6 @@
 <div class="container mx-auto px-4 py-8">
     <h1 class="text-3xl font-bold mb-6">Blog Posts</h1>
     
-    <div class="mb-6 flex justify-end">
-        <button id="export-csv-btn" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500 transition duration-300">Export to CSV</button>
-    </div>
 
     <div id="parsed-content-table" class="bg-white shadow-md rounded-lg overflow-hidden"></div>
 
@@ -40,6 +37,9 @@
                     server: {
                         url: (prev, page, limit) => `${prev}${prev.includes('?') ? '&' : '?'}limit=${limit}&page=${page}`
                     }
+                },
+                header: {
+                    export: true
                 },
                 search: {
                     server: {
