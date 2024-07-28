@@ -302,7 +302,7 @@ async def add_awesome_feed():
         if not data or 'blog_id' not in data:
             raise BadRequest("Missing blog_id in request data")
 
-        blog_id = UUID(data['blog_id'])
+        blog_id = data['blog_id']
         awesome_blog = AwesomeThreatIntelBlog.query.get(blog_id)
         if not awesome_blog:
             return jsonify({'error': 'Awesome blog not found'}), 404
@@ -331,8 +331,6 @@ async def add_awesome_feed():
         return jsonify({'message': 'Awesome feed added successfully', 'feeds': [feed.to_dict() for feed in feeds]}), 200
     except BadRequest as e:
         return jsonify({'error': str(e)}), 400
-    except ValueError as e:
-        return jsonify({'error': 'Invalid blog ID'}), 400
     except IntegrityError:
         db.session.rollback()
         return jsonify({'error': 'This feed already exists in your RSS feeds'}), 400
