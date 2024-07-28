@@ -27,7 +27,7 @@
                 ],
                 server: {
                     url: parsedContentUrl,
-                    then: data => data.map(item => [item.id, item.title, item.description, item.pub_date])
+                    then: data => data.data.map(item => [item.id, item.title, item.description, item.pub_date])
                 },
                 pagination: {
                     limit: 10
