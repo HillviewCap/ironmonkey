@@ -345,14 +345,21 @@ async def add_awesome_feed():
 
         # Parse the new feed
         try:
-            await rss_feed_service.parse_feed(new_feed.id)
+            parsed_content = await rss_feed_service.parse_feed(new_feed.id)
             current_app.logger.info(f"Successfully parsed new feed: {new_feed.id}")
+            return jsonify({
+                'message': 'Awesome feed added and parsed successfully',
+                'feed': new_feed.to_dict(),
+                'parsed_content': [content.to_dict() for content in parsed_content]
+            }), 200
         except Exception as parse_error:
             current_app.logger.error(f"Error parsing new feed: {str(parse_error)}")
-            # Even if parsing fails, we keep the feed
-
-        feeds = RSSFeed.query.all()
-        return jsonify({'message': 'Awesome feed added successfully', 'feeds': [feed.to_dict() for feed in feeds]}), 200
+            # Even if parsing fails, we keep the feed and return a partial success
+            return jsonify({
+                'message': 'Awesome feed added successfully, but parsing failed',
+                'feed': new_feed.to_dict(),
+                'parse_error': str(parse_error)
+            }), 202  # 202 Accepted indicates partial success
     except BadRequest as e:
         current_app.logger.error(f"BadRequest error: {str(e)}")
         return jsonify({'error': str(e)}), 400
