@@ -181,7 +181,7 @@
                 ],
                 server: {
                     url: '{{ url_for("rss_manager.get_awesome_blogs") }}',
-                    then: data => data.map(blog => [
+                    then: response => response.data.map(blog => [
                         blog.blog,
                         blog.blog_category,
                         blog.type,
