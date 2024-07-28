@@ -93,7 +93,113 @@
     <script>
         async function addFeed(event) {
             event.preventDefault();
-            const form = document.getElementById('addS
+            const form = document.getElementById('addSingleFeedForm');
+            const formData = new FormData(form);
+            const response = await fetch('{{ url_for("rss_manager.create_rss_feed") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify(Object.fromEntries(formData))
+            });
+            const result = await response.json();
+            if (response.ok) {
+                showNotification('Feed added successfully', 'success');
+                form.reset();
+                grid.forceRender();
+            } else {
+                showNotification('Error adding feed: ' + result.error, 'error');
+            }
+        }
+
+        async function addAwesomeFeed(blogId) {
+            try {
+                const response = await fetch('{{ url_for("rss_manager.add_awesome_feed") }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token() }}'
+                    },
+                    body: JSON.stringify({ blog_id: blogId })
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    showNotification('Awesome feed added successfully', 'success');
+                    grid.forceRender();
+                } else {
+                    showNotification('Error adding awesome feed: ' + result.error, 'error');
+                }
+            } catch (error) {
+                console.error('Error adding awesome feed:', error);
+                showNotification('An unexpected error occurred while adding the awesome feed', 'error');
+            }
+        }
+
+        function showNotification(message, type) {
+            const notification = document.createElement('div');
+            notification.textContent = message;
+            notification.className = `fixed top-4 right-4 p-4 rounded-md ${type === 'success' ? 'bg-green-500' : 'bg-red-500'} text-white`;
+            document.body.appendChild(notification);
+            setTimeout(() => notification.remove(), 3000);
+        }
+
+        document.addEventListener('DOMContentLoaded', async function() {
+            const grid = new gridjs.Grid({
+                columns: [
+                    { id: 'blog', name: 'Blog' },
+                    { id: 'blog_category', name: 'Category' },
+                    { id: 'type', name: 'Type' },
+                    { 
+                        id: 'blog_link', 
+                        name: 'Blog Link',
+                        formatter: (cell) => gridjs.html(`<a href="${cell}" target="_blank" class="text-blue-500 hover:text-blue-700">Blog Link</a>`)
+                    },
+                    { 
+                        id: 'feed_link', 
+                        name: 'Feed Link',
+                        formatter: (cell) => cell ? gridjs.html(`<a href="${cell}" target="_blank" class="text-blue-500 hover:text-blue-700">Feed Link</a>`) : 'No RSS feed available'
+                    },
+                    {
+                        id: 'actions',
+                        name: 'Actions',
+                        formatter: (_, row) => {
+                            if (row.cells[4].data && !row.cells[6].data) {
+                                return gridjs.html(`<button onclick="addAwesomeFeed('${row.cells[5].data}')" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline add-feed-btn">Add Feed</button>`);
+                            } else if (row.cells[6].data) {
+                                return gridjs.html('<p class="text-sm text-green-500 font-bold">Already in RSS Feeds</p>');
+                            }
+                            return '';
+                        }
+                    },
+                    { id: 'id', name: 'ID', hidden: true },
+                    { id: 'is_in_rss_feeds', name: 'Is In RSS Feeds', hidden: true }
+                ],
+                server: {
+                    url: '{{ url_for("rss_manager.get_awesome_blogs") }}',
+                    then: data => data.map(blog => [
+                        blog.blog,
+                        blog.blog_category,
+                        blog.type,
+                        blog.blog_link,
+                        blog.feed_link,
+                        blog.id,
+                        blog.is_in_rss_feeds
+                    ])
+                },
+                search: true,
+                sort: true,
+                pagination: {
+                    limit: 10
+                },
+                className: {
+                    table: 'min-w-full bg-white'
+                }
+            }).render(document.getElementById("awesomeBlogsGrid"));
+        });
+    </script>
 {% endblock %}
         function showNotification(message, type) {
             const notification = document.createElement('div');
