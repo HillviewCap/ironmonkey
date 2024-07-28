@@ -312,23 +312,23 @@ async def add_awesome_feed():
                 blog_id = UUID(blog_id)
             except ValueError as e:
                 current_app.logger.error(f"Invalid blog_id format: {str(e)}")
-                return jsonify({'error': 'Invalid blog_id format'}), 400
+                return jsonify({'error': f'Invalid blog_id format: {str(e)}'}), 400
 
         current_app.logger.debug(f"Converted blog_id: {blog_id}")
 
         awesome_blog = AwesomeThreatIntelBlog.query.get(blog_id)
         if not awesome_blog:
             current_app.logger.error(f"Awesome blog not found for id: {blog_id}")
-            return jsonify({'error': 'Awesome blog not found'}), 404
+            return jsonify({'error': f'Awesome blog not found for id: {blog_id}'}), 404
 
         if not awesome_blog.feed_link:
             current_app.logger.error(f"Blog {blog_id} does not have an RSS feed")
-            return jsonify({'error': 'This blog does not have an RSS feed'}), 400
+            return jsonify({'error': f'Blog {blog_id} does not have an RSS feed'}), 400
 
         existing_feed = RSSFeed.query.filter_by(url=awesome_blog.feed_link).first()
         if existing_feed:
             current_app.logger.info(f"Feed already exists for blog {blog_id}")
-            return jsonify({'error': 'This feed already exists in your RSS feeds'}), 400
+            return jsonify({'error': f'Feed already exists for blog {blog_id}'}), 400
 
         feed_data = {
             'url': awesome_blog.feed_link,
@@ -357,7 +357,7 @@ async def add_awesome_feed():
         return jsonify({'error': 'This feed already exists in your RSS feeds'}), 400
     except Exception as e:
         current_app.logger.error(f"Unexpected error adding awesome feed: {str(e)}", exc_info=True)
-        return jsonify({'error': 'An unexpected error occurred while adding the awesome feed'}), 500
+        return jsonify({'error': f'An unexpected error occurred while adding the awesome feed: {str(e)}'}), 500
 
 @rss_manager_bp.route('/rss/feed/edit/<uuid:feed_id>', methods=['GET', 'POST'])
 @login_required
@@ -428,7 +428,7 @@ def get_awesome_blogs():
             blog_dict['is_in_rss_feeds'] = blog.feed_link in rss_feed_urls if blog.feed_link else False
             blog_data.append(blog_dict)
 
-        return jsonify(blog_data), 200
+        return jsonify({"data": blog_data}), 200
     except Exception as e:
         current_app.logger.error(f"Error fetching awesome blogs: {str(e)}")
         return jsonify({"error": "Failed to fetch awesome blogs"}), 500
