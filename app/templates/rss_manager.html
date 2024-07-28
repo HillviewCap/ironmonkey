@@ -266,7 +266,7 @@
                             if (feed_link && !is_in_rss_feeds) {
                                 return gridjs.html(`<button onclick="addAwesomeFeed('${id}')" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline add-feed-btn">Add Feed</button>`);
                             } else if (is_in_rss_feeds) {
-                                return gridjs.html('<p class="text-sm text-green-500 font-bold">Already in RSS Feeds</p>');
+                                return gridjs.html(`<p class="text-sm text-green-500 font-bold">Already in RSS Feeds</p>`);
                             }
                             return '';
                         }
