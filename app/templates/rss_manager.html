@@ -250,12 +250,12 @@
                     body: JSON.stringify({ blog_id: blogId })
                 });
 
-                const result = await response.json();
-
                 if (response.ok) {
+                    const result = await response.json();
                     showNotification('Awesome feed added successfully', 'success');
                     grid.forceRender();
                 } else {
+                    const result = await response.json();
                     showNotification('Error adding awesome feed: ' + result.error, 'error');
                 }
             } catch (error) {
