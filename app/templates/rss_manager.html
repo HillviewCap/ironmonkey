@@ -131,12 +131,11 @@
                     body: JSON.stringify({ blog_id: blogId })
                 });
 
-                const result = await response.json();
-
                 if (response.ok) {
                     showNotification('Awesome feed added successfully', 'success');
                     grid.forceRender();
                 } else {
+                    const result = await response.json();
                     showNotification('Error adding awesome feed: ' + result.error, 'error');
                 }
             } catch (error) {
@@ -268,11 +267,12 @@
                         id: 'actions',
                         name: 'Actions',
                         formatter: (_, row) => {
-                            const { feed_link, id, is_in_rss_feeds } = row.cells.reduce((acc, cell) => ({ ...acc, [cell.data.id]: cell.data }), {});
-                            if (feed_link && !is_in_rss_feeds) {
-                                return gridjs.html(`<button onclick="addAwesomeFeed('${id}')" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline add-feed-btn">Add Feed</button>`);
-                            } else if (is_in_rss_feeds) {
-                                return gridjs.html(`<p class="text-sm text-green-500 font-bold">Already in RSS Feeds</p>`);
+                            const feedLink = row.cells[4].data;
+                            const isInRssFeeds = row.cells[7].data;
+                            if (feedLink && !isInRssFeeds) {
+                                return gridjs.html(`<button onclick="addAwesomeFeed('${row.cells[6].data}')" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline add-feed-btn">Add Feed</button>`);
+                            } else if (isInRssFeeds) {
+                                return gridjs.html('<p class="text-sm text-green-500 font-bold">Already in RSS Feeds</p>');
                             }
                             return '';
                         }
@@ -282,21 +282,19 @@
                 ],
                 server: {
                     url: '{{ url_for("rss_manager.get_awesome_blogs") }}',
-                    then: response => response.data.map(blog => ({
-                        blog: blog.blog,
-                        blog_category: blog.blog_category,
-                        type: blog.type,
-                        blog_link: blog.blog_link,
-                        feed_link: blog.feed_link,
-                        id: blog.id,
-                        is_in_rss_feeds: blog.is_in_rss_feeds
-                    }))
+                    then: response => response.data.map(blog => [
+                        blog.blog,
+                        blog.blog_category,
+                        blog.type,
+                        blog.blog_link,
+                        blog.feed_link,
+                        blog.id,
+                        blog.is_in_rss_feeds
+                    ])
                 },
                 search: true,
                 sort: true,
-                pagination: {
-                    limit: 10
-                },
+                pagination: true,
                 className: {
                     table: 'min-w-full bg-white'
                 }
