@@ -154,7 +154,10 @@ async def create_rss_feed_from_awesome() -> Tuple[Response, int]:
         response, status_code = await create_rss_feed()
 
         if status_code == 201:
-            return jsonify({"message": "Awesome feed added successfully", **response}), 200
+            return (
+                jsonify({"message": "Awesome feed added successfully", **response}),
+                200,
+            )
         else:
             return response, status_code
 
@@ -240,124 +243,39 @@ def update_awesome_threat_intel():
     return redirect(url_for("rss_manager.get_rss_feeds"))
 
 
-@rss_manager_bp.route("/add_awesome_feed", methods=["POST"])
+@rss_manager_bp.route("/rss/feed/edit/<uuid:feed_id>", methods=["GET", "POST"])
 @login_required
-async def add_awesome_feed():
+def edit_feed(feed_id):
     """
-    Add an Awesome Threat Intel Blog as an RSS feed.
+    Edit an existing RSS feed.
 
-    This function handles the addition of an Awesome Threat Intel Blog to the user's RSS feeds.
-    It checks if the blog exists, has a feed link, and is not already in the user's feeds.
-    It then creates a new RSSFeed entry and parses the feed.
+    This function handles both GET and POST requests for editing an RSS feed.
+    For GET requests, it renders a form for editing. For POST requests, it
+    processes the form submission and updates the feed.
+
+    Args:
+        feed_id (uuid.UUID): The UUID of the RSS feed to edit.
 
     Returns:
-        tuple: A tuple containing a JSON response with the result of the operation
-               and an HTTP status code.
+        str: Rendered HTML template for editing the feed (GET) or a redirect
+             response to the RSS feed manager page (POST).
 
     Raises:
-        BadRequest: If the blog ID is missing or invalid.
-        Exception: For any other unexpected errors during the process.
+        404: If the RSS feed with the given ID is not found.
+
+    Note:
+        This function uses Flask-WTF for form handling and validation.
     """
-    try:
-        data = request.get_json()
-        if not data or "blog_id" not in data:
-            raise BadRequest("Missing blog_id in request data")
+    feed = RSSFeed.query.get_or_404(feed_id)
+    form = EditRSSFeedForm(obj=feed)
 
-        blog_id = data["blog_id"]
-        current_app.logger.debug(f"Received blog_id: {blog_id}")
-
-        # Convert blog_id to UUID if it's a string
-        if isinstance(blog_id, str):
-            try:
-                # Remove any non-hexadecimal characters
-                blog_id = "".join(c for c in blog_id if c in "0123456789abcdefABCDEF")
-
-                # If the blog_id is a 32-character hex string, add hyphens to make it a valid UUID
-                if len(blog_id) == 32:
-                    blog_id = f"{blog_id[:8]}-{blog_id[8:12]}-{blog_id[12:16]}-{blog_id[16:20]}-{blog_id[20:]}"
-
-                blog_id = UUID(blog_id)
-            except ValueError as e:
-                current_app.logger.error(f"Invalid blog_id format: {str(e)}")
-                return jsonify({"error": f"Invalid blog_id format: {str(e)}"}), 400
-        elif not isinstance(blog_id, UUID):
-            current_app.logger.error(f"Invalid blog_id type: {type(blog_id)}")
-            return jsonify({"error": f"Invalid blog_id type: {type(blog_id)}"}), 400
-
-        current_app.logger.debug(f"Converted blog_id: {blog_id}")
-
-        awesome_blog = AwesomeThreatIntelBlog.query.get(blog_id)
-        if not awesome_blog:
-            current_app.logger.error(f"Awesome blog not found for id: {blog_id}")
-            return jsonify({"error": f"Awesome blog not found for id: {blog_id}"}), 404
-
-        if not awesome_blog.feed_link:
-            current_app.logger.error(f"Blog {blog_id} does not have an RSS feed")
-            return jsonify({"error": f"Blog {blog_id} does not have an RSS feed"}), 400
-
-        existing_feed = RSSFeed.query.filter_by(url=awesome_blog.feed_link).first()
-        if existing_feed:
-            current_app.logger.info(f"Feed already exists for blog {blog_id}")
-            return jsonify({"error": f"Feed already exists for blog {blog_id}"}), 400
-
-        # Create a new RSSFeed entry
-        new_feed = RSSFeed(
-            url=awesome_blog.feed_link,
-            category=awesome_blog.blog_category,
-            name=awesome_blog.blog,
-        )
-        db.session.add(new_feed)
+    if form.validate_on_submit():
+        form.populate_obj(feed)
         db.session.commit()
-        current_app.logger.info(f"Created new feed: {new_feed.id}")
+        flash("RSS feed updated successfully", "success")
+        return redirect(url_for("rss_manager.get_rss_feeds"))
 
-        # Parse the new feed
-        try:
-            parsed_content = await rss_feed_service.parse_feed(new_feed.id)
-            current_app.logger.info(f"Successfully parsed new feed: {new_feed.id}")
-            return (
-                jsonify(
-                    {
-                        "message": "Awesome feed added and parsed successfully",
-                        "feed": new_feed.to_dict(),
-                        "parsed_content": [
-                            content.to_dict() for content in parsed_content
-                        ],
-                    }
-                ),
-                200,
-            )
-        except Exception as parse_error:
-            current_app.logger.error(f"Error parsing new feed: {str(parse_error)}")
-            # Even if parsing fails, we keep the feed and return a partial success
-            return (
-                jsonify(
-                    {
-                        "message": "Awesome feed added successfully, but parsing failed",
-                        "feed": new_feed.to_dict(),
-                        "parse_error": str(parse_error),
-                    }
-                ),
-                202,
-            )  # 202 Accepted indicates partial success
-    except BadRequest as e:
-        current_app.logger.error(f"BadRequest error: {str(e)}")
-        return jsonify({"error": str(e)}), 400
-    except IntegrityError:
-        current_app.logger.error("IntegrityError: Feed already exists")
-        db.session.rollback()
-        return jsonify({"error": "This feed already exists in your RSS feeds"}), 400
-    except Exception as e:
-        current_app.logger.error(
-            f"Unexpected error adding awesome feed: {str(e)}", exc_info=True
-        )
-        return (
-            jsonify(
-                {
-                    "error": f"An unexpected error occurred while adding the awesome feed: {str(e)}"
-                }
-            ),
-            500,
-        )
+    return render_template("edit_rss_feed.html", form=form, feed=feed)
 
 
 @rss_manager_bp.route("/awesome_blogs", methods=["GET"])
