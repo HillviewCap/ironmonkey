@@ -12,7 +12,7 @@ from typing import Optional
 
 import httpx
 import feedparser
-from app.utils.content_sanitizer import sanitize_html_content
+from app.services.html_sanitizer_service import sanitize_html
 from flask import current_app
 from sqlalchemy.orm import Session
 
@@ -73,9 +73,9 @@ async def fetch_and_parse_feed(feed: RSSFeed) -> int:
                 logger.debug(f"Parsed feed data for {feed.url}")
             # Update the feed title and description if available
             if 'title' in feed_data.feed:
-                feed.title = sanitize_html_content(feed_data.feed.title)
+                feed.title = sanitize_html(feed_data.feed.title)
             if 'description' in feed_data.feed:
-                feed.description = sanitize_html_content(feed_data.feed.description)
+                feed.description = sanitize_html(feed_data.feed.description)
             db.session.commit()
 
             for entry in feed_data.entries:
@@ -103,10 +103,11 @@ async def fetch_and_parse_feed(feed: RSSFeed) -> int:
                                 content=parsed_content,
                                 feed_id=feed.id,
                                 url=url,
-                                title=sanitize_html_content(title),
-                                description=sanitize_html_content(entry.get('description', '')),
+                                title=sanitize_html(title),
+                                description=sanitize_html(entry.get('description', '')),
                                 pub_date=pub_date,
-                                creator=sanitize_html_content(entry.get('author', ''))
+                                creator=sanitize_html(entry.get('author', '')),
+                                content=sanitize_html(parsed_content)
                             )
                             db.session.add(new_content)
                             db.session.flush()  # This will assign the UUID to new_content
@@ -114,7 +115,7 @@ async def fetch_and_parse_feed(feed: RSSFeed) -> int:
                             # Handle categories
                             categories = entry.get('tags', [])
                             for category in categories:
-                                cat_name = sanitize_html_content(category.get('term', ''))
+                                cat_name = sanitize_html(category.get('term', ''))
                                 if cat_name:
                                     cat_obj = get_or_create_category(cat_name)
                                     new_content.categories.append(cat_obj)
