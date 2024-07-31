@@ -149,19 +149,14 @@ async def create_rss_feed_from_awesome() -> Tuple[Response, int]:
         feed_data = {
             "url": awesome_blog.feed_link,
             "category": awesome_blog.blog_category,
+            "name": awesome_blog.blog,
         }
-        new_feed = await rss_feed_service.create_feed(feed_data)
+        response, status_code = await create_rss_feed()
 
-        feeds = rss_feed_service.get_all_feeds()
-        return (
-            jsonify(
-                {
-                    "message": "Awesome feed added successfully",
-                    "feeds": [feed.to_dict() for feed in feeds],
-                }
-            ),
-            200,
-        )
+        if status_code == 201:
+            return jsonify({"message": "Awesome feed added successfully", **response}), 200
+        else:
+            return response, status_code
 
     except ValueError as e:
         return jsonify({"error": str(e)}), 400
