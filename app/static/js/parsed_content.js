@@ -1,111 +1,79 @@
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOMContentLoaded event fired');
+    const debugOutput = document.getElementById('debug-output');
+
+    function logDebug(message) {
+        console.log(message);
+        if (debugOutput) {
+            debugOutput.textContent += message + '\n';
+        }
+    }
+
+    logDebug('Initializing Grid.js');
+
     const grid = new gridjs.Grid({
         columns: [
             { 
                 id: 'title', 
                 name: 'Title',
-                width: '20%',
-                resizable: true,
-                formatter: (cell, row) => gridjs.html(`<a href="/item/${row.cells[4].data}" class="text-blue-500 hover:underline">${cell}</a>`)
+                sort: true,
+                formatter: (cell, row) => gridjs.html(`<a href="/parsed_content/item/${row.cells[0].data}" class="text-blue-500 hover:underline">${cell}</a>`)
             },
             { 
-                id: 'summary', 
-                name: 'Summary', 
-                width: '40%',
-                resizable: true,
-                formatter: (cell) => cell && cell.length > 200 ? cell.substring(0, 200) + '...' : cell
+                id: 'description', 
+                name: 'Description', 
+                formatter: (cell) => cell && cell.length > 100 ? cell.substring(0, 100) + '...' : cell
             },
-            { 
-                id: 'url', 
-                name: 'URL',
-                width: '15%',
-                resizable: true,
-                formatter: (cell) => {
-                    if (!cell) return '';
-                    return gridjs.html(`<a href="${cell}" target="_blank" class="text-blue-500 hover:underline" title="${cell}">Source</a>`);
-                }
-            },
-            { 
-                id: 'pub_date', 
-                name: 'Published Date',
-                width: '15%',
-                resizable: true,
-                formatter: (cell) => gridjs.html(`<span class="text-sm">${cell}</span>`),
-                sort: {
-                    enabled: true,
-                    compare: (a, b) => {
-                        const dateA = new Date(a);
-                        const dateB = new Date(b);
-                        return dateB - dateA;  // Descending order
-                    }
-                }
-            },
+            { id: 'pub_date', name: 'Published Date', sort: true },
             {
                 id: 'actions',
                 name: 'Actions',
-                width: '10%',
-                resizable: true,
                 formatter: (_, row) => gridjs.html(`
-                    <button class="bg-green-500 hover:bg-green-700 text-white font-bold py-1 px-2 rounded text-xs summarize-btn" data-post-id="${row.cells[4].data}">
+                    <button class="bg-green-500 hover:bg-green-700 text-white font-bold py-1 px-2 rounded text-xs summarize-btn" data-post-id="${row.cells[0].data}">
                         Summarize
                     </button>
                 `)
             }
         ],
-        data: () => {
-            return new Promise((resolve, reject) => {
-                fetch(parsedContentUrl)
-                    .then(response => response.json())
-                    .then(data => {
-                        if (!data || !data.data || !Array.isArray(data.data)) {
-                            console.error('Invalid data structure received:', data);
-                            resolve([]);
-                            return;
-                        }
-                        resolve(data.data.map(post => [
-                            post.title || '',
-                            post.summary || '',
-                            post.url || '',
-                            post.pub_date || '',
-                            post.id || ''
-                        ]));
-                    })
-                    .catch(error => {
-                        console.error('Error fetching data:', error);
-                        reject(error);
-                    });
-            });
+        server: {
+            url: '/parsed_content/get_parsed_content',
+            then: data => {
+                logDebug(`Received data: ${JSON.stringify(data)}`);
+                return data.data.map(post => [post[0], post[1], post[2], post[3]]);
+            },
+            handle: (res) => {
+                if (!res.ok) {
+                    logDebug(`Error fetching data: ${res.status} ${res.statusText}`);
+                    throw Error(res.statusText);
+                }
+                return res.json();
+            }
         },
-        search: {
-            enabled: true
-        },
+        search: true,
         sort: true,
         pagination: {
-            enabled: true,
-            limit: 10
+            limit: 10,
+            server: {
+                url: (prev, page, limit) => `${prev}${prev.includes('?') ? '&' : '?'}page=${page}&limit=${limit}`
+            }
         },
-        fixedHeader: true,
         style: {
             table: {
-                width: '100%'
-            },
-            td: {
-                'white-space': 'normal',
-                'word-wrap': 'break-word'
-            }
-        },
-        language: {
-            'search': {
-                'placeholder': '🔍 Search...'
-            },
-            'pagination': {
-                'previous': '⬅️',
-                'next': '➡️',
-                'showing': '👀 Displaying',
-                'results': () => 'Records'
+                'font-size': '0.9rem'
             }
         }
-    }).render(document.getElementById("parsed-content-table"));
+    });
+
+    grid.on('load', () => {
+        logDebug('Grid loaded');
+    });
+
+    grid.on('error', (err) => {
+        logDebug(`Grid error: ${err.message}`);
+    });
+
+    logDebug('Rendering grid');
+    grid.render(document.getElementById("blog-posts-grid"));
 
     // Add export button
     const exportBtn = document.createElement('button');
