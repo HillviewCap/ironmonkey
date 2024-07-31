@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <h1 class="mb-4">Threat Intelligence Dashboard</h1>
+
+    <!-- Threat Summary Section -->
+    <div class="card mb-4">
+        <div class="card-header bg-danger text-white">
+            <h5 class="mb-0">Current Threat Summary</h5>
+        </div>
+        <div class="card-body">
+            <p>High-level overview of current threats (To be implemented with real-time data)</p>
+        </div>
+    </div>
+
+    <!-- Quick Filters -->
+    <div class="mb-4">
+        <h5>Quick Filters:</h5>
+        <button class="btn btn-outline-primary mr-2" onclick="filterContent('all')">All</button>
+        <button class="btn btn-outline-danger mr-2" onclick="filterContent('critical')">Critical</button>
+        <button class="btn btn-outline-warning mr-2" onclick="filterContent('malware')">Malware</button>
+        <button class="btn btn-outline-info mr-2" onclick="filterContent('phishing')">Phishing</button>
+    </div>
+
+    <!-- Search Bar -->
+    <div class="mb-4">
+        <input type="text" id="searchInput" class="form-control" placeholder="Search blog posts...">
+    </div>
+
+    <!-- Blog Posts Grid -->
+    <div id="blogPostsGrid"></div>
+</div>
+
+<script src="https://unpkg.com/gridjs/dist/gridjs.umd.js"></script>
+<script>
+    let grid;
+
+    function initGrid(data) {
+        grid = new gridjs.Grid({
+            columns: [
+                { id: 'id', name: 'ID', hidden: true },
+                { id: 'title', name: 'Title' },
+                { id: 'description', name: 'Description' },
+                { id: 'pub_date', name: 'Date' },
+                {
+                    name: 'Actions',
+                    formatter: (_, row) => gridjs.html(`<a href="/parsed_content/item/${row.cells[0].data}" class="btn btn-sm btn-primary">View</a>`)
+                }
+            ],
+            data: data,
+            search: true,
+            sort: true,
+            pagination: {
+                limit: 10
+            },
+            style: {
+                table: {
+                    'font-size': '0.9rem'
+                }
+            }
+        }).render(document.getElementById("blogPostsGrid"));
+    }
+
+    function filterContent(filter) {
+        // Implement filtering logic here
+        console.log(`Filtering by: ${filter}`);
+        // You would typically make an AJAX call here to get filtered data
+        // For now, we'll just log the filter
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        fetch('/parsed_content/get_parsed_content')
+            .then(response => response.json())
+            .then(data => {
+                initGrid(data.data);
+            });
+
+        document.getElementById('searchInput').addEventListener('input', function(e) {
+            grid.search(e.target.value);
+        });
+    });
+</script>
+{% endblock %}
