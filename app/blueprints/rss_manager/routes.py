@@ -121,55 +121,6 @@ async def create_rss_feed() -> Tuple[Response, int]:
         return jsonify({"error": f"An unexpected error occurred: {str(e)}"}), 500
 
 
-@rss_manager_bp.route("/rss/rss/feed/awesome", methods=["POST"])
-@login_required
-async def add_awesome_feed() -> Tuple[Response, int]:
-    """
-    Create a new RSS feed from an Awesome Threat Intel Blog.
-
-    This function handles the creation of a new RSS feed from an Awesome Threat Intel Blog ID.
-
-    Returns:
-        tuple: A tuple containing a JSON response with the new feed data or error
-               message, and an HTTP status code.
-
-    Raises:
-        BadRequest: If the request data is missing or invalid.
-    """
-    data = request.get_json()
-    if not data or "blog_id" not in data:
-        raise BadRequest("Missing blog_id in request data")
-
-    try:
-        blog_id = UUID(data["blog_id"])
-        awesome_blog = AwesomeThreatIntelBlog.query.get(blog_id)
-        if not awesome_blog:
-            raise ValueError("Awesome Threat Intel Blog not found")
-
-        feed_data = {
-            "url": awesome_blog.feed_link,
-            "category": awesome_blog.blog_category,
-            "name": awesome_blog.blog,
-        }
-        response, status_code = await create_rss_feed()
-
-        if status_code == 201:
-            return (
-                jsonify({"message": "Awesome feed added successfully", **response}),
-                200,
-            )
-        else:
-            return response, status_code
-
-    except ValueError as e:
-        return jsonify({"error": str(e)}), 400
-    except Exception as e:
-        current_app.logger.error(
-            f"Error creating RSS feed from Awesome Threat Intel Blog: {str(e)}"
-        )
-        return jsonify({"error": "Failed to create RSS feed"}), 500
-
-
 @rss_manager_bp.route("/rss/feed/<uuid:feed_id>", methods=["PUT"])
 @login_required
 def update_rss_feed(feed_id):
