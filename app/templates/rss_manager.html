@@ -115,14 +115,6 @@
 
         async function addAwesomeFeed(blogId) {
             try {
-                // Ensure the blogId is a valid UUID string
-                // Ensure the blogId is a valid UUID string
-                const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-                if (!uuidRegex.test(blogId)) {
-                    showNotification('Invalid blog ID format', 'error');
-                    return;
-                }
-
                 const response = await fetch('{{ url_for("rss_manager.add_awesome_feed") }}', {
                     method: 'POST',
                     headers: {
@@ -135,7 +127,14 @@
                 const result = await response.json();
 
                 if (response.ok) {
-                    showNotification('Awesome feed added successfully', 'success');
+                    if (response.status === 200) {
+                        showNotification('Awesome feed added and parsed successfully', 'success');
+                        console.log('Parsed content:', result.parsed_content);
+                        // You can update the UI here with the parsed content if needed
+                    } else if (response.status === 202) {
+                        showNotification('Awesome feed added successfully, but parsing failed', 'warning');
+                        console.error('Parse error:', result.parse_error);
+                    }
                     grid.forceRender();
                 } else {
                     showNotification('Error adding awesome feed: ' + result.error, 'error');
@@ -207,20 +206,6 @@
                 }
             }).render(document.getElementById("awesomeBlogsGrid"));
 
-            grid.on('error', (err) => {
-                console.error('Error in Grid:', err);
-                showNotification('An error occurred while fetching data. Please try again later.', 'error');
-            });
-
-            grid.on('error', (err) => {
-                console.error('Error in Grid:', err);
-                showNotification('An error occurred while fetching data. Please try again later.', 'error');
-            });
-
-            grid.on('error', (err) => {
-                console.error('Error in Grid:', err);
-                showNotification('An error occurred while fetching data. Please try again later.', 'error');
-            });
         });
     </script>
 {% endblock %}
@@ -253,7 +238,14 @@
                 const result = await response.json();
 
                 if (response.ok) {
-                    showNotification('Awesome feed added successfully', 'success');
+                    if (response.status === 200) {
+                        showNotification('Awesome feed added and parsed successfully', 'success');
+                        console.log('Parsed content:', result.parsed_content);
+                        // You can update the UI here with the parsed content if needed
+                    } else if (response.status === 202) {
+                        showNotification('Awesome feed added successfully, but parsing failed', 'warning');
+                        console.error('Parse error:', result.parse_error);
+                    }
                     grid.forceRender();
                 } else {
                     showNotification('Error adding awesome feed: ' + result.error, 'error');
@@ -264,7 +256,7 @@
             }
         }
 
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', async function() {
             const grid = new gridjs.Grid({
                 columns: [
                     { id: 'blog', name: 'Blog' },
@@ -284,11 +276,13 @@
                         id: 'actions',
                         name: 'Actions',
                         formatter: (_, row) => {
-                            const { feed_link, id, is_in_rss_feeds } = row.cells.reduce((acc, cell) => ({ ...acc, [cell.data.id]: cell.data }), {});
-                            if (feed_link && !is_in_rss_feeds) {
-                                return gridjs.html(`<button onclick="addAwesomeFeed('${id}')" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline add-feed-btn">Add Feed</button>`);
-                            } else if (is_in_rss_feeds) {
-                                return gridjs.html(`<p class="text-sm text-green-500 font-bold">Already in RSS Feeds</p>`);
+                            const feedLink = row.cells[4].data;
+                            const isInRssFeeds = row.cells[7].data;
+                            const blogId = row.cells[6].data;
+                            if (feedLink && !isInRssFeeds) {
+                                return gridjs.html(`<button onclick="addAwesomeFeed('${blogId}')" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline add-feed-btn">Add Feed</button>`);
+                            } else if (isInRssFeeds) {
+                                return gridjs.html('<p class="text-sm text-green-500 font-bold">Already in RSS Feeds</p>');
                             }
                             return '';
                         }
@@ -298,21 +292,11 @@
                 ],
                 server: {
                     url: '{{ url_for("rss_manager.get_awesome_blogs") }}',
-                    then: response => response.data.map(blog => ({
-                        blog: blog.blog,
-                        blog_category: blog.blog_category,
-                        type: blog.type,
-                        blog_link: blog.blog_link,
-                        feed_link: blog.feed_link,
-                        id: blog.id,
-                        is_in_rss_feeds: blog.is_in_rss_feeds
-                    }))
+                    then: response => response.data
                 },
                 search: true,
                 sort: true,
-                pagination: {
-                    limit: 10
-                },
+                pagination: true,
                 className: {
                     table: 'min-w-full bg-white'
                 }

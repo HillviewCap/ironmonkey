@@ -6,6 +6,7 @@ retrieving the update status.
 """
 
 import os
+import uuid
 from flask import current_app
 from app.models.relational.awesome_threat_intel_blog import AwesomeThreatIntelBlog
 from app import db
@@ -46,8 +47,9 @@ class AwesomeThreatIntelService:
                     blog.feed_link = row['Feed Link']
                     blog.feed_type = row['Feed Type']
                 else:
-                    # Add new blog
+                    # Add new blog with a proper UUID
                     blog = AwesomeThreatIntelBlog(
+                        id=uuid.uuid4(),  # Generate a new UUID for each new blog
                         blog=blog_name,
                         blog_category=row['Blog Category'],
                         type=row['Type'],

@@ -14,7 +14,7 @@ class AwesomeThreatIntelBlog(db.Model):
     """
     Represents an Awesome Threat Intel Blog entry.
     """
-    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid4, nullable=False)
     blog = db.Column(String(255), nullable=False)
     blog_category = db.Column(String(100), nullable=False)
     type = db.Column(String(50), nullable=False)

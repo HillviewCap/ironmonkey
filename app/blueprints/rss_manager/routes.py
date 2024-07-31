@@ -288,7 +288,7 @@ async def add_awesome_feed():
 
     This function handles the addition of an Awesome Threat Intel Blog to the user's RSS feeds.
     It checks if the blog exists, has a feed link, and is not already in the user's feeds.
-    It then uses the rss_feed_service to create and parse the feed.
+    It then creates a new RSSFeed entry and parses the feed.
 
     Returns:
         tuple: A tuple containing a JSON response with the result of the operation
@@ -309,7 +309,14 @@ async def add_awesome_feed():
         # Convert blog_id to UUID if it's a string
         if isinstance(blog_id, str):
             try:
-                blog_id = UUID(blog_id.strip())  # Strip any whitespace
+                # Remove any non-hexadecimal characters
+                blog_id = ''.join(c for c in blog_id if c in '0123456789abcdefABCDEF')
+                
+                # If the blog_id is a 32-character hex string, add hyphens to make it a valid UUID
+                if len(blog_id) == 32:
+                    blog_id = f"{blog_id[:8]}-{blog_id[8:12]}-{blog_id[12:16]}-{blog_id[16:20]}-{blog_id[20:]}"
+                
+                blog_id = UUID(blog_id)
             except ValueError as e:
                 current_app.logger.error(f"Invalid blog_id format: {str(e)}")
                 return jsonify({'error': f'Invalid blog_id format: {str(e)}'}), 400
@@ -333,24 +340,33 @@ async def add_awesome_feed():
             current_app.logger.info(f"Feed already exists for blog {blog_id}")
             return jsonify({'error': f'Feed already exists for blog {blog_id}'}), 400
 
-        feed_data = {
-            'url': awesome_blog.feed_link,
-            'category': awesome_blog.blog_category,
-            'name': awesome_blog.blog
-        }
-        new_feed = await rss_feed_service.create_feed(feed_data)
+        # Create a new RSSFeed entry
+        new_feed = RSSFeed(
+            url=awesome_blog.feed_link,
+            category=awesome_blog.blog_category,
+            name=awesome_blog.blog
+        )
+        db.session.add(new_feed)
+        db.session.commit()
         current_app.logger.info(f"Created new feed: {new_feed.id}")
 
         # Parse the new feed
         try:
-            await rss_feed_service.parse_feed(new_feed.id)
+            parsed_content = await rss_feed_service.parse_feed(new_feed.id)
             current_app.logger.info(f"Successfully parsed new feed: {new_feed.id}")
+            return jsonify({
+                'message': 'Awesome feed added and parsed successfully',
+                'feed': new_feed.to_dict(),
+                'parsed_content': [content.to_dict() for content in parsed_content]
+            }), 200
         except Exception as parse_error:
             current_app.logger.error(f"Error parsing new feed: {str(parse_error)}")
-            # Even if parsing fails, we keep the feed
-
-        feeds = RSSFeed.query.all()
-        return jsonify({'message': 'Awesome feed added successfully', 'feeds': [feed.to_dict() for feed in feeds]}), 200
+            # Even if parsing fails, we keep the feed and return a partial success
+            return jsonify({
+                'message': 'Awesome feed added successfully, but parsing failed',
+                'feed': new_feed.to_dict(),
+                'parse_error': str(parse_error)
+            }), 202  # 202 Accepted indicates partial success
     except BadRequest as e:
         current_app.logger.error(f"BadRequest error: {str(e)}")
         return jsonify({'error': str(e)}), 400
