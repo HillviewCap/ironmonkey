@@ -107,10 +107,24 @@
             if (response.ok) {
                 showNotification('Feed added successfully', 'success');
                 form.reset();
+                refreshExistingFeedsTable();
                 grid.forceRender();
             } else {
                 showNotification('Error adding feed: ' + result.error, 'error');
             }
+        }
+
+        function refreshExistingFeedsTable() {
+            fetch('{{ url_for("rss_manager.get_rss_feeds") }}')
+                .then(response => response.text())
+                .then(html => {
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, 'text/html');
+                    const newTable = doc.querySelector('.min-w-full');
+                    const oldTable = document.querySelector('.min-w-full');
+                    oldTable.parentNode.replaceChild(newTable, oldTable);
+                })
+                .catch(error => console.error('Error refreshing feeds table:', error));
         }
 
 
