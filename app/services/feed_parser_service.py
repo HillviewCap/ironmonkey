@@ -102,10 +102,17 @@ async def fetch_and_parse_feed(feed: RSSFeed) -> int:
                             pub_date = entry.get("published", "")
                             if pub_date:
                                 try:
-                                    pub_date = datetime.strptime(
-                                        pub_date, "%a, %d %b %Y %H:%M:%S %z"
-                                    )
-                                    pub_date = pub_date.strftime("%Y-%m-%d %H:%M:%S")
+                                    # Try parsing with multiple formats
+                                    for date_format in ["%a, %d %b %Y %H:%M:%S %z", "%Y-%m-%dT%H:%M:%S%z"]:
+                                        try:
+                                            parsed_date = datetime.strptime(pub_date, date_format)
+                                            pub_date = parsed_date.strftime("%Y-%m-%d %H:%M:%S")
+                                            break
+                                        except ValueError:
+                                            continue
+                                    else:
+                                        # If no format worked, raise ValueError to log a warning
+                                        raise ValueError("No matching date format found")
                                 except ValueError:
                                     logger.warning(
                                         f"Could not parse date: {pub_date}. Using original string."
