@@ -208,3 +208,55 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 });
+let grid;
+
+function initGrid(data) {
+    grid = new gridjs.Grid({
+        columns: [
+            { id: 'id', name: 'ID', hidden: true },
+            { id: 'title', name: 'Title' },
+            { id: 'description', name: 'Description' },
+            { id: 'pub_date', name: 'Date' },
+            {
+                name: 'Actions',
+                formatter: (_, row) => gridjs.html(`<a href="/parsed_content/item/${row.cells[0].data}" class="btn btn-sm btn-primary">View</a>`)
+            }
+        ],
+        data: data,
+        search: true,
+        sort: true,
+        pagination: {
+            limit: 10
+        },
+        style: {
+            table: {
+                'font-size': '0.9rem'
+            }
+        }
+    }).render(document.getElementById("blog-posts-grid"));
+}
+
+function filterContent(filter) {
+    // Implement filtering logic here
+    console.log(`Filtering by: ${filter}`);
+    // You would typically make an AJAX call here to get filtered data
+    // For now, we'll just log the filter
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    fetch('/parsed_content/get_parsed_content')
+        .then(response => response.json())
+        .then(data => {
+            initGrid(data.data);
+        });
+
+    document.getElementById('search-input').addEventListener('input', function(e) {
+        grid.search(e.target.value);
+    });
+
+    document.querySelectorAll('[data-filter]').forEach(button => {
+        button.addEventListener('click', function() {
+            filterContent(this.dataset.filter);
+        });
+    });
+});
