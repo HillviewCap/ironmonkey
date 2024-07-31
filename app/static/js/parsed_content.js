@@ -211,6 +211,15 @@ document.addEventListener('DOMContentLoaded', function() {
 let grid;
 
 document.addEventListener('DOMContentLoaded', function() {
+    const debugOutput = document.getElementById('debug-output');
+
+    function logDebug(message) {
+        console.log(message);
+        debugOutput.textContent += message + '\n';
+    }
+
+    logDebug('DOMContentLoaded event fired');
+
     const grid = new gridjs.Grid({
         columns: [
             { 
@@ -237,7 +246,17 @@ document.addEventListener('DOMContentLoaded', function() {
         ],
         server: {
             url: '/parsed_content/get_parsed_content',
-            then: data => data.data.map(post => [post[0], post[1], post[2], post[3]])
+            then: data => {
+                logDebug(`Received data: ${JSON.stringify(data)}`);
+                return data.data.map(post => [post[0], post[1], post[2], post[3]]);
+            },
+            handle: (res) => {
+                if (!res.ok) {
+                    logDebug(`Error fetching data: ${res.status} ${res.statusText}`);
+                    throw Error(res.statusText);
+                }
+                return res.json();
+            }
         },
         search: true,
         sort: true,
@@ -252,13 +271,21 @@ document.addEventListener('DOMContentLoaded', function() {
                 'font-size': '0.9rem'
             }
         }
-    }).render(document.getElementById("blog-posts-grid"));
+    });
+
+    grid.on('load', () => {
+        logDebug('Grid loaded');
+    });
+
+    grid.on('error', (err) => {
+        logDebug(`Grid error: ${err.message}`);
+    });
+
+    grid.render(document.getElementById("blog-posts-grid"));
 
     function filterContent(filter) {
+        logDebug(`Filtering by: ${filter}`);
         // Implement filtering logic here
-        console.log(`Filtering by: ${filter}`);
-        // You would typically update the grid's server URL with the filter parameter
-        // For now, we'll just log the filter
     }
 
     document.querySelectorAll('[data-filter]').forEach(button => {
@@ -275,9 +302,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     function summarizeContent(postId) {
+        logDebug(`Summarizing post: ${postId}`);
         // Implement summarize functionality here
-        console.log(`Summarizing post: ${postId}`);
-        // You would typically make an AJAX call to a summarize endpoint
-        // For now, we'll just log the post ID
     }
 });
