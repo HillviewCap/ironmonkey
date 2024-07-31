@@ -61,6 +61,27 @@ def get_rss_feeds() -> str:
     )
 
 
+@rss_manager_bp.route("/rss/feed/<uuid:feed_id>")
+@login_required
+def get_rss_feed(feed_id: UUID) -> Tuple[Response, int]:
+    """
+    Retrieve a specific RSS feed by its ID.
+
+    Args:
+        feed_id (UUID): The UUID of the RSS feed to retrieve.
+
+    Returns:
+        Tuple[Response, int]: A tuple containing a JSON response with the feed data and HTTP status code.
+
+    Raises:
+        404: If the RSS feed with the given ID is not found.
+    """
+    feed: RSSFeed = rss_feed_service.get_feed_by_id(feed_id)
+    if not feed:
+        abort(404, description="RSS feed not found")
+    return jsonify(feed.to_dict()), 200
+
+
 @rss_manager_bp.route("/rss/feed", methods=["POST"])
 @login_required
 async def create_rss_feed() -> Tuple[Response, int]:
@@ -121,6 +142,57 @@ async def create_rss_feed() -> Tuple[Response, int]:
         return jsonify({"error": f"An unexpected error occurred: {str(e)}"}), 500
 
 
+@rss_manager_bp.route("/feed/awesome", methods=["POST"])
+@login_required
+async def create_rss_feed_from_awesome() -> Tuple[Response, int]:
+    """
+    Create a new RSS feed from an Awesome Threat Intel Blog.
+
+    This function handles the creation of a new RSS feed from an Awesome Threat Intel Blog ID.
+
+    Returns:
+        tuple: A tuple containing a JSON response with the new feed data or error
+               message, and an HTTP status code.
+
+    Raises:
+        BadRequest: If the request data is missing or invalid.
+    """
+    data = request.get_json()
+    if not data or "blog_id" not in data:
+        raise BadRequest("Missing blog_id in request data")
+
+    try:
+        blog_id = UUID(data["blog_id"])
+        awesome_blog = AwesomeThreatIntelBlog.query.get(blog_id)
+        if not awesome_blog:
+            raise ValueError("Awesome Threat Intel Blog not found")
+
+        feed_data = {
+            "url": awesome_blog.feed_link,
+            "category": awesome_blog.blog_category,
+        }
+        new_feed = await rss_feed_service.create_feed(feed_data)
+
+        feeds = rss_feed_service.get_all_feeds()
+        return (
+            jsonify(
+                {
+                    "message": "Awesome feed added successfully",
+                    "feeds": [feed.to_dict() for feed in feeds],
+                }
+            ),
+            200,
+        )
+
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
+    except Exception as e:
+        current_app.logger.error(
+            f"Error creating RSS feed from Awesome Threat Intel Blog: {str(e)}"
+        )
+        return jsonify({"error": "Failed to create RSS feed"}), 500
+
+
 @rss_manager_bp.route("/rss/feed/<uuid:feed_id>", methods=["PUT"])
 @login_required
 def update_rss_feed(feed_id):
@@ -169,6 +241,76 @@ def delete_rss_feed(feed_id):
     return redirect(url_for("rss_manager.get_rss_feeds"))
 
 
+@rss_manager_bp.route("/rss/parse/<uuid:feed_id>", methods=["POST"])
+@login_required
+async def parse_rss_feed(feed_id):
+    """
+    Parse an RSS feed.
+
+    Args:
+        feed_id (uuid.UUID): The UUID of the RSS feed to parse.
+
+    Returns:
+        tuple: A tuple containing a JSON response with the parsed content or
+               error message, and an HTTP status code.
+    """
+    try:
+        parsed_content = await rss_feed_service.parse_feed(feed_id)
+        return (
+            jsonify(
+                {
+                    "message": "RSS feed parsed successfully",
+                    "parsed_content": [content.to_dict() for content in parsed_content],
+                }
+            ),
+            200,
+        )
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 404
+    except Exception as e:
+        current_app.logger.error(f"Error parsing RSS feed: {str(e)}")
+        return jsonify({"error": "Failed to parse RSS feed"}), 500
+
+
+@rss_manager_bp.route("/rss/parsed_content/<uuid:feed_id>")
+@login_required
+def get_parsed_content(feed_id):
+    """
+    Retrieve parsed content for a specific RSS feed.
+
+    Args:
+        feed_id (uuid.UUID): The UUID of the RSS feed to get parsed content for.
+
+    Returns:
+        str: Rendered HTML template with the parsed content.
+    """
+    return render_template("parsed_content.html", feed_id=feed_id)
+
+
+@rss_manager_bp.route("/rss/parsed_content_data/<uuid:feed_id>")
+@login_required
+def get_parsed_content_data(feed_id):
+    """
+    Retrieve parsed content data for a specific RSS feed.
+
+    Args:
+        feed_id (uuid.UUID): The UUID of the RSS feed to get parsed content for.
+
+    Returns:
+        json: JSON response with parsed content data.
+    """
+    page = request.args.get("page", 1, type=int)
+    per_page = request.args.get("per_page", 10, type=int)
+    filters = request.args.to_dict()
+    filters.pop("page", None)
+    filters.pop("per_page", None)
+    filters["feed_id"] = feed_id
+
+    content, total = parsed_content_service.get_parsed_content(filters, page, per_page)
+
+    return jsonify({"data": [item.to_dict() for item in content], "total": total})
+
+
 @rss_manager_bp.route("/update_awesome_threat_intel", methods=["POST"])
 @login_required
 def update_awesome_threat_intel():
@@ -192,6 +334,126 @@ def update_awesome_threat_intel():
         current_app.logger.error(f"Error updating Awesome Threat Intel Blogs: {str(e)}")
         flash("An error occurred while updating Awesome Threat Intel Blogs.", "error")
     return redirect(url_for("rss_manager.get_rss_feeds"))
+
+
+@rss_manager_bp.route("/add_awesome_feed", methods=["POST"])
+@login_required
+async def add_awesome_feed():
+    """
+    Add an Awesome Threat Intel Blog as an RSS feed.
+
+    This function handles the addition of an Awesome Threat Intel Blog to the user's RSS feeds.
+    It checks if the blog exists, has a feed link, and is not already in the user's feeds.
+    It then creates a new RSSFeed entry and parses the feed.
+
+    Returns:
+        tuple: A tuple containing a JSON response with the result of the operation
+               and an HTTP status code.
+
+    Raises:
+        BadRequest: If the blog ID is missing or invalid.
+        Exception: For any other unexpected errors during the process.
+    """
+    try:
+        data = request.get_json()
+        if not data or "blog_id" not in data:
+            raise BadRequest("Missing blog_id in request data")
+
+        blog_id = data["blog_id"]
+        current_app.logger.debug(f"Received blog_id: {blog_id}")
+
+        # Convert blog_id to UUID if it's a string
+        if isinstance(blog_id, str):
+            try:
+                # Remove any non-hexadecimal characters
+                blog_id = "".join(c for c in blog_id if c in "0123456789abcdefABCDEF")
+
+                # If the blog_id is a 32-character hex string, add hyphens to make it a valid UUID
+                if len(blog_id) == 32:
+                    blog_id = f"{blog_id[:8]}-{blog_id[8:12]}-{blog_id[12:16]}-{blog_id[16:20]}-{blog_id[20:]}"
+
+                blog_id = UUID(blog_id)
+            except ValueError as e:
+                current_app.logger.error(f"Invalid blog_id format: {str(e)}")
+                return jsonify({"error": f"Invalid blog_id format: {str(e)}"}), 400
+        elif not isinstance(blog_id, UUID):
+            current_app.logger.error(f"Invalid blog_id type: {type(blog_id)}")
+            return jsonify({"error": f"Invalid blog_id type: {type(blog_id)}"}), 400
+
+        current_app.logger.debug(f"Converted blog_id: {blog_id}")
+
+        awesome_blog = AwesomeThreatIntelBlog.query.get(blog_id)
+        if not awesome_blog:
+            current_app.logger.error(f"Awesome blog not found for id: {blog_id}")
+            return jsonify({"error": f"Awesome blog not found for id: {blog_id}"}), 404
+
+        if not awesome_blog.feed_link:
+            current_app.logger.error(f"Blog {blog_id} does not have an RSS feed")
+            return jsonify({"error": f"Blog {blog_id} does not have an RSS feed"}), 400
+
+        existing_feed = RSSFeed.query.filter_by(url=awesome_blog.feed_link).first()
+        if existing_feed:
+            current_app.logger.info(f"Feed already exists for blog {blog_id}")
+            return jsonify({"error": f"Feed already exists for blog {blog_id}"}), 400
+
+        # Create a new RSSFeed entry
+        new_feed = RSSFeed(
+            url=awesome_blog.feed_link,
+            category=awesome_blog.blog_category,
+            name=awesome_blog.blog,
+        )
+        db.session.add(new_feed)
+        db.session.commit()
+        current_app.logger.info(f"Created new feed: {new_feed.id}")
+
+        # Parse the new feed
+        try:
+            parsed_content = await rss_feed_service.parse_feed(new_feed.id)
+            current_app.logger.info(f"Successfully parsed new feed: {new_feed.id}")
+            return (
+                jsonify(
+                    {
+                        "message": "Awesome feed added and parsed successfully",
+                        "feed": new_feed.to_dict(),
+                        "parsed_content": [
+                            content.to_dict() for content in parsed_content
+                        ],
+                    }
+                ),
+                200,
+            )
+        except Exception as parse_error:
+            current_app.logger.error(f"Error parsing new feed: {str(parse_error)}")
+            # Even if parsing fails, we keep the feed and return a partial success
+            return (
+                jsonify(
+                    {
+                        "message": "Awesome feed added successfully, but parsing failed",
+                        "feed": new_feed.to_dict(),
+                        "parse_error": str(parse_error),
+                    }
+                ),
+                202,
+            )  # 202 Accepted indicates partial success
+    except BadRequest as e:
+        current_app.logger.error(f"BadRequest error: {str(e)}")
+        return jsonify({"error": str(e)}), 400
+    except IntegrityError:
+        current_app.logger.error("IntegrityError: Feed already exists")
+        db.session.rollback()
+        return jsonify({"error": "This feed already exists in your RSS feeds"}), 400
+    except Exception as e:
+        current_app.logger.error(
+            f"Unexpected error adding awesome feed: {str(e)}", exc_info=True
+        )
+        return (
+            jsonify(
+                {
+                    "error": f"An unexpected error occurred while adding the awesome feed: {str(e)}"
+                }
+            ),
+            500,
+        )
 
 
 @rss_manager_bp.route("/rss/feed/edit/<uuid:feed_id>", methods=["GET", "POST"])
