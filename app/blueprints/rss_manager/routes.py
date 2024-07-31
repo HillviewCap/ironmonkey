@@ -121,7 +121,7 @@ async def create_rss_feed() -> Tuple[Response, int]:
         return jsonify({"error": f"An unexpected error occurred: {str(e)}"}), 500
 
 
-@rss_manager_bp.route("/rss/feed/awesome", methods=["POST"])
+@rss_manager_bp.route("/rss/rss/feed/awesome", methods=["POST"])
 @login_required
 async def add_awesome_feed() -> Tuple[Response, int]:
     """
