@@ -142,6 +142,11 @@ class ParsedContentService:
         return ParsedContent.query.get(content_id)
 
     @staticmethod
+    def clear_all_summaries():
+        ParsedContent.query.update({ParsedContent.summary: None})
+        db.session.commit()
+
+    @staticmethod
     def create_parsed_content(content_data: Dict[str, any]) -> ParsedContent:
         """
         Create a new parsed content item.
