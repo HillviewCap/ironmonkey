@@ -1,48 +1,50 @@
 {% extends "base.html" %}
 
+{% block extra_head %}
+<link href="https://unpkg.com/gridjs/dist/theme/mermaid.min.css" rel="stylesheet" />
+{% endblock %}
+
 {% block content %}
-<div class="container mt-5">
-    <h1 class="mb-4">Threat Intelligence Dashboard</h1>
+<div class="container mx-auto px-4">
+    <h1 class="text-2xl font-bold mb-4">Threat Intelligence Dashboard</h1>
 
     <!-- Threat Summary Section -->
-    <div class="card mb-4">
-        <div class="card-header bg-danger text-white">
-            <h5 class="mb-0">Current Threat Summary</h5>
-        </div>
-        <div class="card-body">
-            <p>High-level overview of current threats (To be implemented with real-time data)</p>
-        </div>
+    <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-4" role="alert">
+        <p class="font-bold">Current Threat Summary</p>
+        <p>High-level overview of current threats (To be implemented with real-time data)</p>
     </div>
 
     <!-- Quick Filters -->
     <div class="mb-4">
-        <h5>Quick Filters:</h5>
-        <button class="btn btn-outline-primary mr-2" data-filter="all">All</button>
-        <button class="btn btn-outline-danger mr-2" data-filter="critical">Critical</button>
-        <button class="btn btn-outline-warning mr-2" data-filter="malware">Malware</button>
-        <button class="btn btn-outline-info mr-2" data-filter="phishing">Phishing</button>
-    </div>
-
-    <!-- Search Bar -->
-    <div class="mb-4">
-        <input type="text" id="search-input" class="form-control" placeholder="Search blog posts...">
+        <h5 class="text-lg font-semibold mb-2">Quick Filters:</h5>
+        <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mr-2" data-filter="all">All</button>
+        <button class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded mr-2" data-filter="critical">Critical</button>
+        <button class="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded mr-2" data-filter="malware">Malware</button>
+        <button class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded mr-2" data-filter="phishing">Phishing</button>
     </div>
 
     <!-- Blog Posts Grid -->
-    <div id="blog-posts-grid"></div>
+    <div id="blog-posts-grid" class="mb-4"></div>
     
+    <!-- Clear Summaries Button -->
+    <button id="clear-summaries-btn" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded mb-4">
+        Clear All Summaries
+    </button>
+
     <!-- Debug Information -->
-    <div id="debug-info" class="mt-4">
-        <h5>Debug Information:</h5>
-        <pre id="debug-output"></pre>
+    <div id="debug-info" class="mt-4 bg-gray-100 p-4 rounded">
+        <h5 class="text-lg font-semibold mb-2">Debug Information:</h5>
+        <pre id="debug-output" class="whitespace-pre-wrap"></pre>
     </div>
 </div>
 {% endblock %}
 
-{% block scripts %}
+{% block extra_scripts %}
 <script src="https://unpkg.com/gridjs/dist/gridjs.umd.js"></script>
-<script src="{{ url_for('static', filename='js/parsed_content.js') }}"></script>
 <script>
-    // Add any additional JavaScript here if needed
+    const csrfToken = "{{ csrf_token() }}";
+    const summarizeContentUrl = "{{ url_for('parsed_content.summarize_content') }}";
+    const clearAllSummariesUrl = "{{ url_for('parsed_content.clear_all_summaries') }}";
 </script>
+<script src="{{ url_for('static', filename='js/parsed_content.js') }}"></script>
 {% endblock %}
