@@ -113,37 +113,6 @@
             }
         }
 
-        async function addAwesomeFeed(blogId) {
-            try {
-                const response = await fetch('{{ url_for("rss_manager.add_awesome_feed") }}', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': '{{ csrf_token() }}'
-                    },
-                    body: JSON.stringify({ blog_id: blogId })
-                });
-
-                const result = await response.json();
-
-                if (response.ok) {
-                    if (response.status === 200) {
-                        showNotification('Awesome feed added and parsed successfully', 'success');
-                        console.log('Parsed content:', result.parsed_content);
-                        // You can update the UI here with the parsed content if needed
-                    } else if (response.status === 202) {
-                        showNotification('Awesome feed added successfully, but parsing failed', 'warning');
-                        console.error('Parse error:', result.parse_error);
-                    }
-                    grid.forceRender();
-                } else {
-                    showNotification('Error adding awesome feed: ' + result.error, 'error');
-                }
-            } catch (error) {
-                console.error('Error adding awesome feed:', error);
-                showNotification('An unexpected error occurred while adding the awesome feed', 'error');
-            }
-        }
 
         function showNotification(message, type) {
             const notification = document.createElement('div');
