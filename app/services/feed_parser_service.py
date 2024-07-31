@@ -100,14 +100,13 @@ async def fetch_and_parse_feed(feed: RSSFeed) -> int:
                                     logger.warning(f"Could not parse date: {pub_date}. Using original string.")
                             
                             new_content = ParsedContent(
-                                content=parsed_content,
+                                content=sanitize_html(parsed_content),
                                 feed_id=feed.id,
                                 url=url,
                                 title=sanitize_html(title),
                                 description=sanitize_html(entry.get('description', '')),
                                 pub_date=pub_date,
-                                creator=sanitize_html(entry.get('author', '')),
-                                content=sanitize_html(parsed_content)
+                                creator=sanitize_html(entry.get('author', ''))
                             )
                             db.session.add(new_content)
                             db.session.flush()  # This will assign the UUID to new_content
