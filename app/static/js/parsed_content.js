@@ -210,23 +210,42 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 let grid;
 
-function initGrid(data) {
-    grid = new gridjs.Grid({
+document.addEventListener('DOMContentLoaded', function() {
+    const grid = new gridjs.Grid({
         columns: [
-            { id: 'id', name: 'ID', hidden: true },
-            { id: 'title', name: 'Title' },
-            { id: 'description', name: 'Description' },
-            { id: 'pub_date', name: 'Date' },
+            { 
+                id: 'title', 
+                name: 'Title',
+                sort: true,
+                formatter: (cell, row) => gridjs.html(`<a href="/parsed_content/item/${row.cells[0].data}" class="text-blue-500 hover:underline">${cell}</a>`)
+            },
+            { 
+                id: 'description', 
+                name: 'Description', 
+                formatter: (cell) => cell && cell.length > 100 ? cell.substring(0, 100) + '...' : cell
+            },
+            { id: 'pub_date', name: 'Published Date', sort: true },
             {
+                id: 'actions',
                 name: 'Actions',
-                formatter: (_, row) => gridjs.html(`<a href="/parsed_content/item/${row.cells[0].data}" class="btn btn-sm btn-primary">View</a>`)
+                formatter: (_, row) => gridjs.html(`
+                    <button class="bg-green-500 hover:bg-green-700 text-white font-bold py-1 px-2 rounded text-xs summarize-btn" data-post-id="${row.cells[0].data}">
+                        Summarize
+                    </button>
+                `)
             }
         ],
-        data: data,
+        server: {
+            url: '/parsed_content/get_parsed_content',
+            then: data => data.data.map(post => [post[0], post[1], post[2], post[3]])
+        },
         search: true,
         sort: true,
         pagination: {
-            limit: 10
+            limit: 10,
+            server: {
+                url: (prev, page, limit) => `${prev}${prev.includes('?') ? '&' : '?'}page=${page}&limit=${limit}`
+            }
         },
         style: {
             table: {
@@ -234,29 +253,31 @@ function initGrid(data) {
             }
         }
     }).render(document.getElementById("blog-posts-grid"));
-}
 
-function filterContent(filter) {
-    // Implement filtering logic here
-    console.log(`Filtering by: ${filter}`);
-    // You would typically make an AJAX call here to get filtered data
-    // For now, we'll just log the filter
-}
-
-document.addEventListener('DOMContentLoaded', function() {
-    fetch('/parsed_content/get_parsed_content')
-        .then(response => response.json())
-        .then(data => {
-            initGrid(data.data);
-        });
-
-    document.getElementById('search-input').addEventListener('input', function(e) {
-        grid.search(e.target.value);
-    });
+    function filterContent(filter) {
+        // Implement filtering logic here
+        console.log(`Filtering by: ${filter}`);
+        // You would typically update the grid's server URL with the filter parameter
+        // For now, we'll just log the filter
+    }
 
     document.querySelectorAll('[data-filter]').forEach(button => {
         button.addEventListener('click', function() {
             filterContent(this.dataset.filter);
         });
     });
+
+    document.addEventListener('click', function(event) {
+        if (event.target.classList.contains('summarize-btn')) {
+            const postId = event.target.getAttribute('data-post-id');
+            summarizeContent(postId);
+        }
+    });
+
+    function summarizeContent(postId) {
+        // Implement summarize functionality here
+        console.log(`Summarizing post: ${postId}`);
+        // You would typically make an AJAX call to a summarize endpoint
+        // For now, we'll just log the post ID
+    }
 });
