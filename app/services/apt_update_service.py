@@ -133,8 +133,15 @@ def update_allgroups(session: Session, data: List[Dict[str, Any]]) -> None:
             try:
                 group_uuid = UUID(group["uuid"])  # Convert string UUID to UUID object
             except ValueError:
-                logger.error(f"Invalid UUID for group: {group.get('name', 'Unknown')} - UUID: {group['uuid']}. Skipping this group.")
-                continue
+                logger.warning(f"Invalid UUID for group: {group.get('name', 'Unknown')} - UUID: {group['uuid']}. Attempting to fix.")
+                try:
+                    # Try to pad the UUID if it's too short
+                    padded_uuid = group["uuid"].ljust(32, '0')
+                    group_uuid = UUID(padded_uuid)
+                    logger.info(f"Successfully fixed UUID for group: {group.get('name', 'Unknown')} - New UUID: {group_uuid}")
+                except ValueError:
+                    logger.error(f"Unable to fix UUID for group: {group.get('name', 'Unknown')} - UUID: {group['uuid']}. Skipping this group.")
+                    continue
 
             db_group = session.query(AllGroups).filter(AllGroups.uuid == group_uuid).first()
             if not db_group:
