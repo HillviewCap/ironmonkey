@@ -5,6 +5,7 @@ import logging
 from typing import Dict, List, Any, Optional
 import httpx
 from sqlalchemy import create_engine, inspect
+from uuid import UUID
 from sqlalchemy.orm import sessionmaker, Session
 from app.models.relational.alltools import AllTools, AllToolsValues, AllToolsValuesNames
 from app.models.relational.allgroups import AllGroups, AllGroupsValues, AllGroupsValuesNames
@@ -42,9 +43,10 @@ def update_alltools(session: Session, data: List[Dict[str, Any]]) -> None:
         data (List[Dict[str, Any]]): The data to update the database with.
     """
     for tool in data:
-        db_tool = session.query(AllTools).filter(AllTools.uuid == tool["uuid"]).first()
+        tool_uuid = UUID(tool["uuid"])  # Convert string UUID to UUID object
+        db_tool = session.query(AllTools).filter(AllTools.uuid == tool_uuid).first()
         if not db_tool:
-            db_tool = AllTools(uuid=tool["uuid"])
+            db_tool = AllTools(uuid=tool_uuid)
             session.add(db_tool)
 
         db_tool.authors = (
@@ -110,11 +112,12 @@ def update_allgroups(session: Session, data: List[Dict[str, Any]]) -> None:
         data (List[Dict[str, Any]]]: The data to update the database with.
     """
     for group in data:
+        group_uuid = UUID(group["uuid"])  # Convert string UUID to UUID object
         db_group = (
-            session.query(AllGroups).filter(AllGroups.uuid == group["uuid"]).first()
+            session.query(AllGroups).filter(AllGroups.uuid == group_uuid).first()
         )
         if not db_group:
-            db_group = AllGroups(uuid=group["uuid"])
+            db_group = AllGroups(uuid=group_uuid)
             session.add(db_group)
 
         db_group.authors = (
