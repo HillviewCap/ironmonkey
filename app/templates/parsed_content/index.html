@@ -31,6 +31,22 @@
         </div>
     </div>
 
+    <!-- Quick Filter Buttons -->
+    <div class="flex justify-center space-x-4 mb-8">
+        <button class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded">
+            Malware
+        </button>
+        <button class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded">
+            Ransomware
+        </button>
+        <button class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded">
+            Nationstate
+        </button>
+        <button class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded">
+            Threat Actor
+        </button>
+    </div>
+
     <!-- Content Grid -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {% for item in content %}
