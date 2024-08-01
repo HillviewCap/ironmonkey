@@ -61,6 +61,10 @@ class SummaryService:
                         logger.warning(f"ParsedContent not found for id {content_id}")
                         return False
 
+                    if parsed_content.summary:
+                        logger.info(f"Record {content_id} already has a summary. Skipping.")
+                        return True
+
                     parsed_content.summary = summary.strip()
                     session.commit()
                     logger.info(f"Updated summary for record {content_id}")
