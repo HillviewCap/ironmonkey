@@ -36,11 +36,11 @@ class ParsedContentService:
 
         # Top 3 sites with article count for today
         top_sites = db.session.query(
-            RSSFeed.name,
+            RSSFeed.title,
             func.count(ParsedContent.id).label('article_count')
         ).join(RSSFeed, ParsedContent.feed_id == RSSFeed.id)\
          .filter(func.date(ParsedContent.created_at) == today)\
-         .group_by(RSSFeed.name)\
+         .group_by(RSSFeed.title)\
          .order_by(func.count(ParsedContent.id).desc())\
          .limit(3)\
          .all()
