@@ -1,0 +1,94 @@
+from flask import Blueprint, render_template, abort, request, redirect, url_for, jsonify, Response, current_app
+import csv
+from app.models.relational.parsed_content import ParsedContent
+from app.services.parsed_content_service import ParsedContentService
+from app.services.summary_service import SummaryService
+from uuid import UUID
+
+parsed_content_bp = Blueprint('parsed_content', __name__)
+summary_service = SummaryService()
+
+@parsed_content_bp.route('/', methods=['GET'])
+def parsed_content_list():
+    return render_template('parsed_content.html')
+
+@parsed_content_bp.route('/item/<uuid:content_id>', methods=['GET'])
+def view_content(content_id):
+    content = ParsedContentService.get_content_by_id(content_id)
+    if not content:
+        abort(404)
+    return render_template('view_item.html', item=content)
+
+@parsed_content_bp.route('/list', methods=['GET'])
+def list_content():
+    try:
+        page = request.args.get('page', 1, type=int)  # Assume 1-based indexing from frontend
+        limit = request.args.get('limit', 10, type=int)
+        search_query = request.args.get('search', '')
+        feed_id = request.args.get('feed_id')
+        
+        # Adjust page for 0-based indexing in the service
+        contents, total = ParsedContentService.get_contents(page=page-1, limit=limit, search_query=search_query, feed_id=feed_id)
+        
+        return jsonify({
+            'data': [content.to_dict() for content in contents],
+            'total': total,
+            'page': page,  # Return 1-based page number
+            'limit': limit
+        })
+    except Exception as e:
+        current_app.logger.error(f"Error in list_content: {str(e)}")
+        return jsonify({'error': 'An error occurred while fetching content'}), 500
+
+@parsed_content_bp.route('/export_csv', methods=['GET'])
+def export_csv():
+    search = request.args.get('search', '')
+    feed_id = request.args.get('feed_id')
+    
+    # Convert feed_id to UUID if it's provided
+    if feed_id:
+        try:
+            feed_id = UUID(feed_id)
+        except ValueError:
+            return jsonify({'error': 'Invalid feed_id'}), 400
+
+    # Fetch data from your database
+    items, _ = ParsedContentService.get_contents(
+        page=0,  # Fetch all items
+        limit=0,  # No limit
+        search_query=search,
+        feed_id=feed_id
+    )
+
+    # Create a CSV response
+    def generate():
+        data = [content.to_dict() for content in items]
+        fieldnames = data[0].keys() if data else []
+        writer = csv.DictWriter(Response(), fieldnames=fieldnames)
+        writer.writeheader()
+        for row in data:
+            writer.writerow(row)
+        yield writer
+
+    return Response(generate(), mimetype='text/csv', headers={"Content-Disposition": "attachment;filename=parsed_content.csv"})
+
+
+@parsed_content_bp.route('/summarize_content', methods=['POST'])
+def summarize_content():
+    content_id = request.json.get('content_id')
+    if not content_id:
+        return jsonify({'error': 'No content_id provided'}), 400
+
+    try:
+        summary = summary_service.generate_summary(content_id)
+        return jsonify({'summary': summary})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@parsed_content_bp.route('/clear_all_summaries', methods=['POST'])
+def clear_all_summaries():
+    try:
+        ParsedContentService.clear_all_summaries()
+        return jsonify({'message': 'All summaries cleared successfully'})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500

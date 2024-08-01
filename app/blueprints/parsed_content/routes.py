@@ -8,4 +8,4 @@ def parsed_content():
     content_service = ParsedContentService()
     latest_content = content_service.get_latest_parsed_content()
     content_stats = content_service.get_content_stats()
-    return render_template('parsed_content/index.html', content=latest_content['content'], stats=latest_content['stats'])
+    return render_template('parsed_content/index.html', content=latest_content['content'], stats=content_stats)

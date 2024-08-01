@@ -22,6 +22,7 @@ from app.blueprints.admin.routes import admin_bp
 from app.blueprints.search.routes import search_bp
 from app.blueprints.api.routes import api_bp
 from app.blueprints.parsed_content.routes import parsed_content_bp
+from app.blueprints.apt.routes import bp as apt_bp
 from app.utils.ollama_client import OllamaAPI
 from app.services.scheduler_service import SchedulerService
 
@@ -83,7 +84,8 @@ def create_app(config_object=None):
         (admin_bp, '/admin'),
         (search_bp, '/search'),
         (api_bp, '/api'),
-        (parsed_content_bp, '/content')
+        (parsed_content_bp, '/content'),
+        (apt_bp, '/apt')
     ]
 
     registered_blueprints = set()
