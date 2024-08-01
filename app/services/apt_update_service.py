@@ -43,6 +43,7 @@ def update_alltools(session: Session, data: List[Dict[str, Any]]) -> None:
         data (List[Dict[str, Any]]): The data to update the database with.
     """
     for tool in data:
+        try:
         tool_uuid = UUID(tool["uuid"])  # Convert string UUID to UUID object
         db_tool = session.query(AllTools).filter(AllTools.uuid == tool_uuid).first()
         if not db_tool:
@@ -80,7 +81,7 @@ def update_alltools(session: Session, data: List[Dict[str, Any]]) -> None:
             db_value.type = (
                 ", ".join(value.get("type"))
                 if isinstance(value.get("type"), list)
-                else value.get("type")
+                else value.get("type") or "Unknown"  # Set default value if None
             )
             db_value.information = (
                 ", ".join(value.get("information"))
@@ -103,6 +104,11 @@ def update_alltools(session: Session, data: List[Dict[str, Any]]) -> None:
                         alltools_values_uuid=db_value.uuid
                     )
                     db_value.names.append(db_name)
+        except Exception as e:
+            logger.error(f"Error processing tool {tool.get('name', 'Unknown')}: {str(e)}")
+            session.rollback()
+        else:
+            session.commit()
 
 
 def update_allgroups(session: Session, data: List[Dict[str, Any]]) -> None:
