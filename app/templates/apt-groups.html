@@ -30,7 +30,7 @@
                 <div class="p-4">
                     <p class="text-sm text-gray-600 mb-2"><strong>Category:</strong> {{ group.category }}</p>
                     <p class="text-sm text-gray-600 mb-2"><strong>Type:</strong> {{ group.type }}</p>
-                    <p class="text-sm text-gray-800 mb-4">{{ group.description[:150] }}{% if group.description|length > 150 %}...{% endif %}</p>
+                    <p class="text-sm text-gray-800 mb-4">{{ group.description|truncate(150) }}</p>
                     {% if group.values %}
                     <div class="mb-4">
                         <p class="text-sm text-gray-600"><strong>Actor:</strong> {{ group.values[0].actor }}</p>
