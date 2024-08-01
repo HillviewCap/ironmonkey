@@ -104,6 +104,8 @@ class ParsedContentService:
         total = query.count()
 
         # Apply pagination
+        page = 0 if page is None else page
+        limit = 10 if limit is None else limit
         query = query.offset(page * limit).limit(limit)
 
         return query.all(), total
