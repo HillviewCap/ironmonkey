@@ -7,15 +7,19 @@ from sqlalchemy import func
 
 class ParsedContentService:
     @staticmethod
-    def get_latest_parsed_content(limit: int = 20) -> List[Dict[str, Any]]:
+    def get_latest_parsed_content(limit: int = 20) -> Dict[str, Any]:
         """
-        Retrieve the latest parsed content entries.
+        Retrieve the latest parsed content entries and content stats.
         
         :param limit: The maximum number of entries to retrieve
-        :return: A list of dictionaries containing parsed content data
+        :return: A dictionary containing parsed content data and content stats
         """
         latest_content = ParsedContent.query.order_by(ParsedContent.created_at.desc()).limit(limit).all()
-        return [content.to_dict() for content in latest_content]
+        content_stats = ParsedContentService.get_content_stats()
+        return {
+            'content': [content.to_dict() for content in latest_content],
+            'content_stats': content_stats
+        }
 
     @staticmethod
     def get_content_stats() -> Dict[str, Any]:

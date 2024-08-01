@@ -8,7 +8,28 @@
 </head>
 <body class="bg-gray-100">
     <div class="container mx-auto px-4 py-8">
-        <h1 class="text-3xl font-bold mb-6">Latest Threat Intelligence</h1>
+        <h1 class="text-3xl font-bold mb-6">Threat Intelligence Dashboard</h1>
+        
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h2 class="text-2xl font-semibold mb-4">Content Stats</h2>
+            <p class="mb-2">Articles today: {{ content_stats.articles_today }}</p>
+            
+            <h3 class="text-xl font-semibold mt-4 mb-2">Top 3 Sites:</h3>
+            <ul class="list-disc list-inside">
+                {% for site in content_stats.top_sites %}
+                <li>{{ site[0] }}: {{ site[1] }} articles</li>
+                {% endfor %}
+            </ul>
+            
+            <h3 class="text-xl font-semibold mt-4 mb-2">Top 3 Authors:</h3>
+            <ul class="list-disc list-inside">
+                {% for author in content_stats.top_authors %}
+                <li>{{ author[0] }}: {{ author[1] }} articles</li>
+                {% endfor %}
+            </ul>
+        </div>
+        
+        <h2 class="text-2xl font-bold mb-4">Latest Threat Intelligence</h2>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {% for item in content %}
             <div class="bg-white rounded-lg shadow-md p-6">
