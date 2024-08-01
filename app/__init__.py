@@ -25,6 +25,7 @@ from app.blueprints.parsed_content.routes import parsed_content_bp
 from app.blueprints.apt.routes import bp as apt_bp
 from app.utils.ollama_client import OllamaAPI
 from app.services.scheduler_service import SchedulerService
+from app.services.apt_update_service import update_databases
 
 load_dotenv()
 
@@ -109,6 +110,10 @@ def create_app(config_object=None):
         # Initialize Awesome Threat Intel Blogs
         from app.services.awesome_threat_intel_service import AwesomeThreatIntelService
         AwesomeThreatIntelService.initialize_awesome_feeds()
+
+        # Update APT databases
+        update_databases()
+        logger.info("APT databases updated at application startup")
 
     @login_manager.user_loader
     def load_user(user_id):
