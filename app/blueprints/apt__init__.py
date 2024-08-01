@@ -2,4 +2,5 @@ from flask import Blueprint
 
 apt = Blueprint('apt', __name__)
 
-from . import routes
+def init_app():
+    from . import routes
