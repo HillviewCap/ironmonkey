@@ -8,12 +8,10 @@ from sqlalchemy import create_engine, inspect
 from sqlalchemy.orm import sessionmaker, Session
 from app.models.relational.alltools import AllTools, AllToolsValues, AllToolsValuesNames
 from app.models.relational.allgroups import AllGroups, AllGroupsValues, AllGroupsValuesNames
-from app.config import Config
 import uuid
+from flask import current_app
 
 logger = logging.getLogger(__name__)
-
-import os
 
 
 def load_json_file(file_path: str) -> Optional[List[Dict[str, Any]]]:
@@ -233,20 +231,21 @@ def update_databases() -> None:
     """
     Update the AllTools and AllGroups databases with the latest data from the local JSON files.
     """
-    engine = create_engine(Config.SQLALCHEMY_DATABASE_URI)
-    Session = sessionmaker(bind=engine)
-    session = Session()
+    with current_app.app_context():
+        engine = create_engine(current_app.config['SQLALCHEMY_DATABASE_URI'])
+        Session = sessionmaker(bind=engine)
+        session = Session()
 
-    try:
-        # Check if tables exist
-        inspector = inspect(engine)
-        if not inspector.has_table("alltools") or not inspector.has_table("allgroups"):
-            logger.error(
-                "Required tables do not exist. Creating tables now."
-            )
-            AllTools.__table__.create(engine)
-            AllGroups.__table__.create(engine)
-            logger.info("Tables created successfully.")
+        try:
+            # Check if tables exist
+            inspector = inspect(engine)
+            if not inspector.has_table("alltools") or not inspector.has_table("allgroups"):
+                logger.error(
+                    "Required tables do not exist. Creating tables now."
+                )
+                AllTools.__table__.create(engine)
+                AllGroups.__table__.create(engine)
+                logger.info("Tables created successfully.")
 
         # Update AllTools
         tools_data = load_json_file("tgcapt/Threat Group Card - All tools.json")
