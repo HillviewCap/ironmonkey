@@ -247,55 +247,55 @@ def update_databases() -> None:
                 AllGroups.__table__.create(engine)
                 logger.info("Tables created successfully.")
 
-        # Update AllTools
-        tools_data = load_json_file("tgcapt/Threat Group Card - All tools.json")
-        if tools_data is not None:
-            if isinstance(tools_data, dict) and "values" in tools_data:
-                update_alltools(session, [tools_data])
-                logger.info(
-                    "AllTools database updated successfully (single tool data)."
-                )
-            elif isinstance(tools_data, list):
-                update_alltools(session, tools_data)
-                logger.info("AllTools database updated successfully.")
+            # Update AllTools
+            tools_data = load_json_file("tgcapt/Threat Group Card - All tools.json")
+            if tools_data is not None:
+                if isinstance(tools_data, dict) and "values" in tools_data:
+                    update_alltools(session, [tools_data])
+                    logger.info(
+                        "AllTools database updated successfully (single tool data)."
+                    )
+                elif isinstance(tools_data, list):
+                    update_alltools(session, tools_data)
+                    logger.info("AllTools database updated successfully.")
+                else:
+                    logger.error(
+                        f"Unexpected data type for tools_data: {type(tools_data)}. Expected a list or a dict with 'values'."
+                    )
+                    logger.debug(
+                        f"tools_data content: {str(tools_data)[:500]}..."
+                    )  # Log first 500 characters
             else:
-                logger.error(
-                    f"Unexpected data type for tools_data: {type(tools_data)}. Expected a list or a dict with 'values'."
-                )
-                logger.debug(
-                    f"tools_data content: {str(tools_data)[:500]}..."
-                )  # Log first 500 characters
-        else:
-            logger.warning("Failed to load AllTools data. Skipping update.")
+                logger.warning("Failed to load AllTools data. Skipping update.")
 
-        # Update AllGroups
-        groups_data = load_json_file("tgcapt/Threat Group Card - All groups.json")
-        if groups_data is not None:
-            if isinstance(groups_data, dict) and "values" in groups_data:
-                update_allgroups(session, [groups_data])
-                logger.info(
-                    "AllGroups database updated successfully (single group data)."
-                )
-            elif isinstance(groups_data, list):
-                update_allgroups(session, groups_data)
-                logger.info("AllGroups database updated successfully.")
+            # Update AllGroups
+            groups_data = load_json_file("tgcapt/Threat Group Card - All groups.json")
+            if groups_data is not None:
+                if isinstance(groups_data, dict) and "values" in groups_data:
+                    update_allgroups(session, [groups_data])
+                    logger.info(
+                        "AllGroups database updated successfully (single group data)."
+                    )
+                elif isinstance(groups_data, list):
+                    update_allgroups(session, groups_data)
+                    logger.info("AllGroups database updated successfully.")
+                else:
+                    logger.error(
+                        f"Unexpected data type for groups_data: {type(groups_data)}. Expected a list or a dict with 'values'."
+                    )
+                    logger.debug(
+                        f"groups_data content: {str(groups_data)[:500]}..."
+                    )  # Log first 500 characters
             else:
-                logger.error(
-                    f"Unexpected data type for groups_data: {type(groups_data)}. Expected a list or a dict with 'values'."
-                )
-                logger.debug(
-                    f"groups_data content: {str(groups_data)[:500]}..."
-                )  # Log first 500 characters
-        else:
-            logger.warning("Failed to load AllGroups data. Skipping update.")
+                logger.warning("Failed to load AllGroups data. Skipping update.")
 
-        session.commit()
-    except Exception as e:
-        session.rollback()
-        logger.error(f"An error occurred: {str(e)}")
-        logger.exception("Exception details:")
-    finally:
-        session.close()
+            session.commit()
+        except Exception as e:
+            session.rollback()
+            logger.error(f"An error occurred: {str(e)}")
+            logger.exception("Exception details:")
+        finally:
+            session.close()
 
 
 if __name__ == "__main__":
