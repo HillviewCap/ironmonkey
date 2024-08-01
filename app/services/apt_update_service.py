@@ -232,8 +232,8 @@ def update_allgroups(session: Session, data: List[Dict[str, Any]]) -> None:
                         db_name = AllGroupsValuesNames(
                             name=name_data["name"],
                             name_giver=name_data.get("name-giver"),
-                            uuid=str(uuid.uuid4()),
-                            allgroups_values_uuid=str(db_value.uuid),
+                            uuid=uuid.uuid4(),  # Generate a new UUID object
+                            allgroups_values_uuid=db_value.uuid,  # Use the UUID object directly
                         )
                         db_value.names.append(db_name)
                     else:
