@@ -120,26 +120,28 @@ def update_allgroups(session: Session, data: List[Dict[str, Any]]) -> None:
         session (Session): The SQLAlchemy session.
         data (List[Dict[str, Any]]]: The data to update the database with.
     """
+    if not isinstance(data, list):
+        logger.error(f"Expected a list of groups, but got {type(data)}. Converting to list.")
+        data = [data]
+
     for group in data:
         try:
+            if "uuid" not in group:
+                logger.error(f"Group is missing UUID: {group.get('name', 'Unknown')}. Skipping this group.")
+                continue
+
             try:
                 group_uuid = UUID(group["uuid"])  # Convert string UUID to UUID object
             except ValueError:
-                logger.warning(f"Invalid UUID for group: {group.get('name', 'Unknown')}. Skipping this group.")
+                logger.error(f"Invalid UUID for group: {group.get('name', 'Unknown')} - UUID: {group['uuid']}. Skipping this group.")
                 continue
 
-            db_group = (
-                session.query(AllGroups).filter(AllGroups.uuid == group_uuid).first()
-            )
+            db_group = session.query(AllGroups).filter(AllGroups.uuid == group_uuid).first()
             if not db_group:
                 db_group = AllGroups(uuid=group_uuid)
                 session.add(db_group)
 
-            db_group.authors = (
-                ", ".join(group.get("authors", []))
-                if isinstance(group.get("authors"), list)
-                else group.get("authors")
-            )
+            db_group.authors = ", ".join(group.get("authors", [])) if isinstance(group.get("authors"), list) else group.get("authors", "")
             db_group.category = group.get("category")
             db_group.name = group.get("name")
             db_group.type = group.get("type")
@@ -295,20 +297,18 @@ def update_databases() -> None:
             groups_data = load_json_file("app/static/json/Threat Group Card - All groups.json")
             if groups_data is not None:
                 if isinstance(groups_data, dict) and "values" in groups_data:
-                    update_allgroups(session, [groups_data])
-                    logger.info(
-                        "AllGroups database updated successfully (single group data)."
-                    )
+                    logger.info(f"Processing single group data with {len(groups_data['values'])} values.")
+                    update_allgroups(session, groups_data["values"])
                 elif isinstance(groups_data, list):
+                    logger.info(f"Processing list of {len(groups_data)} groups.")
                     update_allgroups(session, groups_data)
-                    logger.info("AllGroups database updated successfully.")
                 else:
-                    logger.error(
-                        f"Unexpected data type for groups_data: {type(groups_data)}. Expected a list or a dict with 'values'."
-                    )
-                    logger.debug(
-                        f"groups_data content: {str(groups_data)[:500]}..."
-                    )  # Log first 500 characters
+                    logger.error(f"Unexpected data type for groups_data: {type(groups_data)}. Expected a list or a dict with 'values'.")
+                    logger.debug(f"groups_data content: {str(groups_data)[:500]}...")  # Log first 500 characters
+                
+                # Check if any groups were actually added
+                group_count = session.query(AllGroups).count()
+                logger.info(f"Total number of groups in the database after update: {group_count}")
             else:
                 logger.warning("Failed to load AllGroups data. Skipping update.")
 
