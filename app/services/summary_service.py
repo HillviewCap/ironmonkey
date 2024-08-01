@@ -10,6 +10,7 @@ from app.models.relational.parsed_content import ParsedContent
 from app.models.relational.rss_feed import RSSFeed
 from app.extensions import db
 import os
+import asyncio
 from typing import Optional, Union
 from uuid import UUID
 from app.utils.ollama_client import OllamaAPI
