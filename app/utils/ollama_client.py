@@ -17,6 +17,8 @@ load_dotenv()
 class OllamaAPI:
     def __init__(self):
         self.base_url = os.getenv("OLLAMA_BASE_URL")
+        if not self.base_url.startswith("http://") and not self.base_url.startswith("https://"):
+            self.base_url = "http://" + self.base_url
         self.model = os.getenv("OLLAMA_MODEL")
         if not self.base_url:
             logger.error("OLLAMA_BASE_URL must be set in the .env file")
