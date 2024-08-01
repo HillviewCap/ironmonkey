@@ -34,7 +34,7 @@ class SummaryService:
                 raise ValueError(f"Unsupported API choice: {api_choice}. Please set SUMMARY_API_CHOICE to 'ollama' or 'groq' in the .env file.")
         return self.api
 
-    def generate_summary(self, content_id: str) -> Optional[str]:
+    async def generate_summary(self, content_id: str) -> Optional[str]:
         api = self._initialize_api()
 
         with db.session() as session:
@@ -42,15 +42,15 @@ class SummaryService:
             if not parsed_content:
                 logger.error(f"No ParsedContent found with id {content_id}")
                 return None
-            return api.generate("threat_intel_summary", parsed_content.content)
+            return await api.generate("threat_intel_summary", parsed_content.content)
 
-    def enhance_summary(self, content_id: str) -> bool:
+    async def enhance_summary(self, content_id: str) -> bool:
         logger.info(f"Processing record {content_id}")
 
         with db.session() as session:
             for attempt in range(self.max_retries):
                 try:
-                    summary = self.generate_summary(content_id)
+                    summary = await self.generate_summary(content_id)
                     if not summary:
                         logger.warning(f"Empty summary generated for record {content_id}. Attempt {attempt + 1}/{self.max_retries}")
                         continue
@@ -87,7 +87,7 @@ class SummaryService:
             ).all()
 
             for content in parsed_contents:
-                success = self.enhance_summary(content.id.hex)
+                success = await self.enhance_summary(content.id.hex)
                 if not success:
                     logger.warning(f"Failed to generate summary for content {content.id}")
 
