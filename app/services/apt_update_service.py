@@ -134,109 +134,114 @@ def update_allgroups(session: Session, data: List[Dict[str, Any]]) -> None:
                 if isinstance(group.get("authors"), list)
                 else group.get("authors")
             )
-        db_group.category = group.get("category")
-        db_group.name = group.get("name")
-        db_group.type = group.get("type")
-        db_group.source = group.get("source")
-        db_group.description = group.get("description")
-        db_group.tlp = group.get("tlp")
-        db_group.license = group.get("license")
-        db_group.last_db_change = group.get("last-db-change")
+            db_group.category = group.get("category")
+            db_group.name = group.get("name")
+            db_group.type = group.get("type")
+            db_group.source = group.get("source")
+            db_group.description = group.get("description")
+            db_group.tlp = group.get("tlp")
+            db_group.license = group.get("license")
+            db_group.last_db_change = group.get("last-db-change")
 
-        for value in group.get("values", []):
-            value_uuid = UUID(str(value["uuid"]))  # Convert string to UUID object
-            db_value = (
-                session.query(AllGroupsValues)
-                .filter(AllGroupsValues.uuid == value_uuid)
-                .first()
-            )
-            if not db_value:
-                db_value = AllGroupsValues(uuid=value_uuid)
-                db_group.values.append(db_value)
-
-            db_value.actor = value.get("actor")
-            db_value.country = (
-                ", ".join(value.get("country", []))
-                if isinstance(value.get("country"), list)
-                else value.get("country")
-            )
-            db_value.description = value.get("description")
-            db_value.information = (
-                ", ".join(value.get("information", []))
-                if isinstance(value.get("information"), list)
-                else value.get("information")
-            )
-            db_value.last_card_change = value.get("last-card-change")
-            db_value.motivation = (
-                ", ".join(value.get("motivation", []))
-                if isinstance(value.get("motivation"), list)
-                else value.get("motivation")
-            )
-            db_value.first_seen = value.get("first-seen")
-            db_value.observed_sectors = (
-                ", ".join(value.get("observed-sectors", []))
-                if isinstance(value.get("observed-sectors"), list)
-                else value.get("observed-sectors")
-            )
-            db_value.observed_countries = (
-                ", ".join(value.get("observed-countries", []))
-                if isinstance(value.get("observed-countries"), list)
-                else value.get("observed-countries")
-            )
-            db_value.tools = (
-                ", ".join(value.get("tools", []))
-                if isinstance(value.get("tools"), list)
-                else value.get("tools")
-            )
-            db_value.sponsor = value.get("sponsor")
-
-            # Handle operations separately as it's a list of dictionaries
-            if "operations" in value and isinstance(value["operations"], list):
-                operations_json = json.dumps(value["operations"])
-                db_value.operations = operations_json
-            else:
-                db_value.operations = None
-
-            # Handle counter-operations
-            if "counter-operations" in value and isinstance(
-                value["counter-operations"], list
-            ):
-                counter_operations_json = json.dumps(value["counter-operations"])
-                db_value.counter_operations = counter_operations_json
-            else:
-                db_value.counter_operations = None
-
-            # Handle mitre-attack
-            if "mitre-attack" in value and isinstance(value["mitre-attack"], list):
-                db_value.mitre_attack = ", ".join(value["mitre-attack"])
-            else:
-                db_value.mitre_attack = None
-
-            # Handle playbook
-            if "playbook" in value and isinstance(value["playbook"], list):
-                db_value.playbook = ", ".join(value["playbook"])
-            else:
-                db_value.playbook = None
-
-            for name_data in value.get("names", []):
-                db_name = (
-                    session.query(AllGroupsValuesNames)
-                    .filter(
-                        AllGroupsValuesNames.name == name_data["name"],
-                        AllGroupsValuesNames.allgroups_values_uuid == db_value.uuid,
-                    )
+            for value in group.get("values", []):
+                value_uuid = UUID(str(value["uuid"]))  # Convert string to UUID object
+                db_value = (
+                    session.query(AllGroupsValues)
+                    .filter(AllGroupsValues.uuid == value_uuid)
                     .first()
                 )
-                if not db_name:
-                    db_name = AllGroupsValuesNames(
-                        name=name_data["name"],
-                        name_giver=name_data.get("name-giver"),
-                        uuid=str(uuid.uuid4()),
-                        allgroups_values_uuid=db_value.uuid,
-                    )
-                    db_value.names.append(db_name)
+                if not db_value:
+                    db_value = AllGroupsValues(uuid=value_uuid)
+                    db_group.values.append(db_value)
+
+                db_value.actor = value.get("actor")
+                db_value.country = (
+                    ", ".join(value.get("country", []))
+                    if isinstance(value.get("country"), list)
+                    else value.get("country")
+                )
+                db_value.description = value.get("description")
+                db_value.information = (
+                    ", ".join(value.get("information", []))
+                    if isinstance(value.get("information"), list)
+                    else value.get("information")
+                )
+                db_value.last_card_change = value.get("last-card-change")
+                db_value.motivation = (
+                    ", ".join(value.get("motivation", []))
+                    if isinstance(value.get("motivation"), list)
+                    else value.get("motivation")
+                )
+                db_value.first_seen = value.get("first-seen")
+                db_value.observed_sectors = (
+                    ", ".join(value.get("observed-sectors", []))
+                    if isinstance(value.get("observed-sectors"), list)
+                    else value.get("observed-sectors")
+                )
+                db_value.observed_countries = (
+                    ", ".join(value.get("observed-countries", []))
+                    if isinstance(value.get("observed-countries"), list)
+                    else value.get("observed-countries")
+                )
+                db_value.tools = (
+                    ", ".join(value.get("tools", []))
+                    if isinstance(value.get("tools"), list)
+                    else value.get("tools")
+                )
+                db_value.sponsor = value.get("sponsor")
+
+                # Handle operations separately as it's a list of dictionaries
+                if "operations" in value and isinstance(value["operations"], list):
+                    operations_json = json.dumps(value["operations"])
+                    db_value.operations = operations_json
                 else:
-                    db_name.name_giver = name_data.get("name-giver")
+                    db_value.operations = None
+
+                # Handle counter-operations
+                if "counter-operations" in value and isinstance(
+                    value["counter-operations"], list
+                ):
+                    counter_operations_json = json.dumps(value["counter-operations"])
+                    db_value.counter_operations = counter_operations_json
+                else:
+                    db_value.counter_operations = None
+
+                # Handle mitre-attack
+                if "mitre-attack" in value and isinstance(value["mitre-attack"], list):
+                    db_value.mitre_attack = ", ".join(value["mitre-attack"])
+                else:
+                    db_value.mitre_attack = None
+
+                # Handle playbook
+                if "playbook" in value and isinstance(value["playbook"], list):
+                    db_value.playbook = ", ".join(value["playbook"])
+                else:
+                    db_value.playbook = None
+
+                for name_data in value.get("names", []):
+                    db_name = (
+                        session.query(AllGroupsValuesNames)
+                        .filter(
+                            AllGroupsValuesNames.name == name_data["name"],
+                            AllGroupsValuesNames.allgroups_values_uuid == db_value.uuid,
+                        )
+                        .first()
+                    )
+                    if not db_name:
+                        db_name = AllGroupsValuesNames(
+                            name=name_data["name"],
+                            name_giver=name_data.get("name-giver"),
+                            uuid=str(uuid.uuid4()),
+                            allgroups_values_uuid=db_value.uuid,
+                        )
+                        db_value.names.append(db_name)
+                    else:
+                        db_name.name_giver = name_data.get("name-giver")
+        except Exception as e:
+            logger.error(f"Error processing group {group.get('name', 'Unknown')}: {str(e)}")
+            session.rollback()
+        else:
+            session.commit()
 
 
 def update_databases() -> None:
