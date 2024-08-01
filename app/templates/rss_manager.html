@@ -94,23 +94,36 @@
         async function addFeed(event) {
             event.preventDefault();
             const form = document.getElementById('addSingleFeedForm');
+            const submitButton = form.querySelector('button[type="submit"]');
+            const originalButtonText = submitButton.textContent;
+            
+            submitButton.disabled = true;
+            submitButton.textContent = 'Processing...';
+            
             const formData = new FormData(form);
-            const response = await fetch('{{ url_for("rss_manager.create_rss_feed") }}', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': '{{ csrf_token() }}'
-                },
-                body: JSON.stringify(Object.fromEntries(formData))
-            });
-            const result = await response.json();
-            if (response.ok) {
-                showNotification('Feed added successfully', 'success');
-                form.reset();
-                refreshExistingFeedsTable();
-                grid.forceRender();
-            } else {
-                showNotification('Error adding feed: ' + result.error, 'error');
+            try {
+                const response = await fetch('{{ url_for("rss_manager.create_rss_feed") }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token() }}'
+                    },
+                    body: JSON.stringify(Object.fromEntries(formData))
+                });
+                const result = await response.json();
+                if (response.ok) {
+                    showNotification('Feed added successfully', 'success');
+                    form.reset();
+                    refreshExistingFeedsTable();
+                    grid.forceRender();
+                } else {
+                    showNotification('Error adding feed: ' + result.error, 'error');
+                }
+            } catch (error) {
+                showNotification('An error occurred while adding the feed', 'error');
+            } finally {
+                submitButton.disabled = false;
+                submitButton.textContent = originalButtonText;
             }
         }
 
