@@ -248,7 +248,7 @@ def update_databases() -> None:
                 logger.info("Tables created successfully.")
 
             # Update AllTools
-            tools_data = load_json_file("tgcapt/Threat Group Card - All tools.json")
+            tools_data = load_json_file("app/static/json/Threat Group Card - All tools.json")
             if tools_data is not None:
                 if isinstance(tools_data, dict) and "values" in tools_data:
                     update_alltools(session, [tools_data])
@@ -269,7 +269,7 @@ def update_databases() -> None:
                 logger.warning("Failed to load AllTools data. Skipping update.")
 
             # Update AllGroups
-            groups_data = load_json_file("tgcapt/Threat Group Card - All groups.json")
+            groups_data = load_json_file("app/static/json/Threat Group Card - All groups.json")
             if groups_data is not None:
                 if isinstance(groups_data, dict) and "values" in groups_data:
                     update_allgroups(session, [groups_data])
