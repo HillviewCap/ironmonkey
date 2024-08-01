@@ -1,4 +1,5 @@
 from app.models.relational.parsed_content import ParsedContent
+from app.models.relational.rss_feed import RSSFeed
 from app.extensions import db
 from typing import List, Dict, Any
 from datetime import datetime, timedelta
@@ -31,10 +32,11 @@ class ParsedContentService:
 
         # Top 3 sites with article count for today
         top_sites = db.session.query(
-            ParsedContent.feed_id,
+            RSSFeed.feed_name,
             func.count(ParsedContent.id).label('article_count')
-        ).filter(func.date(ParsedContent.created_at) == today)\
-         .group_by(ParsedContent.feed_id)\
+        ).join(RSSFeed, ParsedContent.feed_id == RSSFeed.id)\
+         .filter(func.date(ParsedContent.created_at) == today)\
+         .group_by(RSSFeed.feed_name)\
          .order_by(func.count(ParsedContent.id).desc())\
          .limit(3)\
          .all()
