@@ -48,3 +48,43 @@
 </script>
 <script src="{{ url_for('static', filename='js/parsed_content.js') }}"></script>
 {% endblock %}
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mx-auto px-4">
+    <h1 class="text-2xl font-bold mb-4">Parsed Content</h1>
+    
+    <table id="content-table" class="min-w-full bg-white">
+        <thead>
+            <tr>
+                <th class="py-2 px-4 border-b">Title</th>
+                <th class="py-2 px-4 border-b">Description</th>
+                <th class="py-2 px-4 border-b">Published Date</th>
+                <th class="py-2 px-4 border-b">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Content will be dynamically inserted here -->
+        </tbody>
+    </table>
+
+    <div id="pagination-container" class="mt-4 flex justify-center">
+        <!-- Pagination buttons will be dynamically inserted here -->
+    </div>
+
+    <button id="clear-summaries-btn" class="mt-4 bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">
+        Clear All Summaries
+    </button>
+
+    <div id="debug-output" class="mt-4 p-4 bg-gray-100 rounded">
+        <!-- Debug output will be inserted here -->
+    </div>
+</div>
+
+<script>
+    const summarizeContentUrl = "{{ url_for('parsed_content.summarize_content') }}";
+    const clearAllSummariesUrl = "{{ url_for('parsed_content.clear_all_summaries') }}";
+    const csrfToken = "{{ csrf_token() }}";
+</script>
+<script src="{{ url_for('static', filename='js/parsed_content.js') }}"></script>
+{% endblock %}

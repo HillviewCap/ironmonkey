@@ -1,5 +1,9 @@
 document.addEventListener('DOMContentLoaded', function() {
-    const debugOutput =  document.getElementById('debug-output');
+    const debugOutput = document.getElementById('debug-output');
+    const contentTable = document.getElementById('content-table');
+    const paginationContainer = document.getElementById('pagination-container');
+    let currentPage = 1;
+    const itemsPerPage = 10;
 
     function logDebug(message) {
         console.log(message);
@@ -8,89 +12,52 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    logDebug('DOMContentLoaded event fired');
-    logDebug('Initializing Grid.js');
+    function fetchContent(page) {
+        logDebug(`Fetching content for page ${page}`);
+        fetch(`/parsed_content/list?page=${page}&limit=${itemsPerPage}`)
+            .then(response => response.json())
+            .then(data => {
+                renderTable(data.data);
+                renderPagination(data.total, page);
+            })
+            .catch(error => {
+                logDebug(`Error fetching content: ${error}`);
+                console.error('Error:', error);
+            });
+    }
 
-    const grid = new gridjs.Grid({
-        columns: [
-            { 
-                id: 'id',
-                name: 'ID',
-                hidden: true
-            },
-            { 
-                id: 'title', 
-                name: 'Title',
-                sort: true,
-                formatter: (cell, row) => gridjs.html(`<a href="/parsed_content/item/${row.cells[0].data}" class="text-blue-500 hover:underline">${cell}</a>`)
-            },
-            { 
-                id: 'description', 
-                name: 'Description', 
-                formatter: (cell) => cell && cell.length > 100 ? cell.substring(0, 100) + '...' : cell
-            },
-            { id: 'pub_date', name: 'Published Date', sort: true },
-            {
-                id: 'actions',
-                name: 'Actions',
-                formatter: (_, row) => gridjs.html(`
-                    <button class="bg-green-500 hover:bg-green-700 text-white font-bold py-1 px-2 rounded text-xs summarize-btn" data-post-id="${row.cells[0].data}">
+    function renderTable(data) {
+        const tbody = contentTable.querySelector('tbody');
+        tbody.innerHTML = '';
+        data.forEach(item => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td><a href="/parsed_content/item/${item.id}" class="text-blue-500 hover:underline">${item.title}</a></td>
+                <td>${item.description ? (item.description.length > 100 ? item.description.substring(0, 100) + '...' : item.description) : ''}</td>
+                <td>${item.pub_date}</td>
+                <td>
+                    <button class="bg-green-500 hover:bg-green-700 text-white font-bold py-1 px-2 rounded text-xs summarize-btn" data-post-id="${item.id}">
                         Summarize
                     </button>
-                `)
-            }
-        ],
-        server: {
-            url: '/parsed_content/list',
-            then: data => {
-                logDebug(`Received data: ${JSON.stringify(data)}`);
-                return data.data;
-            },
-            total: data => data.total,
-            handle: (res) => {
-                if (!res.ok) {
-                    logDebug(`Error fetching data: ${res.status} ${res.statusText}`);
-                    throw Error(res.statusText);
-                }
-                return res.json();
-            }
-        },
-        search: true,
-        sort: true,
-        pagination: {
-            limit: 10,
-            server: {
-                url: (prev, page, limit) => `${prev}${prev.includes('?') ? '&' : '?'}page=${page}&limit=${limit}`
-            }
-        },
-        style: {
-            table: {
-                'font-size': '0.9rem'
-            }
-        }
-    });
-
-    grid.on('load', () => {
-        logDebug('Grid loaded');
-    });
-
-    grid.on('error', (err) => {
-        logDebug(`Grid error: ${err.message}`);
-    });
-
-    logDebug('Rendering grid');
-    grid.render(document.getElementById("blog-posts-grid"));
-
-    // Add export button
-    const exportBtn = document.createElement('button');
-    exportBtn.textContent = 'Export to CSV';
-    exportBtn.className = 'bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mt-4';
-    exportBtn.addEventListener('click', () => {
-        grid.export('csv', {
-            filename: 'parsed_content_export'
+                </td>
+            `;
+            tbody.appendChild(row);
         });
-    });
-    document.getElementById("blog-posts-grid").parentNode.insertBefore(exportBtn, document.getElementById("blog-posts-grid").nextSibling);
+    }
+
+    function renderPagination(total, currentPage) {
+        const totalPages = Math.ceil(total / itemsPerPage);
+        paginationContainer.innerHTML = '';
+        for (let i = 1; i <= totalPages; i++) {
+            const button = document.createElement('button');
+            button.textContent = i;
+            button.className = `px-3 py-1 mx-1 ${i === currentPage ? 'bg-blue-500 text-white' : 'bg-gray-200'}`;
+            button.addEventListener('click', () => fetchContent(i));
+            paginationContainer.appendChild(button);
+        }
+    }
+
+    fetchContent(currentPage);
 
     document.addEventListener('click', function(event) {
         if (event.target.classList.contains('summarize-btn')) {
@@ -103,7 +70,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function summarizeContent(postId) {
         logDebug(`Summarizing post: ${postId}`);
         const button = document.querySelector(`button[data-post-id="${postId}"]`);
-        if (button.disabled) return; // Prevent multiple clicks
+        if (button.disabled) return;
 
         const originalText = button.textContent;
         button.textContent = 'Summarizing...';
@@ -126,7 +93,7 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(data => {
             if (data.summary) {
                 alert('Content summarized successfully!');
-                grid.forceRender();
+                fetchContent(currentPage);
             } else {
                 throw new Error(data.error || 'Failed to summarize content');
             }
@@ -143,36 +110,27 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     const clearSummariesBtn = document.getElementById('clear-summaries-btn');
-    clearSummariesBtn.addEventListener('click', function() {
-        if (confirm('Are you sure you want to clear all summaries? This action cannot be undone.')) {
-            fetch(clearAllSummariesUrl, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': csrfToken
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
-                alert(data.message);
-                grid.forceRender();
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                logDebug(`Error clearing summaries: ${error.message}`);
-                alert('An error occurred while processing your request.');
-            });
-        }
-    });
-
-    function filterContent(filter) {
-        logDebug(`Filtering by: ${filter}`);
-        // Implement filtering logic here
-    }
-
-    document.querySelectorAll('[data-filter]').forEach(button => {
-        button.addEventListener('click', function() {
-            filterContent(this.dataset.filter);
+    if (clearSummariesBtn) {
+        clearSummariesBtn.addEventListener('click', function() {
+            if (confirm('Are you sure you want to clear all summaries? This action cannot be undone.')) {
+                fetch(clearAllSummariesUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    alert(data.message);
+                    fetchContent(currentPage);
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    logDebug(`Error clearing summaries: ${error.message}`);
+                    alert('An error occurred while processing your request.');
+                });
+            }
         });
-    });
+    }
 });

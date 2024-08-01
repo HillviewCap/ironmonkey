@@ -10,9 +10,7 @@ summary_service = SummaryService()
 
 @parsed_content_bp.route('/', methods=['GET'])
 def parsed_content_list():
-    # Fetch the most recent blog posts
-    recent_posts, _ = ParsedContentService.get_contents(page=0, limit=10, search_query='')
-    return render_template('parsed_content.html', recent_posts=recent_posts)
+    return render_template('parsed_content.html')
 
 @parsed_content_bp.route('/item/<uuid:content_id>', methods=['GET'])
 def view_content(content_id):
