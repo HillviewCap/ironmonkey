@@ -14,7 +14,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function fetchContent(page) {
         logDebug(`Fetching content for page ${page}`);
-        fetch(`/parsed_content/list?page=${page}&limit=${itemsPerPage}`)
+        fetch(`/list?page=${page}&limit=${itemsPerPage}`)
             .then(response => {
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
