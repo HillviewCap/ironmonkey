@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request
-from app.models.relational.allgroups import AllGroups, AllGroupsValues
+from app.models.relational.allgroups import AllGroupsValues, AllGroupsValuesNames
 from sqlalchemy import or_
 
 bp = Blueprint('apt', __name__)
@@ -10,18 +10,20 @@ def apt_groups():
     page = request.args.get('page', 1, type=int)
     per_page = 10
 
-    query = AllGroups.query.join(AllGroupsValues)
+    query = AllGroupsValues.query
     
     if search_query:
         query = query.filter(or_(
-            AllGroups.name.ilike(f'%{search_query}%'),
-            AllGroups.category.ilike(f'%{search_query}%'),
-            AllGroups.type.ilike(f'%{search_query}%'),
             AllGroupsValues.actor.ilike(f'%{search_query}%'),
-            AllGroupsValues.country.ilike(f'%{search_query}%')
+            AllGroupsValues.country.ilike(f'%{search_query}%'),
+            AllGroupsValues.description.ilike(f'%{search_query}%'),
+            AllGroupsValues.motivation.ilike(f'%{search_query}%')
         ))
 
     pagination = query.paginate(page=page, per_page=per_page, error_out=False)
     groups = pagination.items
+
+    for group in groups:
+        group.names = AllGroupsValuesNames.query.filter_by(allgroups_values_uuid=group.uuid).all()
 
     return render_template('apt-groups.html', groups=groups, pagination=pagination, search_query=search_query)
