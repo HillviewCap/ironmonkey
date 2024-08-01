@@ -44,66 +44,66 @@ def update_alltools(session: Session, data: List[Dict[str, Any]]) -> None:
     """
     for tool in data:
         try:
-        tool_uuid = UUID(tool["uuid"])  # Convert string UUID to UUID object
-        db_tool = session.query(AllTools).filter(AllTools.uuid == tool_uuid).first()
-        if not db_tool:
-            db_tool = AllTools(uuid=tool_uuid)
-            session.add(db_tool)
+            tool_uuid = UUID(tool["uuid"])  # Convert string UUID to UUID object
+            db_tool = session.query(AllTools).filter(AllTools.uuid == tool_uuid).first()
+            if not db_tool:
+                db_tool = AllTools(uuid=tool_uuid)
+                session.add(db_tool)
 
-        db_tool.authors = (
-            ", ".join(tool.get("authors", []))
-            if isinstance(tool.get("authors"), list)
-            else tool.get("authors")
-        )
-        db_tool.category = tool.get("category")
-        db_tool.name = tool.get("name")
-        db_tool.type = tool.get("type")
-        db_tool.source = tool.get("source")
-        db_tool.description = tool.get("description")
-        db_tool.tlp = tool.get("tlp")
-        db_tool.license = tool.get("license")
-        db_tool.last_db_change = tool.get("last-db-change")
-
-        for value in tool.get("values", []):
-            value_uuid = UUID(str(value["uuid"]))  # Convert string to UUID object
-            db_value = (
-                session.query(AllToolsValues)
-                .filter(AllToolsValues.uuid == value_uuid)
-                .first()
+            db_tool.authors = (
+                ", ".join(tool.get("authors", []))
+                if isinstance(tool.get("authors"), list)
+                else tool.get("authors")
             )
-            if not db_value:
-                db_value = AllToolsValues(uuid=value_uuid)
-                db_tool.values.append(db_value)
+            db_tool.category = tool.get("category")
+            db_tool.name = tool.get("name")
+            db_tool.type = tool.get("type")
+            db_tool.source = tool.get("source")
+            db_tool.description = tool.get("description")
+            db_tool.tlp = tool.get("tlp")
+            db_tool.license = tool.get("license")
+            db_tool.last_db_change = tool.get("last-db-change")
 
-            db_value.tool = value.get("tool")
-            db_value.description = value.get("description")
-            db_value.category = value.get("category")
-            db_value.type = (
-                ", ".join(value.get("type"))
-                if isinstance(value.get("type"), list)
-                else value.get("type") or "Unknown"  # Set default value if None
-            )
-            db_value.information = (
-                ", ".join(value.get("information"))
-                if isinstance(value.get("information"), list)
-                else value.get("information")
-            )
-            db_value.last_card_change = value.get("last-card-change")
-
-            for name_data in value.get("names", []):
-                name = name_data["name"] if isinstance(name_data, dict) else name_data
-                db_name = (
-                    session.query(AllToolsValuesNames)
-                    .filter(AllToolsValuesNames.name == name)
+            for value in tool.get("values", []):
+                value_uuid = UUID(str(value["uuid"]))  # Convert string to UUID object
+                db_value = (
+                    session.query(AllToolsValues)
+                    .filter(AllToolsValues.uuid == value_uuid)
                     .first()
                 )
-                if not db_name:
-                    db_name = AllToolsValuesNames(
-                        name=name,
-                        uuid=uuid.uuid4(),  # Generate a new UUID object
-                        alltools_values_uuid=db_value.uuid
+                if not db_value:
+                    db_value = AllToolsValues(uuid=value_uuid)
+                    db_tool.values.append(db_value)
+
+                db_value.tool = value.get("tool")
+                db_value.description = value.get("description")
+                db_value.category = value.get("category")
+                db_value.type = (
+                    ", ".join(value.get("type"))
+                    if isinstance(value.get("type"), list)
+                    else value.get("type") or "Unknown"  # Set default value if None
+                )
+                db_value.information = (
+                    ", ".join(value.get("information"))
+                    if isinstance(value.get("information"), list)
+                    else value.get("information")
+                )
+                db_value.last_card_change = value.get("last-card-change")
+
+                for name_data in value.get("names", []):
+                    name = name_data["name"] if isinstance(name_data, dict) else name_data
+                    db_name = (
+                        session.query(AllToolsValuesNames)
+                        .filter(AllToolsValuesNames.name == name)
+                        .first()
                     )
-                    db_value.names.append(db_name)
+                    if not db_name:
+                        db_name = AllToolsValuesNames(
+                            name=name,
+                            uuid=uuid.uuid4(),  # Generate a new UUID object
+                            alltools_values_uuid=db_value.uuid
+                        )
+                        db_value.names.append(db_name)
         except Exception as e:
             logger.error(f"Error processing tool {tool.get('name', 'Unknown')}: {str(e)}")
             session.rollback()
@@ -120,19 +120,20 @@ def update_allgroups(session: Session, data: List[Dict[str, Any]]) -> None:
         data (List[Dict[str, Any]]]: The data to update the database with.
     """
     for group in data:
-        group_uuid = UUID(group["uuid"])  # Convert string UUID to UUID object
-        db_group = (
-            session.query(AllGroups).filter(AllGroups.uuid == group_uuid).first()
-        )
-        if not db_group:
-            db_group = AllGroups(uuid=group_uuid)
-            session.add(db_group)
+        try:
+            group_uuid = UUID(group["uuid"])  # Convert string UUID to UUID object
+            db_group = (
+                session.query(AllGroups).filter(AllGroups.uuid == group_uuid).first()
+            )
+            if not db_group:
+                db_group = AllGroups(uuid=group_uuid)
+                session.add(db_group)
 
-        db_group.authors = (
-            ", ".join(group.get("authors", []))
-            if isinstance(group.get("authors"), list)
-            else group.get("authors")
-        )
+            db_group.authors = (
+                ", ".join(group.get("authors", []))
+                if isinstance(group.get("authors"), list)
+                else group.get("authors")
+            )
         db_group.category = group.get("category")
         db_group.name = group.get("name")
         db_group.type = group.get("type")
