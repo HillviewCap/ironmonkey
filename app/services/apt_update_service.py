@@ -6,9 +6,9 @@ from typing import Dict, List, Any, Optional
 import httpx
 from sqlalchemy import create_engine, inspect
 from sqlalchemy.orm import sessionmaker, Session
-from models.relational.alltools import AllTools, AllToolsValues, AllToolsValuesNames
-from models.relational.allgroups import AllGroups, AllGroupsValues, AllGroupsValuesNames
-from config import Config
+from app.models.relational.alltools import AllTools, AllToolsValues, AllToolsValuesNames
+from app.models.relational.allgroups import AllGroups, AllGroupsValues, AllGroupsValuesNames
+from app.config import Config
 import uuid
 
 logger = logging.getLogger(__name__)
