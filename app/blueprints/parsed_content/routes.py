@@ -69,8 +69,8 @@ def export_csv():
 
     return Response(generate(), mimetype='text/csv', headers={"Content-Disposition": "attachment;filename=parsed_content.csv"})
 
-@parsed_content_bp.route('/get_parsed_content')
-def get_parsed_content():
+@parsed_content_bp.route('/list')
+def list_parsed_content():
     search = request.args.get('search', '')
     feed_id = request.args.get('feed_id')
     page = request.args.get('page', 1, type=int)
@@ -85,26 +85,20 @@ def get_parsed_content():
 
     # Fetch data from your database
     items, total = ParsedContentService.get_contents(
-        page=page,  # Keep as 1-based index
+        page=page - 1,  # Convert to 0-based index for the service
         limit=limit,
         search_query=search,
         feed_id=feed_id
     )
 
     # Format the data for Grid.js
-    formatted_data = [
-        [
-            str(item.id),
-            item.title,
-            item.description[:100] + '...' if len(item.description) > 100 else item.description,
-            item.pub_date.split(' ')[0] if item.pub_date else ''
-        ]
-        for item in items
-    ]
+    formatted_data = [item.to_dict() for item in items]
 
     return jsonify({
         'data': formatted_data,
-        'total': total
+        'total': total,
+        'limit': limit,
+        'page': page
     })
 
 @parsed_content_bp.route('/summarize_content', methods=['POST'])

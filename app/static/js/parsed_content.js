@@ -60,7 +60,7 @@ document.addEventListener('DOMContentLoaded', function() {
         pagination: {
             limit: 10,
             server: {
-                url: (prev, page, limit) => `${prev}${prev.includes('?') ? '&' : '?'}page=${page + 1}&limit=${limit}`
+                url: (prev, page, limit) => `${prev}${prev.includes('?') ? '&' : '?'}page=${page}&limit=${limit}`
             }
         },
         style: {
