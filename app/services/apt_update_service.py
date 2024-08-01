@@ -45,14 +45,14 @@ def update_alltools(session: Session, data: List[Dict[str, Any]]) -> None:
     for tool in data:
         try:
             with session.no_autoflush:
-            tool_uuid = UUID(tool["uuid"])  # Convert string UUID to UUID object
-            db_tool = session.query(AllTools).filter(AllTools.uuid == tool_uuid).first()
-            if not db_tool:
-                db_tool = AllTools(uuid=tool_uuid)
-                session.add(db_tool)
+                tool_uuid = UUID(tool["uuid"])  # Convert string UUID to UUID object
+                db_tool = session.query(AllTools).filter(AllTools.uuid == tool_uuid).first()
+                if not db_tool:
+                    db_tool = AllTools(uuid=tool_uuid)
+                    session.add(db_tool)
 
-            db_tool.authors = (
-                ", ".join(tool.get("authors", []))
+                db_tool.authors = (
+                    ", ".join(tool.get("authors", []))
                 if isinstance(tool.get("authors"), list)
                 else tool.get("authors")
             )
