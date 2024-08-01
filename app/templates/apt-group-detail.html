@@ -50,12 +50,14 @@
             </div>
             {% endif %}
             
-            {% if group.mitre_attack %}
+            {% if group.mitre_attack and group.mitre_attack.strip() %}
             <div class="mb-4">
                 <h2 class="text-2xl font-semibold mb-2">MITRE ATT&CK Techniques:</h2>
                 <ul class="list-disc list-inside">
                     {% for technique in group.mitre_attack.split(', ') %}
-                    <li>{{ technique }}</li>
+                    {% if technique.strip() %}
+                    <li>{{ technique.strip() }}</li>
+                    {% endif %}
                     {% endfor %}
                 </ul>
             </div>
