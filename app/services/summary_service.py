@@ -13,7 +13,7 @@ import os
 import asyncio
 from typing import Optional, Union
 from uuid import UUID
-from app.utils.ollama_client import OllamaAPI
+from app.utils.ollama_client import OllamaAPI, OllamaAPI
 from app.utils.groq_api import GroqAPI
 
 logger = setup_logger('summary_service', 'summary_service.log')
