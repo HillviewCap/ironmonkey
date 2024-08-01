@@ -44,6 +44,7 @@ def update_alltools(session: Session, data: List[Dict[str, Any]]) -> None:
     """
     for tool in data:
         try:
+            with session.no_autoflush:
             tool_uuid = UUID(tool["uuid"])  # Convert string UUID to UUID object
             db_tool = session.query(AllTools).filter(AllTools.uuid == tool_uuid).first()
             if not db_tool:
@@ -84,9 +85,9 @@ def update_alltools(session: Session, data: List[Dict[str, Any]]) -> None:
                     else value.get("type") or "Unknown"  # Set default value if None
                 )
                 db_value.information = (
-                    ", ".join(value.get("information"))
+                    ", ".join(value.get("information", []))
                     if isinstance(value.get("information"), list)
-                    else value.get("information")
+                    else (value.get("information") or "")
                 )
                 db_value.last_card_change = value.get("last-card-change")
 
@@ -232,7 +233,7 @@ def update_allgroups(session: Session, data: List[Dict[str, Any]]) -> None:
                             name=name_data["name"],
                             name_giver=name_data.get("name-giver"),
                             uuid=str(uuid.uuid4()),
-                            allgroups_values_uuid=db_value.uuid,
+                            allgroups_values_uuid=str(db_value.uuid),
                         )
                         db_value.names.append(db_name)
                     else:
