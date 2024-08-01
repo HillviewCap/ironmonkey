@@ -72,7 +72,7 @@ class SummaryService:
         logger.error(f"Failed to generate summary for record {content_id} after {self.max_retries} attempts.")
         return False
 
-    def summarize_feed(self, feed_id: str) -> None:
+    async def summarize_feed(self, feed_id: str) -> None:
         logger.info(f"Starting summary enhancement for feed {feed_id}")
 
         with db.session() as session:
@@ -86,9 +86,11 @@ class SummaryService:
                 ParsedContent.summary == None
             ).all()
 
-            for content in parsed_contents:
+            async def process_content(content):
                 success = await self.enhance_summary(content.id.hex)
                 if not success:
                     logger.warning(f"Failed to generate summary for content {content.id}")
+
+            await asyncio.gather(*(process_content(content) for content in parsed_contents))
 
         logger.info(f"Summary enhancement for feed {feed_id} completed")
