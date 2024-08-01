@@ -7,7 +7,12 @@ def create_app(config_name):
 
     @app.template_filter('json_loads')
     def json_loads_filter(s):
-        return json.loads(s) if s else []
+        if not s:
+            return []
+        try:
+            return json.loads(s)
+        except json.JSONDecodeError:
+            return []
 
     # ... rest of your create_app function ...
 
