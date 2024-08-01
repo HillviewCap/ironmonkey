@@ -53,6 +53,16 @@ document.addEventListener('DOMContentLoaded', function() {
                     throw Error(res.statusText);
                 }
                 return res.json();
+            },
+        },
+        pagination: {
+            limit: 10,
+            server: {
+                url: (prev, page, limit) => `${prev}?page=${page}&limit=${limit}`
+            }
+                    throw Error(res.statusText);
+                }
+                return res.json();
             }
         },
         search: true,
