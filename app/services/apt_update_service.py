@@ -153,10 +153,6 @@ def update_allgroups(session: Session, data: List[Dict[str, Any]]) -> None:
                 setattr(db_group, field, group.get(field, ""))
             db_group.last_db_change = group.get("last-db-change", "")
 
-            # Log the values being set
-            logger.info(f"Setting values for group {db_group.uuid}:")
-            for field in ['authors', 'category', 'name', 'type', 'source', 'description', 'tlp', 'license', 'last_db_change']:
-                logger.info(f"  {field}: {getattr(db_group, field)}")
 
             # Process AllGroupsValues
             db_value = session.query(AllGroupsValues).filter(AllGroupsValues.uuid == group_uuid).first()
@@ -193,10 +189,6 @@ def update_allgroups(session: Session, data: List[Dict[str, Any]]) -> None:
                 else:
                     setattr(db_value, field, None)
 
-            # Log the values being set for AllGroupsValues
-            logger.info(f"Setting values for AllGroupsValues {db_value.uuid}:")
-            for field in ['actor', 'country', 'description', 'information', 'motivation', 'first_seen', 'observed_sectors', 'observed_countries', 'tools', 'sponsor', 'last_card_change']:
-                logger.info(f"  {field}: {getattr(db_value, field)}")
 
             # Handle names
             for name_data in group.get("names", []):
@@ -263,9 +255,6 @@ def update_databases() -> None:
                     logger.error(
                         f"Unexpected data type for tools_data: {type(tools_data)}. Expected a list or a dict with 'values'."
                     )
-                    logger.debug(
-                        f"tools_data content: {str(tools_data)[:500]}..."
-                    )  # Log first 500 characters
             else:
                 logger.warning("Failed to load AllTools data. Skipping update.")
 
@@ -280,7 +269,6 @@ def update_databases() -> None:
                     update_allgroups(session, groups_data)
                 else:
                     logger.error(f"Unexpected data type for groups_data: {type(groups_data)}. Expected a list or a dict with 'values'.")
-                    logger.debug(f"groups_data content: {str(groups_data)[:500]}...")  # Log first 500 characters
                 
                 # Check if any groups were actually added
                 group_count = session.query(AllGroups).count()
