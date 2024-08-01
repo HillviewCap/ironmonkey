@@ -68,61 +68,15 @@
             <h2 class="text-2xl font-bold mb-4 text-gray-800">APT Group Analytics</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                    <canvas id="categoryChart"></canvas>
+                    <canvas id="category-chart"></canvas>
                 </div>
                 <div>
-                    <canvas id="tlpChart"></canvas>
+                    <canvas id="tlp-chart"></canvas>
                 </div>
             </div>
         </div>
     </div>
 
-    <script>
-        // Sample data for charts (you would replace this with real data from your backend)
-        const categoryData = {
-            labels: ['State-sponsored', 'Cybercrime', 'Hacktivism', 'Other'],
-            datasets: [{
-                data: [40, 30, 20, 10],
-                backgroundColor: ['#4299E1', '#48BB78', '#ED8936', '#A0AEC0']
-            }]
-        };
-
-        const tlpData = {
-            labels: ['RED', 'AMBER', 'GREEN', 'WHITE'],
-            datasets: [{
-                data: [10, 30, 40, 20],
-                backgroundColor: ['#F56565', '#ED8936', '#48BB78', '#A0AEC0']
-            }]
-        };
-
-        // Create charts
-        new Chart(document.getElementById('categoryChart'), {
-            type: 'pie',
-            data: categoryData,
-            options: {
-                responsive: true,
-                plugins: {
-                    title: {
-                        display: true,
-                        text: 'APT Groups by Category'
-                    }
-                }
-            }
-        });
-
-        new Chart(document.getElementById('tlpChart'), {
-            type: 'pie',
-            data: tlpData,
-            options: {
-                responsive: true,
-                plugins: {
-                    title: {
-                        display: true,
-                        text: 'APT Groups by TLP'
-                    }
-                }
-            }
-        });
-    </script>
+    <script src="{{ url_for('static', filename='js/apt-groups.js') }}"></script>
 </body>
 </html>
