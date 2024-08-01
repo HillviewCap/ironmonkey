@@ -8,7 +8,11 @@ from sqlalchemy import create_engine, inspect
 from uuid import UUID
 from sqlalchemy.orm import sessionmaker, Session
 from app.models.relational.alltools import AllTools, AllToolsValues, AllToolsValuesNames
-from app.models.relational.allgroups import AllGroups, AllGroupsValues, AllGroupsValuesNames
+from app.models.relational.allgroups import (
+    AllGroups,
+    AllGroupsValues,
+    AllGroupsValuesNames,
+)
 import uuid
 from flask import current_app
 
@@ -46,16 +50,18 @@ def update_alltools(session: Session, data: List[Dict[str, Any]]) -> None:
         try:
             with session.no_autoflush:
                 tool_uuid = UUID(tool["uuid"])  # Convert string UUID to UUID object
-                db_tool = session.query(AllTools).filter(AllTools.uuid == tool_uuid).first()
+                db_tool = (
+                    session.query(AllTools).filter(AllTools.uuid == tool_uuid).first()
+                )
                 if not db_tool:
                     db_tool = AllTools(uuid=tool_uuid)
                     session.add(db_tool)
 
                 db_tool.authors = (
                     ", ".join(tool.get("authors", []))
-                if isinstance(tool.get("authors"), list)
-                else tool.get("authors")
-            )
+                    if isinstance(tool.get("authors"), list)
+                    else tool.get("authors")
+                )
             db_tool.category = tool.get("category")
             db_tool.name = tool.get("name")
             db_tool.type = tool.get("type")
@@ -92,7 +98,9 @@ def update_alltools(session: Session, data: List[Dict[str, Any]]) -> None:
                 db_value.last_card_change = value.get("last-card-change")
 
                 for name_data in value.get("names", []):
-                    name = name_data["name"] if isinstance(name_data, dict) else name_data
+                    name = (
+                        name_data["name"] if isinstance(name_data, dict) else name_data
+                    )
                     db_name = (
                         session.query(AllToolsValuesNames)
                         .filter(AllToolsValuesNames.name == name)
@@ -102,11 +110,13 @@ def update_alltools(session: Session, data: List[Dict[str, Any]]) -> None:
                         db_name = AllToolsValuesNames(
                             name=name,
                             uuid=uuid.uuid4(),  # Generate a new UUID object
-                            alltools_values_uuid=db_value.uuid
+                            alltools_values_uuid=db_value.uuid,
                         )
                         db_value.names.append(db_name)
         except Exception as e:
-            logger.error(f"Error processing tool {tool.get('name', 'Unknown')}: {str(e)}")
+            logger.error(
+                f"Error processing tool {tool.get('name', 'Unknown')}: {str(e)}"
+            )
             session.rollback()
         else:
             session.commit()
@@ -121,47 +131,78 @@ def update_allgroups(session: Session, data: List[Dict[str, Any]]) -> None:
         data (List[Dict[str, Any]]]: The data to update the database with.
     """
     if not isinstance(data, list):
-        logger.error(f"Expected a list of groups, but got {type(data)}. Converting to list.")
+        logger.error(
+            f"Expected a list of groups, but got {type(data)}. Converting to list."
+        )
         data = [data]
 
     for group in data:
         try:
             if "uuid" not in group:
-                logger.error(f"Group is missing UUID: {group.get('name', 'Unknown')}. Skipping this group.")
+                logger.error(
+                    f"Group is missing UUID: {group.get('name', 'Unknown')}. Skipping this group."
+                )
                 continue
 
             try:
                 group_uuid = UUID(group["uuid"])  # Convert string UUID to UUID object
             except ValueError:
-                logger.warning(f"Invalid UUID for group: {group.get('name', 'Unknown')} - UUID: {group['uuid']}. Attempting to fix.")
+                logger.warning(
+                    f"Invalid UUID for group: {group.get('name', 'Unknown')} - UUID: {group['uuid']}. Attempting to fix."
+                )
                 try:
                     # Try to pad the UUID if it's too short
-                    padded_uuid = group["uuid"].ljust(32, '0')
+                    padded_uuid = group["uuid"].ljust(32, "0")
                     group_uuid = UUID(padded_uuid)
-                    logger.info(f"Successfully fixed UUID for group: {group.get('name', 'Unknown')} - New UUID: {group_uuid}")
+                    logger.info(
+                        f"Successfully fixed UUID for group: {group.get('name', 'Unknown')} - New UUID: {group_uuid}"
+                    )
                 except ValueError:
-                    logger.error(f"Unable to fix UUID for group: {group.get('name', 'Unknown')} - UUID: {group['uuid']}. Skipping this group.")
+                    logger.error(
+                        f"Unable to fix UUID for group: {group.get('name', 'Unknown')} - UUID: {group['uuid']}. Skipping this group."
+                    )
                     continue
 
-            db_group = session.query(AllGroups).filter(AllGroups.uuid == group_uuid).first()
+            db_group = (
+                session.query(AllGroups).filter(AllGroups.uuid == group_uuid).first()
+            )
             if not db_group:
                 db_group = AllGroups(uuid=group_uuid)
                 session.add(db_group)
 
             # Update AllGroups fields
-            for field in ['authors', 'category', 'name', 'type', 'source', 'description', 'tlp', 'license']:
+            for field in [
+                "authors",
+                "category",
+                "name",
+                "type",
+                "source",
+                "description",
+                "tlp",
+                "license",
+            ]:
                 setattr(db_group, field, group.get(field, ""))
             db_group.last_db_change = group.get("last-db-change", "")
 
-
             # Process AllGroupsValues
-            db_value = session.query(AllGroupsValues).filter(AllGroupsValues.uuid == group_uuid).first()
+            db_value = (
+                session.query(AllGroupsValues)
+                .filter(AllGroupsValues.uuid == group_uuid)
+                .first()
+            )
             if not db_value:
                 db_value = AllGroupsValues(uuid=group_uuid)
                 db_group.values.append(db_value)
 
             # Update AllGroupsValues fields
-            for field in ['actor', 'country', 'description', 'information', 'motivation', 'sponsor']:
+            for field in [
+                "actor",
+                "country",
+                "description",
+                "information",
+                "motivation",
+                "sponsor",
+            ]:
                 value = group.get(field, "")
                 if isinstance(value, list):
                     value = ", ".join(value)
@@ -175,20 +216,19 @@ def update_allgroups(session: Session, data: List[Dict[str, Any]]) -> None:
             db_value.last_card_change = group.get("last-card-change", "")
 
             # Handle special fields
-            for field in ['operations', 'counter_operations']:
-                json_field = field.replace('_', '-')
+            for field in ["operations", "counter_operations"]:
+                json_field = field.replace("_", "-")
                 if json_field in group and isinstance(group[json_field], list):
                     setattr(db_value, field, json.dumps(group[json_field]))
                 else:
                     setattr(db_value, field, None)
 
-            for field in ['mitre_attack', 'playbook']:
-                json_field = field.replace('_', '-')
+            for field in ["mitre_attack", "playbook"]:
+                json_field = field.replace("_", "-")
                 if json_field in group and isinstance(group[json_field], list):
                     setattr(db_value, field, ", ".join(group[json_field]))
                 else:
                     setattr(db_value, field, None)
-
 
             # Handle names
             for name_data in group.get("names", []):
@@ -212,9 +252,10 @@ def update_allgroups(session: Session, data: List[Dict[str, Any]]) -> None:
                     db_name.name_giver = name_data.get("name-giver")
 
             session.commit()
-            logger.info(f"Successfully updated group: {group.get('name', 'Unknown')}")
         except Exception as e:
-            logger.error(f"Error processing group {group.get('name', 'Unknown')}: {str(e)}")
+            logger.error(
+                f"Error processing group {group.get('name', 'Unknown')}: {str(e)}"
+            )
             session.rollback()
         else:
             session.commit()
@@ -225,23 +266,25 @@ def update_databases() -> None:
     Update the AllTools and AllGroups databases with the latest data from the local JSON files.
     """
     with current_app.app_context():
-        engine = create_engine(current_app.config['SQLALCHEMY_DATABASE_URI'])
+        engine = create_engine(current_app.config["SQLALCHEMY_DATABASE_URI"])
         Session = sessionmaker(bind=engine)
         session = Session()
 
         try:
             # Check if tables exist
             inspector = inspect(engine)
-            if not inspector.has_table("alltools") or not inspector.has_table("allgroups"):
-                logger.error(
-                    "Required tables do not exist. Creating tables now."
-                )
+            if not inspector.has_table("alltools") or not inspector.has_table(
+                "allgroups"
+            ):
+                logger.error("Required tables do not exist. Creating tables now.")
                 AllTools.__table__.create(engine)
                 AllGroups.__table__.create(engine)
                 logger.info("Tables created successfully.")
 
             # Update AllTools
-            tools_data = load_json_file("app/static/json/Threat Group Card - All tools.json")
+            tools_data = load_json_file(
+                "app/static/json/Threat Group Card - All tools.json"
+            )
             if tools_data is not None:
                 if isinstance(tools_data, dict) and "values" in tools_data:
                     update_alltools(session, [tools_data])
@@ -259,20 +302,28 @@ def update_databases() -> None:
                 logger.warning("Failed to load AllTools data. Skipping update.")
 
             # Update AllGroups
-            groups_data = load_json_file("app/static/json/Threat Group Card - All groups.json")
+            groups_data = load_json_file(
+                "app/static/json/Threat Group Card - All groups.json"
+            )
             if groups_data is not None:
                 if isinstance(groups_data, dict) and "values" in groups_data:
-                    logger.info(f"Processing group data with {len(groups_data['values'])} values.")
+                    logger.info(
+                        f"Processing group data with {len(groups_data['values'])} values."
+                    )
                     update_allgroups(session, groups_data["values"])
                 elif isinstance(groups_data, list):
                     logger.info(f"Processing list of {len(groups_data)} groups.")
                     update_allgroups(session, groups_data)
                 else:
-                    logger.error(f"Unexpected data type for groups_data: {type(groups_data)}. Expected a list or a dict with 'values'.")
-                
+                    logger.error(
+                        f"Unexpected data type for groups_data: {type(groups_data)}. Expected a list or a dict with 'values'."
+                    )
+
                 # Check if any groups were actually added
                 group_count = session.query(AllGroups).count()
-                logger.info(f"Total number of groups in the database after update: {group_count}")
+                logger.info(
+                    f"Total number of groups in the database after update: {group_count}"
+                )
             else:
                 logger.warning("Failed to load AllGroups data. Skipping update.")
 
