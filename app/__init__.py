@@ -4,6 +4,7 @@ This module initializes the Flask application and sets up all necessary configur
 
 import os
 import warnings
+import json
 from dotenv import load_dotenv
 from flask import Flask
 from flask_migrate import Migrate
@@ -71,6 +72,16 @@ def create_app(config_object=None):
     csrf.init_app(app)
     migrate.init_app(app, db)
     login_manager.init_app(app)
+
+    # Register json_loads filter
+    @app.template_filter('json_loads')
+    def json_loads_filter(s):
+        if not s:
+            return []
+        try:
+            return json.loads(s)
+        except json.JSONDecodeError:
+            return []
 
     # Initialize database
     with app.app_context():
