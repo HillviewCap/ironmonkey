@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request
+from flask import Blueprint, render_template, request, abort
 from app.models.relational.allgroups import AllGroupsValues, AllGroupsValuesNames
 from sqlalchemy import or_
 
@@ -27,3 +27,9 @@ def apt_groups():
         group.names = AllGroupsValuesNames.query.filter_by(allgroups_values_uuid=group.uuid).all()
 
     return render_template('apt-groups.html', groups=groups, pagination=pagination, search_query=search_query)
+
+@bp.route('/apt-group/<uuid:group_uuid>')
+def apt_group_detail(group_uuid):
+    group = AllGroupsValues.query.get_or_404(group_uuid)
+    group.names = AllGroupsValuesNames.query.filter_by(allgroups_values_uuid=group.uuid).all()
+    return render_template('apt-group-detail.html', group=group)

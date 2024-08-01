@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+
+{% block title %}{{ group.actor }} - APT Group Detail{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <h1 class="text-4xl font-bold mb-8 text-center text-gray-800">{{ group.actor }}</h1>
+    
+    <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+        <div class="p-6">
+            <p class="text-lg text-gray-700 mb-4"><strong>Description:</strong> {{ group.description }}</p>
+            <p class="text-lg text-gray-700 mb-4"><strong>Country:</strong> {{ group.country }}</p>
+            <p class="text-lg text-gray-700 mb-4"><strong>Motivation:</strong> {{ group.motivation }}</p>
+            <p class="text-lg text-gray-700 mb-4"><strong>First Seen:</strong> {{ group.first_seen }}</p>
+            <p class="text-lg text-gray-700 mb-4"><strong>Observed Sectors:</strong> {{ group.observed_sectors }}</p>
+            <p class="text-lg text-gray-700 mb-4"><strong>Observed Countries:</strong> {{ group.observed_countries }}</p>
+            <p class="text-lg text-gray-700 mb-4"><strong>Tools:</strong> {{ group.tools }}</p>
+            <p class="text-lg text-gray-700 mb-4"><strong>Sponsor:</strong> {{ group.sponsor }}</p>
+            
+            {% if group.names %}
+            <div class="mb-4">
+                <h2 class="text-2xl font-semibold mb-2">Alternative Names:</h2>
+                <ul class="list-disc list-inside">
+                    {% for name in group.names %}
+                    <li>{{ name.name }} ({{ name.name_giver }})</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+            
+            {% if group.operations %}
+            <div class="mb-4">
+                <h2 class="text-2xl font-semibold mb-2">Operations:</h2>
+                <ul class="list-disc list-inside">
+                    {% for operation in group.operations|json_loads %}
+                    <li>{{ operation }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+            
+            {% if group.counter_operations %}
+            <div class="mb-4">
+                <h2 class="text-2xl font-semibold mb-2">Counter Operations:</h2>
+                <ul class="list-disc list-inside">
+                    {% for operation in group.counter_operations|json_loads %}
+                    <li>{{ operation }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+            
+            {% if group.mitre_attack %}
+            <div class="mb-4">
+                <h2 class="text-2xl font-semibold mb-2">MITRE ATT&CK Techniques:</h2>
+                <ul class="list-disc list-inside">
+                    {% for technique in group.mitre_attack.split(', ') %}
+                    <li>{{ technique }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+            
+            <p class="text-sm text-gray-500 mt-4"><strong>Last Updated:</strong> {{ group.last_card_change }}</p>
+        </div>
+    </div>
+    
+    <div class="mt-8 text-center">
+        <a href="{{ url_for('apt.apt_groups') }}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+            Back to APT Groups
+        </a>
+    </div>
+</div>
+{% endblock %}
