@@ -165,12 +165,17 @@ def update_allgroups(session: Session, data: List[Dict[str, Any]]) -> None:
                 db_group.values.append(db_value)
 
             # Update AllGroupsValues fields
-            for field in ['actor', 'country', 'description', 'information', 'motivation', 'first_seen', 'observed_sectors', 'observed_countries', 'tools', 'sponsor']:
+            for field in ['actor', 'country', 'description', 'information', 'motivation', 'sponsor']:
                 value = group.get(field, "")
                 if isinstance(value, list):
                     value = ", ".join(value)
                 setattr(db_value, field, value)
 
+            # Handle fields that need special treatment
+            db_value.first_seen = group.get("first-seen", "")
+            db_value.observed_sectors = ", ".join(group.get("observed-sectors", []))
+            db_value.observed_countries = ", ".join(group.get("observed-countries", []))
+            db_value.tools = ", ".join(group.get("tools", []))
             db_value.last_card_change = group.get("last-card-change", "")
 
             # Handle special fields
@@ -187,6 +192,11 @@ def update_allgroups(session: Session, data: List[Dict[str, Any]]) -> None:
                     setattr(db_value, field, ", ".join(group[json_field]))
                 else:
                     setattr(db_value, field, None)
+
+            # Log the values being set for AllGroupsValues
+            logger.info(f"Setting values for AllGroupsValues {db_value.uuid}:")
+            for field in ['actor', 'country', 'description', 'information', 'motivation', 'first_seen', 'observed_sectors', 'observed_countries', 'tools', 'sponsor', 'last_card_change']:
+                logger.info(f"  {field}: {getattr(db_value, field)}")
 
             # Handle names
             for name_data in group.get("names", []):
