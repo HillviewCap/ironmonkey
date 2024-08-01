@@ -22,17 +22,18 @@ def view_content(content_id):
 @parsed_content_bp.route('/list', methods=['GET'])
 def list_content():
     try:
-        page = request.args.get('page', 0, type=int)  # Grid.js uses 0-based indexing
+        page = request.args.get('page', 1, type=int)  # Assume 1-based indexing from frontend
         limit = request.args.get('limit', 10, type=int)
         search_query = request.args.get('search', '')
         feed_id = request.args.get('feed_id')
         
-        contents, total = ParsedContentService.get_contents(page=page, limit=limit, search_query=search_query, feed_id=feed_id)
+        # Adjust page for 0-based indexing in the service
+        contents, total = ParsedContentService.get_contents(page=page-1, limit=limit, search_query=search_query, feed_id=feed_id)
         
         return jsonify({
             'data': [content.to_dict() for content in contents],
             'total': total,
-            'page': page,  # Return 0-based page number
+            'page': page,  # Return 1-based page number
             'limit': limit
         })
     except Exception as e:
