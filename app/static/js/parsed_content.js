@@ -41,11 +41,12 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         ],
         server: {
-            url: '/parsed_content/get_parsed_content',
+            url: '/parsed_content/list',
             then: data => {
                 logDebug(`Received data: ${JSON.stringify(data)}`);
                 return data.data;
             },
+            total: data => data.total,
             handle: (res) => {
                 if (!res.ok) {
                     logDebug(`Error fetching data: ${res.status} ${res.statusText}`);
@@ -59,7 +60,7 @@ document.addEventListener('DOMContentLoaded', function() {
         pagination: {
             limit: 10,
             server: {
-                url: (prev, page, limit) => `${prev}${prev.includes('?') ? '&' : '?'}page=${page}&limit=${limit}`
+                url: (prev, page, limit) => `${prev}${prev.includes('?') ? '&' : '?'}page=${page + 1}&limit=${limit}`
             }
         },
         style: {
