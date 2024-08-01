@@ -2,9 +2,11 @@ from flask import Blueprint, render_template, abort, request, redirect, url_for,
 import csv
 from app.models.relational.parsed_content import ParsedContent
 from app.services.parsed_content_service import ParsedContentService
+from app.services.summary_service import SummaryService
 from uuid import UUID
 
 parsed_content_bp = Blueprint('parsed_content', __name__)
+summary_service = SummaryService()
 
 @parsed_content_bp.route('/', methods=['GET'])
 def parsed_content_list():
@@ -104,3 +106,23 @@ def get_parsed_content():
         'data': formatted_data,
         'total': total
     })
+
+@parsed_content_bp.route('/summarize_content', methods=['POST'])
+def summarize_content():
+    content_id = request.json.get('content_id')
+    if not content_id:
+        return jsonify({'error': 'No content_id provided'}), 400
+
+    try:
+        summary = summary_service.generate_summary(content_id)
+        return jsonify({'summary': summary})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@parsed_content_bp.route('/clear_all_summaries', methods=['POST'])
+def clear_all_summaries():
+    try:
+        ParsedContentService.clear_all_summaries()
+        return jsonify({'message': 'All summaries cleared successfully'})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
