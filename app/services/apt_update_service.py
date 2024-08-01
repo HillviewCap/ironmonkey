@@ -122,7 +122,12 @@ def update_allgroups(session: Session, data: List[Dict[str, Any]]) -> None:
     """
     for group in data:
         try:
-            group_uuid = UUID(group["uuid"])  # Convert string UUID to UUID object
+            try:
+                group_uuid = UUID(group["uuid"])  # Convert string UUID to UUID object
+            except ValueError:
+                logger.warning(f"Invalid UUID for group: {group.get('name', 'Unknown')}. Skipping this group.")
+                continue
+
             db_group = (
                 session.query(AllGroups).filter(AllGroups.uuid == group_uuid).first()
             )
