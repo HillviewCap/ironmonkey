@@ -54,7 +54,17 @@
                 <h2 class="text-2xl font-semibold mb-2">Counter Operations:</h2>
                 <ul class="list-disc list-inside">
                     {% for operation in group.counter_operations|json_loads %}
-                    <li>{{ operation }}</li>
+                    <li>
+                        <strong>Date:</strong> {{ operation.date }}<br>
+                        <strong>Activity:</strong> 
+                        {% for line in operation.activity.split('\n') %}
+                            {% if 'http' in line %}
+                                <a href="{{ line }}" target="_blank">{{ line }}</a><br>
+                            {% else %}
+                                {{ line }}<br>
+                            {% endif %}
+                        {% endfor %}
+                    </li>
                     {% endfor %}
                 </ul>
             </div>
