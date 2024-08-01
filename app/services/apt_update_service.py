@@ -149,14 +149,25 @@ def update_allgroups(session: Session, data: List[Dict[str, Any]]) -> None:
                 session.add(db_group)
 
             db_group.authors = ", ".join(group.get("authors", [])) if isinstance(group.get("authors"), list) else group.get("authors", "")
-            db_group.category = group.get("category")
-            db_group.name = group.get("name")
-            db_group.type = group.get("type")
-            db_group.source = group.get("source")
-            db_group.description = group.get("description")
-            db_group.tlp = group.get("tlp")
-            db_group.license = group.get("license")
-            db_group.last_db_change = group.get("last-db-change")
+            db_group.category = group.get("category", "")
+            db_group.name = group.get("name", "")
+            db_group.type = group.get("type", "")
+            db_group.source = group.get("source", "")
+            db_group.description = group.get("description", "")
+            db_group.tlp = group.get("tlp", "")
+            db_group.license = group.get("license", "")
+            db_group.last_db_change = group.get("last-db-change", "")
+
+            # Log the values being set
+            logger.info(f"Setting values for group {db_group.uuid}:")
+            logger.info(f"  authors: {db_group.authors}")
+            logger.info(f"  category: {db_group.category}")
+            logger.info(f"  name: {db_group.name}")
+            logger.info(f"  type: {db_group.type}")
+            logger.info(f"  source: {db_group.source}")
+            logger.info(f"  tlp: {db_group.tlp}")
+            logger.info(f"  license: {db_group.license}")
+            logger.info(f"  last_db_change: {db_group.last_db_change}")
 
             for value in group.get("values", []):
                 value_uuid = UUID(str(value["uuid"]))  # Convert string to UUID object
