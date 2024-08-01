@@ -38,6 +38,10 @@ def index():
         current_app.logger.error(f"Error in index route: {str(e)}")
         abort(500)  # Return a 500 Internal Server Error
 
+@bp.route('/apt-groups')
+def apt_groups():
+    return redirect(url_for('apt.apt_groups'))
+
 @bp.route('/item/<uuid:item_id>')
 @login_required
 def view_item(item_id):

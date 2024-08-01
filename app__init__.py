@@ -1,17 +1,19 @@
+import json
 from flask import Flask
-from flask_sqlalchemy import SQLAlchemy
 
-db = SQLAlchemy()
-
-def create_app():
+def create_app(config_name):
     app = Flask(__name__)
-    
-    # Configure your app here (e.g., load config, register blueprints, etc.)
-    
-    db.init_app(app)
+    # ... other configuration ...
 
-    with app.app_context():
-        from app.services.awesome_threat_intel_service import AwesomeThreatIntelService
-        AwesomeThreatIntelService.initialize_awesome_feeds()
+    @app.template_filter('json_loads')
+    def json_loads_filter(s):
+        if not s:
+            return []
+        try:
+            return json.loads(s)
+        except json.JSONDecodeError:
+            return []
+
+    # ... rest of your create_app function ...
 
     return app

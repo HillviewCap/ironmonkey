@@ -10,10 +10,10 @@ from app.models.relational.parsed_content import ParsedContent
 from app.models.relational.rss_feed import RSSFeed
 from app.extensions import db
 import os
-import uuid
 import asyncio
 from typing import Optional, Union
-from app.utils.ollama_client import OllamaAPI
+from uuid import UUID
+from app.utils.ollama_client import OllamaAPI, OllamaAPI
 from app.utils.groq_api import GroqAPI
 
 logger = setup_logger('summary_service', 'summary_service.log')
@@ -38,8 +38,8 @@ class SummaryService:
     async def generate_summary(self, content_id: str) -> Optional[str]:
         api = self._initialize_api()
 
-        async with db.session() as session:
-            parsed_content = await session.get(ParsedContent, content_id)
+        with db.session() as session:
+            parsed_content = session.get(ParsedContent, UUID(content_id))
             if not parsed_content:
                 logger.error(f"No ParsedContent found with id {content_id}")
                 return None
@@ -48,7 +48,7 @@ class SummaryService:
     async def enhance_summary(self, content_id: str) -> bool:
         logger.info(f"Processing record {content_id}")
 
-        async with db.session() as session:
+        with db.session() as session:
             for attempt in range(self.max_retries):
                 try:
                     summary = await self.generate_summary(content_id)
@@ -56,19 +56,23 @@ class SummaryService:
                         logger.warning(f"Empty summary generated for record {content_id}. Attempt {attempt + 1}/{self.max_retries}")
                         continue
 
-                    parsed_content = await session.get(ParsedContent, content_id)
+                    parsed_content = session.get(ParsedContent, UUID(content_id))
                     if not parsed_content:
                         logger.warning(f"ParsedContent not found for id {content_id}")
                         return False
 
+                    if parsed_content.summary:
+                        logger.info(f"Record {content_id} already has a summary. Skipping.")
+                        return True
+
                     parsed_content.summary = summary.strip()
-                    await session.commit()
+                    session.commit()
                     logger.info(f"Updated summary for record {content_id}")
                     return True
 
                 except Exception as e:
                     logger.error(f"Error generating summary for record {content_id}: {str(e)}. Attempt {attempt + 1}/{self.max_retries}", exc_info=True)
-                    await session.rollback()
+                    session.rollback()
 
         logger.error(f"Failed to generate summary for record {content_id} after {self.max_retries} attempts.")
         return False
@@ -76,20 +80,22 @@ class SummaryService:
     async def summarize_feed(self, feed_id: str) -> None:
         logger.info(f"Starting summary enhancement for feed {feed_id}")
 
-        async with db.session() as session:
-            feed = await session.get(RSSFeed, feed_id)
+        with db.session() as session:
+            feed = session.get(RSSFeed, feed_id)
             if not feed:
                 logger.error(f"Feed with id {feed_id} not found")
                 return
 
-            parsed_contents = await session.execute(
-                ParsedContent.select().where(ParsedContent.feed_id == feed_id, ParsedContent.summary == None)
-            )
-            parsed_contents = parsed_contents.scalars().all()
+            parsed_contents = session.query(ParsedContent).filter(
+                ParsedContent.feed_id == feed_id,
+                ParsedContent.summary == None
+            ).all()
 
-            for content in parsed_contents:
-                success = await self.enhance_summary(str(content.id))
+            async def process_content(content):
+                success = await self.enhance_summary(content.id.hex)
                 if not success:
                     logger.warning(f"Failed to generate summary for content {content.id}")
+
+            await asyncio.gather(*(process_content(content) for content in parsed_contents))
 
         logger.info(f"Summary enhancement for feed {feed_id} completed")

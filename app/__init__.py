@@ -4,6 +4,7 @@ This module initializes the Flask application and sets up all necessary configur
 
 import os
 import warnings
+import json
 from dotenv import load_dotenv
 from flask import Flask
 from flask_migrate import Migrate
@@ -22,8 +23,10 @@ from app.blueprints.admin.routes import admin_bp
 from app.blueprints.search.routes import search_bp
 from app.blueprints.api.routes import api_bp
 from app.blueprints.parsed_content.routes import parsed_content_bp
+from app.blueprints.apt.routes import bp as apt_bp
 from app.utils.ollama_client import OllamaAPI
 from app.services.scheduler_service import SchedulerService
+from app.services.apt_update_service import update_databases
 
 load_dotenv()
 
@@ -33,7 +36,8 @@ logger = setup_logger("app", "app.log")
 migrate = Migrate()
 csrf = CSRFProtect()
 login_manager = LoginManager()
-login_manager.login_view = 'auth.login'
+login_manager.login_view = "auth.login"
+
 
 def create_app(config_object=None):
     """
@@ -45,16 +49,21 @@ def create_app(config_object=None):
     Returns:
         Flask: The configured Flask application instance.
     """
-    app = Flask(__name__, instance_relative_config=True, static_url_path="/static", template_folder="templates")
+    app = Flask(
+        __name__,
+        instance_relative_config=True,
+        static_url_path="/static",
+        template_folder="templates",
+    )
 
     # Load the default config if no config_object is provided
     if config_object is None:
-        app.config.from_object('config.DevelopmentConfig')
+        app.config.from_object("config.DevelopmentConfig")
     else:
         app.config.from_object(config_object)
 
     # Ensure debug mode is set and log its value
-    app.config['DEBUG'] = True
+    app.config["DEBUG"] = True
     logger.info(f"Debug mode set to: {app.config['DEBUG']}")
 
     # Ensure the instance folder exists
@@ -70,6 +79,16 @@ def create_app(config_object=None):
     migrate.init_app(app, db)
     login_manager.init_app(app)
 
+    # Register json_loads filter
+    @app.template_filter("json_loads")
+    def json_loads_filter(s):
+        if not s:
+            return []
+        try:
+            return json.loads(s)
+        except json.JSONDecodeError:
+            return []
+
     # Initialize database
     with app.app_context():
         db.create_all()
@@ -78,19 +97,22 @@ def create_app(config_object=None):
     # Register blueprints
     blueprints = [
         (main_bp, None),
-        (auth_bp, '/auth'),
-        (rss_manager_bp, '/rss'),
-        (admin_bp, '/admin'),
-        (search_bp, '/search'),
-        (api_bp, '/api'),
-        (parsed_content_bp, '/content')
+        (auth_bp, "/auth"),
+        (rss_manager_bp, "/rss"),
+        (admin_bp, "/admin"),
+        (search_bp, "/search"),
+        (api_bp, "/api"),
+        (parsed_content_bp, "/content"),
+        (apt_bp, "/apt"),
     ]
 
     registered_blueprints = set()
     for blueprint, url_prefix in blueprints:
         if blueprint.name not in registered_blueprints:
             app.register_blueprint(blueprint, url_prefix=url_prefix)
-            logger.info(f"Registered blueprint: {blueprint.name} with url_prefix: {url_prefix}")
+            logger.info(
+                f"Registered blueprint: {blueprint.name} with url_prefix: {url_prefix}"
+            )
             registered_blueprints.add(blueprint.name)
         else:
             logger.warning(f"Blueprint {blueprint.name} already registered, skipping.")
@@ -99,14 +121,19 @@ def create_app(config_object=None):
     with app.app_context():
         # Initialize Ollama API
         app.ollama_api = OllamaAPI()
-        
+
         # Setup scheduler
         app.scheduler = SchedulerService(app)
         app.scheduler.setup_scheduler()
 
         # Initialize Awesome Threat Intel Blogs
         from app.services.awesome_threat_intel_service import AwesomeThreatIntelService
+
         AwesomeThreatIntelService.initialize_awesome_feeds()
+
+        # Update APT databases
+        update_databases()
+        logger.info("APT databases updated at application startup")
 
     @login_manager.user_loader
     def load_user(user_id):
@@ -121,6 +148,7 @@ def create_app(config_object=None):
         """
         from app.models.relational.user import User
         from uuid import UUID
+
         try:
             # Convert the string to a UUID object
             uuid_obj = UUID(user_id)

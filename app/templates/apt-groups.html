@@ -1,34 +1,87 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>APT Groups</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body class="bg-gray-100">
-    <div class="container mx-auto px-4 py-8">
-        <h1 class="text-3xl font-bold mb-8 text-center text-gray-800">APT Groups</h1>
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+{% extends "base.html" %}
+
+{% block title %}{{ _('APT Groups Intelligence Dashboard') }}{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+        <h1 class="text-4xl font-bold mb-8 text-center text-gray-800">APT Groups Intelligence Dashboard</h1>
+        
+        <!-- Search Bar -->
+        <div class="mb-8">
+            <form action="{{ url_for('apt.apt_groups') }}" method="get" class="flex items-center">
+                <input type="text" name="search" value="{{ search_query }}" placeholder="Search APT groups..." class="flex-grow p-2 border rounded-l-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <button type="submit" class="bg-blue-600 text-white p-2 rounded-r-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">Search</button>
+            </form>
+        </div>
+
+        <!-- APT Groups Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
             {% for group in groups %}
-            <div class="bg-white rounded-lg shadow-md overflow-hidden">
-                <div class="bg-blue-600 text-white px-4 py-2">
-                    <h2 class="text-xl font-semibold">{{ group.name }}</h2>
-                </div>
-                <div class="p-4">
-                    <p class="text-sm text-gray-600 mb-2">Category: {{ group.category }}</p>
-                    <p class="text-sm text-gray-600 mb-2">Type: {{ group.type }}</p>
-                    <p class="text-sm text-gray-600 mb-4">TLP: {{ group.tlp }}</p>
-                    <p class="text-sm text-gray-800 mb-4">{{ group.description }}</p>
-                    <div class="border-t pt-4">
-                        <p class="text-xs text-gray-500">Authors: {{ group.authors }}</p>
-                        <p class="text-xs text-gray-500">Source: {{ group.source }}</p>
-                        <p class="text-xs text-gray-500">Last Updated: {{ group.last_db_change }}</p>
+            <a href="{{ url_for('apt.apt_group_detail', group_uuid=group.uuid) }}" class="block">
+                <div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300">
+                    <div class="bg-blue-600 text-white px-4 py-2 flex justify-between items-center">
+                        <h2 class="text-xl font-semibold">{{ group.actor }}</h2>
+                    </div>
+                    <div class="p-4">
+                        <p class="text-sm text-gray-600 mb-2"><strong>Country:</strong> {{ group.country }}</p>
+                        <p class="text-sm text-gray-600 mb-2"><strong>Motivation:</strong> {{ group.motivation }}</p>
+                        <p class="text-sm text-gray-800 mb-4">{{ group.description|truncate(150) }}</p>
+                        <div class="mb-4">
+                            <p class="text-sm text-gray-600"><strong>First Seen:</strong> {{ group.first_seen }}</p>
+                            <p class="text-sm text-gray-600"><strong>Observed Sectors:</strong> {{ group.observed_sectors }}</p>
+                            <p class="text-sm text-gray-600"><strong>Observed Countries:</strong> {{ group.observed_countries }}</p>
+                        </div>
+                        <div class="border-t pt-4 text-xs text-gray-500">
+                            <p><strong>Tools:</strong> {{ group.tools }}</p>
+                            <p><strong>Last Updated:</strong> {{ group.last_card_change }}</p>
+                        </div>
+                        {% if group.names %}
+                        <div class="mt-4">
+                            <strong>Alternative Names:</strong>
+                            <ul class="list-disc list-inside">
+                                {% for name in group.names %}
+                                <li>{{ name.name }} ({{ name.name_giver }})</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        {% endif %}
                     </div>
                 </div>
-            </div>
+            </a>
             {% endfor %}
         </div>
+
+        <!-- Pagination -->
+        <div class="flex justify-center space-x-2 mb-8">
+            {% for page in pagination.iter_pages() %}
+                {% if page %}
+                    {% if page != pagination.page %}
+                        <a href="{{ url_for('apt.apt_groups', page=page, search=search_query) }}" class="px-3 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">{{ page }}</a>
+                    {% else %}
+                        <span class="px-3 py-2 bg-blue-700 text-white rounded">{{ page }}</span>
+                    {% endif %}
+                {% else %}
+                    <span class="px-3 py-2">...</span>
+                {% endif %}
+            {% endfor %}
+        </div>
+
+        <!-- Analytics Section -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+            <h2 class="text-2xl font-bold mb-4 text-gray-800">APT Group Analytics</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <canvas id="category-chart"></canvas>
+                </div>
+                <div>
+                    <canvas id="tlp-chart"></canvas>
+                </div>
+            </div>
+        </div>
     </div>
-</body>
-</html>
+{% endblock %}
+
+{% block scripts %}
+    {{ super() }}
+    <script src="{{ url_for('static', filename='js/apt-groups.js') }}"></script>
+{% endblock %}
