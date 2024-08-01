@@ -1,14 +1,9 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>APT Groups Intelligence Dashboard</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-</head>
-<body class="bg-gray-100">
-    <div class="container mx-auto px-4 py-8">
+{% extends "base.html" %}
+
+{% block title %}APT Groups Intelligence Dashboard{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
         <h1 class="text-4xl font-bold mb-8 text-center text-gray-800">APT Groups Intelligence Dashboard</h1>
         
         <!-- Search Bar -->
@@ -76,7 +71,9 @@
             </div>
         </div>
     </div>
+{% endblock %}
 
+{% block scripts %}
+    {{ super() }}
     <script src="{{ url_for('static', filename='js/apt-groups.js') }}"></script>
-</body>
-</html>
+{% endblock %}
