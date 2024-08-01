@@ -15,14 +15,23 @@ document.addEventListener('DOMContentLoaded', function() {
     function fetchContent(page) {
         logDebug(`Fetching content for page ${page}`);
         fetch(`/parsed_content/list?page=${page}&limit=${itemsPerPage}`)
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
             .then(data => {
+                if (data.error) {
+                    throw new Error(data.error);
+                }
                 renderTable(data.data);
                 renderPagination(data.total, page);
             })
             .catch(error => {
-                logDebug(`Error fetching content: ${error}`);
+                logDebug(`Error fetching content: ${error.message}`);
                 console.error('Error:', error);
+                alert('An error occurred while fetching content. Please try again later.');
             });
     }
 

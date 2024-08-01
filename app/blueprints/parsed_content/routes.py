@@ -21,19 +21,23 @@ def view_content(content_id):
 
 @parsed_content_bp.route('/list', methods=['GET'])
 def list_content():
-    page = request.args.get('page', 0, type=int)  # Grid.js uses 0-based indexing
-    limit = request.args.get('limit', 10, type=int)
-    search_query = request.args.get('search', '')
-    feed_id = request.args.get('feed_id')
-    
-    contents, total = ParsedContentService.get_contents(page=page, limit=limit, search_query=search_query, feed_id=feed_id)
-    
-    return jsonify({
-        'data': [content.to_dict() for content in contents],
-        'total': total,
-        'page': page,  # Return 0-based page number
-        'limit': limit
-    })
+    try:
+        page = request.args.get('page', 0, type=int)  # Grid.js uses 0-based indexing
+        limit = request.args.get('limit', 10, type=int)
+        search_query = request.args.get('search', '')
+        feed_id = request.args.get('feed_id')
+        
+        contents, total = ParsedContentService.get_contents(page=page, limit=limit, search_query=search_query, feed_id=feed_id)
+        
+        return jsonify({
+            'data': [content.to_dict() for content in contents],
+            'total': total,
+            'page': page,  # Return 0-based page number
+            'limit': limit
+        })
+    except Exception as e:
+        current_app.logger.error(f"Error in list_content: {str(e)}")
+        return jsonify({'error': 'An error occurred while fetching content'}), 500
 
 @parsed_content_bp.route('/export_csv', methods=['GET'])
 def export_csv():
