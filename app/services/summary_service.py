@@ -11,6 +11,7 @@ from app.models.relational.rss_feed import RSSFeed
 from app.extensions import db
 import os
 from typing import Optional, Union
+from uuid import UUID
 from app.utils.ollama_client import OllamaAPI
 from app.utils.groq_api import GroqAPI
 
@@ -37,7 +38,7 @@ class SummaryService:
         api = self._initialize_api()
 
         with db.session() as session:
-            parsed_content = session.get(ParsedContent, content_id)
+            parsed_content = session.get(ParsedContent, UUID(content_id))
             if not parsed_content:
                 logger.error(f"No ParsedContent found with id {content_id}")
                 return None
@@ -54,7 +55,7 @@ class SummaryService:
                         logger.warning(f"Empty summary generated for record {content_id}. Attempt {attempt + 1}/{self.max_retries}")
                         continue
 
-                    parsed_content = session.get(ParsedContent, content_id)
+                    parsed_content = session.get(ParsedContent, UUID(content_id))
                     if not parsed_content:
                         logger.warning(f"ParsedContent not found for id {content_id}")
                         return False
@@ -86,7 +87,7 @@ class SummaryService:
             ).all()
 
             for content in parsed_contents:
-                success = self.enhance_summary(str(content.id))
+                success = self.enhance_summary(content.id.hex)
                 if not success:
                     logger.warning(f"Failed to generate summary for content {content.id}")
 
