@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, abort, request, redirect, url_for, jsonify, Response
+from flask import Blueprint, render_template, abort, request, redirect, url_for, jsonify, Response, current_app
 import csv
 from app.models.relational.parsed_content import ParsedContent
 from app.services.parsed_content_service import ParsedContentService
