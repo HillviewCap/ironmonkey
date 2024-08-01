@@ -18,7 +18,7 @@ class ParsedContentService:
         content_stats = ParsedContentService.get_content_stats()
         return {
             'content': [content.to_dict() for content in latest_content],
-            'content_stats': content_stats
+            'stats': content_stats
         }
 
     @staticmethod
