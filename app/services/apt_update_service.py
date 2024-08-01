@@ -98,8 +98,10 @@ def update_alltools(session: Session, data: List[Dict[str, Any]]) -> None:
                 )
                 if not db_name:
                     db_name = AllToolsValuesNames(
-                        name=name, uuid=str(uuid.uuid4())
-                    )  # Generate a new UUID as string
+                        name=name,
+                        uuid=uuid.uuid4(),  # Generate a new UUID object
+                        alltools_values_uuid=db_value.uuid
+                    )
                     db_value.names.append(db_name)
 
 
