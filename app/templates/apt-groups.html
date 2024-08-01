@@ -19,25 +19,31 @@
             {% for group in groups %}
             <div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300">
                 <div class="bg-blue-600 text-white px-4 py-2 flex justify-between items-center">
-                    <h2 class="text-xl font-semibold">{{ group.name }}</h2>
-                    <span class="text-sm bg-yellow-500 text-gray-800 px-2 py-1 rounded">{{ group.tlp }}</span>
+                    <h2 class="text-xl font-semibold">{{ group.actor }}</h2>
                 </div>
                 <div class="p-4">
-                    <p class="text-sm text-gray-600 mb-2"><strong>Category:</strong> {{ group.category }}</p>
-                    <p class="text-sm text-gray-600 mb-2"><strong>Type:</strong> {{ group.type }}</p>
+                    <p class="text-sm text-gray-600 mb-2"><strong>Country:</strong> {{ group.country }}</p>
+                    <p class="text-sm text-gray-600 mb-2"><strong>Motivation:</strong> {{ group.motivation }}</p>
                     <p class="text-sm text-gray-800 mb-4">{{ group.description|truncate(150) }}</p>
-                    {% if group.values %}
                     <div class="mb-4">
-                        <p class="text-sm text-gray-600"><strong>Actor:</strong> {{ group.values[0].actor }}</p>
-                        <p class="text-sm text-gray-600"><strong>Country:</strong> {{ group.values[0].country }}</p>
-                        <p class="text-sm text-gray-600"><strong>Motivation:</strong> {{ group.values[0].motivation }}</p>
+                        <p class="text-sm text-gray-600"><strong>First Seen:</strong> {{ group.first_seen }}</p>
+                        <p class="text-sm text-gray-600"><strong>Observed Sectors:</strong> {{ group.observed_sectors }}</p>
+                        <p class="text-sm text-gray-600"><strong>Observed Countries:</strong> {{ group.observed_countries }}</p>
+                    </div>
+                    <div class="border-t pt-4 text-xs text-gray-500">
+                        <p><strong>Tools:</strong> {{ group.tools }}</p>
+                        <p><strong>Last Updated:</strong> {{ group.last_card_change }}</p>
+                    </div>
+                    {% if group.names %}
+                    <div class="mt-4">
+                        <strong>Alternative Names:</strong>
+                        <ul class="list-disc list-inside">
+                            {% for name in group.names %}
+                            <li>{{ name.name }} ({{ name.name_giver }})</li>
+                            {% endfor %}
+                        </ul>
                     </div>
                     {% endif %}
-                    <div class="border-t pt-4 text-xs text-gray-500">
-                        <p><strong>Authors:</strong> {{ group.authors }}</p>
-                        <p><strong>Source:</strong> {{ group.source }}</p>
-                        <p><strong>Last Updated:</strong> {{ group.last_db_change }}</p>
-                    </div>
                 </div>
             </div>
             {% endfor %}
