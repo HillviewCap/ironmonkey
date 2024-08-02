@@ -9,3 +9,8 @@ def parsed_content():
     latest_content = content_service.get_latest_parsed_content()
     content_stats = content_service.get_content_stats()
     return render_template('parsed_content/index.html', content=latest_content['content'], stats=content_stats)
+@parsed_content_bp.route('/item/<content_id>')
+def view_item(content_id):
+    content_service = ParsedContentService()
+    item = content_service.get_content_by_id(content_id)
+    return render_template('view_item.html', item=item)
