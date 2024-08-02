@@ -22,14 +22,20 @@ class ParsedContentService:
             }
         return None
     @staticmethod
-    def get_latest_parsed_content(limit: int = 20) -> Dict[str, Any]:
+    def get_latest_parsed_content(limit: int = 20, category: Optional[str] = None) -> Dict[str, Any]:
         """
         Retrieve the latest parsed content entries and content stats.
         
         :param limit: The maximum number of entries to retrieve
+        :param category: Optional category to filter the content
         :return: A dictionary containing parsed content data and content stats
         """
-        latest_content = ParsedContent.query.order_by(ParsedContent.created_at.desc()).limit(limit).all()
+        query = ParsedContent.query.order_by(ParsedContent.created_at.desc())
+        
+        if category:
+            query = query.filter(ParsedContent.category.has(name=category))
+        
+        latest_content = query.limit(limit).all()
         content_stats = ParsedContentService.get_content_stats()
         return {
             'content': [content.to_dict() if hasattr(content, 'to_dict') else str(content) for content in latest_content],
