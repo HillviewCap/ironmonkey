@@ -13,3 +13,15 @@
     <a href="{{ url_for('main.index') }}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mt-4 inline-block">Escape to Safety</a>
 </div>
 {% endblock %}
+{% extends "base.html" %}
+
+{% block content %}
+<div class="error-container">
+    <div class="error-code">500</div>
+    <div class="error-message">{{ _('Oops! Something went wrong on our end.') }}</div>
+    <p>{{ _('We're working on fixing the issue. Please try again later.') }}</p>
+    <a href="{{ url_for('parsed_content.parsed_content') }}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+        {{ _('Return to Latest Threat Intelligence') }}
+    </a>
+</div>
+{% endblock %}
