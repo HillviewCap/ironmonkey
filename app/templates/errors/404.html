@@ -18,8 +18,8 @@
 {% block content %}
 <div class="error-container">
     <div class="error-code">404</div>
-    <div class="error-message">{{ _('Oops! The content you're looking for couldn't be found.') }}</div>
-    <p>{{ _('The article might have been removed or doesn't exist.') }}</p>
+    <div class="error-message">{{ _("Oops! The content you're looking for couldn't be found.") }}</div>
+    <p>{{ _("The article might have been removed or doesn't exist.") }}</p>
     <a href="{{ url_for('parsed_content.parsed_content') }}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
         {{ _('Return to Latest Threat Intelligence') }}
     </a>
