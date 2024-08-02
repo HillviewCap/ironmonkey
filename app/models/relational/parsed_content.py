@@ -73,8 +73,13 @@ class ParsedContent(db.Model):
     def get_by_id(cls, content_id: Union[str, UUID]) -> Optional[ParsedContent]:
         """Retrieve a ParsedContent instance by its ID."""
         try:
-            if isinstance(content_id, str) and not isinstance(content_id, UUID):
-                content_id = UUID(content_id)
+            if isinstance(content_id, UUID):
+                content_id = str(content_id)
+            elif isinstance(content_id, str):
+                # Validate if it's a valid UUID string
+                UUID(content_id)
+            else:
+                raise ValueError("Invalid content_id type")
             return cls.query.filter(cls.id == content_id).first()
         except ValueError:
             return None
