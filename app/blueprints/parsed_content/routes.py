@@ -14,4 +14,6 @@ def parsed_content():
 def view_item(content_id):
     content_service = ParsedContentService()
     item = content_service.get_content_by_id(content_id)
+    if item is None:
+        abort(404)  # Return a 404 error if the item is not found
     return render_template('view_item.html', item=item)
