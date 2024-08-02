@@ -75,7 +75,7 @@ class ParsedContent(db.Model):
         try:
             if isinstance(content_id, str):
                 content_id = UUID(content_id)
-            return cls.query.filter(cls.id == content_id).first()
+            return cls.query.filter(cls.id == str(content_id)).first()
         except ValueError:
             return None
 
