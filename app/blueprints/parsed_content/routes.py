@@ -1,5 +1,6 @@
 from flask import render_template, Blueprint, abort, request
 from .services import ParsedContentService
+from app.models.relational.parsed_content import ParsedContent
 
 parsed_content_bp = Blueprint('parsed_content', __name__)
 
