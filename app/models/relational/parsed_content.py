@@ -7,7 +7,7 @@ from sqlalchemy import Column, String, DateTime, Text, ForeignKey, Table
 from app.extensions import db
 from flask import flash
 from .category import Category
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Union
 
 parsed_content_categories = Table(
     'parsed_content_categories',
@@ -70,10 +70,11 @@ class ParsedContent(db.Model):
         return deleted_count
 
     @classmethod
-    def get_by_id(cls, content_id: str) -> Optional[ParsedContent]:
+    def get_by_id(cls, content_id: Union[str, UUID]) -> Optional[ParsedContent]:
         """Retrieve a ParsedContent instance by its ID."""
-        try: 
-            content_id = UUID(content_id) if isinstance(content_id, str) else content_id
+        try:
+            if isinstance(content_id, str):
+                content_id = UUID(content_id)
             return cls.query.filter(cls.id == content_id).first()
         except ValueError:
             return None
