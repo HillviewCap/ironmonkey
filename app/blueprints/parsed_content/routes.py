@@ -12,7 +12,7 @@ def parsed_content():
     content_stats = content_service.get_content_stats()
     return render_template('parsed_content/index.html', content=latest_content['content'], stats=content_stats, selected_category=category)
 
-@parsed_content_bp.route('/item/<uuid:content_id>', methods=['GET'])
+@parsed_content_bp.route('/item/<string:content_id>', methods=['GET'])
 def view_item(content_id):
     current_app.logger.info(f"Attempting to retrieve content with ID: {content_id}")
     item = ParsedContent.get_by_id(content_id)
@@ -20,7 +20,7 @@ def view_item(content_id):
         current_app.logger.warning(f"Content with ID {content_id} not found in the database")
         abort(404, description="Content not found")
     try:
-        item_dict = ParsedContentService.get_content_by_id(str(content_id))
+        item_dict = ParsedContentService.get_content_by_id(content_id)
         if item_dict is None:
             current_app.logger.error(f"ParsedContentService returned None for content ID: {content_id}")
             abort(500, description="Error retrieving content details")
