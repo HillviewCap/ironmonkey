@@ -5,7 +5,11 @@ from typing import List, Dict, Any
 from datetime import datetime, timedelta
 from sqlalchemy import func
 
+from app.models.relational.parsed_content import ParsedContent
+
 class ParsedContentService:
+    def get_content_by_id(self, content_id: str):
+        return ParsedContent.get_by_id(content_id)
     @staticmethod
     def get_latest_parsed_content(limit: int = 20) -> Dict[str, Any]:
         """
