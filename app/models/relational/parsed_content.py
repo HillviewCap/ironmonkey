@@ -79,7 +79,7 @@ class ParsedContent(db.Model):
                 # Remove hyphens if present
                 content_id = content_id.replace('-', '')
                 # Validate if it's a valid UUID string
-                UUID(content_id, version=4)
+                UUID(content_id)
             else:
                 raise ValueError("Invalid content_id type")
             return cls.query.filter(cls.id == content_id).first()
