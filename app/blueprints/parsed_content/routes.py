@@ -1,4 +1,4 @@
-from flask import render_template, Blueprint
+from flask import render_template, Blueprint, abort
 from .services import ParsedContentService
 
 parsed_content_bp = Blueprint('parsed_content', __name__)
