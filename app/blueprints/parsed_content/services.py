@@ -1,15 +1,26 @@
 from app.models.relational.parsed_content import ParsedContent
 from app.models.relational.rss_feed import RSSFeed
 from app.extensions import db
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 from datetime import datetime, timedelta
 from sqlalchemy import func
 
-from app.models.relational.parsed_content import ParsedContent
-
 class ParsedContentService:
-    def get_content_by_id(self, content_id: str):
-        return ParsedContent.get_by_id(content_id)
+    @staticmethod
+    def get_content_by_id(content_id: str) -> Optional[Dict[str, Any]]:
+        content = ParsedContent.get_by_id(content_id)
+        if content:
+            return {
+                'rss_feed_title': content.rss_feed.title,
+                'title': content.title,
+                'creator': content.creator,
+                'pub_date': content.pub_date,
+                'category': content.category.name if content.category else None,
+                'url': content.url,
+                'description': content.description,
+                'summary': content.summary
+            }
+        return None
     @staticmethod
     def get_latest_parsed_content(limit: int = 20) -> Dict[str, Any]:
         """
