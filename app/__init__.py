@@ -62,16 +62,14 @@ def create_app(config_object=None):
     else:
         app.config.from_object(config_object)
 
-    # Ensure debug mode is set and log its value
-    app.config["DEBUG"] = True
-    logger.info(f"Debug mode set to: {app.config['DEBUG']}")
-
     # Ensure the instance folder exists
     os.makedirs(app.instance_path, exist_ok=True)
 
-    # Log the instance path and database URI
-    logger.debug(f"Instance path: {app.instance_path}")
-    logger.debug(f"Database URI: {app.config['SQLALCHEMY_DATABASE_URI']}")
+    # Log configuration details
+    logger.info(f"Debug mode set to: {app.config['DEBUG']}")
+    logger.info(f"Instance path: {app.instance_path}")
+    logger.info(f"Database URI: {app.config['SQLALCHEMY_DATABASE_URI']}")
+    logger.info(f"Flask port: {app.config['FLASK_PORT']}")
 
     # Initialize extensions
     db.init_app(app)

@@ -41,13 +41,11 @@ def main():
     This function sets up the environment and starts the Flask development server.
     """
     try:
-        # Set debug mode explicitly
-        app.config['DEBUG'] = True
         app.run(
-            host='0.0.0.0',
+            host=app.config.get('HOST', '0.0.0.0'),
             port=int(app.config.get('FLASK_PORT', 5000)),
-            use_reloader=True,
-            debug=True
+            use_reloader=app.config.get('USE_RELOADER', True),
+            debug=app.config.get('DEBUG', True)
         )
         logger.info(f"Application started in debug mode: {app.debug}")
     except Exception as e:
