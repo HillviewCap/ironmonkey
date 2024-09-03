@@ -45,7 +45,7 @@ def main():
         app.config['DEBUG'] = True
         app.run(
             host='0.0.0.0',
-            port=app.config['FLASK_PORT'],
+            port=int(app.config.get('FLASK_PORT', 5000)),
             use_reloader=True,
             debug=True
         )
