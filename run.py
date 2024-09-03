@@ -43,8 +43,14 @@ def main():
     This function sets up the environment and starts the Flask development server.
     """
     try:
+        # Use Flask's CLI configuration if available
+        if os.getenv('FLASK_RUN_FROM_CLI') == 'true':
+            logger.info("Running from Flask CLI")
+            return
+        
+        # Otherwise, use the manual configuration
         app.run(
-            host=app.config.get("HOST", "10.0.10.9"),
+            host=app.config.get("HOST", "0.0.0.0"),
             port=int(app.config.get("FLASK_PORT", 5000)),
             use_reloader=app.config.get("USE_RELOADER", True),
             debug=app.config.get("DEBUG", True),
