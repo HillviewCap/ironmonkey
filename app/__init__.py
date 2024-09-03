@@ -13,6 +13,7 @@ from flask_login import LoginManager
 
 from .extensions import db
 from app.utils.logging_config import setup_logger
+from app.utils.db_connection_manager import init_db_connection_manager
 
 # Suppress Pydantic deprecation warning
 warnings.filterwarnings("ignore", category=DeprecationWarning, module="pydantic")
@@ -87,10 +88,11 @@ def create_app(config_object=None):
         except json.JSONDecodeError:
             return []
 
-    # Initialize database
+    # Initialize database and connection manager
     with app.app_context():
         db.create_all()
-        logger.info("Database tables created")
+        init_db_connection_manager(app)
+        logger.info("Database tables created and connection manager initialized")
 
     # Register blueprints
     blueprints = [
