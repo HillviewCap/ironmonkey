@@ -19,10 +19,11 @@ load_dotenv()
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-env = os.getenv('FLASK_ENV', 'development')
+env = os.getenv("FLASK_ENV", "development")
 config_obj = get_config(env)
 app = create_app(config_obj)
 logger.info("Application created")
+
 
 @app.shell_context_processor
 def make_shell_context():
@@ -32,7 +33,8 @@ def make_shell_context():
     Returns:
         dict: A dictionary containing objects to be included in the shell context.
     """
-    return {'db': db, 'User': User}
+    return {"db": db, "User": User}
+
 
 def main():
     """
@@ -42,14 +44,15 @@ def main():
     """
     try:
         app.run(
-            host=app.config.get('HOST', '0.0.0.0'),
-            port=int(app.config.get('FLASK_PORT', 5000)),
-            use_reloader=app.config.get('USE_RELOADER', True),
-            debug=app.config.get('DEBUG', True)
+            host=app.config.get("HOST", "10.0.10.9"),
+            port=int(app.config.get("FLASK_PORT", 5000)),
+            use_reloader=app.config.get("USE_RELOADER", True),
+            debug=app.config.get("DEBUG", True),
         )
         logger.info(f"Application started in debug mode: {app.debug}")
     except Exception as e:
         logger.error(f"Error starting the application: {e}")
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()
