@@ -5,7 +5,7 @@ import hashlib
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy import Column, String, DateTime, Text, ForeignKey, Table
 from app.extensions import db
-from flask import flash
+from flask import flash, current_app
 from .category import Category
 from typing import List, Dict, Any, Optional, Union
 
