@@ -59,6 +59,7 @@ def content_item(content_id):
         if content is None:
             current_app.logger.warning(f"Content with ID {content_id} not found in the database")
             abort(404)
+        current_app.logger.info(f"Content retrieved successfully: {content.id}")
         return render_template('content_item.html', content=content)
     except Exception as e:
         current_app.logger.error(f"Error retrieving content with ID {content_id}: {str(e)}")
