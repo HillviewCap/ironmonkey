@@ -63,26 +63,34 @@ class SchedulerService:
 
     async def start_check_empty_summaries(self):
         with self.app.app_context():
+            processed_count = 0
+            summary_service = SummaryService()
+            
             with DBConnectionManager.get_session() as session:
-                empty_summaries = (
-                    session.query(ParsedContent)
+                empty_summary_ids = (
+                    session.query(ParsedContent.id)
                     .filter(ParsedContent.summary.is_(None))
                     .limit(10)
                     .all()
                 )
-                processed_count = 0
-                summary_service = SummaryService()
-                for content in empty_summaries:
-                    try:
-                        success = await summary_service.enhance_summary(str(content.id))
-                        if success:
-                            processed_count += 1
+                
+            for (content_id,) in empty_summary_ids:
+                try:
+                    with DBConnectionManager.get_session() as session:
+                        content = session.query(ParsedContent).get(content_id)
+                        if content:
+                            success = await summary_service.enhance_summary(str(content.id))
+                            if success:
+                                processed_count += 1
+                            else:
+                                scheduler_logger.warning(f"Failed to generate summary for content {content.id}")
                         else:
-                            scheduler_logger.warning(f"Failed to generate summary for content {content.id}")
-                    except Exception as e:
-                        scheduler_logger.error(
-                            f"Error generating summary for content {content.id}: {str(e)}"
-                        )
-                scheduler_logger.info(
-                    f"Processed {processed_count} out of {len(empty_summaries)} empty summaries"
-                )
+                            scheduler_logger.warning(f"Content with id {content_id} not found")
+                except Exception as e:
+                    scheduler_logger.error(
+                        f"Error generating summary for content {content_id}: {str(e)}"
+                    )
+            
+            scheduler_logger.info(
+                f"Processed {processed_count} out of {len(empty_summary_ids)} empty summaries"
+            )
