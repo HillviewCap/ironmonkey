@@ -12,16 +12,18 @@ def parsed_content():
     content_stats = content_service.get_content_stats()
     return render_template('parsed_content/index.html', content=latest_content['content'], stats=content_stats, selected_category=category)
 
-@parsed_content_bp.route('/item/<content_id>', methods=['GET'])
+@parsed_content_bp.route('/item/<uuid:content_id>', methods=['GET'])
 def view_item(content_id):
     current_app.logger.info(f"Attempting to retrieve content with ID: {content_id}")
     try:
-        item_dict = ParsedContentService.get_content_by_id(content_id)
+        # Convert UUID to string
+        content_id_str = str(content_id)
+        item_dict = ParsedContentService.get_content_by_id(content_id_str)
         if item_dict is None:
-            current_app.logger.warning(f"Content with ID {content_id} not found in the database")
+            current_app.logger.warning(f"Content with ID {content_id_str} not found in the database")
             return render_template('errors/404.html'), 404
 
         return render_template('parsed_content/view_item.html', item=item_dict)
     except Exception as e:
-        current_app.logger.error(f"Error processing content ID {content_id}: {str(e)}")
+        current_app.logger.error(f"Error processing content ID {content_id_str}: {str(e)}")
         return render_template('errors/500.html'), 500
