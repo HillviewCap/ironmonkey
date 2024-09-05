@@ -17,9 +17,6 @@ threat_intel_summary:
     - Ensure that the summary can stand alone and be understood without reference to the original document.
     - Use transition words or phrases to create a smooth flow between sentences.
     
-    Example Summary
-    Space ISAC signs a Memorandum of Understanding with the Australian Cyber Collaboration Centre (Aus3C) to boost space cybersecurity initiatives. Aus3C is committed to building cyber capacity and securing Australia's digital landscape through collaboration and information sharing. The partnership aligns seamlessly with Space ISAC's goal of enhancing the cybersecurity of space systems through robust collaboration and information sharing. Space ISAC establishes partnerships with government agencies to facilitate collaboration to protect the security of the global space industry. Space ISAC officials, including Space ISAC executive director Erin Miller, are currently attending an Australian Space Cyber Forum. The partnership leverages advanced tools, capabilities, and expertise from both organizations, aiming to address critical challenges and foster growth within the space-cyber sector.
-
     Create a paragraph of your summary and remember, your goal is to create a concise yet comprehensive summary that accurately represents the main ideas and key points of the original document.
 
     Input:
