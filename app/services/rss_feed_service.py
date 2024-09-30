@@ -17,7 +17,7 @@ from app.utils.http_client import fetch_feed_info
 from app.services.feed_parser_service import fetch_and_parse_feed
 from app.utils.logging_config import setup_logger
 from app.services.parsed_content_service import ParsedContentService
-from app.utils.db_lock import acquire_lock, release_lock, is_database_locked
+from app.utils.db_lock import with_lock, is_database_locked
 
 logger = setup_logger('rss_feed_service', 'rss_feed_service.log')
 
@@ -31,6 +31,7 @@ class RSSFeedService:
     RSS feeds, including retrieval, creation, updating, deletion, and parsing.
     """
     @staticmethod
+    @with_lock
     def get_all_feeds() -> List[RSSFeed]:
         """
         Retrieve all RSS feeds.
@@ -38,16 +39,8 @@ class RSSFeedService:
         Returns:
             List[RSSFeed]: A list of all RSS feed objects.
         """
-        if is_database_locked():
-            logger.warning("Database is locked. Cannot retrieve feeds.")
-            return []
-        
-        lock = acquire_lock()
-        try:
-            with Session(db.engine) as session:
-                return session.query(RSSFeed).all()
-        finally:
-            release_lock(lock)
+        with Session(db.engine) as session:
+            return session.query(RSSFeed).all()
 
     @staticmethod
     def get_feed_by_id(feed_id: uuid.UUID) -> RSSFeed:
