@@ -17,7 +17,7 @@ from app.utils.http_client import fetch_feed_info
 from app.services.feed_parser_service import fetch_and_parse_feed
 from app.utils.logging_config import setup_logger
 from app.services.parsed_content_service import ParsedContentService
-from app.utils.db_lock import with_lock, is_database_locked
+from app.utils.db_lock import with_lock, is_database_locked, acquire_lock, release_lock
 
 logger = setup_logger('rss_feed_service', 'rss_feed_service.log')
 
@@ -213,15 +213,18 @@ class RSSFeedService:
             release_lock(lock)
 
     @staticmethod
-    async def parse_feed(feed_id: uuid.UUID) -> None:
+    async def parse_feed(feed_id: UUID) -> List[ParsedContent]:
         """
-        Manually trigger the parsing of an RSS feed.
+        Parse an RSS feed and store the parsed content.
 
         Args:
-            feed_id (uuid.UUID): The unique identifier of the RSS feed.
+            feed_id (UUID): The ID of the RSS feed to parse.
+
+        Returns:
+            List[ParsedContent]: A list of parsed content items.
 
         Raises:
-            ValueError: If the RSS feed with the given ID is not found or if the database is locked.
+            ValueError: If the RSS feed is not found or if the database is locked.
         """
         if is_database_locked():
             logger.warning(f"Database is locked. Cannot parse feed with ID {feed_id}.")
@@ -234,7 +237,7 @@ class RSSFeedService:
                 if not feed:
                     raise ValueError(f"RSS feed with ID {feed_id} not found.")
 
-                await fetch_and_parse_feed(feed)
-                logger.info(f"Manually parsed RSS feed: {feed.title}")
+                parsed_content = await fetch_and_parse_feed(feed)
+                return parsed_content
         finally:
             release_lock(lock)
