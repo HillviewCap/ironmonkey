@@ -26,10 +26,26 @@ from datetime import datetime
 import httpx
 import feedparser
 from app.models import db, ParsedContent, RSSFeed
+import os
+import fcntl
 from app.utils.logging_config import setup_logger
 
 logger = setup_logger("feed_parser_service", "feed_parser_service.log")
 
+LOCK_FILE = "feed_parser.lock"
+
+def acquire_lock():
+    lock_file = open(LOCK_FILE, 'w')
+    try:
+        fcntl.flock(lock_file, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        return lock_file
+    except IOError:
+        return None
+
+def release_lock(lock_file):
+    fcntl.flock(lock_file, fcntl.LOCK_UN)
+    lock_file.close()
+    os.remove(LOCK_FILE)
 
 def get_or_create_category(name):
     category = Category.query.filter_by(name=name).first()
@@ -59,6 +75,11 @@ async def fetch_and_parse_feed(feed: RSSFeed) -> int:
         RuntimeError: For unexpected errors during parsing.
     """
     new_entries_count = 0
+    lock_file = acquire_lock()
+    if not lock_file:
+        logger.warning("Another instance is already running. Skipping this run.")
+        return new_entries_count
+
     try:
         logger.info(f"Starting to fetch and parse feed: {feed.url}")
         headers = {
@@ -176,4 +197,6 @@ async def fetch_and_parse_feed(feed: RSSFeed) -> int:
         )
         raise RuntimeError(f"Unexpected error: {str(e)}")
     finally:
+        if lock_file:
+            release_lock(lock_file)
         return new_entries_count
