@@ -19,7 +19,7 @@ from app.services.feed_parser_service import fetch_and_parse_feed
 from app.utils.logging_config import setup_logger
 from app.services.parsed_content_service import ParsedContentService
 from app.utils.db_lock import with_lock, is_database_locked, acquire_lock, release_lock
-from dateutil import parser as dateutil_parser
+from dateutil import parser
 
 logger = setup_logger('rss_feed_service', 'rss_feed_service.log')
 
