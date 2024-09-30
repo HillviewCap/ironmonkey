@@ -110,6 +110,7 @@ class RSSFeedService:
                 raise ValueError(f"Error creating RSS feed: {str(e)}")
 
     @staticmethod
+    @with_lock
     async def parse_feed(feed_id: UUID) -> List[ParsedContent]:
         """
         Parse an RSS feed and store the parsed content.
@@ -127,17 +128,13 @@ class RSSFeedService:
             logger.warning(f"Database is locked. Cannot parse feed with ID {feed_id}.")
             raise ValueError("Database is locked. Cannot parse feed at this time.")
 
-        lock = acquire_lock()
-        try:
-            with Session(db.engine) as session:
-                feed = session.get(RSSFeed, feed_id)
-                if not feed:
-                    raise ValueError(f"RSS feed with ID {feed_id} not found.")
+        with Session(db.engine) as session:
+            feed = session.get(RSSFeed, feed_id)
+            if not feed:
+                raise ValueError(f"RSS feed with ID {feed_id} not found.")
 
-                parsed_content = await fetch_and_parse_feed(feed)
-                return parsed_content
-        finally:
-            release_lock(lock)
+            parsed_content = await fetch_and_parse_feed(feed)
+            return parsed_content
 
     @staticmethod
     async def update_feed(feed_id: uuid.UUID, feed_data: Dict[str, str]) -> RSSFeed:
