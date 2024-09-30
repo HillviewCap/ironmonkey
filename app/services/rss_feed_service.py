@@ -17,6 +17,7 @@ from app.utils.http_client import fetch_feed_info
 from app.services.feed_parser_service import fetch_and_parse_feed
 from app.utils.logging_config import setup_logger
 from app.services.parsed_content_service import ParsedContentService
+from app.utils.db_lock import acquire_lock, release_lock, is_database_locked
 
 logger = setup_logger('rss_feed_service', 'rss_feed_service.log')
 
@@ -37,8 +38,16 @@ class RSSFeedService:
         Returns:
             List[RSSFeed]: A list of all RSS feed objects.
         """
-        with Session(db.engine) as session:
-            return session.query(RSSFeed).all()
+        if is_database_locked():
+            logger.warning("Database is locked. Cannot retrieve feeds.")
+            return []
+        
+        lock = acquire_lock()
+        try:
+            with Session(db.engine) as session:
+                return session.query(RSSFeed).all()
+        finally:
+            release_lock(lock)
 
     @staticmethod
     def get_feed_by_id(feed_id: uuid.UUID) -> RSSFeed:
@@ -51,8 +60,16 @@ class RSSFeedService:
         Returns:
             RSSFeed: The RSS feed object with the given ID.
         """
-        with Session(db.engine) as session:
-            return session.get(RSSFeed, feed_id)
+        if is_database_locked():
+            logger.warning(f"Database is locked. Cannot retrieve feed with ID {feed_id}.")
+            return None
+        
+        lock = acquire_lock()
+        try:
+            with Session(db.engine) as session:
+                return session.get(RSSFeed, feed_id)
+        finally:
+            release_lock(lock)
 
     @staticmethod
     async def create_feed(feed_data: Dict[str, str]) -> RSSFeed:
@@ -79,31 +96,39 @@ class RSSFeedService:
             logger.error(f"Error validating RSS feed URL: {url}, {str(e)}")
             raise ValueError(f"Error validating RSS feed URL: {url}, {str(e)}")
 
-        with Session(db.engine) as session:
-            existing_feed = session.query(RSSFeed).filter_by(url=url).first()
-            if existing_feed:
-                logger.warning(f"RSS feed URL already exists: {url}")
-                raise ValueError("RSS feed URL already exists")
+        if is_database_locked():
+            logger.warning(f"Database is locked. Cannot create feed with URL: {url}")
+            raise ValueError("Database is locked. Cannot create feed at this time.")
 
-            try:
-                logger.info(f"Fetching feed info for URL: {url}")
-                feed_info = await fetch_feed_info(url)
-                feed = RSSFeed(
-                    id=uuid.uuid4(),
-                    url=url,
-                    title=feed_info['title'],
-                    description=feed_info['description'],
-                    last_build_date=feed_info['last_build_date'],
-                    category=feed_data.get('category', 'Uncategorized')
-                )
+        lock = acquire_lock()
+        try:
+            with Session(db.engine) as session:
+                existing_feed = session.query(RSSFeed).filter_by(url=url).first()
+                if existing_feed:
+                    logger.warning(f"RSS feed URL already exists: {url}")
+                    raise ValueError("RSS feed URL already exists")
 
-                session.add(feed)
-                session.commit()
-                logger.info(f"Created new RSS feed: {feed.title}")
-                return feed
-            except Exception as e:
-                logger.error(f"Error creating RSS feed: {str(e)}")
-                raise ValueError(f"Error creating RSS feed: {str(e)}")
+                try:
+                    logger.info(f"Fetching feed info for URL: {url}")
+                    feed_info = await fetch_feed_info(url)
+                    feed = RSSFeed(
+                        id=uuid.uuid4(),
+                        url=url,
+                        title=feed_info['title'],
+                        description=feed_info['description'],
+                        last_build_date=feed_info['last_build_date'],
+                        category=feed_data.get('category', 'Uncategorized')
+                    )
+
+                    session.add(feed)
+                    session.commit()
+                    logger.info(f"Created new RSS feed: {feed.title}")
+                    return feed
+                except Exception as e:
+                    logger.error(f"Error creating RSS feed: {str(e)}")
+                    raise ValueError(f"Error creating RSS feed: {str(e)}")
+        finally:
+            release_lock(lock)
 
     @staticmethod
     async def parse_feed(feed_id: UUID) -> List[ParsedContent]:
@@ -117,15 +142,23 @@ class RSSFeedService:
             List[ParsedContent]: A list of parsed content items.
 
         Raises:
-            ValueError: If the RSS feed is not found.
+            ValueError: If the RSS feed is not found or if the database is locked.
         """
-        with Session(db.engine) as session:
-            feed = session.get(RSSFeed, feed_id)
-            if not feed:
-                raise ValueError(f"RSS feed with ID {feed_id} not found.")
+        if is_database_locked():
+            logger.warning(f"Database is locked. Cannot parse feed with ID {feed_id}.")
+            raise ValueError("Database is locked. Cannot parse feed at this time.")
 
-            parsed_content = await fetch_and_parse_feed(feed)
-            return parsed_content
+        lock = acquire_lock()
+        try:
+            with Session(db.engine) as session:
+                feed = session.get(RSSFeed, feed_id)
+                if not feed:
+                    raise ValueError(f"RSS feed with ID {feed_id} not found.")
+
+                parsed_content = await fetch_and_parse_feed(feed)
+                return parsed_content
+        finally:
+            release_lock(lock)
 
     @staticmethod
     async def update_feed(feed_id: uuid.UUID, feed_data: Dict[str, str]) -> RSSFeed:
@@ -138,28 +171,39 @@ class RSSFeedService:
 
         Returns:
             RSSFeed: The updated RSS feed object.
+
+        Raises:
+            ValueError: If the RSS feed is not found or if the database is locked.
         """
-        with Session(db.engine) as session:
-            feed = session.query(RSSFeed).get(feed_id)
-            if not feed:
-                raise ValueError(f"RSS feed with ID {feed_id} not found.")
+        if is_database_locked():
+            logger.warning(f"Database is locked. Cannot update feed with ID {feed_id}.")
+            raise ValueError("Database is locked. Cannot update feed at this time.")
 
-            url = feed_data.get('url', feed.url)
-            if url != feed.url and not validate_rss_url(url):
-                raise ValueError(f"Invalid RSS feed URL: {url}")
+        lock = acquire_lock()
+        try:
+            with Session(db.engine) as session:
+                feed = session.query(RSSFeed).get(feed_id)
+                if not feed:
+                    raise ValueError(f"RSS feed with ID {feed_id} not found.")
 
-            if url != feed.url:
-                feed_info = await fetch_feed_info(url)
-                feed.url = url
-                feed.title = feed_info['title']
-                feed.description = feed_info['description']
-                feed.last_build_date = feed_info['last_build_date']
+                url = feed_data.get('url', feed.url)
+                if url != feed.url and not validate_rss_url(url):
+                    raise ValueError(f"Invalid RSS feed URL: {url}")
 
-            feed.category = feed_data.get('category', feed.category)
+                if url != feed.url:
+                    feed_info = await fetch_feed_info(url)
+                    feed.url = url
+                    feed.title = feed_info['title']
+                    feed.description = feed_info['description']
+                    feed.last_build_date = feed_info['last_build_date']
 
-            session.commit()
-            logger.info(f"Updated RSS feed: {feed.title}")
-            return feed
+                feed.category = feed_data.get('category', feed.category)
+
+                session.commit()
+                logger.info(f"Updated RSS feed: {feed.title}")
+                return feed
+        finally:
+            release_lock(lock)
 
     @staticmethod
     def delete_feed(feed_id: uuid.UUID) -> None:
@@ -170,19 +214,27 @@ class RSSFeedService:
             feed_id (uuid.UUID): The unique identifier of the RSS feed.
 
         Raises:
-            ValueError: If the RSS feed with the given ID is not found.
+            ValueError: If the RSS feed with the given ID is not found or if the database is locked.
         """
-        with Session(db.engine) as session:
-            feed = session.get(RSSFeed, feed_id)
-            if not feed:
-                raise ValueError(f"RSS feed with ID {feed_id} not found.")
+        if is_database_locked():
+            logger.warning(f"Database is locked. Cannot delete feed with ID {feed_id}.")
+            raise ValueError("Database is locked. Cannot delete feed at this time.")
 
-            session.delete(feed)
-            session.commit()
-            logger.info(f"Deleted RSS feed: {feed.title}")
+        lock = acquire_lock()
+        try:
+            with Session(db.engine) as session:
+                feed = session.get(RSSFeed, feed_id)
+                if not feed:
+                    raise ValueError(f"RSS feed with ID {feed_id} not found.")
 
-        # Delete associated parsed content
-        ParsedContentService.delete_parsed_content_by_feed_id(feed_id)
+                session.delete(feed)
+                session.commit()
+                logger.info(f"Deleted RSS feed: {feed.title}")
+
+            # Delete associated parsed content
+            ParsedContentService.delete_parsed_content_by_feed_id(feed_id)
+        finally:
+            release_lock(lock)
 
     @staticmethod
     async def parse_feed(feed_id: uuid.UUID) -> None:
@@ -191,11 +243,22 @@ class RSSFeedService:
 
         Args:
             feed_id (uuid.UUID): The unique identifier of the RSS feed.
-        """
-        with Session(db.engine) as session:
-            feed = session.get(RSSFeed, feed_id)
-            if not feed:
-                raise ValueError(f"RSS feed with ID {feed_id} not found.")
 
-            await fetch_and_parse_feed(feed)
-            logger.info(f"Manually parsed RSS feed: {feed.title}")
+        Raises:
+            ValueError: If the RSS feed with the given ID is not found or if the database is locked.
+        """
+        if is_database_locked():
+            logger.warning(f"Database is locked. Cannot parse feed with ID {feed_id}.")
+            raise ValueError("Database is locked. Cannot parse feed at this time.")
+
+        lock = acquire_lock()
+        try:
+            with Session(db.engine) as session:
+                feed = session.get(RSSFeed, feed_id)
+                if not feed:
+                    raise ValueError(f"RSS feed with ID {feed_id} not found.")
+
+                await fetch_and_parse_feed(feed)
+                logger.info(f"Manually parsed RSS feed: {feed.title}")
+        finally:
+            release_lock(lock)
