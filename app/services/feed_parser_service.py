@@ -9,7 +9,6 @@ from __future__ import annotations
 
 from datetime import datetime
 from typing import Optional
-import dateutil.parser
 
 import httpx
 import feedparser
@@ -33,6 +32,7 @@ logger = setup_logger("feed_parser_service", "feed_parser_service.log")
 
 LOCK_FILE = os.path.join(tempfile.gettempdir(), "feed_parser.lock")
 
+
 def acquire_lock():
     try:
         if os.path.exists(LOCK_FILE):
@@ -41,16 +41,18 @@ def acquire_lock():
                 os.remove(LOCK_FILE)
             else:
                 return None
-        with open(LOCK_FILE, 'x'):  # Create the file exclusively
+        with open(LOCK_FILE, "x"):  # Create the file exclusively
             return LOCK_FILE
     except FileExistsError:
         return None
+
 
 def release_lock(lock_file):
     try:
         os.remove(lock_file)
     except Exception as e:
         logger.error(f"Error releasing lock: {e}")
+
 
 def get_or_create_category(name):
     category = Category.query.filter_by(name=name).first()
@@ -97,7 +99,9 @@ async def fetch_and_parse_feed(feed: RSSFeed) -> int:
             with DBConnectionManager.get_session() as session:
                 # Check if the URL has been redirected
                 if str(response.url) != feed.url:
-                    logger.info(f"Feed URL redirected from {feed.url} to {response.url}")
+                    logger.info(
+                        f"Feed URL redirected from {feed.url} to {response.url}"
+                    )
                     feed.url = str(response.url)
                     session.commit()
 
@@ -117,11 +121,15 @@ async def fetch_and_parse_feed(feed: RSSFeed) -> int:
                     try:
                         url = entry.link
                         title = entry.get("title", "")
-                        logger.info(f"Processing entry {index}/{total_entries}: {url} - {title}")
+                        logger.info(
+                            f"Processing entry {index}/{total_entries}: {url} - {title}"
+                        )
 
-                        existing_content = session.query(ParsedContent).filter_by(
-                            url=url, feed_id=feed.id
-                        ).first()
+                        existing_content = (
+                            session.query(ParsedContent)
+                            .filter_by(url=url, feed_id=feed.id)
+                            .first()
+                        )
                         if not existing_content:
                             logger.info(f"New content found: {url}")
                             parsed_content = await parse_content(url)
@@ -145,7 +153,9 @@ async def fetch_and_parse_feed(feed: RSSFeed) -> int:
                                     feed_id=feed.id,
                                     url=url,
                                     title=sanitize_html(title),
-                                    description=sanitize_html(entry.get("description", "")),
+                                    description=sanitize_html(
+                                        entry.get("description", "")
+                                    ),
                                     pub_date=pub_date,
                                     creator=sanitize_html(entry.get("author", "")),
                                 )
@@ -162,13 +172,15 @@ async def fetch_and_parse_feed(feed: RSSFeed) -> int:
                                 new_entries_count += 1
                                 logger.info(f"Added new entry: {url}")
                             else:
-                                logger.warning(f"Failed to parse content for URL: {url}")
+                                logger.warning(
+                                    f"Failed to parse content for URL: {url}"
+                                )
                         else:
                             logger.info(f"Content already exists: {url}")
                     except Exception as entry_error:
                         logger.error(
                             f"Error processing entry {entry.get('link', 'Unknown')} from feed {feed.url}: {str(entry_error)}",
-                            exc_info=True
+                            exc_info=True,
                         )
                         continue  # Continue with the next entry
 
@@ -177,18 +189,27 @@ async def fetch_and_parse_feed(feed: RSSFeed) -> int:
                     f"Feed: {feed.url} - Added {new_entries_count} new entries to database"
                 )
     except httpx.HTTPStatusError as e:
-        logger.error(f"HTTP error occurred while fetching feed {feed.url}: {e}", exc_info=True)
+        logger.error(
+            f"HTTP error occurred while fetching feed {feed.url}: {e}", exc_info=True
+        )
         raise ValueError(
             f"HTTP error: {e.response.status_code} - {e.response.reason_phrase}"
         )
     except httpx.RequestError as e:
-        logger.error(f"An error occurred while requesting {feed.url}: {e}", exc_info=True)
+        logger.error(
+            f"An error occurred while requesting {feed.url}: {e}", exc_info=True
+        )
         raise ValueError(f"Request error: {str(e)}")
     except httpx.TimeoutException as e:
-        logger.error(f"Timeout occurred while fetching feed {feed.url}: {e}", exc_info=True)
+        logger.error(
+            f"Timeout occurred while fetching feed {feed.url}: {e}", exc_info=True
+        )
         raise ValueError(f"Timeout error: The request to {feed.url} timed out")
     except feedparser.FeedParserError as e:
-        logger.error(f"FeedParser error occurred while parsing feed {feed.url}: {e}", exc_info=True)
+        logger.error(
+            f"FeedParser error occurred while parsing feed {feed.url}: {e}",
+            exc_info=True,
+        )
         raise ValueError(f"FeedParser error: {str(e)}")
     except Exception as e:
         logger.error(
