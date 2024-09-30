@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from datetime import datetime
 from typing import Optional
+import dateutil.parser
 
 import httpx
 import feedparser
@@ -20,9 +21,6 @@ from app.models import ParsedContent, RSSFeed, Category
 from app.utils.db_connection_manager import DBConnectionManager
 from app.utils.logging_config import setup_logger
 from app.utils.jina_api import parse_content
-
-from typing import Optional
-from datetime import datetime
 import httpx
 import feedparser
 from app.models import db, ParsedContent, RSSFeed
@@ -131,21 +129,16 @@ async def fetch_and_parse_feed(feed: RSSFeed) -> int:
                                 pub_date = entry.get("published", "")
                                 if pub_date:
                                     try:
-                                        # Try parsing with multiple formats
-                                        for date_format in ["%a, %d %b %Y %H:%M:%S %z", "%Y-%m-%dT%H:%M:%S%z"]:
-                                            try:
-                                                parsed_date = datetime.strptime(pub_date, date_format)
-                                                pub_date = parsed_date.strftime("%Y-%m-%d %H:%M:%S")
-                                                break
-                                            except ValueError:
-                                                continue
-                                        else:
-                                            # If no format worked, raise ValueError to log a warning
-                                            raise ValueError("No matching date format found")
-                                    except ValueError:
+                                        # Use dateutil.parser to parse the date flexibly
+                                        parsed_date = dateutil.parser.parse(pub_date)
+                                        pub_date = parsed_date.strftime("%Y-%m-%d")
+                                    except (ValueError, OverflowError):
                                         logger.warning(
-                                            f"Could not parse date: {pub_date}. Using original string."
+                                            f"Could not parse date: {pub_date}. Using default date."
                                         )
+                                        pub_date = datetime.now().strftime("%Y-%m-%d")
+                                else:
+                                    pub_date = datetime.now().strftime("%Y-%m-%d")
 
                                 new_content = ParsedContent(
                                     content=sanitize_html(parsed_content),
