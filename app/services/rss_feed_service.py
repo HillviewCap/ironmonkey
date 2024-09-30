@@ -12,7 +12,7 @@ from app.extensions import db
 
 from app.models import RSSFeed, ParsedContent, AwesomeThreatIntelBlog
 import asyncio
-from dateutil import parser as dateutil_parser
+from dateutil import parser
 from app.utils.rss_validator import validate_rss_url
 from app.utils.http_client import fetch_feed_info
 from app.services.feed_parser_service import fetch_and_parse_feed
