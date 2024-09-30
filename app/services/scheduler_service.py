@@ -46,19 +46,36 @@ class SchedulerService:
     def check_and_process_rss_feeds(self):
         with self.app.app_context():
             with DBConnectionManager.get_session() as session:
-                feeds = session.query(RSSFeed).all()
+                total_feeds = session.query(RSSFeed).count()
                 new_articles_count = 0
-                for feed in feeds:
+                processed_feeds = 0
+                
+                scheduler_logger.info(f"Starting to process {total_feeds} RSS feeds")
+                
+                feed_ids = [feed.id for feed in session.query(RSSFeed).all()]
+                
+                for feed_id in feed_ids:
                     try:
-                        new_articles = asyncio.run(fetch_and_parse_feed(feed))
-                        if new_articles is not None:
-                            new_articles_count += new_articles
+                        feed = session.query(RSSFeed).get(feed_id)
+                        if feed:
+                            scheduler_logger.info(f"Processing feed: {feed.url}")
+                            new_articles = asyncio.run(fetch_and_parse_feed(feed))
+                            if new_articles is not None:
+                                new_articles_count += new_articles
+                                scheduler_logger.info(f"Added {new_articles} new articles from feed: {feed.url}")
+                            else:
+                                scheduler_logger.warning(f"fetch_and_parse_feed returned None for feed {feed.url}")
+                            processed_feeds += 1
+                            scheduler_logger.info(f"Processed {processed_feeds}/{total_feeds} feeds")
                         else:
-                            scheduler_logger.warning(f"fetch_and_parse_feed returned None for feed {feed.url}")
+                            scheduler_logger.warning(f"Feed with id {feed_id} not found")
                     except Exception as e:
-                        scheduler_logger.error(f"Error processing feed {feed.url}: {str(e)}", exc_info=True)
+                        scheduler_logger.error(f"Error processing feed {feed_id}: {str(e)}", exc_info=True)
+                    
+                    session.commit()
+                
                 scheduler_logger.info(
-                    f"Processed {len(feeds)} RSS feeds, added {new_articles_count} new articles"
+                    f"Finished processing {processed_feeds}/{total_feeds} RSS feeds, added {new_articles_count} new articles"
                 )
 
     async def start_check_empty_summaries(self):

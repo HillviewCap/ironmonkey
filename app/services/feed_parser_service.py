@@ -26,10 +26,33 @@ from datetime import datetime
 import httpx
 import feedparser
 from app.models import db, ParsedContent, RSSFeed
+import os
+import tempfile
+import time
 from app.utils.logging_config import setup_logger
 
 logger = setup_logger("feed_parser_service", "feed_parser_service.log")
 
+LOCK_FILE = os.path.join(tempfile.gettempdir(), "feed_parser.lock")
+
+def acquire_lock():
+    try:
+        if os.path.exists(LOCK_FILE):
+            # Check if the existing lock is stale (older than 1 hour)
+            if os.path.getmtime(LOCK_FILE) < time.time() - 3600:
+                os.remove(LOCK_FILE)
+            else:
+                return None
+        with open(LOCK_FILE, 'x'):  # Create the file exclusively
+            return LOCK_FILE
+    except FileExistsError:
+        return None
+
+def release_lock(lock_file):
+    try:
+        os.remove(lock_file)
+    except Exception as e:
+        logger.error(f"Error releasing lock: {e}")
 
 def get_or_create_category(name):
     category = Category.query.filter_by(name=name).first()
@@ -59,9 +82,13 @@ async def fetch_and_parse_feed(feed: RSSFeed) -> int:
         RuntimeError: For unexpected errors during parsing.
     """
     new_entries_count = 0
+    lock_file = acquire_lock()
+    if not lock_file:
+        logger.warning("Another instance is already running. Skipping this run.")
+        return new_entries_count
+
     try:
-        if current_app.debug:
-            logger.debug(f"Starting to fetch and parse feed: {feed.url}")
+        logger.info(f"Starting to fetch and parse feed: {feed.url}")
         headers = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
         }
@@ -77,8 +104,7 @@ async def fetch_and_parse_feed(feed: RSSFeed) -> int:
                     session.commit()
 
                 feed_data = feedparser.parse(response.content)
-                if current_app.debug:
-                    logger.debug(f"Parsed feed data for {feed.url}")
+                logger.info(f"Parsed feed data for {feed.url}")
                 # Update the feed title and description if available
                 if "title" in feed_data.feed:
                     feed.title = sanitize_html(feed_data.feed.title)
@@ -86,19 +112,20 @@ async def fetch_and_parse_feed(feed: RSSFeed) -> int:
                     feed.description = sanitize_html(feed_data.feed.description)
                 session.commit()
 
-                for entry in feed_data.entries:
+                total_entries = len(feed_data.entries)
+                logger.info(f"Found {total_entries} entries in feed: {feed.url}")
+
+                for index, entry in enumerate(feed_data.entries, 1):
                     try:
                         url = entry.link
                         title = entry.get("title", "")
-                        if current_app.debug:
-                            logger.debug(f"Processing entry: {url} - {title}")
+                        logger.info(f"Processing entry {index}/{total_entries}: {url} - {title}")
 
                         existing_content = session.query(ParsedContent).filter_by(
                             url=url, feed_id=feed.id
                         ).first()
                         if not existing_content:
-                            if current_app.debug:
-                                logger.debug(f"New content found: {url}")
+                            logger.info(f"New content found: {url}")
                             parsed_content = await parse_content(url)
                             if parsed_content is not None:
                                 pub_date = entry.get("published", "")
@@ -140,16 +167,15 @@ async def fetch_and_parse_feed(feed: RSSFeed) -> int:
                                         cat_obj = get_or_create_category(cat_name)
                                         new_content.categories.append(cat_obj)
                                 new_entries_count += 1
-                                if current_app.debug:
-                                    logger.debug(f"Added new entry: {url}")
+                                logger.info(f"Added new entry: {url}")
                             else:
                                 logger.warning(f"Failed to parse content for URL: {url}")
                         else:
-                            if current_app.debug:
-                                logger.debug(f"Content already exists: {url}")
+                            logger.info(f"Content already exists: {url}")
                     except Exception as entry_error:
                         logger.error(
-                            f"Error processing entry {entry.get('link', 'Unknown')} from feed {feed.url}: {str(entry_error)}"
+                            f"Error processing entry {entry.get('link', 'Unknown')} from feed {feed.url}: {str(entry_error)}",
+                            exc_info=True
                         )
                         continue  # Continue with the next entry
 
@@ -158,18 +184,18 @@ async def fetch_and_parse_feed(feed: RSSFeed) -> int:
                     f"Feed: {feed.url} - Added {new_entries_count} new entries to database"
                 )
     except httpx.HTTPStatusError as e:
-        logger.error(f"HTTP error occurred while fetching feed {feed.url}: {e}")
+        logger.error(f"HTTP error occurred while fetching feed {feed.url}: {e}", exc_info=True)
         raise ValueError(
             f"HTTP error: {e.response.status_code} - {e.response.reason_phrase}"
         )
     except httpx.RequestError as e:
-        logger.error(f"An error occurred while requesting {feed.url}: {e}")
+        logger.error(f"An error occurred while requesting {feed.url}: {e}", exc_info=True)
         raise ValueError(f"Request error: {str(e)}")
     except httpx.TimeoutException as e:
-        logger.error(f"Timeout occurred while fetching feed {feed.url}: {e}")
+        logger.error(f"Timeout occurred while fetching feed {feed.url}: {e}", exc_info=True)
         raise ValueError(f"Timeout error: The request to {feed.url} timed out")
     except feedparser.FeedParserError as e:
-        logger.error(f"FeedParser error occurred while parsing feed {feed.url}: {e}")
+        logger.error(f"FeedParser error occurred while parsing feed {feed.url}: {e}", exc_info=True)
         raise ValueError(f"FeedParser error: {str(e)}")
     except Exception as e:
         logger.error(
@@ -178,4 +204,6 @@ async def fetch_and_parse_feed(feed: RSSFeed) -> int:
         )
         raise RuntimeError(f"Unexpected error: {str(e)}")
     finally:
+        if lock_file:
+            release_lock(lock_file)
         return new_entries_count
