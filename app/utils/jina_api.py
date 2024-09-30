@@ -8,6 +8,7 @@ import logging
 from app.utils.logging_config import setup_logger
 from cachetools import TTLCache
 from functools import lru_cache
+from app.utils.db_connection_manager import DBConnectionManager
 
 load_dotenv()
 
@@ -18,6 +19,16 @@ logger = setup_logger("jina_api", "jina_api.log")
 
 # Create a TTL cache with a maximum of 1000 items and a 1-hour expiration
 content_cache = TTLCache(maxsize=1000, ttl=3600)
+
+# Function to check if the database is locked
+def is_database_locked():
+    with DBConnectionManager.get_session() as session:
+        try:
+            session.execute("SELECT 1")
+            return False
+        except Exception as e:
+            logger.error(f"Database is locked: {str(e)}")
+            return True
 
 
 async def follow_redirects(url: str) -> str:
@@ -136,6 +147,10 @@ async def process_url(url: str, post_id: str) -> None:
         url (str): The URL to process.
         post_id (str): The ID of the associated post in the database.
     """
+    if is_database_locked():
+        logger.warning("Database is locked. Skipping URL processing.")
+        return
+
     if url in content_cache:
         content = content_cache[url]
         logger.info(f"Using cached content for URL: {url}")

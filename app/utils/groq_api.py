@@ -17,6 +17,7 @@ from flask import current_app
 from app.utils.logging_config import setup_logger
 from langchain_groq import ChatGroq
 from langchain.schema import HumanMessage
+from app.utils.db_connection_manager import DBConnectionManager
 
 logger = setup_logger('groq_api', 'groq_api.log')
 
@@ -32,12 +33,26 @@ class GroqAPI:
         self.prompts = self.load_prompts()
 
     @staticmethod
+    def is_database_locked():
+        with DBConnectionManager.get_session() as session:
+            try:
+                session.execute("SELECT 1")
+                return False
+            except Exception as e:
+                logger.error(f"Database is locked: {str(e)}")
+                return True
+
+    @staticmethod
     def load_prompts():
         prompts_path = os.path.join(current_app.root_path, 'static', 'yaml', 'prompts.yaml')
         with open(prompts_path, "r") as file:
             return yaml.safe_load(file)
 
     async def generate(self, prompt_type: str, article: str) -> str:
+        if self.is_database_locked():
+            logger.warning("Database is locked. Skipping summary generation.")
+            return ""
+
         try:
             prompt_data = self.prompts.get(prompt_type, {})
             system_prompt = prompt_data.get("system_prompt", "")
