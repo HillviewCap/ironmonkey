@@ -27,25 +27,31 @@ import httpx
 import feedparser
 from app.models import db, ParsedContent, RSSFeed
 import os
-import fcntl
+import tempfile
 from app.utils.logging_config import setup_logger
 
 logger = setup_logger("feed_parser_service", "feed_parser_service.log")
 
-LOCK_FILE = "feed_parser.lock"
+LOCK_FILE = os.path.join(tempfile.gettempdir(), "feed_parser.lock")
 
 def acquire_lock():
-    lock_file = open(LOCK_FILE, 'w')
     try:
-        fcntl.flock(lock_file, fcntl.LOCK_EX | fcntl.LOCK_NB)
-        return lock_file
-    except IOError:
+        if os.path.exists(LOCK_FILE):
+            # Check if the existing lock is stale (older than 1 hour)
+            if os.path.getmtime(LOCK_FILE) < time.time() - 3600:
+                os.remove(LOCK_FILE)
+            else:
+                return None
+        with open(LOCK_FILE, 'x'):  # Create the file exclusively
+            return LOCK_FILE
+    except FileExistsError:
         return None
 
 def release_lock(lock_file):
-    fcntl.flock(lock_file, fcntl.LOCK_UN)
-    lock_file.close()
-    os.remove(LOCK_FILE)
+    try:
+        os.remove(lock_file)
+    except Exception as e:
+        logger.error(f"Error releasing lock: {e}")
 
 def get_or_create_category(name):
     category = Category.query.filter_by(name=name).first()
