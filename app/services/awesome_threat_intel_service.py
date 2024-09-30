@@ -52,9 +52,9 @@ class AwesomeThreatIntelService:
                 next(reader)  # Skip the header row
                 
                 for row in reader:
-                    blog_name = row.get('Blog')
+                    blog_name = row.get('Blog Name')
                     if not blog_name:
-                        print(f"Warning: 'Blog' column not found in row: {row}")
+                        print(f"Warning: 'Blog Name' column not found in row: {row}")
                         continue
                     
                     csv_blogs.add(blog_name)
@@ -79,6 +79,9 @@ class AwesomeThreatIntelService:
                             feed_type=row.get('Feed Type', '')
                         )
                         db.session.add(blog)
+                    
+                    # Update last_checked for each entry
+                    blog.last_checked = datetime.utcnow()
         except FileNotFoundError:
             print(f"Error: CSV file not found at {csv_file_path}")
             return
