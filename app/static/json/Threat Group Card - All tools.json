@@ -10,7 +10,7 @@
   "tlp": "white",
   "license": "Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License",
   "uuid": "797fafb7-945a-4349-a829-3e8e27184843",
-  "last-db-change": "2024-06-19",
+  "last-db-change": "2024-08-27",
   "values": [
     {
       "tool": "3102 RAT",
@@ -1606,6 +1606,24 @@
       ],
       "uuid": "808cf3ae-bce9-40a5-a4e9-14bb9c1c8424",
       "last-card-change": "2020-05-21"
+    },
+    {
+      "tool": "AnvilEcho",
+      "names": [
+        {
+          "name": "AnvilEcho"
+        }
+      ],
+      "description": "(Proofpoint) AnvilEcho is a PowerShell trojan that contains extensive functionality, including capabilities that expand on previous TA453 malware samples.",
+      "category": "Malware",
+      "type": [
+        "Backdoor"
+      ],
+      "information": [
+        "https://www.proofpoint.com/us/blog/threat-insight/best-laid-plans-ta453-targets-religious-figure-fake-podcast-invite-delivering"
+      ],
+      "uuid": "25df748b-8427-4acf-8aae-dd5d61c89f69",
+      "last-card-change": "2024-08-27"
     },
     {
       "tool": "AnyDesk",
@@ -3761,6 +3779,24 @@
       "last-card-change": "2023-10-13"
     },
     {
+      "tool": "BEACON",
+      "names": [
+        {
+          "name": "BEACON"
+        }
+      ],
+      "description": "(Mandiant) The BEACON payloads, once executed, communicated using either self-managed infrastructure hosted behind Cloudflare or utilized Cloudflare Workers as their command-and-control (C2) channels. BEACON configuration can be found in the Indicators of Compromise section.",
+      "category": "Malware",
+      "type": [
+        "Backdoor"
+      ],
+      "information": [
+        "https://cloud.google.com/blog/topics/threat-intelligence/apt41-arisen-from-dust"
+      ],
+      "uuid": "365cf995-1e41-4f59-a788-fea8af594f6c",
+      "last-card-change": "2024-08-26"
+    },
+    {
       "tool": "BeaconLoader",
       "names": [
         {
@@ -4929,6 +4965,46 @@
       "last-card-change": "2022-12-29"
     },
     {
+      "tool": "BlackSmith",
+      "names": [
+        {
+          "name": "BlackSmith"
+        }
+      ],
+      "description": "(Proofpoint) With BlackSmith, TA453 has created a sophisticated intelligence collection toolkit and streamlined its malware functions from a disparate set of individual scripts into a full-service PowerShell trojan.",
+      "category": "Malware",
+      "type": [
+        "Backdoor",
+        "Info stealer"
+      ],
+      "information": [
+        "https://www.proofpoint.com/us/blog/threat-insight/best-laid-plans-ta453-targets-religious-figure-fake-podcast-invite-delivering"
+      ],
+      "uuid": "87eb68be-5b44-4229-9357-89986d18e5e0",
+      "last-card-change": "2024-08-27"
+    },
+    {
+      "tool": "BlankBot",
+      "names": [
+        {
+          "name": "BlankBot"
+        }
+      ],
+      "description": "(Intel471) In July 2024, Intel 471 Malware Intelligence researchers discovered the new BlankBot Android banking trojan.\nBased on the application names and certain strings found within the application, it is highly likely BlankBot’s primary targets are Turkish users.\nBlankBot features a range of malicious capabilities, which include customer injections, keylogging, screen recording and it communicates with a control server over a WebSocket connection.",
+      "category": "Malware",
+      "type": [
+        "Banking trojan",
+        "Backdoor",
+        "Info stealer",
+        "Credential stealer"
+      ],
+      "information": [
+        "https://intel471.com/blog/blankbot-a-new-android-banking-trojan-with-screen-recording-keylogging-and-remote-control-capabilities"
+      ],
+      "uuid": "3531375b-b63c-4b6c-8558-6ba176f2d75e",
+      "last-card-change": "2024-08-27"
+    },
+    {
       "tool": "BLINDINGCAN",
       "names": [
         {
@@ -5064,6 +5140,24 @@
       ],
       "uuid": "0380de25-2be3-4367-81a5-6dce337093ef",
       "last-card-change": "2021-12-26"
+    },
+    {
+      "tool": "BLUEBEAM",
+      "names": [
+        {
+          "name": "BLUEBEAM"
+        }
+      ],
+      "description": "No description available yet.",
+      "category": "Malware",
+      "type": [
+        "Backdoor"
+      ],
+      "information": [
+        "https://cloud.google.com/blog/topics/threat-intelligence/apt41-arisen-from-dust"
+      ],
+      "uuid": "3eaeff4f-1f9f-4056-81cd-0ea5dfb91549",
+      "last-card-change": "2024-08-26"
     },
     {
       "tool": "BlueCore",
@@ -5779,21 +5873,25 @@
       "names": [
         {
           "name": "Brute Ratel"
+        },
+        {
+          "name": "Brute Ratel C4"
         }
       ],
       "description": "No description available yet.",
-      "category": "Malware",
+      "category": "Tools",
       "type": [
         "Backdoor"
       ],
       "information": [
-        "https://go.recordedfuture.com/hubfs/reports/cta-2023-0808.pdf"
+        "https://go.recordedfuture.com/hubfs/reports/cta-2023-0808.pdf",
+        "https://unit42.paloaltonetworks.com/brute-ratel-c4-tool/"
       ],
       "playbook": [
         "https://pan-unit42.github.io/playbook_viewer/?pb=brute-ratel"
       ],
       "uuid": "801504e0-6904-4a8e-bdff-c9f8436f8bc0",
-      "last-card-change": "2024-03-10"
+      "last-card-change": "2024-08-27"
     },
     {
       "tool": "BrutishCommand",
@@ -5944,6 +6042,24 @@
       ],
       "uuid": "346a101f-489c-4d64-994b-f12ff6b60a1a",
       "last-card-change": "2021-04-24"
+    },
+    {
+      "tool": "BugSleep",
+      "names": [
+        {
+          "name": "BugSleep"
+        }
+      ],
+      "description": "(Check Point) BugSleep is a new tailor-made malware used in MuddyWater phishing lures since May 2024, partially replacing their use of legitimate RMM tools. We discovered several versions of the malware being distributed, with differences between each version showing improvements and bug fixes (and sometimes creating new bugs). These updates, occurring within short intervals between samples, suggest a trial-and-error approach.\n\nBugSleep main logic is similar in all versions, starting with many calls to the Sleep API to evade sandboxes and then it loads the APIs it needs to run properly. It then creates a mutex (we observed “PackageManager” and “DocumentUpdater” in our samples) and decrypts its configuration which includes the C&C IP address and port. All the configurations and strings are encrypted in the same way, where every byte is subtracted with the same hardcoded value.\n\nIn most BugSleep samples, the malware then creates a scheduled task with the same name as the mutex and adds the comment 'sample comment' to it. The scheduled task, which ensures persistence for BugSleep, runs the malware and is triggered every 30 minutes on a daily basis.",
+      "category": "Malware",
+      "type": [
+        "Backdoor"
+      ],
+      "information": [
+        "https://research.checkpoint.com/2024/new-bugsleep-backdoor-deployed-in-recent-muddywater-campaigns/"
+      ],
+      "uuid": "fd142e2a-1c90-4780-8eac-3319136a2f3f",
+      "last-card-change": "2024-08-26"
     },
     {
       "tool": "Buhtrap",
@@ -6804,6 +6920,24 @@
       "last-card-change": "2020-04-23"
     },
     {
+      "tool": "CASTLETAP",
+      "names": [
+        {
+          "name": "CASTLETAP"
+        }
+      ],
+      "description": "(Mandiant) Analysis on the FortiGate firewalls identified an additional malicious file /bin/fgfm. Analysis of /bin/fgfm determined it to be a passive backdoor, named CASTLETAP, that listened for a specialized ICMP packet for activation. The threat actor likely named the file ‘fgfm’ in an attempt to disguise the backdoor as the legitimate service ‘fgfmd’ which facilitates communication between the FortiManager and FortiGate firewalls.\n\nOnce executed, CASTLETAP created a raw promiscuous socket to sniff network traffic. CASTLETAP then filtered and XOR decoded a 9-byte magic activation string in the payload of an ICMP echo request packet.",
+      "category": "Malware",
+      "type": [
+        "Backdoor"
+      ],
+      "information": [
+        "https://cloud.google.com/blog/topics/threat-intelligence/fortinet-malware-ecosystem/"
+      ],
+      "uuid": "cc32e2b8-7562-4241-929f-450ed69be9cb",
+      "last-card-change": "2024-08-26"
+    },
+    {
       "tool": "Castov",
       "names": [
         {
@@ -7303,6 +7437,25 @@
       ],
       "uuid": "617bd0a3-821e-43b4-9619-a6fd084d1439",
       "last-card-change": "2022-12-30"
+    },
+    {
+      "tool": "CHERRYSPY",
+      "names": [
+        {
+          "name": "CHERRYSPY"
+        }
+      ],
+      "description": "(The Hacker News) a Python backdoor codenamed CHERRYSPY, which is capable of running commands issued by a remote server.",
+      "category": "Malware",
+      "type": [
+        "Backdoor"
+      ],
+      "information": [
+        "https://thehackernews.com/2024/07/ukrainian-institutions-targeted-using.html",
+        "https://cert.gov.ua/article/6280129"
+      ],
+      "uuid": "cf2472e2-b447-46a6-b572-3954135468c0",
+      "last-card-change": "2024-08-27"
     },
     {
       "tool": "ChewBacca",
@@ -8052,7 +8205,9 @@
         "https://unit42.paloaltonetworks.com/cobalt-strike-memory-analysis/",
         "https://securityintelligence.com/posts/defining-cobalt-strike-reflective-loader/",
         "https://unit42.paloaltonetworks.com/cobalt-strike-malleable-c2/",
-        "https://asec.ahnlab.com/en/59110/"
+        "https://asec.ahnlab.com/en/59110/",
+        "https://unit42.paloaltonetworks.com/attackers-exploit-public-cobalt-strike-profiles/",
+        "https://www.europol.europa.eu/media-press/newsroom/news/europol-coordinates-global-action-against-criminal-abuse-of-cobalt-strike"
       ],
       "mitre-attack": [
         "https://attack.mitre.org/software/S0154/"
@@ -8064,7 +8219,7 @@
         "https://otx.alienvault.com/browse/pulses?q=tag:Cobalt%20Strike"
       ],
       "uuid": "7ea8d070-cfd7-473c-a615-437fc292af55",
-      "last-card-change": "2023-11-30"
+      "last-card-change": "2024-08-26"
     },
     {
       "tool": "CobInt",
@@ -9221,6 +9376,24 @@
       ],
       "uuid": "4241f520-2de3-4e62-8a0f-51f04a119ca4",
       "last-card-change": "2020-05-21"
+    },
+    {
+      "tool": "CrossC2",
+      "names": [
+        {
+          "name": "CrossC2"
+        }
+      ],
+      "description": "CrossC2Kit is an infiltration expansion around the Unix platform derived from CrossC2. Use Aggressor Script Open Source Script engine. It can be used to create automation to simulate the operation process of the Red Team and expand the CobaltStrike client.",
+      "category": "Tools",
+      "type": [
+        "Backdoor"
+      ],
+      "information": [
+        "https://github.com/gloxec/CrossC2"
+      ],
+      "uuid": "612fbd80-7efb-4f2c-8e10-381369102f63",
+      "last-card-change": "2024-08-27"
     },
     {
       "tool": "CrossRAT",
@@ -10992,6 +11165,25 @@
       "last-card-change": "2020-04-20"
     },
     {
+      "tool": "Demodex",
+      "names": [
+        {
+          "name": "Demodex"
+        }
+      ],
+      "description": "(Sygnia) One of these tools was identified as a variant of Demodex, a rootkit previously associated with the threat group known as GhostEmperor.",
+      "category": "Malware",
+      "type": [
+        "Rootkit",
+        "Backdoor"
+      ],
+      "information": [
+        "https://www.sygnia.co/blog/ghost-emperor-demodex-rootkit/"
+      ],
+      "uuid": "5f36b258-4de7-492d-9052-fcc28b81905a",
+      "last-card-change": "2024-08-26"
+    },
+    {
       "tool": "Dendroid",
       "names": [
         {
@@ -11861,6 +12053,24 @@
       ],
       "uuid": "26caccee-f011-40c9-b1a7-e29e763f3d39",
       "last-card-change": "2020-04-23"
+    },
+    {
+      "tool": "DodgeBox",
+      "names": [
+        {
+          "name": "DodgeBox"
+        }
+      ],
+      "description": "(ZScaler) APT41, a China-based nation state threat actor known for its campaigns in Southeast Asian countries, has recently been observed deploying an advanced and upgraded version of StealthVector. We have named this new variant DodgeBox.\nDodgeBox incorporates various evasive techniques such as call stack spoofing, DLL sideloading, DLL hollowing and environmental guardrails. These techniques work together to significantly decrease the chances of detection by security defenses.\nUpon analyzing DodgeBox, we discovered significant resemblances to the well-known StealthVector loader used by APT41. These similarities, combined with the distinct utilization of DLL side loading and the acquisition of telemetry data from targeted countries, have led us to attribute this new loader to APT41 / Earth Baku with a moderate level of confidence.",
+      "category": "Malware",
+      "type": [
+        "Loader"
+      ],
+      "information": [
+        "https://www.zscaler.com/blogs/security-research/dodgebox-deep-dive-updated-arsenal-apt41-part-1"
+      ],
+      "uuid": "99454294-9157-4735-b62d-0e5475dd492f",
+      "last-card-change": "2024-08-26"
     },
     {
       "tool": "Dolphin",
@@ -12775,6 +12985,44 @@
       ],
       "uuid": "85552932-c4be-498f-b427-2e45495c62b3",
       "last-card-change": "2021-04-24"
+    },
+    {
+      "tool": "DUSTPAN",
+      "names": [
+        {
+          "name": "DUSTPAN"
+        }
+      ],
+      "description": "(Mandiant) DUSTPAN is an in-memory dropper written in C/C++ that decrypts and executes an embedded payload. Different variations of DUSTPAN may also load an external payload off disk from a hard-coded file path encrypted in the Portable Executable (PE) file. DUSTPAN may be configured to inject the decrypted payload into another process or create a new thread and execute it within its own process space.",
+      "category": "Malware",
+      "type": [
+        "Dropper"
+      ],
+      "information": [
+        "https://cloud.google.com/blog/topics/threat-intelligence/apt41-arisen-from-dust",
+        "https://cloud.google.com/blog/topics/threat-intelligence/apt41-us-state-governments"
+      ],
+      "uuid": "023d9604-42c5-4f69-bc1e-625c5795eb1c",
+      "last-card-change": "2024-08-26"
+    },
+    {
+      "tool": "DUSTTRAP",
+      "names": [
+        {
+          "name": "DUSTTRAP"
+        }
+      ],
+      "description": "(Mandiant) DUSTTRAP is a multi-stage plugin framework with multiple components. DUSTTRAP begins with a launcher (Stage 1) that AES-128-CFB decrypts an encrypted on-disk PE file <varies>.dll.mui and executes it in memory. Decryption relies on the target machine's HKLM\\SOFTWARE\\Microsoft\\Cryptography\\MachineGUID, thereby keying the launcher to the victim system. The decrypted PE from the launcher is a memory-only dropper (Stage 2) that is responsible for decrypting an embedded configuration and two or more embedded plugin dynamic-link libraries (DLLs) from its .lrsrc section. Once executed, these DLLs begin the setup of the modular plugin system. The first observed plugin (Stage 3) is responsible for low-level network setup and encryption. The second observed plugin (Stage 4) is responsible for higher-level network operations and may function as a downloader for additional plugins that, when loaded, may register themselves with prior components in the execution chain for additional functionality. We've observed the second plugin to vary in functionality and more plugin variants likely exist.",
+      "category": "Malware",
+      "type": [
+        "Dropper",
+        "Loader"
+      ],
+      "information": [
+        "https://cloud.google.com/blog/topics/threat-intelligence/apt41-arisen-from-dust"
+      ],
+      "uuid": "10f211ca-a8cb-4c7f-9199-a66ab8c99cbd",
+      "last-card-change": "2024-08-26"
     },
     {
       "tool": "DustyExfilTool",
@@ -15854,6 +16102,24 @@
       "last-card-change": "2020-05-13"
     },
     {
+      "tool": "FrostyGoop",
+      "names": [
+        {
+          "name": "FrostyGoop"
+        }
+      ],
+      "description": "(Dragos) FrostyGoop is the ninth industrial control systems (ICS) specific malware. It is the first ICS-specific malware that uses Modbus TCP communications to achieve an impact on Operational Technology (OT). {{PIPEDREAM}}, an ICS malware discovered in 2022, uses Modbus communications in one of its components for enumeration.",
+      "category": "Malware",
+      "type": [
+        "ICS malware"
+      ],
+      "information": [
+        "https://hub.dragos.com/hubfs/Reports/Dragos-FrostyGoop-ICS-Malware-Intel-Brief-0724_.pdf"
+      ],
+      "uuid": "b3c0bbae-809d-4bf0-917f-d52fe95f7812",
+      "last-card-change": "2024-08-27"
+    },
+    {
       "tool": "FrozenCell",
       "names": [
         {
@@ -16831,8 +17097,11 @@
         "https://www.volexity.com/blog/2024/01/10/active-exploitation-of-two-zero-day-vulnerabilities-in-ivanti-connect-secure-vpn/",
         "https://www.volexity.com/blog/2024/01/15/ivanti-connect-secure-vpn-exploitation-goes-global/"
       ],
+      "mitre-attack": [
+        "https://attack.mitre.org/software/S1115"
+      ],
       "uuid": "ff025551-4ea2-43f3-8faf-97b156c08b51",
-      "last-card-change": "2024-01-17"
+      "last-card-change": "2024-08-27"
     },
     {
       "tool": "Gigabud",
@@ -16860,6 +17129,30 @@
       ],
       "uuid": "5a809ab7-3b4e-418f-af13-2c897c3089b5",
       "last-card-change": "2023-09-06"
+    },
+    {
+      "tool": "GIMMICK",
+      "names": [
+        {
+          "name": "GIMMICK"
+        }
+      ],
+      "description": "(Volexity) GIMMICK is used in targeted attacks by Storm Cloud, a Chinese espionage threat actor known to attack organizations across Asia. It is a feature-rich, multi-platform malware family that uses public cloud hosting services (such as Google Drive) for command-and-control (C2) channels. The newly identified macOS variant is written primarily in Objective C, with Windows versions written in both .NET and Delphi. Despite core differences in programming languages used and operating systems targeted, Volexity tracks the malware under the same name due to shared C2 architecture, file paths, and behavioral patterns used by all variants.",
+      "category": "Malware",
+      "type": [
+        "Backdoor",
+        "Downloader",
+        "Exfiltration"
+      ],
+      "information": [
+        "https://www.volexity.com/blog/2022/03/22/storm-cloud-on-the-horizon-gimmick-malware-strikes-at-macos/"
+      ],
+      "malpedia": [
+        "https://malpedia.caad.fkie.fraunhofer.de/details/osx.gimmick",
+        "https://malpedia.caad.fkie.fraunhofer.de/details/win.gimmick"
+      ],
+      "uuid": "9243117d-7400-455a-a9cc-98413c1681d8",
+      "last-card-change": "2024-08-27"
     },
     {
       "tool": "GlanceLove",
@@ -17614,7 +17907,9 @@
         "https://www.trendmicro.com/en_us/research/23/a/gootkit-loader-actively-targets-the-australian-healthcare-indust.html",
         "https://www.mandiant.com/resources/blog/tracking-evolution-gootloader-operations",
         "https://www.cybereason.com/blog/threat-alert-gootloader-seo-poisoning-and-large-payloads-leading-to-compromise",
-        "https://securityintelligence.com/x-force/gootbot-gootloaders-new-approach-to-post-exploitation/"
+        "https://securityintelligence.com/x-force/gootbot-gootloaders-new-approach-to-post-exploitation/",
+        "https://www.cybereason.com/blog/i-am-goot-loader",
+        "https://unit42.paloaltonetworks.com/javascript-malware-gootloader/"
       ],
       "malpedia": [
         "https://malpedia.caad.fkie.fraunhofer.de/details/win.gootkit"
@@ -17623,7 +17918,7 @@
         "https://otx.alienvault.com/browse/pulses?q=tag:Gootkit"
       ],
       "uuid": "3211a3c1-ebff-42f3-9139-87e77b266759",
-      "last-card-change": "2023-11-29"
+      "last-card-change": "2024-08-26"
     },
     {
       "tool": "Gophe",
@@ -18043,7 +18338,8 @@
         "https://www.welivesecurity.com/en/eset-research/eset-takes-part-global-operation-disrupt-grandoreiro-banking-trojan/",
         "https://www.interpol.int/News-and-Events/News/2024/Disrupting-a-Grandoreiro-malware-operation",
         "https://www.trendmicro.com/en_us/research/24/d/trend-micro-collaborated-with-interpol-in-cracking-down-grandore.html",
-        "https://securityintelligence.com/x-force/grandoreiro-banking-trojan-unleashed/"
+        "https://securityintelligence.com/x-force/grandoreiro-banking-trojan-unleashed/",
+        "https://flashpoint.io/blog/grandoreiro-malware-exploits/"
       ],
       "mitre-attack": [
         "https://attack.mitre.org/software/S0531/"
@@ -18055,7 +18351,7 @@
         "https://otx.alienvault.com/browse/pulses?q=tag:grandoreiro"
       ],
       "uuid": "c4ec465b-e68f-49d7-ae46-de7f308d7723",
-      "last-card-change": "2024-06-18"
+      "last-card-change": "2024-08-27"
     },
     {
       "tool": "GraphicalNeutrino",
@@ -18427,6 +18723,24 @@
       ],
       "uuid": "b9feebcb-c81d-4be0-a9d4-26fedc4a735e",
       "last-card-change": "2020-04-20"
+    },
+    {
+      "tool": "GrewApacha",
+      "names": [
+        {
+          "name": "GrewApacha"
+        }
+      ],
+      "description": "(Kaspersky) The threat actors used the above backdoor to collect information about infected computers and install additional malware on them.",
+      "category": "Malware",
+      "type": [
+        "Backdoor"
+      ],
+      "information": [
+        "https://securelist.com/eastwind-apt-campaign/113345/"
+      ],
+      "uuid": "820a6b58-f941-4a75-a302-0e2da9730c54",
+      "last-card-change": "2024-08-27"
     },
     {
       "tool": "GreyEnergy",
@@ -19075,6 +19389,25 @@
       ],
       "uuid": "d582c66b-480c-41d3-9211-20a615163a5b",
       "last-card-change": "2024-01-16"
+    },
+    {
+      "tool": "HATVIBE",
+      "names": [
+        {
+          "name": "HATVIBE"
+        }
+      ],
+      "description": "(The Hacker News) Opening the document and enabling macros results in the execution of an encoded HTML Application (HTA) named HATVIBE, which sets up persistence on the host using a scheduled task and paves the way for a Python backdoor codenamed {{CHERRYSPY}}, which is capable of running commands issued by a remote server.",
+      "category": "Malware",
+      "type": [
+        "Loader"
+      ],
+      "information": [
+        "https://thehackernews.com/2024/07/ukrainian-institutions-targeted-using.html",
+        "https://cert.gov.ua/article/6280129"
+      ],
+      "uuid": "1c242d91-b9d1-40af-972a-ecf002dbde30",
+      "last-card-change": "2024-08-27"
     },
     {
       "tool": "Havex RAT",
@@ -24110,6 +24443,25 @@
       "last-card-change": "2020-05-14"
     },
     {
+      "tool": "LESLIELOADER",
+      "names": [
+        {
+          "name": "LESLIELOADER"
+        }
+      ],
+      "description": "(Kroll) The loader achieves its goal by decoding and decrypting a secondary payload binary, then injecting it into a notepad.exe instance. This injection allows the malware to blend with legitimate system activity as it shares the memory space of a legitimate application. Despite detection tools’ ability to mitigate process injections, they remain a common evasion tactic.",
+      "category": "Tools",
+      "type": [
+        "Loader"
+      ],
+      "information": [
+        "https://www.kroll.com/en/insights/publications/cyber/leslieloader-undocumented-loader-observed",
+        "https://go.recordedfuture.com/hubfs/reports/cta-2024-0716.pdf"
+      ],
+      "uuid": "532e4f3e-a52a-4e25-ba6e-c3d79e3d9ecd",
+      "last-card-change": "2024-08-27"
+    },
+    {
       "tool": "Licat",
       "names": [
         {
@@ -25215,6 +25567,24 @@
       "last-card-change": "2021-04-24"
     },
     {
+      "tool": "LOOKOVER",
+      "names": [
+        {
+          "name": "LOOKOVER"
+        }
+      ],
+      "description": "(Mandiant) The threat actor's first attempt to extend their access to the network appliances by targeting the TACACS server was the use of LOOKOVER. LOOKOVER is a sniffer written in C that processes TACACS+ authentication packets, performs decryption, and writes its contents to a specified file path. LOOKOVER uses the publicly available libpcap library to sniff TCP packets.",
+      "category": "Malware",
+      "type": [
+        "Info stealer"
+      ],
+      "information": [
+        "https://cloud.google.com/blog/topics/threat-intelligence/uncovering-unc3886-espionage-operations"
+      ],
+      "uuid": "75320f8c-19aa-489e-b7b2-4c22d2592a32",
+      "last-card-change": "2024-08-26"
+    },
+    {
       "tool": "LOWBALL",
       "names": [
         {
@@ -25544,6 +25914,42 @@
       ],
       "uuid": "0abfd804-c6f6-483e-987b-3714073798bc",
       "last-card-change": "2020-05-14"
+    },
+    {
+      "tool": "Macma",
+      "names": [
+        {
+          "name": "Macma"
+        },
+        {
+          "name": "MacMa"
+        },
+        {
+          "name": "CDDS"
+        },
+        {
+          "name": "DazzleSpy"
+        }
+      ],
+      "description": "(Symantec) Macma is a macOS backdoor that was first documented by Google in 2021 but appears to have been used since at least 2019. At the time of discovery, it was being distributed in watering hole attacks involving compromised websites in Hong Kong. The watering holes contained exploits for iOS and macOS devices. Users of macOS devices were targeted with a privilege escalation vulnerability (CVE-2021-30869) which allowed the attackers to install Macma on vulnerable systems.\n\nMacma is a modular backdoor. Functionality includes:\n• Device fingerprinting\n• Executing commands\n• Screen capture\n• Keylogging\n• Audio capture<vr />• Uploading and downloading files",
+      "category": "Malware",
+      "type": [
+        "Backdoor",
+        "Info stealer",
+        "Credential stealer",
+        "Exfiltration"
+      ],
+      "information": [
+        "https://symantec-enterprise-blogs.security.com/threat-intelligence/daggerfly-espionage-updated-toolset"
+      ],
+      "mitre-attack": [
+        "https://attack.mitre.org/software/S1016"
+      ],
+      "malpedia": [
+        "https://malpedia.caad.fkie.fraunhofer.de/details/osx.cdds"
+      ],
+      "uuid": "069c86ae-99de-4486-a5c4-fa3616d2a2a4",
+      "last-card-change": "2024-08-27"
     },
     {
       "tool": "Madi",
@@ -26383,13 +26789,14 @@
         "https://research.checkpoint.com/2021/mekotio-banker-returns-with-improved-stealth-and-ancient-encryption/",
         "https://www.sygnia.co/blog/breaking-down-casbaneiro-infection-chain/",
         "https://www.sygnia.co/blog/breaking-down-casbaneiro-infection-chain-part2/",
-        "https://www.forcepoint.com/blog/x-labs/exploring-metamorfo-banking-malware"
+        "https://www.forcepoint.com/blog/x-labs/exploring-metamorfo-banking-malware",
+        "https://www.trendmicro.com/en_us/research/24/g/mekotio-banking-trojan.html"
       ],
       "malpedia": [
         "https://malpedia.caad.fkie.fraunhofer.de/details/win.mekotio"
       ],
       "uuid": "a5c752a8-eefc-4ed1-9520-0e0ae67fa892",
-      "last-card-change": "2024-06-18"
+      "last-card-change": "2024-08-26"
     },
     {
       "tool": "Merdoor",
@@ -26588,6 +26995,9 @@
         },
         {
           "name": "Mgmbot"
+        },
+        {
+          "name": "POCOSTICK"
         }
       ],
       "description": "(Malwarebytes) MgBot uses several anti-analysis and anti-virtualization techniques. The code is self modifying which means it alters its code sections during runtime. This makes static analysis of the sample harder.\n\nMgBot tries to avoid running in known virtualized environment such as VmWare, Sandboxie and VirtualBox. To identify if it’s running in one of these environments, it looks for the following DLL files: vmhgfs.dll, sbiedll.dll and vboxogl.dll and if it finds any of these DLLs, it goes to an infinite loop without doing any malicious activity.",
@@ -26597,13 +27007,14 @@
       ],
       "information": [
         "https://blog.malwarebytes.com/threat-analysis/2020/07/chinese-apt-group-targets-india-and-hong-kong-using-new-variant-of-mgbot-malware/",
-        "https://vb2020.vblocalhost.com/uploads/VB2020-43.pdf"
+        "https://vb2020.vblocalhost.com/uploads/VB2020-43.pdf",
+        "https://www.welivesecurity.com/2023/04/26/evasive-panda-apt-group-malware-updates-popular-chinese-software/"
       ],
       "malpedia": [
         "https://malpedia.caad.fkie.fraunhofer.de/details/win.mgbot"
       ],
       "uuid": "ff3865c1-fb45-4197-89a2-2cce3bed17bb",
-      "last-card-change": "2021-08-10"
+      "last-card-change": "2024-08-27"
     },
     {
       "tool": "MiamiBeach",
@@ -27519,6 +27930,24 @@
       "last-card-change": "2022-12-27"
     },
     {
+      "tool": "MoonPeak",
+      "names": [
+        {
+          "name": "MoonPeak"
+        }
+      ],
+      "description": "(Talos) This a XenoRAT-based malware, which is under active development by a North Korean nexus cluster we are calling “UAT-5394.” Our analysis of infrastructure used in the campaign reveals additional links to the UAT-5394 infrastructure and new tactics, techniques and procedures (TTPs) of the threat actor.",
+      "category": "Malware",
+      "type": [
+        "Backdoor"
+      ],
+      "information": [
+        "https://blog.talosintelligence.com/moonpeak-malware-infrastructure-north-korea/"
+      ],
+      "uuid": "73a652ba-a6af-4e0c-a936-bd03af035699",
+      "last-card-change": "2024-08-27"
+    },
+    {
       "tool": "MOONSHINE",
       "names": [
         {
@@ -27536,6 +27965,24 @@
       ],
       "uuid": "2ea4f916-78e7-4c96-b24d-72a28372ea2c",
       "last-card-change": "2020-04-20"
+    },
+    {
+      "tool": "MoonWalk",
+      "names": [
+        {
+          "name": "MoonWalk"
+        }
+      ],
+      "description": "(ZScaler) APT41, a China-based nation-state threat actor known for campaigns in Southeast Asia, has been observed using a new backdoor called MoonWalk.\nMoonWalk shares a common development toolkit with {{DodgeBox}}, reusing code that implements evasive techniques such as DLL hollowing, import resolution, DLL unhooking, and call stack spoofing. Additionally, MoonWalk employs further evasion tactics, including the use of Google Drive as its C2 channel to blend in with legitimate network traffic and the utilization of Windows Fibers to evade AV/EDR security solutions.\nMoonWalk's modular design allows attackers to easily update its capabilities, modify its behavior, and customize functionality for different scenarios.",
+      "category": "Malware",
+      "type": [
+        "Backdoor"
+      ],
+      "information": [
+        "https://www.zscaler.com/blogs/security-research/moonwalk-deep-dive-updated-arsenal-apt41-part-2"
+      ],
+      "uuid": "fcd28a3d-27ab-4858-9982-f14c6bc77c8e",
+      "last-card-change": "2024-08-26"
     },
     {
       "tool": "MoonWind RAT",
@@ -27568,6 +28015,25 @@
       ],
       "uuid": "14592f43-472d-41b2-9f29-7994c9a473fa",
       "last-card-change": "2020-04-23"
+    },
+    {
+      "tool": "MOPSLED",
+      "names": [
+        {
+          "name": "MOPSLED"
+        }
+      ],
+      "description": "(Mandiant) MOPSLED is a shellcode-based modular backdoor that has the capability to communicate over HTTP or a custom binary protocol over TCP to its C2 server. The core functionality of MOPSLED involves expanding its capabilities by retrieving plugins from the C2 server. MOPSLED also uses a custom ChaCha20 encryption algorithm to decrypt embedded and external configuration files.\n\nMandiant observed sharing of MOPSLED between other Chinese cyber espionage groups including APT41. Mandiant considered MOPSLED to be an evolution of {{CrossWalk}}, which can act as a network proxy.",
+      "category": "Malware",
+      "type": [
+        "Reconnaissance",
+        "Backdoor"
+      ],
+      "information": [
+        "https://cloud.google.com/blog/topics/threat-intelligence/uncovering-unc3886-espionage-operations"
+      ],
+      "uuid": "50d20909-9e12-4a46-8305-7af8ae4ae861",
+      "last-card-change": "2024-08-26"
     },
     {
       "tool": "More_eggs",
@@ -29120,13 +29586,14 @@
         "https://unit42.paloaltonetworks.com/cortex-xdr-detects-netsupport-manager-rat-campaign/",
         "https://www.bleepingcomputer.com/news/security/microsoft-warns-of-massive-phishing-attack-pushing-legit-rat/",
         "https://asec.ahnlab.com/en/45312/",
-        "https://blogs.vmware.com/security/2023/11/netsupport-rat-the-rat-king-returns.html"
+        "https://blogs.vmware.com/security/2023/11/netsupport-rat-the-rat-king-returns.html",
+        "https://blog.talosintelligence.com/detecting-evolving-threats-netsupport-rat/"
       ],
       "malpedia": [
         "https://malpedia.caad.fkie.fraunhofer.de/details/win.netsupportmanager_rat"
       ],
       "uuid": "78c4aab3-63f3-4238-9ca9-5f9e07b2a871",
-      "last-card-change": "2023-11-30"
+      "last-card-change": "2024-08-27"
     },
     {
       "tool": "NetSpy",
@@ -29728,6 +30195,31 @@
       "last-card-change": "2022-12-30"
     },
     {
+      "tool": "Nightdoor",
+      "names": [
+        {
+          "name": "Nightdoor"
+        },
+        {
+          "name": "NetMM"
+        },
+        {
+          "name": "Suzafk"
+        }
+      ],
+      "description": "(ESET) The backdoor that we have named Nightdoor (and is named NetMM by the malware authors according to PDB paths) is a late addition to Evasive Panda’s toolset. Our earliest knowledge of Nightdoor goes back to 2020, when Evasive Panda deployed it onto a machine of a high-profile target in Vietnam. The backdoor communicates with its C&C server via UDP or the Google Drive API. The Nightdoor implant from this campaign used the latter. It encrypts a Google API OAuth 2.0 token within the data section and uses the token to access the attacker’s Google Drive. We have requested that the Google account associated with this token be taken down.",
+      "category": "Malware",
+      "type": [
+        "Backdoor"
+      ],
+      "information": [
+        "https://www.welivesecurity.com/en/eset-research/evasive-panda-leverages-monlam-festival-target-tibetans/",
+        "https://symantec-enterprise-blogs.security.com/threat-intelligence/daggerfly-espionage-updated-toolset"
+      ],
+      "uuid": "43a3efa0-ab8e-4404-8416-f2629a7026e3",
+      "last-card-change": "2024-08-27"
+    },
+    {
       "tool": "NIGHTJAR",
       "names": [
         {
@@ -30100,6 +30592,24 @@
       ],
       "uuid": "f17f40a9-f9d0-42d5-9e69-72146a0038cb",
       "last-card-change": "2020-04-20"
+    },
+    {
+      "tool": "NOOPDOOR",
+      "names": [
+        {
+          "name": "NOOPDOOR"
+        }
+      ],
+      "description": "(Cybereason) NOOPDOOR is a 64-bit modular backdoor which employs DGA-based C2 communication. The backdoor is seen to be loaded by NOOPLDR, which is responsible for decrypting and executing NOOPDOOR.",
+      "category": "Malware",
+      "type": [
+        "Backdoor"
+      ],
+      "information": [
+        "https://www.cybereason.com/blog/cuckoo-spear"
+      ],
+      "uuid": "0d486f8b-072f-4703-83d4-322ea23fd030",
+      "last-card-change": "2024-08-27"
     },
     {
       "tool": "NotPetya",
@@ -31390,6 +31900,24 @@
       "last-card-change": "2022-12-30"
     },
     {
+      "tool": "Pantegana",
+      "names": [
+        {
+          "name": "Pantegana"
+        }
+      ],
+      "description": "(Recorded Future) Pantegana is an open-source malware family written in Go that features a cross-platform payload client Windows, Linux, OSX and uses HTTPS for C2 communications. It supports file upload and download, system fingerprinting, and direct command-line interaction with infected hosts. Pantegana also supports obfuscation using the open-source obfuscator Garble. Publicly reported use of Pantegana in the wild to date is minimal, other than a campaign exploiting a zero-day vulnerability in the Sophos Firewall appliance attributed by Volexity to the suspected Chinese state-sponsored threat activity group DriftingCloud.",
+      "category": "Tools",
+      "type": [
+        "Backdoor"
+      ],
+      "information": [
+        "https://go.recordedfuture.com/hubfs/reports/cta-2024-0716.pdf"
+      ],
+      "uuid": "deff9b60-6a3c-4db2-9c46-1adc20420bfd",
+      "last-card-change": "2024-08-27"
+    },
+    {
       "tool": "PapaCreep",
       "names": [
         {
@@ -31845,7 +32373,10 @@
         "https://www.theguardian.com/technology/2024/feb/29/pegasus-surveillance-code-whatsapp-meta-lawsuit-nso-group",
         "https://therecord.media/poland-pegasus-spyware-government-investigation",
         "https://www.securityweek.com/spain-reopens-a-probe-into-a-pegasus-spyware-case-after-a-french-request-to-work-together/",
-        "https://www.accessnow.org/publication/civil-society-in-exile-pegasus/"
+        "https://www.accessnow.org/publication/civil-society-in-exile-pegasus/",
+        "https://therecord.media/poland-seizure-pegasus-spyware-systems",
+        "https://therecord.media/pegasus-spyware-victims-sannikov-erlikh",
+        "https://therecord.media/maker-of-pegasus-spyware-deposition-whatsapp-lawsuit"
       ],
       "mitre-attack": [
         "https://attack.mitre.org/software/S0316/",
@@ -31858,7 +32389,7 @@
         "https://otx.alienvault.com/browse/pulses?q=tag:Pegasus"
       ],
       "uuid": "ff64b1c1-6846-4f3f-9dae-0e23f866299e",
-      "last-card-change": "2024-06-19"
+      "last-card-change": "2024-08-27"
     },
     {
       "tool": "Penquin Turla",
@@ -31938,6 +32469,26 @@
       ],
       "uuid": "86d071f2-79ff-4e25-92ad-357b9f56c57c",
       "last-card-change": "2020-04-23"
+    },
+    {
+      "tool": "PGoShell",
+      "names": [
+        {
+          "name": "PGoShell"
+        }
+      ],
+      "description": "(Knownsec 404) PGoShell is developed in the Go programming language, overall, it offers a rich set of functionalities, including remote shell capabilities, screen capture, and downloading and executing payloads.It was initially named for its primary feature of remote shell capability.",
+      "category": "Malware",
+      "type": [
+        "Backdoor",
+        "Info stealer",
+        "Downloader"
+      ],
+      "information": [
+        "https://medium.com/@knownsec404team/the-patchwork-group-has-updated-its-arsenal-launching-attacks-for-the-first-time-using-brute-ratel-175741987d87"
+      ],
+      "uuid": "762e6de4-062d-4298-b622-97efdf448c6e",
+      "last-card-change": "2024-08-27"
     },
     {
       "tool": "PhanDoor",
@@ -32330,6 +32881,24 @@
       ],
       "uuid": "8a823fe9-e03f-4c37-be82-3288c05ec213",
       "last-card-change": "2023-06-22"
+    },
+    {
+      "tool": "PINEGROVE",
+      "names": [
+        {
+          "name": "PINEGROVE"
+        }
+      ],
+      "description": "(Mandiant) During the intrusion, Mandiant observed APT41 leveraging PINEGROVE for their data exfiltration. PINEGROVE is a command-line uploader written in Go with functionality to collect and upload a file to OneDrive via the OneDrive API. PINEGROVE expects an authentication JSON file including relevant OneDrive credentials and the target file to upload.",
+      "category": "Malware",
+      "type": [
+        "Exfiltration"
+      ],
+      "information": [
+        "https://cloud.google.com/blog/topics/threat-intelligence/apt41-arisen-from-dust"
+      ],
+      "uuid": "009cf2c1-7f43-4b26-abc4-38836a7f0309",
+      "last-card-change": "2024-08-26"
     },
     {
       "tool": "PingCastle",
@@ -32915,7 +33484,8 @@
         "https://www.cybereason.com/blog/threat-analysis-report-plugx-rat-loader-evolution",
         "https://unit42.paloaltonetworks.com/plugx-variants-in-usbs/",
         "https://asec.ahnlab.com/en/49097/",
-        "https://blog.sekoia.io/unplugging-plugx-sinkholing-the-plugx-usb-worm-botnet/"
+        "https://blog.sekoia.io/unplugging-plugx-sinkholing-the-plugx-usb-worm-botnet/",
+        "https://www.bleepingcomputer.com/news/security/french-police-push-plugx-malware-self-destruct-payload-to-clean-pcs/"
       ],
       "mitre-attack": [
         "https://attack.mitre.org/software/S0013/"
@@ -32930,7 +33500,26 @@
         "https://pan-unit42.github.io/playbook_viewer/?pb=plugx-malware"
       ],
       "uuid": "20865c5a-3bb0-413b-b59b-9a994303a9c9",
-      "last-card-change": "2024-06-18"
+      "last-card-change": "2024-08-27"
+    },
+    {
+      "tool": "PlugY",
+      "names": [
+        {
+          "name": "PlugY"
+        }
+      ],
+      "description": "(Kaspersky) Having analyzed the behavior of the newly found CloudSorcerer samples, we found that the attackers used it to download a previously unknown implant. This implant connects to the C2 server by one of three methods:\n• TCP protocol\n• UDP protocol\n• Named pipes \n\nThe set of commands this implant can handle is quite extensive, and implemented commands range from manipulating files and executing shell commands to logging keystrokes and monitoring the screen or the clipboard.",
+      "category": "Malware",
+      "type": [
+        "Backdoor",
+        "Info stealer"
+      ],
+      "information": [
+        "https://securelist.com/eastwind-apt-campaign/113345/"
+      ],
+      "uuid": "8ab930f9-1f09-41ce-912f-f95221973e88",
+      "last-card-change": "2024-08-27"
     },
     {
       "tool": "pngdowner",
@@ -37079,6 +37668,24 @@
       "last-card-change": "2020-04-23"
     },
     {
+      "tool": "RELOADEXT",
+      "names": [
+        {
+          "name": "RELOADEXT"
+        }
+      ],
+      "description": "(Volexity) In one case, following successful compromise of a victim’s macOS device, Volexity observed StormBamboo deploying a Google Chrome extension to the victim’s device. Volexity tracks this malicious extension under the name RELOADEXT.",
+      "category": "Malware",
+      "type": [
+        "Info stealer"
+      ],
+      "information": [
+        "https://www.volexity.com/blog/2024/08/02/stormbamboo-compromises-isp-to-abuse-insecure-software-update-mechanisms/"
+      ],
+      "uuid": "4a1ec054-bbdb-40b2-a58c-02f915c7f9d1",
+      "last-card-change": "2024-08-27"
+    },
+    {
       "tool": "Remcom",
       "names": [
         {
@@ -37396,6 +38003,27 @@
       ],
       "uuid": "5f4763dc-2637-4fd7-8387-29de883b56ba",
       "last-card-change": "2022-12-29"
+    },
+    {
+      "tool": "REPTILE",
+      "names": [
+        {
+          "name": "REPTILE"
+        }
+      ],
+      "description": "(Mandiant) To achieve persistent access on the FortiManager device, the threat actor deployed a backdoor with the filename /bin/klogd (MD5: 53a69adac914808eced2bf8155a7512d) that Mandiant refers to as REPTILE, a variant of a publicly available Linux kernel module (LKM) rootkit. With the assistance of TABLEFLIP, the threat actor was able to successfully forward traffic and access the REPTILE backdoor using iptables traffic redirection rules.\n\nOnce executed, REPTILE created a packet socket to receive OSI layer 2 packets. When a packet was received, the backdoor would perform the check seen in the pseudocode in Figure 20 to determine if a magic string was present.",
+      "category": "Malware",
+      "type": [
+        "Backdoor"
+      ],
+      "information": [
+        "https://cloud.google.com/blog/topics/threat-intelligence/fortinet-malware-ecosystem/"
+      ],
+      "malpedia": [
+        "https://malpedia.caad.fkie.fraunhofer.de/details/elf.reptile"
+      ],
+      "uuid": "e6153a12-1a8f-4727-8c7d-dfe7ea45cc67",
+      "last-card-change": "2024-08-27"
     },
     {
       "tool": "Resetter",
@@ -37781,6 +38409,24 @@
       ],
       "uuid": "52c89d28-fe3b-4d5f-9881-a0df2180f712",
       "last-card-change": "2022-12-30"
+    },
+    {
+      "tool": "RIFLESPINE",
+      "names": [
+        {
+          "name": "RIFLESPINE"
+        }
+      ],
+      "description": "(Mandiant) RIFLESPINE is a cross-platform backdoor that leverages Google Drive to transfer files and execute commands. It adopts the CryptoPP library to implement the AES algorithm to encrypt and decrypt the data transmitted between an affected machine and the threat actor.",
+      "category": "Malware",
+      "type": [
+        "Backdoor"
+      ],
+      "information": [
+        "https://cloud.google.com/blog/topics/threat-intelligence/uncovering-unc3886-espionage-operations"
+      ],
+      "uuid": "d9c072a3-0aa5-426c-b55c-1dc582c5596d",
+      "last-card-change": "2024-08-26"
     },
     {
       "tool": "Rikamanu",
@@ -39562,7 +40208,7 @@
         "Backdoor"
       ],
       "information": [
-        "https://screenconnect.connectwise.com/"
+https://screenconnect.connectwise.com/
       ],
       "mitre-attack": [
         "https://attack.mitre.org/software/S0591"
@@ -43087,6 +43733,24 @@
       "last-card-change": "2020-04-23"
     },
     {
+      "tool": "SQLULDR2",
+      "names": [
+        {
+          "name": "SQLULDR2"
+        }
+      ],
+      "description": "(Mandiant) SQLULDR2 is a command-line utility written in C/C++ that can be used to export the contents of a remote Oracle database to a local text-based file. There are multiple command-line parameters available to specify the details of the data export including but not limited to: query, user, rows, and text.",
+      "category": "Malware",
+      "type": [
+        "Info stealer"
+      ],
+      "information": [
+        "https://cloud.google.com/blog/topics/threat-intelligence/apt41-arisen-from-dust"
+      ],
+      "uuid": "83162071-9c3f-4107-a5fc-dbe54e0bb51a",
+      "last-card-change": "2024-08-26"
+    },
+    {
       "tool": "SScan",
       "names": [
         {
@@ -44586,6 +45250,24 @@
       "last-card-change": "2022-09-13"
     },
     {
+      "tool": "TABLEFLIP",
+      "names": [
+        {
+          "name": "TABLEFLIP"
+        }
+      ],
+      "description": "(Mandiant) To enable continued access directly from the Internet, the threat actor implemented TABLEFLIP (MD5: b6e92149efaf78e9ce7552297505b9d5), a passive traffic redirection utility that listens on all active interfaces for specialized command packets. With this utility in place, and regardless of the ACL’s in place, the threat actor would be able to connect directly to the FortiManager as seen in Figure 15.",
+      "category": "Malware",
+      "type": [
+        "Tunneling"
+      ],
+      "information": [
+        "https://cloud.google.com/blog/topics/threat-intelligence/fortinet-malware-ecosystem/"
+      ],
+      "uuid": "a7e011e1-7edd-4166-9582-3e200d13910c",
+      "last-card-change": "2024-08-26"
+    },
+    {
       "tool": "TabMsgSQL",
       "names": [
         {
@@ -45493,6 +46175,47 @@
       ],
       "uuid": "e14bb059-7b4c-46c6-aaa5-24cd9fe89ab5",
       "last-card-change": "2020-04-20"
+    },
+    {
+      "tool": "The CloudSorcerer",
+      "names": [
+        {
+          "name": "The CloudSorcerer"
+        }
+      ],
+      "description": "(Kaspersky) The backdoor module begins by collecting various system information about the victim machine, running in a separate thread.",
+      "category": "Malware",
+      "type": [
+        "Reconnaissance",
+        "Backdoor",
+        "Info stealer",
+        "Downloader",
+        "Loader"
+      ],
+      "information": [
+        "https://securelist.com/cloudsorcerer-new-apt-cloud-actor/113056/",
+        "https://securelist.com/eastwind-apt-campaign/113345/"
+      ],
+      "uuid": "8076eecb-18b5-4122-90f4-ec322cd54b30",
+      "last-card-change": "2024-08-27"
+    },
+    {
+      "tool": "THINCRUST",
+      "names": [
+        {
+          "name": "THINCRUST"
+        }
+      ],
+      "description": "(Mandiant) Mandiant’s analysis identified that upon initial connection to the FortiManager, the threat actor appended python backdoor code to a legitimate web framework file. Mandiant classified this new malware family as THINCRUST.",
+      "category": "Malware",
+      "type": [
+        "Backdoor"
+      ],
+      "information": [
+        "https://cloud.google.com/blog/topics/threat-intelligence/fortinet-malware-ecosystem/"
+      ],
+      "uuid": "3a8460fc-e6a6-4c9e-9372-446b1488ccac",
+      "last-card-change": "2024-08-26"
     },
     {
       "tool": "THINSPOOL",
@@ -46558,6 +47281,25 @@
       "last-card-change": "2022-12-30"
     },
     {
+      "tool": "TRANSLATEXT",
+      "names": [
+        {
+          "name": "TRANSLATEXT"
+        }
+      ],
+      "description": "(ZScaler) TRANSLATEXT is specifically leveraged to steal email addresses, usernames, passwords, cookies, and captures browser screenshots.",
+      "category": "Malware",
+      "type": [
+        "Info stealer",
+        "Credential stealer"
+      ],
+      "information": [
+        "https://www.zscaler.com/blogs/security-research/kimsuky-deploys-translatext-target-south-korean-academia"
+      ],
+      "uuid": "777235e2-5075-464d-b8f0-f42f3fe00841",
+      "last-card-change": "2024-08-26"
+    },
+    {
       "tool": "TranslucentGh0st",
       "names": [
         {
@@ -47024,6 +47766,9 @@
         },
         {
           "name": "QUIETCANARY"
+        },
+        {
+          "name": "Kapushka"
         }
       ],
       "description": "(Kaspersky) A .NET-based backdoor with the ability to run commands or perform file actions on an infected system and send the results to its command-and-control servers. So far, the infrastructure has been built using compromised sites with vulnerable Wordpress installations. According to the company’s telemetry, Tunnus activity started in March and remained active.",
@@ -47038,8 +47783,11 @@
       "mitre-attack": [
         "https://attack.mitre.org/software/S1076"
       ],
+      "malpedia": [
+        "https://malpedia.caad.fkie.fraunhofer.de/details/win.quietcanary"
+      ],
       "uuid": "ab2cec4c-4871-4495-8dc5-eb129e7516a3",
-      "last-card-change": "2023-11-30"
+      "last-card-change": "2024-08-27"
     },
     {
       "tool": "Turian",
@@ -48343,6 +49091,81 @@
       ],
       "uuid": "d85829da-432f-406b-9cb7-b6d94dc2db87",
       "last-card-change": "2022-12-30"
+    },
+    {
+      "tool": "VIRTUALGATE",
+      "names": [
+        {
+          "name": "VIRTUALGATE"
+        }
+      ],
+      "description": "(Mandiant) The Windows guest virtual machines which were hosted by the infected hypervisors also contained a unique malware sample located at C:\\Windows\\Temp\\avp.exe. This malware, which we refer to as VIRTUALGATE, is a utility program written in C that is comprised of two (2) parts, a dropper, and the payload. The memory only dropper deobfuscates a second stage DLL payload that uses VMware's virtual machine communication interface (VMCI) sockets to run commands on a guest virtual machine from a hypervisor host, or between guest virtual machines on the same host.",
+      "category": "Malware",
+      "type": [
+        "Dropper"
+      ],
+      "information": [
+        "https://cloud.google.com/blog/topics/threat-intelligence/esxi-hypervisors-malware-persistence"
+      ],
+      "malpedia": [
+        "https://malpedia.caad.fkie.fraunhofer.de/details/win.virtualgate"
+      ],
+      "uuid": "bab2da7c-d096-486f-acb5-a7bae7d53afc",
+      "last-card-change": "2024-08-27"
+    },
+    {
+      "tool": "VIRTUALPIE",
+      "names": [
+        {
+          "name": "VIRTUALPIE"
+        }
+      ],
+      "description": "(Mandiant) VIRTUALPIE is a lightweight backdoor written in Python that spawns a daemonized IPv6 listener on a hardcoded port on a VMware ESXi server. It supports arbitrary command line execution, file transfer capabilities, and reverse shell capabilities. Communications use a custom protocol and are encrypted using RC4.",
+      "category": "Malware",
+      "type": [
+        "Backdoor"
+      ],
+      "information": [
+        "https://cloud.google.com/blog/topics/threat-intelligence/esxi-hypervisors-malware-persistence"
+      ],
+      "uuid": "77c1d60e-6b20-4576-be17-b163b7e2746c",
+      "last-card-change": "2024-08-26"
+    },
+    {
+      "tool": "VIRTUALPITA",
+      "names": [
+        {
+          "name": "VIRTUALPITA"
+        }
+      ],
+      "description": "(Mandiant) VIRTUALPITA is a 64-bit passive backdoor that creates a listener on a hardcoded port number on a VMware ESXi server. The backdoor often utilizes VMware service names and ports to masquerade as a legitimate service. It supports arbitrary command execution, file upload and download, and the ability to start and stop vmsyslogd. During arbitrary command execution, the malware also sets the environmental variable HISTFILE to 0 to further hide activity that occurred on the machine. Variants of this malware were found to listen on a Virtual Machine Communication Interface (VMCI) and log this activity to the file sysclog.",
+      "category": "Malware",
+      "type": [
+        "Backdoor"
+      ],
+      "information": [
+        "https://cloud.google.com/blog/topics/threat-intelligence/esxi-hypervisors-malware-persistence"
+      ],
+      "uuid": "c3eb047f-01f5-47a2-bda0-fd6d7d32146d",
+      "last-card-change": "2024-08-26"
+    },
+    {
+      "tool": "VIRTUALSHINE",
+      "names": [
+        {
+          "name": "VIRTUALSHINE"
+        }
+      ],
+      "description": "(Mandiant) VIRTUALSHINE is a simple VMware VMCI sockets-based backdoor that provides access to a bash shell. VIRTUALSHINE connects to a specified target, which streams the bash pty.",
+      "category": "Malware",
+      "type": [
+        "Backdoor"
+      ],
+      "information": [
+        "https://cloud.google.com/blog/topics/threat-intelligence/uncovering-unc3886-espionage-operations"
+      ],
+      "uuid": "078bf1cc-d8b5-4110-85aa-a5cd0988e21b",
+      "last-card-change": "2024-08-26"
     },
     {
       "tool": "Vizom",
@@ -49675,6 +50498,28 @@
       ],
       "uuid": "bdca71c3-3a0c-4ff2-8022-94028ef516b7",
       "last-card-change": "2023-06-22"
+    },
+    {
+      "tool": "Winos",
+      "names": [
+        {
+          "name": "Winos"
+        }
+      ],
+      "description": "(Trend Micro) The final payload of this attack is the Winos 4.0 implant, which is written in C++ and targets the Windows platform. Winos has features that include file management, distributed denial of service (DDoS) using TCP/UDP/ ICMP/HTTP, full disk search, webcam control, and screen capturing. Additionally, it supports many functionalities including process injection and microphone recording, system and service management, remote shell access, and keylogging functionalities, further enhancing its ability to control and monitor the infected system.",
+      "category": "Malware",
+      "type": [
+        "Backdoor",
+        "Info stealer",
+        "Keylogger",
+        "Loader",
+        "Exfiltration"
+      ],
+      "information": [
+        "https://www.trendmicro.com/en_us/research/24/f/behind-the-great-wall-void-arachne-targets-chinese-speaking-user.html"
+      ],
+      "uuid": "8c1859a2-f359-4d93-99ca-bdbbf1d8e0e7",
+      "last-card-change": "2024-08-26"
     },
     {
       "tool": "WinPot",
