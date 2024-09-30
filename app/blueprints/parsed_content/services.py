@@ -1,20 +1,41 @@
 from app.models.relational.parsed_content import ParsedContent
 from app.models.relational.rss_feed import RSSFeed
 from app.extensions import db
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 from datetime import datetime, timedelta
 from sqlalchemy import func
 
 class ParsedContentService:
     @staticmethod
-    def get_latest_parsed_content(limit: int = 20) -> Dict[str, Any]:
+    def get_content_by_id(content_id: str) -> Optional[Dict[str, Any]]:
+        content = ParsedContent.get_by_id(content_id)
+        if content:
+            return {
+                'rss_feed_title': content.rss_feed.title,
+                'title': content.title,
+                'creator': content.creator,
+                'pub_date': content.pub_date,
+                'category': content.category.name if content.category else None,
+                'url': content.url,
+                'description': content.description,
+                'summary': content.summary
+            }
+        return None
+    @staticmethod
+    def get_latest_parsed_content(limit: int = 20, category: Optional[str] = None) -> Dict[str, Any]:
         """
         Retrieve the latest parsed content entries and content stats.
         
         :param limit: The maximum number of entries to retrieve
+        :param category: Optional category to filter the content
         :return: A dictionary containing parsed content data and content stats
         """
-        latest_content = ParsedContent.query.order_by(ParsedContent.created_at.desc()).limit(limit).all()
+        query = ParsedContent.query.order_by(ParsedContent.created_at.desc())
+        
+        if category:
+            query = query.filter(ParsedContent.category.has(name=category))
+        
+        latest_content = query.limit(limit).all()
         content_stats = ParsedContentService.get_content_stats()
         return {
             'content': [content.to_dict() if hasattr(content, 'to_dict') else str(content) for content in latest_content],

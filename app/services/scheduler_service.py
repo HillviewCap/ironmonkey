@@ -5,7 +5,7 @@ from app.models.relational import ParsedContent, RSSFeed
 from app.services.rss_feed_service import fetch_and_parse_feed
 from app.services.summary_service import SummaryService
 from flask import current_app
-from sqlalchemy.orm import scoped_session, sessionmaker
+from app.utils.db_connection_manager import DBConnectionManager
 from logging import getLogger
 
 logger = getLogger(__name__)
@@ -14,7 +14,6 @@ scheduler_logger = getLogger('scheduler')
 class SchedulerService:
     def __init__(self, app):
         self.app = app
-        self.db = app.extensions['sqlalchemy']
         self.scheduler = BackgroundScheduler()
 
     def setup_scheduler(self):
@@ -46,9 +45,7 @@ class SchedulerService:
 
     def check_and_process_rss_feeds(self):
         with self.app.app_context():
-            Session = scoped_session(sessionmaker(bind=self.db.engine))
-            session = Session()
-            try:
+            with DBConnectionManager.get_session() as session:
                 feeds = session.query(RSSFeed).all()
                 new_articles_count = 0
                 for feed in feeds:
@@ -63,38 +60,37 @@ class SchedulerService:
                 scheduler_logger.info(
                     f"Processed {len(feeds)} RSS feeds, added {new_articles_count} new articles"
                 )
-            finally:
-                Session.remove()
 
     async def start_check_empty_summaries(self):
         with self.app.app_context():
-            Session = scoped_session(sessionmaker(bind=self.db.engine))
-            session = Session()
-            try:
-                empty_summaries = (
-                    session.query(ParsedContent)
+            processed_count = 0
+            summary_service = SummaryService()
+            
+            with DBConnectionManager.get_session() as session:
+                empty_summary_ids = (
+                    session.query(ParsedContent.id)
                     .filter(ParsedContent.summary.is_(None))
                     .limit(10)
                     .all()
                 )
-                processed_count = 0
-                summary_service = SummaryService()
-                for content in empty_summaries:
-                    try:
-                        success = await summary_service.enhance_summary(str(content.id))
-                        if success:
-                            processed_count += 1
+                
+            for (content_id,) in empty_summary_ids:
+                try:
+                    with DBConnectionManager.get_session() as session:
+                        content = session.query(ParsedContent).get(content_id)
+                        if content:
+                            success = await summary_service.enhance_summary(str(content.id))
+                            if success:
+                                processed_count += 1
+                            else:
+                                scheduler_logger.warning(f"Failed to generate summary for content {content.id}")
                         else:
-                            scheduler_logger.warning(f"Failed to generate summary for content {content.id}")
-                    except Exception as e:
-                        scheduler_logger.error(
-                            f"Error generating summary for content {content.id}: {str(e)}"
-                        )
-                session.commit()
-                scheduler_logger.info(
-                    f"Processed {processed_count} out of {len(empty_summaries)} empty summaries"
-                )
-            except Exception as e:
-                scheduler_logger.error(f"Error in start_check_empty_summaries: {str(e)}")
-            finally:
-                Session.remove()
+                            scheduler_logger.warning(f"Content with id {content_id} not found")
+                except Exception as e:
+                    scheduler_logger.error(
+                        f"Error generating summary for content {content_id}: {str(e)}"
+                    )
+            
+            scheduler_logger.info(
+                f"Processed {processed_count} out of {len(empty_summary_ids)} empty summaries"
+            )

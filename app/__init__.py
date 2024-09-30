@@ -13,6 +13,7 @@ from flask_login import LoginManager
 
 from .extensions import db
 from app.utils.logging_config import setup_logger
+from app.utils.db_connection_manager import init_db_connection_manager
 
 # Suppress Pydantic deprecation warning
 warnings.filterwarnings("ignore", category=DeprecationWarning, module="pydantic")
@@ -62,16 +63,14 @@ def create_app(config_object=None):
     else:
         app.config.from_object(config_object)
 
-    # Ensure debug mode is set and log its value
-    app.config["DEBUG"] = True
-    logger.info(f"Debug mode set to: {app.config['DEBUG']}")
-
     # Ensure the instance folder exists
     os.makedirs(app.instance_path, exist_ok=True)
 
-    # Log the instance path and database URI
-    logger.debug(f"Instance path: {app.instance_path}")
-    logger.debug(f"Database URI: {app.config['SQLALCHEMY_DATABASE_URI']}")
+    # Log configuration details
+    logger.info(f"Debug mode set to: {app.config['DEBUG']}")
+    logger.info(f"Instance path: {app.instance_path}")
+    logger.info(f"Database URI: {app.config['SQLALCHEMY_DATABASE_URI']}")
+    logger.info(f"Flask port: {app.config['FLASK_PORT']}")
 
     # Initialize extensions
     db.init_app(app)
@@ -89,10 +88,11 @@ def create_app(config_object=None):
         except json.JSONDecodeError:
             return []
 
-    # Initialize database
+    # Initialize database and connection manager
     with app.app_context():
         db.create_all()
-        logger.info("Database tables created")
+        init_db_connection_manager(app)
+        logger.info("Database tables created and connection manager initialized")
 
     # Register blueprints
     blueprints = [

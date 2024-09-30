@@ -8,7 +8,7 @@ from app.utils.logging_config import setup_logger
 from sqlalchemy.orm import Session
 from app.models.relational.parsed_content import ParsedContent
 from app.models.relational.rss_feed import RSSFeed
-from app.extensions import db
+from app.utils.db_connection_manager import DBConnectionManager
 import os
 import asyncio
 from typing import Optional, Union
@@ -38,7 +38,7 @@ class SummaryService:
     async def generate_summary(self, content_id: str) -> Optional[str]:
         api = self._initialize_api()
 
-        with db.session() as session:
+        with DBConnectionManager.get_session() as session:
             parsed_content = session.get(ParsedContent, UUID(content_id))
             if not parsed_content:
                 logger.error(f"No ParsedContent found with id {content_id}")
@@ -48,9 +48,9 @@ class SummaryService:
     async def enhance_summary(self, content_id: str) -> bool:
         logger.info(f"Processing record {content_id}")
 
-        with db.session() as session:
-            for attempt in range(self.max_retries):
-                try:
+        for attempt in range(self.max_retries):
+            try:
+                with DBConnectionManager.get_session() as session:
                     summary = await self.generate_summary(content_id)
                     if not summary:
                         logger.warning(f"Empty summary generated for record {content_id}. Attempt {attempt + 1}/{self.max_retries}")
@@ -70,9 +70,8 @@ class SummaryService:
                     logger.info(f"Updated summary for record {content_id}")
                     return True
 
-                except Exception as e:
-                    logger.error(f"Error generating summary for record {content_id}: {str(e)}. Attempt {attempt + 1}/{self.max_retries}", exc_info=True)
-                    session.rollback()
+            except Exception as e:
+                logger.error(f"Error generating summary for record {content_id}: {str(e)}. Attempt {attempt + 1}/{self.max_retries}", exc_info=True)
 
         logger.error(f"Failed to generate summary for record {content_id} after {self.max_retries} attempts.")
         return False
@@ -80,7 +79,7 @@ class SummaryService:
     async def summarize_feed(self, feed_id: str) -> None:
         logger.info(f"Starting summary enhancement for feed {feed_id}")
 
-        with db.session() as session:
+        with DBConnectionManager.get_session() as session:
             feed = session.get(RSSFeed, feed_id)
             if not feed:
                 logger.error(f"Feed with id {feed_id} not found")

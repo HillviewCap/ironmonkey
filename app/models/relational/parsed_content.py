@@ -5,9 +5,9 @@ import hashlib
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy import Column, String, DateTime, Text, ForeignKey, Table
 from app.extensions import db
-from flask import flash
+from flask import flash, current_app
 from .category import Category
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Union
 
 parsed_content_categories = Table(
     'parsed_content_categories',
@@ -70,12 +70,18 @@ class ParsedContent(db.Model):
         return deleted_count
 
     @classmethod
-    def get_by_id(cls, content_id: str) -> Optional[ParsedContent]:
+    def get_by_id(cls, content_id: Union[str, UUID]) -> Optional[ParsedContent]:
         """Retrieve a ParsedContent instance by its ID."""
-        try: 
-            content_id = UUID(content_id) if isinstance(content_id, str) else content_id
+        try:
+            if isinstance(content_id, str):
+                # Try to create a UUID object directly from the string
+                content_id = UUID(content_id)
+            elif not isinstance(content_id, UUID):
+                raise ValueError("Invalid content_id type")
+            
             return cls.query.filter(cls.id == content_id).first()
         except ValueError:
+            current_app.logger.error(f"Invalid content_id: {content_id}")
             return None
 
     @classmethod

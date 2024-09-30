@@ -19,10 +19,11 @@ load_dotenv()
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-env = os.getenv('FLASK_ENV', 'development')
+env = os.getenv("FLASK_ENV", "development")
 config_obj = get_config(env)
 app = create_app(config_obj)
 logger.info("Application created")
+
 
 @app.shell_context_processor
 def make_shell_context():
@@ -32,7 +33,8 @@ def make_shell_context():
     Returns:
         dict: A dictionary containing objects to be included in the shell context.
     """
-    return {'db': db, 'User': User}
+    return {"db": db, "User": User}
+
 
 def main():
     """
@@ -41,17 +43,22 @@ def main():
     This function sets up the environment and starts the Flask development server.
     """
     try:
-        # Set debug mode explicitly
-        app.config['DEBUG'] = True
+        # Use Flask's CLI configuration if available
+        if os.getenv('FLASK_RUN_FROM_CLI') == 'true':
+            logger.info("Running from Flask CLI")
+            return
+        
+        # Otherwise, use the manual configuration
         app.run(
-            host='0.0.0.0',
-            port=app.config['FLASK_PORT'],
-            use_reloader=True,
-            debug=True
+            host=app.config.get("HOST", "0.0.0.0"),
+            port=int(app.config.get("FLASK_PORT", 5000)),
+            use_reloader=app.config.get("USE_RELOADER", True),
+            debug=app.config.get("DEBUG", True),
         )
         logger.info(f"Application started in debug mode: {app.debug}")
     except Exception as e:
         logger.error(f"Error starting the application: {e}")
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()

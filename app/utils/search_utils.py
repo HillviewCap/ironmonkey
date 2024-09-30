@@ -45,10 +45,10 @@ def build_search_query(search_params: SearchParams):
     )
 
     if search_params.start_date:
-        query = query.filter(ParsedContent.date >= search_params.start_date)
+        query = query.filter(ParsedContent.created_at >= search_params.start_date)
 
     if search_params.end_date:
-        query = query.filter(ParsedContent.date <= search_params.end_date)
+        query = query.filter(ParsedContent.created_at <= search_params.end_date)
 
     if search_params.source_types:
         query = query.filter(
