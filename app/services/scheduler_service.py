@@ -52,21 +52,28 @@ class SchedulerService:
                 
                 scheduler_logger.info(f"Starting to process {total_feeds} RSS feeds")
                 
-                for feed in session.query(RSSFeed).all():
-                    try:
-                        scheduler_logger.info(f"Processing feed: {feed.url}")
-                        new_articles = asyncio.run(fetch_and_parse_feed(feed))
-                        if new_articles is not None:
-                            new_articles_count += new_articles
-                            scheduler_logger.info(f"Added {new_articles} new articles from feed: {feed.url}")
-                        else:
-                            scheduler_logger.warning(f"fetch_and_parse_feed returned None for feed {feed.url}")
-                        processed_feeds += 1
-                        scheduler_logger.info(f"Processed {processed_feeds}/{total_feeds} feeds")
-                    except Exception as e:
-                        scheduler_logger.error(f"Error processing feed {feed.id}: {str(e)}", exc_info=True)
+                feed_ids = [feed.id for feed in session.query(RSSFeed).all()]
                 
-                session.commit()
+                for feed_id in feed_ids:
+                    try:
+                        feed = session.query(RSSFeed).get(feed_id)
+                        if feed:
+                            scheduler_logger.info(f"Processing feed: {feed.url}")
+                            new_articles = asyncio.run(fetch_and_parse_feed(feed))
+                            if new_articles is not None:
+                                new_articles_count += new_articles
+                                scheduler_logger.info(f"Added {new_articles} new articles from feed: {feed.url}")
+                            else:
+                                scheduler_logger.warning(f"fetch_and_parse_feed returned None for feed {feed.url}")
+                            processed_feeds += 1
+                            scheduler_logger.info(f"Processed {processed_feeds}/{total_feeds} feeds")
+                        else:
+                            scheduler_logger.warning(f"Feed with id {feed_id} not found")
+                    except Exception as e:
+                        scheduler_logger.error(f"Error processing feed {feed_id}: {str(e)}", exc_info=True)
+                    
+                    session.commit()
+                
                 scheduler_logger.info(
                     f"Finished processing {processed_feeds}/{total_feeds} RSS feeds, added {new_articles_count} new articles"
                 )
