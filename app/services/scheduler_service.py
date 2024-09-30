@@ -47,18 +47,29 @@ class SchedulerService:
         with self.app.app_context():
             with DBConnectionManager.get_session() as session:
                 feeds = session.query(RSSFeed).all()
+                total_feeds = len(feeds)
                 new_articles_count = 0
+                processed_feeds = 0
+                
+                scheduler_logger.info(f"Starting to process {total_feeds} RSS feeds")
+                
                 for feed in feeds:
                     try:
+                        scheduler_logger.info(f"Processing feed: {feed.url}")
                         new_articles = asyncio.run(fetch_and_parse_feed(feed))
                         if new_articles is not None:
                             new_articles_count += new_articles
+                            scheduler_logger.info(f"Added {new_articles} new articles from feed: {feed.url}")
                         else:
                             scheduler_logger.warning(f"fetch_and_parse_feed returned None for feed {feed.url}")
+                        processed_feeds += 1
                     except Exception as e:
                         scheduler_logger.error(f"Error processing feed {feed.url}: {str(e)}", exc_info=True)
+                    
+                    scheduler_logger.info(f"Processed {processed_feeds}/{total_feeds} feeds")
+                
                 scheduler_logger.info(
-                    f"Processed {len(feeds)} RSS feeds, added {new_articles_count} new articles"
+                    f"Finished processing {processed_feeds}/{total_feeds} RSS feeds, added {new_articles_count} new articles"
                 )
 
     async def start_check_empty_summaries(self):
