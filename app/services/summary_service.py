@@ -11,6 +11,8 @@ from app.models.relational.rss_feed import RSSFeed
 from app.utils.db_connection_manager import DBConnectionManager
 import os
 import asyncio
+import tempfile
+import time
 from typing import Optional, Union
 from uuid import UUID
 from app.utils.ollama_client import OllamaAPI, OllamaAPI
@@ -18,11 +20,34 @@ from app.utils.groq_api import GroqAPI
 
 logger = setup_logger('summary_service', 'summary_service.log')
 
+LOCK_FILE = os.path.join(tempfile.gettempdir(), 'summary_service.lock')
+LOCK_TIMEOUT = 600  # 10 minutes
+
 class SummaryService:
     """A service to enhance summaries of parsed content using OllamaAPI or GroqAPI."""
     def __init__(self, max_retries: int = 3):
         self.max_retries = max_retries
         self.api: Optional[Union[OllamaAPI, GroqAPI]] = None
+
+    @staticmethod
+    def acquire_lock():
+        if os.path.exists(LOCK_FILE):
+            # Check if the existing lock is stale
+            if time.time() - os.path.getmtime(LOCK_FILE) > LOCK_TIMEOUT:
+                os.remove(LOCK_FILE)
+            else:
+                return False
+        try:
+            with open(LOCK_FILE, 'w') as f:
+                f.write(str(os.getpid()))
+            return True
+        except IOError:
+            return False
+
+    @staticmethod
+    def release_lock():
+        if os.path.exists(LOCK_FILE):
+            os.remove(LOCK_FILE)
 
     def _initialize_api(self) -> Union[OllamaAPI, GroqAPI]:
         if self.api is None:
@@ -77,24 +102,31 @@ class SummaryService:
         return False
 
     async def summarize_feed(self, feed_id: str) -> None:
-        logger.info(f"Starting summary enhancement for feed {feed_id}")
+        if not self.acquire_lock():
+            logger.warning("Another instance of SummaryService is running. Skipping this run.")
+            return
 
-        with DBConnectionManager.get_session() as session:
-            feed = session.get(RSSFeed, feed_id)
-            if not feed:
-                logger.error(f"Feed with id {feed_id} not found")
-                return
+        try:
+            logger.info(f"Starting summary enhancement for feed {feed_id}")
 
-            parsed_contents = session.query(ParsedContent).filter(
-                ParsedContent.feed_id == feed_id,
-                ParsedContent.summary == None
-            ).all()
+            with DBConnectionManager.get_session() as session:
+                feed = session.get(RSSFeed, feed_id)
+                if not feed:
+                    logger.error(f"Feed with id {feed_id} not found")
+                    return
 
-            async def process_content(content):
-                success = await self.enhance_summary(content.id.hex)
-                if not success:
-                    logger.warning(f"Failed to generate summary for content {content.id}")
+                parsed_contents = session.query(ParsedContent).filter(
+                    ParsedContent.feed_id == feed_id,
+                    ParsedContent.summary == None
+                ).all()
 
-            await asyncio.gather(*(process_content(content) for content in parsed_contents))
+                async def process_content(content):
+                    success = await self.enhance_summary(content.id.hex)
+                    if not success:
+                        logger.warning(f"Failed to generate summary for content {content.id}")
 
-        logger.info(f"Summary enhancement for feed {feed_id} completed")
+                await asyncio.gather(*(process_content(content) for content in parsed_contents))
+
+            logger.info(f"Summary enhancement for feed {feed_id} completed")
+        finally:
+            self.release_lock()
