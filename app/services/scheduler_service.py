@@ -46,14 +46,13 @@ class SchedulerService:
     def check_and_process_rss_feeds(self):
         with self.app.app_context():
             with DBConnectionManager.get_session() as session:
-                feeds = session.query(RSSFeed).all()
-                total_feeds = len(feeds)
+                total_feeds = session.query(RSSFeed).count()
                 new_articles_count = 0
                 processed_feeds = 0
                 
                 scheduler_logger.info(f"Starting to process {total_feeds} RSS feeds")
                 
-                for feed in feeds:
+                for feed in session.query(RSSFeed).yield_per(10):
                     try:
                         scheduler_logger.info(f"Processing feed: {feed.url}")
                         new_articles = asyncio.run(fetch_and_parse_feed(feed))
@@ -67,6 +66,7 @@ class SchedulerService:
                         scheduler_logger.error(f"Error processing feed {feed.url}: {str(e)}", exc_info=True)
                     
                     scheduler_logger.info(f"Processed {processed_feeds}/{total_feeds} feeds")
+                    session.expunge(feed)  # Detach the feed from the session after processing
                 
                 scheduler_logger.info(
                     f"Finished processing {processed_feeds}/{total_feeds} RSS feeds, added {new_articles_count} new articles"
