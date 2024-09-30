@@ -43,6 +43,7 @@ class RSSFeedService:
             return session.query(RSSFeed).all()
 
     @staticmethod
+    @with_lock
     def get_feed_by_id(feed_id: uuid.UUID) -> RSSFeed:
         """
         Retrieve an RSS feed by its ID.
@@ -53,18 +54,11 @@ class RSSFeedService:
         Returns:
             RSSFeed: The RSS feed object with the given ID.
         """
-        if is_database_locked():
-            logger.warning(f"Database is locked. Cannot retrieve feed with ID {feed_id}.")
-            return None
-        
-        lock = acquire_lock()
-        try:
-            with Session(db.engine) as session:
-                return session.get(RSSFeed, feed_id)
-        finally:
-            release_lock(lock)
+        with Session(db.engine) as session:
+            return session.get(RSSFeed, feed_id)
 
     @staticmethod
+    @with_lock
     async def create_feed(feed_data: Dict[str, str]) -> RSSFeed:
         """
         Create a new RSS feed.
@@ -89,39 +83,31 @@ class RSSFeedService:
             logger.error(f"Error validating RSS feed URL: {url}, {str(e)}")
             raise ValueError(f"Error validating RSS feed URL: {url}, {str(e)}")
 
-        if is_database_locked():
-            logger.warning(f"Database is locked. Cannot create feed with URL: {url}")
-            raise ValueError("Database is locked. Cannot create feed at this time.")
+        with Session(db.engine) as session:
+            existing_feed = session.query(RSSFeed).filter_by(url=url).first()
+            if existing_feed:
+                logger.warning(f"RSS feed URL already exists: {url}")
+                raise ValueError("RSS feed URL already exists")
 
-        lock = acquire_lock()
-        try:
-            with Session(db.engine) as session:
-                existing_feed = session.query(RSSFeed).filter_by(url=url).first()
-                if existing_feed:
-                    logger.warning(f"RSS feed URL already exists: {url}")
-                    raise ValueError("RSS feed URL already exists")
+            try:
+                logger.info(f"Fetching feed info for URL: {url}")
+                feed_info = await fetch_feed_info(url)
+                feed = RSSFeed(
+                    id=uuid.uuid4(),
+                    url=url,
+                    title=feed_info['title'],
+                    description=feed_info['description'],
+                    last_build_date=feed_info['last_build_date'],
+                    category=feed_data.get('category', 'Uncategorized')
+                )
 
-                try:
-                    logger.info(f"Fetching feed info for URL: {url}")
-                    feed_info = await fetch_feed_info(url)
-                    feed = RSSFeed(
-                        id=uuid.uuid4(),
-                        url=url,
-                        title=feed_info['title'],
-                        description=feed_info['description'],
-                        last_build_date=feed_info['last_build_date'],
-                        category=feed_data.get('category', 'Uncategorized')
-                    )
-
-                    session.add(feed)
-                    session.commit()
-                    logger.info(f"Created new RSS feed: {feed.title}")
-                    return feed
-                except Exception as e:
-                    logger.error(f"Error creating RSS feed: {str(e)}")
-                    raise ValueError(f"Error creating RSS feed: {str(e)}")
-        finally:
-            release_lock(lock)
+                session.add(feed)
+                session.commit()
+                logger.info(f"Created new RSS feed: {feed.title}")
+                return feed
+            except Exception as e:
+                logger.error(f"Error creating RSS feed: {str(e)}")
+                raise ValueError(f"Error creating RSS feed: {str(e)}")
 
     @staticmethod
     async def parse_feed(feed_id: UUID) -> List[ParsedContent]:
