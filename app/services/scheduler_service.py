@@ -54,6 +54,7 @@ class SchedulerService:
                 
                 for feed in session.query(RSSFeed).yield_per(10):
                     try:
+                        session.refresh(feed)
                         scheduler_logger.info(f"Processing feed: {feed.url}")
                         new_articles = asyncio.run(fetch_and_parse_feed(feed))
                         if new_articles is not None:
@@ -62,11 +63,11 @@ class SchedulerService:
                         else:
                             scheduler_logger.warning(f"fetch_and_parse_feed returned None for feed {feed.url}")
                         processed_feeds += 1
+                        scheduler_logger.info(f"Processed {processed_feeds}/{total_feeds} feeds")
                     except Exception as e:
-                        scheduler_logger.error(f"Error processing feed {feed.url}: {str(e)}", exc_info=True)
-                    
-                    scheduler_logger.info(f"Processed {processed_feeds}/{total_feeds} feeds")
-                    session.expunge(feed)  # Detach the feed from the session after processing
+                        scheduler_logger.error(f"Error processing feed {feed.id}: {str(e)}", exc_info=True)
+                    finally:
+                        session.expunge(feed)  # Detach the feed from the session after processing
                 
                 scheduler_logger.info(
                     f"Finished processing {processed_feeds}/{total_feeds} RSS feeds, added {new_articles_count} new articles"
