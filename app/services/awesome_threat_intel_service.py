@@ -32,32 +32,59 @@ class AwesomeThreatIntelService:
         existing_blogs = {blog.blog: blog for blog in AwesomeThreatIntelBlog.query.all()}
         csv_blogs = set()
 
-        with open(csv_file_path, 'r', encoding='utf-8') as csvfile:
-            reader = csv.DictReader(csvfile)
-            for row in reader:
-                blog_name = row['Blog']
-                csv_blogs.add(blog_name)
+        try:
+            with open(csv_file_path, 'r', encoding='utf-8') as csvfile:
+                reader = csv.DictReader(csvfile)
                 
-                if blog_name in existing_blogs:
-                    # Update existing blog
-                    blog = existing_blogs[blog_name]
-                    blog.blog_category = row['Blog Category']
-                    blog.type = row['Type']
-                    blog.blog_link = row['Blog Link']
-                    blog.feed_link = row['Feed Link']
-                    blog.feed_type = row['Feed Type']
+                # Print column names
+                print("CSV columns:", reader.fieldnames)
+                
+                # Read and print the first row
+                first_row = next(reader, None)
+                if first_row:
+                    print("First row data:", first_row)
                 else:
-                    # Add new blog with a proper UUID
-                    blog = AwesomeThreatIntelBlog(
-                        id=uuid.uuid4(),  # Generate a new UUID for each new blog
-                        blog=blog_name,
-                        blog_category=row['Blog Category'],
-                        type=row['Type'],
-                        blog_link=row['Blog Link'],
-                        feed_link=row['Feed Link'],
-                        feed_type=row['Feed Type']
-                    )
-                    db.session.add(blog)
+                    print("CSV file is empty")
+                    return
+                
+                # Reset the reader to the beginning of the file
+                csvfile.seek(0)
+                next(reader)  # Skip the header row
+                
+                for row in reader:
+                    blog_name = row.get('Blog')
+                    if not blog_name:
+                        print(f"Warning: 'Blog' column not found in row: {row}")
+                        continue
+                    
+                    csv_blogs.add(blog_name)
+                    
+                    if blog_name in existing_blogs:
+                        # Update existing blog
+                        blog = existing_blogs[blog_name]
+                        blog.blog_category = row.get('Blog Category', '')
+                        blog.type = row.get('Type', '')
+                        blog.blog_link = row.get('Blog Link', '')
+                        blog.feed_link = row.get('Feed Link', '')
+                        blog.feed_type = row.get('Feed Type', '')
+                    else:
+                        # Add new blog with a proper UUID
+                        blog = AwesomeThreatIntelBlog(
+                            id=uuid.uuid4(),  # Generate a new UUID for each new blog
+                            blog=blog_name,
+                            blog_category=row.get('Blog Category', ''),
+                            type=row.get('Type', ''),
+                            blog_link=row.get('Blog Link', ''),
+                            feed_link=row.get('Feed Link', ''),
+                            feed_type=row.get('Feed Type', '')
+                        )
+                        db.session.add(blog)
+        except FileNotFoundError:
+            print(f"Error: CSV file not found at {csv_file_path}")
+            return
+        except csv.Error as e:
+            print(f"Error reading CSV file: {e}")
+            return
 
         # Remove blogs that are not in the CSV
         for blog_name, blog in existing_blogs.items():
