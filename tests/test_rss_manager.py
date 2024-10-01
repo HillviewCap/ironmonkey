@@ -7,6 +7,7 @@ from flask import url_for
 from app.models.relational.rss_feed import RSSFeed
 from app.models.relational.user import User
 from app import db
+from app.models.relational.awesome_threat_intel_blog import AwesomeThreatIntelBlog
 
 @pytest.fixture
 def authenticated_client(client, app):
@@ -64,3 +65,45 @@ def test_add_single_feed(authenticated_client, app, csrf_token):
         db.session.delete(new_feed)
         User.query.filter_by(username='testuser').delete()
         db.session.commit()
+
+def test_get_awesome_blogs(authenticated_client, app):
+    # Add a test blog to the database
+    with app.app_context():
+        test_blog = AwesomeThreatIntelBlog(
+            blog="Test Blog",
+            blog_category="Test Category",
+            type="Test Type",
+            blog_link="https://testblog.com",
+            feed_link="https://testblog.com/feed"
+        )
+        db.session.add(test_blog)
+        db.session.commit()
+
+    # Send GET request to get_awesome_blogs endpoint
+    response = authenticated_client.get('/awesome_blogs')
+
+    # Check response
+    assert response.status_code == 200
+    data = response.get_json()
+    assert 'data' in data
+    blogs = data['data']
+    assert len(blogs) > 0
+    assert any(blog['blog'] == "Test Blog" for blog in blogs)
+
+    # Clean up: remove the test blog from the database
+    with app.app_context():
+        db.session.delete(test_blog)
+        db.session.commit()
+
+def test_update_awesome_threat_intel(authenticated_client, app, csrf_token):
+    # Send POST request to update_awesome_threat_intel endpoint
+    response = authenticated_client.post('/update_awesome_threat_intel', data={'csrf_token': csrf_token})
+
+    # Check response
+    assert response.status_code == 302  # Expecting a redirect
+    assert response.location == url_for('rss_manager.get_rss_feeds')
+
+    # Check if the flash message is set
+    with authenticated_client.session_transaction() as session:
+        flash_messages = session.get('_flashes', [])
+        assert any('Awesome Threat Intel Blogs have been updated.' in message for category, message in flash_messages)
