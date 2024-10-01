@@ -182,7 +182,8 @@ async def fetch_and_parse_feed(feed_id: str) -> int:
                         session.rollback()
                         continue  # Continue with the next entry
 
-                session.commit()
+                    session.commit()  # Commit after each successful entry processing
+
                 logger.info(
                     f"Feed: {feed.url} - Added {new_entries_count} new entries to database"
                 )
