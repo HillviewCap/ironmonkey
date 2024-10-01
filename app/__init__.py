@@ -162,10 +162,13 @@ def create_app(config_object=None):
         from app.models.relational.user import User
         from flask import redirect, url_for, request
 
-        # Exclude static files and the registration route from this check
-        if request.endpoint and 'static' not in request.endpoint and request.endpoint != 'auth.register':
+        # Exclude static files, auth routes, and API routes from this check
+        if (request.endpoint and 
+            'static' not in request.endpoint and 
+            not request.endpoint.startswith('auth.') and
+            not request.endpoint.startswith('api.')):
             user_count = db.session.query(User).count()
-            if user_count == 0 and request.endpoint != 'auth.register':
+            if user_count == 0:
                 return redirect(url_for('auth.register'))
 
     return app
