@@ -12,6 +12,7 @@ from typing import Optional
 
 import httpx
 import feedparser
+from dateutil import parser as date_parser
 from app.services.html_sanitizer_service import sanitize_html
 from flask import current_app
 from sqlalchemy.orm import Session
@@ -147,23 +148,16 @@ async def fetch_and_parse_feed(feed: RSSFeed) -> int:
                                 pub_date = entry.get("published", "")
                                 if pub_date:
                                     try:
-                                        # Try parsing with multiple formats
-                                        for date_format in ["%a, %d %b %Y %H:%M:%S %z", "%Y-%m-%dT%H:%M:%S%z", "%Y-%m-%d %H:%M:%S"]:
-                                            try:
-                                                parsed_date = datetime.strptime(pub_date, date_format)
-                                                pub_date = parsed_date.strftime("%Y-%m-%d")
-                                                break
-                                            except ValueError:
-                                                continue
-                                        else:
-                                            # If no format worked, try a more flexible approach
-                                            parsed_date = datetime.fromisoformat(pub_date.replace('Z', '+00:00'))
-                                            pub_date = parsed_date.strftime("%Y-%m-%d")
-                                    except Exception:
+                                        parsed_date = date_parser.parse(pub_date)
+                                        pub_date = parsed_date.strftime("%Y-%m-%d")
+                                    except Exception as e:
                                         logger.warning(
-                                            f"Could not parse date: {pub_date}. Using current date."
+                                            f"Could not parse date: {pub_date}. Error: {str(e)}. Using current date."
                                         )
                                         pub_date = datetime.now().strftime("%Y-%m-%d")
+                                else:
+                                    logger.warning("No published date found. Using current date.")
+                                    pub_date = datetime.now().strftime("%Y-%m-%d")
 
                                 new_content = ParsedContent(
                                     content=sanitize_html(parsed_content),
