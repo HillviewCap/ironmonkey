@@ -40208,7 +40208,7 @@
         "Backdoor"
       ],
       "information": [
-https://screenconnect.connectwise.com/
+        "https://screenconnect.connectwise.com/"
       ],
       "mitre-attack": [
         "https://attack.mitre.org/software/S0591"
