@@ -30,6 +30,8 @@ import os
 import tempfile
 import time
 from app.utils.logging_config import setup_logger
+from sqlalchemy.exc import OperationalError
+import random
 
 logger = setup_logger("feed_parser_service", "feed_parser_service.log")
 
@@ -54,14 +56,28 @@ def release_lock(lock_file):
     except Exception as e:
         logger.error(f"Error releasing lock: {e}")
 
-def get_or_create_category(name):
-    category = Category.query.filter_by(name=name).first()
-    if not category:
-        category = Category(name=name)
-        db.session.add(category)
-        db.session.flush()  # This will assign the id to the new category
-    return category
+def get_or_create_category(session, name):
+    max_retries = 5
+    retry_delay = 1  # Start with 1 second delay
 
+    for attempt in range(max_retries):
+        try:
+            category = session.query(Category).filter_by(name=name).first()
+            if not category:
+                category = Category(name=name)
+                session.add(category)
+                session.flush()  # This will assign the id to the new category
+            return category
+        except OperationalError as e:
+            if "database is locked" in str(e) and attempt < max_retries - 1:
+                logger.warning(f"Database locked, retrying... (attempt {attempt + 1}/{max_retries})")
+                time.sleep(retry_delay)
+                retry_delay *= 2  # Exponential backoff
+                retry_delay += random.uniform(0, 1)  # Add jitter
+                session.rollback()
+            else:
+                logger.error(f"Failed to get or create category after {max_retries} attempts: {e}")
+                raise
 
 async def fetch_and_parse_feed(feed: RSSFeed) -> int:
     """
@@ -164,7 +180,7 @@ async def fetch_and_parse_feed(feed: RSSFeed) -> int:
                                 for category in categories:
                                     cat_name = sanitize_html(category.get("term", ""))
                                     if cat_name:
-                                        cat_obj = get_or_create_category(cat_name)
+                                        cat_obj = get_or_create_category(session, cat_name)
                                         new_content.categories.append(cat_obj)
                                 new_entries_count += 1
                                 logger.info(f"Added new entry: {url}")
@@ -177,6 +193,7 @@ async def fetch_and_parse_feed(feed: RSSFeed) -> int:
                             f"Error processing entry {entry.get('link', 'Unknown')} from feed {feed.url}: {str(entry_error)}",
                             exc_info=True
                         )
+                        session.rollback()
                         continue  # Continue with the next entry
 
                 session.commit()
