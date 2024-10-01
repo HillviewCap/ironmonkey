@@ -47,14 +47,14 @@ def logout():
     """
     Handle user logout.
 
-    Logs out the current user and redirects to the main index.
+    Logs out the current user and redirects to the login page.
 
     Returns:
-        A redirect to the main index with a logout confirmation message.
+        A redirect to the login page with a logout confirmation message.
     """
     logout_user()
     flash('You have been logged out.', 'info')
-    return redirect(url_for('main.index'))
+    return redirect(url_for('auth.login'))
 
 @bp.route('/register', methods=['GET', 'POST'])
 def register():
