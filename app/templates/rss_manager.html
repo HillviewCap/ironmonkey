@@ -1,5 +1,10 @@
 {% extends "base.html" %}
 
+{% block head %}
+{{ super() }}
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; font-src 'self' data:; style-src 'self' 'unsafe-inline' https://unpkg.com; script-src 'self' 'unsafe-inline' https://unpkg.com; connect-src 'self';">
+{% endblock %}
+
 {% block content %}
 <div class="max-w-6xl mx-auto p-6">
     <h1 class="text-3xl font-bold mb-6">RSS Feed Manager</h1>
