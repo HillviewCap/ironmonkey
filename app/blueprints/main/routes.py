@@ -5,34 +5,29 @@ from app.models.relational.parsed_content import ParsedContent
 from . import bp
 
 @bp.route('/')
+@login_required
 def index():
     """
     Render the index page.
     
-    If the user is authenticated, display the 6 most recent parsed content items.
-    Otherwise, display the index page without any items.
+    Display the 6 most recent parsed content items for authenticated users.
     
     Returns:
         str: Rendered HTML template for the index page.
     """
     current_app.logger.info("Entering index route")
     try:
-        recent_items = []
-        if current_user.is_authenticated:
-            recent_items = (
-                ParsedContent.query
-                .filter(
-                    ParsedContent.title.isnot(None),
-                    ParsedContent.description.isnot(None),
-                )
-                .order_by(ParsedContent.pub_date.desc())
-                .limit(6)
-                .all()
+        recent_items = (
+            ParsedContent.query
+            .filter(
+                ParsedContent.title.isnot(None),
+                ParsedContent.description.isnot(None),
             )
-            current_app.logger.info(f"User {current_user.id} accessed index route.")
-            return render_template('index.html', recent_items=recent_items)
-        else:
-            current_app.logger.warning("Unauthenticated access attempt to index route.")
+            .order_by(ParsedContent.pub_date.desc())
+            .limit(6)
+            .all()
+        )
+        current_app.logger.info(f"User {current_user.id} accessed index route.")
         return render_template('index.html', recent_items=recent_items)
     except Exception as e:
         current_app.logger.error(f"Error in index route: {str(e)}")
