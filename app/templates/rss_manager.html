@@ -133,13 +133,27 @@
                 ],
                 server: {
                     url: '{{ url_for("rss_manager.get_rss_feeds") }}',
-                    then: response => response.data.map(feed => [
-                        feed.url,
-                        feed.title,
-                        feed.category,
-                        feed.last_build_date,
-                        feed.id
-                    ])
+                    then: response => {
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        }
+                        return response.json();
+                    },
+                    handle: (res) => {
+                        if (res.data && Array.isArray(res.data)) {
+                            return {
+                                data: res.data.map(feed => [
+                                    feed.url,
+                                    feed.title,
+                                    feed.category,
+                                    feed.last_build_date,
+                                    feed.id
+                                ])
+                            };
+                        } else {
+                            throw new Error('Invalid data format received from server');
+                        }
+                    }
                 },
                 search: true,
                 sort: true,
@@ -148,8 +162,18 @@
                 },
                 className: {
                     table: 'min-w-full bg-white'
+                },
+                style: {
+                    table: {
+                        'font-size': '14px'
+                    }
                 }
             }).render(document.getElementById("existingFeedsGrid"));
+
+            existingFeedsGrid.on('error', (err) => {
+                console.error('Grid.js Error:', err);
+                showNotification(`Error loading feeds: ${err.message}`, 'error');
+            });
         }
 
 
