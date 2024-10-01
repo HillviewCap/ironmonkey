@@ -6,12 +6,18 @@ a shell context for interactive sessions.
 """
 
 import os
+import sys
 import logging
 from dotenv import load_dotenv
 from app import create_app
 from app.extensions import db
 from app.models.relational.user import User
 from config import get_config
+
+# Check if .env file exists
+if not os.path.exists('.env'):
+    print("Error: .env file not found. Please create a .env file with the necessary environment variables.")
+    sys.exit(1)
 
 load_dotenv()
 
