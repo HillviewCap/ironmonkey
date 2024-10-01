@@ -70,8 +70,8 @@ def create_app(config_object=None):
     # Configure Content Security Policy
     csp = {
         'default-src': "'self'",
-        'script-src': "'self' 'unsafe-inline' https://unpkg.com",
-        'style-src': "'self' 'unsafe-inline' https://unpkg.com",
+        'script-src': "'self' 'unsafe-inline' https://unpkg.com https://cdn.tailwindcss.com https://cdn.jsdelivr.net",
+        'style-src': "'self' 'unsafe-inline' https://unpkg.com https://cdn.tailwindcss.com",
         'font-src': "'self' https://unpkg.com",
         'img-src': "'self' data:",
     }
