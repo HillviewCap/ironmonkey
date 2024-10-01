@@ -59,7 +59,7 @@ langchain-community
 langchain-core
 langchain-text-splitters
 langsmith
-litellm==1.44.8
+litellm
 lxml==5.2.2
 Mako==1.3.5
 markdown-it-py==3.0.0
@@ -71,8 +71,8 @@ multidict==6.0.5
 mypy-extensions==1.0.0
 networkx==3.2.1
 numpy==1.26.4
-ollama==0.2.1
-openai==1.35.10
+ollama
+openai
 orjson==3.10.6
 packaging==24.1
 pathspec==0.12.1
@@ -124,3 +124,4 @@ WTForms==3.1.2
 yarl==1.9.4
 zipp==3.19.2
 langchain_groq
+python-dateutil
