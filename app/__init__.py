@@ -10,6 +10,7 @@ from flask import Flask
 from flask_migrate import Migrate
 from flask_wtf.csrf import CSRFProtect
 from flask_login import LoginManager
+from flask_talisman import Talisman
 
 from .extensions import db
 from app.utils.logging_config import setup_logger
@@ -65,6 +66,18 @@ def create_app(config_object=None):
 
     # Ensure the instance folder exists
     os.makedirs(app.instance_path, exist_ok=True)
+
+    # Configure Content Security Policy
+    csp = {
+        'default-src': "'self'",
+        'script-src': "'self' 'unsafe-inline' https://unpkg.com",
+        'style-src': "'self' 'unsafe-inline' https://unpkg.com",
+        'font-src': "'self' https://unpkg.com",
+        'img-src': "'self' data:",
+    }
+
+    # Initialize Talisman
+    Talisman(app, content_security_policy=csp, content_security_policy_nonce_in=['script-src'])
 
     # Log configuration details
     logger.info(f"Debug mode set to: {app.config['DEBUG']}")
