@@ -23,7 +23,7 @@ from app.blueprints.rss_manager.routes import rss_manager_bp
 from app.blueprints.admin.routes import admin_bp
 from app.blueprints.search.routes import search_bp
 from app.blueprints.api.routes import api_bp
-from app.blueprints.parsed_content.routes import parsed_content_bp
+from app.blueprints.parsed_content import bp as parsed_content_bp
 from app.blueprints.apt.routes import bp as apt_bp
 from flask_login import login_required
 from app.utils.ollama_client import OllamaAPI
@@ -105,7 +105,7 @@ def create_app(config_object=None):
         (admin_bp, "/admin"),
         (search_bp, "/search"),
         (api_bp, "/api"),
-        (parsed_content_bp, "/content"),
+        (parsed_content_bp, "/parsed_content"),
         (apt_bp, "/apt"),
     ]
 
