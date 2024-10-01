@@ -6,37 +6,8 @@
 
     <!-- Existing Feeds Section -->
     <div class="mb-8 p-6 bg-white shadow-md rounded-lg">
-        <h2 class="text-xl font-bold mb-4">Existing Feeds (Latest 10)</h2>
-        <div class="overflow-x-auto">
-            <table class="min-w-full bg-white">
-                <thead>
-                    <tr>
-                        <th class="py-2 px-4 border-b">URL</th>
-                        <th class="py-2 px-4 border-b">Title</th>
-                        <th class="py-2 px-4 border-b">Category</th>
-                        <th class="py-2 px-4 border-b">Last Build Date</th>
-                        <th class="py-2 px-4 border-b">Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for feed in feeds[:10] %}
-                    <tr>
-                        <td class="py-2 px-4 border-b">{{ feed.url }}</td>
-                        <td class="py-2 px-4 border-b">{{ feed.title }}</td>
-                        <td class="py-2 px-4 border-b">{{ feed.category }}</td>
-                        <td class="py-2 px-4 border-b">{{ feed.last_build_date }}</td>
-                        <td class="py-2 px-4 border-b">
-                            <a href="{{ url_for('rss_manager.edit_feed', feed_id=feed.id) }}" class="text-blue-500 hover:text-blue-700" title="Edit this feed">Edit</a>
-                            <form action="{{ url_for('rss_manager.delete_rss_feed', feed_id=feed.id) }}" method="POST" class="inline" onsubmit="return confirm('Are you sure you want to delete this feed?');">
-                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                                <button type="submit" class="text-red-500 hover:text-red-700 ml-2">Delete</button>
-                            </form>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
+        <h2 class="text-xl font-bold mb-4">Existing Feeds</h2>
+        <div id="existingFeedsGrid"></div>
     </div>
 
     <!-- Add Single Feed and Import Feeds from CSV Forms -->
@@ -131,17 +102,54 @@
             }
         }
 
+        let existingFeedsGrid;
+
         function refreshExistingFeedsTable() {
-            fetch('{{ url_for("rss_manager.get_rss_feeds") }}')
-                .then(response => response.text())
-                .then(html => {
-                    const parser = new DOMParser();
-                    const doc = parser.parseFromString(html, 'text/html');
-                    const newTable = doc.querySelector('.min-w-full');
-                    const oldTable = document.querySelector('.min-w-full');
-                    oldTable.parentNode.replaceChild(newTable, oldTable);
-                })
-                .catch(error => console.error('Error refreshing feeds table:', error));
+            existingFeedsGrid.forceRender();
+        }
+
+        function initializeExistingFeedsGrid() {
+            existingFeedsGrid = new gridjs.Grid({
+                columns: [
+                    { id: 'url', name: 'URL' },
+                    { id: 'title', name: 'Title' },
+                    { id: 'category', name: 'Category' },
+                    { id: 'last_build_date', name: 'Last Build Date' },
+                    {
+                        id: 'actions',
+                        name: 'Actions',
+                        formatter: (_, row) => {
+                            const feedId = row.cells[4].data;
+                            return gridjs.html(`
+                                <a href="/rss_manager/edit_feed/${feedId}" class="text-blue-500 hover:text-blue-700" title="Edit this feed">Edit</a>
+                                <form action="/rss_manager/delete_rss_feed/${feedId}" method="POST" class="inline" onsubmit="return confirm('Are you sure you want to delete this feed?');">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                    <button type="submit" class="text-red-500 hover:text-red-700 ml-2">Delete</button>
+                                </form>
+                            `);
+                        }
+                    },
+                    { id: 'id', name: 'ID', hidden: true }
+                ],
+                server: {
+                    url: '{{ url_for("rss_manager.get_rss_feeds") }}',
+                    then: response => response.data.map(feed => [
+                        feed.url,
+                        feed.title,
+                        feed.category,
+                        feed.last_build_date,
+                        feed.id
+                    ])
+                },
+                search: true,
+                sort: true,
+                pagination: {
+                    limit: 10
+                },
+                className: {
+                    table: 'min-w-full bg-white'
+                }
+            }).render(document.getElementById("existingFeedsGrid"));
         }
 
 
@@ -154,7 +162,9 @@
         }
 
         document.addEventListener('DOMContentLoaded', async function() {
-            const grid = new gridjs.Grid({
+            initializeExistingFeedsGrid();
+
+            new gridjs.Grid({
                 columns: [
                     { id: 'blog', name: 'Blog' },
                     { id: 'blog_category', name: 'Category' },
@@ -202,7 +212,6 @@
                     table: 'min-w-full bg-white'
                 }
             }).render(document.getElementById("awesomeBlogsGrid"));
-
         });
     </script>
 {% endblock %}
