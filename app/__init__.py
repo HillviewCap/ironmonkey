@@ -113,9 +113,7 @@ def create_app(config_object=None):
     for blueprint, url_prefix in blueprints:
         if blueprint.name not in registered_blueprints:
             if blueprint.name == 'apt':
-                for route in blueprint.url_map.iter_rules():
-                    if not route.rule.startswith('/static'):
-                        blueprint.before_request(login_required)
+                blueprint.before_request(login_required)
             app.register_blueprint(blueprint, url_prefix=url_prefix)
             logger.info(
                 f"Registered blueprint: {blueprint.name} with url_prefix: {url_prefix}"
