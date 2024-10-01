@@ -59,9 +59,11 @@ class SchedulerService:
                         feed = session.query(RSSFeed).get(feed_id)
                         if feed:
                             scheduler_logger.info(f"Processing feed: {feed.url}")
-                            new_articles = asyncio.run(fetch_and_parse_feed(feed))
+                            new_articles = asyncio.run(fetch_and_parse_feed(feed_id))
                             if new_articles is not None:
                                 new_articles_count += new_articles
+                                # Refresh the feed object to ensure it's still attached to the session
+                                session.refresh(feed)
                                 scheduler_logger.info(f"Added {new_articles} new articles from feed: {feed.url}")
                             else:
                                 scheduler_logger.warning(f"fetch_and_parse_feed returned None for feed {feed.url}")

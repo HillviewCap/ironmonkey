@@ -62,7 +62,7 @@ def get_or_create_category(session: Session, name: str) -> Category:
                 logger.error(f"Failed to get or create category after {max_retries} attempts: {e}")
                 raise
 
-async def fetch_and_parse_feed(feed: RSSFeed) -> int:
+async def fetch_and_parse_feed(feed_id: str) -> int:
     """
     Fetch and parse a single RSS feed.
 
@@ -71,7 +71,7 @@ async def fetch_and_parse_feed(feed: RSSFeed) -> int:
     entries.
 
     Args:
-        feed (RSSFeed): The RSS feed object to fetch and parse.
+        feed_id (str): The ID of the RSS feed to fetch and parse.
 
     Returns:
         int: The number of new entries added to the database.
@@ -81,16 +81,22 @@ async def fetch_and_parse_feed(feed: RSSFeed) -> int:
         RuntimeError: For unexpected errors during parsing.
     """
     new_entries_count = 0
-    logger.info(f"Starting to fetch and parse feed: {feed.url}")
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
     }
     try:
-        async with httpx.AsyncClient(follow_redirects=True, timeout=30.0) as client:
-            response = await client.get(feed.url, headers=headers)
-            response.raise_for_status()
+        with DBConnectionManager.get_session() as session:
+            feed = session.query(RSSFeed).get(feed_id)
+            if not feed:
+                logger.error(f"Feed with id {feed_id} not found")
+                return 0
 
-            with DBConnectionManager.get_session() as session:
+            logger.info(f"Starting to fetch and parse feed: {feed.url}")
+
+            async with httpx.AsyncClient(follow_redirects=True, timeout=30.0) as client:
+                response = await client.get(feed.url, headers=headers)
+                response.raise_for_status()
+
                 # Check if the URL has been redirected
                 if str(response.url) != feed.url:
                     logger.info(f"Feed URL redirected from {feed.url} to {response.url}")
