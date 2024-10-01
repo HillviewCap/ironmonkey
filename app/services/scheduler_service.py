@@ -127,7 +127,7 @@ class SchedulerService:
                 empty_summary_ids = (
                     session.query(ParsedContent.id)
                     .filter(ParsedContent.summary.is_(None))
-                    .limit(50)
+                    .limit(10)
                     .all()
                 )
 
