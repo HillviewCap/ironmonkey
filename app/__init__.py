@@ -126,21 +126,20 @@ def create_app(config_object=None):
 
     # Initialize services
     with app.app_context():
-    ]
+        # Initialize Ollama API
+        app.ollama_api = OllamaAPI()
 
-    registered_blueprints = set()
-    for blueprint, url_prefix in blueprints:
-        if blueprint.name not in registered_blueprints:
-            app.register_blueprint(blueprint, url_prefix=url_prefix)
-            logger.info(
-                f"Registered blueprint: {blueprint.name} with url_prefix: {url_prefix}"
-            )
-            registered_blueprints.add(blueprint.name)
-        else:
-            logger.warning(f"Blueprint {blueprint.name} already registered, skipping.")
+        # Setup scheduler
+        app.scheduler = SchedulerService(app)
+        app.scheduler.setup_scheduler()
 
-    # Initialize services
-    with app.app_context():
+        # Initialize Awesome Threat Intel Blogs
+        from app.services.awesome_threat_intel_service import AwesomeThreatIntelService
+        AwesomeThreatIntelService.initialize_awesome_feeds()
+
+        # Update APT databases
+        update_databases()
+        logger.info("APT databases updated at application startup")
         # Initialize Ollama API
         app.ollama_api = OllamaAPI()
 
