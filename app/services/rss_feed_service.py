@@ -100,6 +100,10 @@ class RSSFeedService:
                 session.add(feed)
                 session.commit()
                 logger.info(f"Created new RSS feed: {feed.title}")
+
+                # Immediately parse the newly created feed
+                asyncio.create_task(RSSFeedService.parse_feed(feed.id))
+
                 return feed
             except Exception as e:
                 logger.error(f"Error creating RSS feed: {str(e)}")

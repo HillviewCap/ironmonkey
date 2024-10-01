@@ -36,28 +36,10 @@ import random
 
 logger = setup_logger("feed_parser_service", "feed_parser_service.log")
 
-LOCK_FILE = os.path.join(tempfile.gettempdir(), "feed_parser.lock")
+from sqlalchemy.orm import Session
+from sqlalchemy import select
 
-def acquire_lock():
-    try:
-        if os.path.exists(LOCK_FILE):
-            # Check if the existing lock is stale (older than 1 hour)
-            if os.path.getmtime(LOCK_FILE) < time.time() - 3600:
-                os.remove(LOCK_FILE)
-            else:
-                return None
-        with open(LOCK_FILE, 'x'):  # Create the file exclusively
-            return LOCK_FILE
-    except FileExistsError:
-        return None
-
-def release_lock(lock_file):
-    try:
-        os.remove(lock_file)
-    except Exception as e:
-        logger.error(f"Error releasing lock: {e}")
-
-def get_or_create_category(session, name):
+def get_or_create_category(session: Session, name: str) -> Category:
     max_retries = 5
     retry_delay = 1  # Start with 1 second delay
 
@@ -80,7 +62,7 @@ def get_or_create_category(session, name):
                 logger.error(f"Failed to get or create category after {max_retries} attempts: {e}")
                 raise
 
-async def fetch_and_parse_feed(feed: RSSFeed) -> int:
+async def fetch_and_parse_feed(feed_id: str) -> int:
     """
     Fetch and parse a single RSS feed.
 
@@ -89,7 +71,7 @@ async def fetch_and_parse_feed(feed: RSSFeed) -> int:
     entries.
 
     Args:
-        feed (RSSFeed): The RSS feed object to fetch and parse.
+        feed_id (str): The ID of the RSS feed to fetch and parse.
 
     Returns:
         int: The number of new entries added to the database.
@@ -99,21 +81,22 @@ async def fetch_and_parse_feed(feed: RSSFeed) -> int:
         RuntimeError: For unexpected errors during parsing.
     """
     new_entries_count = 0
-    lock_file = acquire_lock()
-    if not lock_file:
-        logger.warning("Another instance is already running. Skipping this run.")
-        return new_entries_count
-
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+    }
     try:
-        logger.info(f"Starting to fetch and parse feed: {feed.url}")
-        headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
-        }
-        async with httpx.AsyncClient(follow_redirects=True, timeout=30.0) as client:
-            response = await client.get(feed.url, headers=headers)
-            response.raise_for_status()
+        with DBConnectionManager.get_session() as session:
+            feed = session.query(RSSFeed).get(feed_id)
+            if not feed:
+                logger.error(f"Feed with id {feed_id} not found")
+                return 0
 
-            with DBConnectionManager.get_session() as session:
+            logger.info(f"Starting to fetch and parse feed: {feed.url}")
+
+            async with httpx.AsyncClient(follow_redirects=True, timeout=30.0) as client:
+                response = await client.get(feed.url, headers=headers)
+                response.raise_for_status()
+
                 # Check if the URL has been redirected
                 if str(response.url) != feed.url:
                     logger.info(f"Feed URL redirected from {feed.url} to {response.url}")
@@ -138,9 +121,10 @@ async def fetch_and_parse_feed(feed: RSSFeed) -> int:
                         title = entry.get("title", "")
                         logger.info(f"Processing entry {index}/{total_entries}: {url} - {title}")
 
-                        existing_content = session.query(ParsedContent).filter_by(
-                            url=url, feed_id=feed.id
-                        ).first()
+                        existing_content = session.execute(
+                            select(ParsedContent).filter_by(url=url, feed_id=feed.id).with_for_update(nowait=True)
+                        ).scalar_one_or_none()
+
                         if not existing_content:
                             logger.info(f"New content found: {url}")
                             parsed_content = await parse_content(url)
@@ -184,6 +168,12 @@ async def fetch_and_parse_feed(feed: RSSFeed) -> int:
                                 logger.warning(f"Failed to parse content for URL: {url}")
                         else:
                             logger.info(f"Content already exists: {url}")
+                    except OperationalError as e:
+                        if "database is locked" in str(e):
+                            logger.warning(f"Database locked for entry {url}, skipping...")
+                            continue
+                        else:
+                            raise
                     except Exception as entry_error:
                         logger.error(
                             f"Error processing entry {entry.get('link', 'Unknown')} from feed {feed.url}: {str(entry_error)}",
@@ -192,7 +182,8 @@ async def fetch_and_parse_feed(feed: RSSFeed) -> int:
                         session.rollback()
                         continue  # Continue with the next entry
 
-                session.commit()
+                    session.commit()  # Commit after each successful entry processing
+
                 logger.info(
                     f"Feed: {feed.url} - Added {new_entries_count} new entries to database"
                 )
@@ -217,6 +208,4 @@ async def fetch_and_parse_feed(feed: RSSFeed) -> int:
         )
         raise RuntimeError(f"Unexpected error: {str(e)}")
     finally:
-        if lock_file:
-            release_lock(lock_file)
         return new_entries_count
