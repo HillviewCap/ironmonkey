@@ -148,20 +148,22 @@ async def fetch_and_parse_feed(feed: RSSFeed) -> int:
                                 if pub_date:
                                     try:
                                         # Try parsing with multiple formats
-                                        for date_format in ["%a, %d %b %Y %H:%M:%S %z", "%Y-%m-%dT%H:%M:%S%z"]:
+                                        for date_format in ["%a, %d %b %Y %H:%M:%S %z", "%Y-%m-%dT%H:%M:%S%z", "%Y-%m-%d %H:%M:%S"]:
                                             try:
                                                 parsed_date = datetime.strptime(pub_date, date_format)
-                                                pub_date = parsed_date.strftime("%Y-%m-%d %H:%M:%S")
+                                                pub_date = parsed_date.strftime("%Y-%m-%d")
                                                 break
                                             except ValueError:
                                                 continue
                                         else:
-                                            # If no format worked, raise ValueError to log a warning
-                                            raise ValueError("No matching date format found")
-                                    except ValueError:
+                                            # If no format worked, try a more flexible approach
+                                            parsed_date = datetime.fromisoformat(pub_date.replace('Z', '+00:00'))
+                                            pub_date = parsed_date.strftime("%Y-%m-%d")
+                                    except Exception:
                                         logger.warning(
-                                            f"Could not parse date: {pub_date}. Using original string."
+                                            f"Could not parse date: {pub_date}. Using current date."
                                         )
+                                        pub_date = datetime.now().strftime("%Y-%m-%d")
 
                                 new_content = ParsedContent(
                                     content=sanitize_html(parsed_content),
