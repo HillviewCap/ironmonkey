@@ -14,7 +14,7 @@ import asyncio
 import tempfile
 import time
 from typing import Optional, Union
-from uuid import UUID
+from uuid import UUID, uuid4
 from app.utils.ollama_client import OllamaAPI, OllamaAPI
 from app.utils.groq_api import GroqAPI
 
@@ -55,6 +55,16 @@ class SummaryService:
     async def enhance_summary(self, content_id: str) -> bool:
         logger.info(f"Processing record {content_id}")
 
+        # Validate UUID
+        try:
+            uuid_obj = UUID(content_id, version=4)
+            if str(uuid_obj) != content_id.lower():
+                logger.warning(f"Invalid UUID format for content_id: {content_id}")
+                return False
+        except ValueError:
+            logger.warning(f"Invalid UUID format for content_id: {content_id}")
+            return False
+
         for attempt in range(self.max_retries):
             try:
                 with DBConnectionManager.get_session() as session:
@@ -66,6 +76,11 @@ class SummaryService:
                     if parsed_content.summary:
                         logger.info(f"Record {content_id} already has a summary. Skipping.")
                         return True
+
+                    # Check if content exists and is not empty
+                    if not parsed_content.content or parsed_content.content.strip() == "":
+                        logger.warning(f"Record {content_id} has no content. Skipping summary generation.")
+                        return False
 
                     summary = await self.generate_summary(content_id)
                     if not summary:
