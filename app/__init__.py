@@ -25,6 +25,7 @@ from app.blueprints.search.routes import search_bp
 from app.blueprints.api.routes import api_bp
 from app.blueprints.parsed_content.routes import parsed_content_bp
 from app.blueprints.apt.routes import bp as apt_bp
+from flask_login import login_required
 from app.utils.ollama_client import OllamaAPI
 from app.services.scheduler_service import SchedulerService
 from app.services.apt_update_service import update_databases
@@ -106,6 +107,25 @@ def create_app(config_object=None):
         (api_bp, "/api"),
         (parsed_content_bp, "/content"),
         (apt_bp, "/apt"),
+    ]
+
+    registered_blueprints = set()
+    for blueprint, url_prefix in blueprints:
+        if blueprint.name not in registered_blueprints:
+            if blueprint.name == 'apt':
+                for route in blueprint.url_map.iter_rules():
+                    if not route.rule.startswith('/static'):
+                        blueprint.before_request(login_required)
+            app.register_blueprint(blueprint, url_prefix=url_prefix)
+            logger.info(
+                f"Registered blueprint: {blueprint.name} with url_prefix: {url_prefix}"
+            )
+            registered_blueprints.add(blueprint.name)
+        else:
+            logger.warning(f"Blueprint {blueprint.name} already registered, skipping.")
+
+    # Initialize services
+    with app.app_context():
     ]
 
     registered_blueprints = set()
