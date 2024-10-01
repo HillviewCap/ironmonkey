@@ -42,15 +42,9 @@ class SummaryService:
                 raise ValueError(f"Unsupported API choice: {api_choice}. Please set SUMMARY_API_CHOICE to 'ollama' or 'groq' in the .env file.")
         return self.api
 
-    async def generate_summary(self, content_id: str) -> Optional[str]:
+    async def generate_summary(self, content_id: str, text_to_summarize: str) -> Optional[str]:
         api = self._initialize_api()
-
-        with DBConnectionManager.get_session() as session:
-            parsed_content = session.get(ParsedContent, UUID(content_id))
-            if not parsed_content:
-                logger.error(f"No ParsedContent found with id {content_id}")
-                return None
-            return await api.generate("threat_intel_summary", parsed_content.content)
+        return await api.generate("threat_intel_summary", text_to_summarize)
 
     async def enhance_summary(self, content_id: str) -> bool:
         logger.info(f"Processing record {content_id}")
@@ -77,12 +71,18 @@ class SummaryService:
                         logger.info(f"Record {content_id} already has a summary. Skipping.")
                         return True
 
-                    # Check if content exists and is not empty
-                    if not parsed_content.content or parsed_content.content.strip() == "":
-                        logger.warning(f"Record {content_id} has no content. Skipping summary generation.")
+                    # Check if content exists and is not empty, if empty check description
+                    text_to_summarize = None
+                    if parsed_content.content and parsed_content.content.strip():
+                        text_to_summarize = parsed_content.content
+                    elif parsed_content.description and parsed_content.description.strip():
+                        text_to_summarize = parsed_content.description
+                    
+                    if not text_to_summarize:
+                        logger.warning(f"Record {content_id} has no content or description. Skipping summary generation.")
                         return False
 
-                    summary = await self.generate_summary(content_id)
+                    summary = await self.generate_summary(content_id, text_to_summarize)
                     if not summary:
                         logger.warning(f"Empty summary generated for record {content_id}. Attempt {attempt + 1}/{self.max_retries}")
                         continue
