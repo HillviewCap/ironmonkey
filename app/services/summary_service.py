@@ -20,34 +20,16 @@ from app.utils.groq_api import GroqAPI
 
 logger = setup_logger('summary_service', 'summary_service.log')
 
-LOCK_FILE = os.path.join(tempfile.gettempdir(), 'summary_service.lock')
-LOCK_TIMEOUT = 600  # 10 minutes
+from sqlalchemy.orm import Session
+from sqlalchemy.exc import OperationalError
+import random
 
 class SummaryService:
     """A service to enhance summaries of parsed content using OllamaAPI or GroqAPI."""
-    def __init__(self, max_retries: int = 3):
+    def __init__(self, max_retries: int = 3, lock_timeout: int = 60):
         self.max_retries = max_retries
+        self.lock_timeout = lock_timeout
         self.api: Optional[Union[OllamaAPI, GroqAPI]] = None
-
-    @staticmethod
-    def acquire_lock():
-        if os.path.exists(LOCK_FILE):
-            # Check if the existing lock is stale
-            if time.time() - os.path.getmtime(LOCK_FILE) > LOCK_TIMEOUT:
-                os.remove(LOCK_FILE)
-            else:
-                return False
-        try:
-            with open(LOCK_FILE, 'w') as f:
-                f.write(str(os.getpid()))
-            return True
-        except IOError:
-            return False
-
-    @staticmethod
-    def release_lock():
-        if os.path.exists(LOCK_FILE):
-            os.remove(LOCK_FILE)
 
     def _initialize_api(self) -> Union[OllamaAPI, GroqAPI]:
         if self.api is None:
@@ -76,57 +58,67 @@ class SummaryService:
         for attempt in range(self.max_retries):
             try:
                 with DBConnectionManager.get_session() as session:
-                    summary = await self.generate_summary(content_id)
-                    if not summary:
-                        logger.warning(f"Empty summary generated for record {content_id}. Attempt {attempt + 1}/{self.max_retries}")
-                        continue
-
-                    parsed_content = session.get(ParsedContent, UUID(content_id))
+                    parsed_content = self._lock_content(session, content_id)
                     if not parsed_content:
-                        logger.warning(f"ParsedContent not found for id {content_id}")
+                        logger.warning(f"ParsedContent not found or locked for id {content_id}")
                         return False
 
                     if parsed_content.summary:
                         logger.info(f"Record {content_id} already has a summary. Skipping.")
                         return True
 
+                    summary = await self.generate_summary(content_id)
+                    if not summary:
+                        logger.warning(f"Empty summary generated for record {content_id}. Attempt {attempt + 1}/{self.max_retries}")
+                        continue
+
                     parsed_content.summary = summary.strip()
                     session.commit()
                     logger.info(f"Updated summary for record {content_id}")
                     return True
 
+            except OperationalError as e:
+                if "database is locked" in str(e) and attempt < self.max_retries - 1:
+                    wait_time = random.uniform(0.1, 0.5) * (2 ** attempt)
+                    logger.warning(f"Database locked, retrying in {wait_time:.2f} seconds... (attempt {attempt + 1}/{self.max_retries})")
+                    await asyncio.sleep(wait_time)
+                    continue
+                logger.error(f"Operational error for record {content_id}: {str(e)}. Attempt {attempt + 1}/{self.max_retries}", exc_info=True)
             except Exception as e:
                 logger.error(f"Error generating summary for record {content_id}: {str(e)}. Attempt {attempt + 1}/{self.max_retries}", exc_info=True)
 
         logger.error(f"Failed to generate summary for record {content_id} after {self.max_retries} attempts.")
         return False
 
-    async def summarize_feed(self, feed_id: str) -> None:
-        if not self.acquire_lock():
-            logger.warning("Another instance of SummaryService is running. Skipping this run.")
-            return
-
+    def _lock_content(self, session: Session, content_id: str) -> Optional[ParsedContent]:
         try:
-            logger.info(f"Starting summary enhancement for feed {feed_id}")
+            parsed_content = session.query(ParsedContent).filter(
+                ParsedContent.id == UUID(content_id),
+                ParsedContent.summary == None
+            ).with_for_update(nowait=True).first()
+            return parsed_content
+        except OperationalError:
+            return None
 
-            with DBConnectionManager.get_session() as session:
-                feed = session.get(RSSFeed, feed_id)
-                if not feed:
-                    logger.error(f"Feed with id {feed_id} not found")
-                    return
+    async def summarize_feed(self, feed_id: str) -> None:
+        logger.info(f"Starting summary enhancement for feed {feed_id}")
 
-                parsed_contents = session.query(ParsedContent).filter(
-                    ParsedContent.feed_id == feed_id,
-                    ParsedContent.summary == None
-                ).all()
+        with DBConnectionManager.get_session() as session:
+            feed = session.get(RSSFeed, feed_id)
+            if not feed:
+                logger.error(f"Feed with id {feed_id} not found")
+                return
 
-                async def process_content(content):
-                    success = await self.enhance_summary(content.id.hex)
-                    if not success:
-                        logger.warning(f"Failed to generate summary for content {content.id}")
+            parsed_contents = session.query(ParsedContent).filter(
+                ParsedContent.feed_id == feed_id,
+                ParsedContent.summary == None
+            ).all()
 
-                await asyncio.gather(*(process_content(content) for content in parsed_contents))
+            async def process_content(content):
+                success = await self.enhance_summary(content.id.hex)
+                if not success:
+                    logger.warning(f"Failed to generate summary for content {content.id}")
 
-            logger.info(f"Summary enhancement for feed {feed_id} completed")
-        finally:
-            self.release_lock()
+            await asyncio.gather(*(process_content(content) for content in parsed_contents))
+
+        logger.info(f"Summary enhancement for feed {feed_id} completed")
