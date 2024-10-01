@@ -156,4 +156,16 @@ def create_app(config_object=None):
         except (ValueError, AttributeError):
             return None
 
+    # Check if there are any users in the database
+    @app.before_request
+    def check_for_users():
+        from app.models.relational.user import User
+        from flask import redirect, url_for, request
+
+        # Exclude static files and the registration route from this check
+        if request.endpoint and 'static' not in request.endpoint and request.endpoint != 'auth.register':
+            user_count = db.session.query(User).count()
+            if user_count == 0 and request.endpoint != 'auth.register':
+                return redirect(url_for('auth.register'))
+
     return app
