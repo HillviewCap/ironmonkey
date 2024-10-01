@@ -3,6 +3,7 @@ from flask_login import login_required
 
 bp = Blueprint('parsed_content', __name__)
 
+# Import routes after creating the blueprint
 from . import routes
 
 # Apply login_required to all routes in this blueprint
