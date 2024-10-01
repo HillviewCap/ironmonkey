@@ -133,32 +133,30 @@
                 ],
                 server: {
                     url: '{{ url_for("rss_manager.get_rss_feeds") }}',
-                    then: response => {
-                        if (!response.ok) {
-                            throw new Error(`HTTP error! status: ${response.status}`);
-                        }
-                        return response.json();
-                    },
-                    handle: (res) => {
-                        if (res.data && Array.isArray(res.data)) {
-                            return {
-                                data: res.data.map(feed => [
-                                    feed.url,
-                                    feed.title,
-                                    feed.category,
-                                    feed.last_build_date,
-                                    feed.id
-                                ])
-                            };
-                        } else {
-                            throw new Error('Invalid data format received from server');
+                    then: response => response.data,
+                    total: response => response.total
+                },
+                search: {
+                    server: {
+                        url: (prev, keyword) => `${prev}${prev.includes('?') ? '&' : '?'}search=${keyword}`
+                    }
+                },
+                sort: {
+                    multiColumn: false,
+                    server: {
+                        url: (prev, columns) => {
+                            if (!columns.length) return prev;
+                            const col = columns[0];
+                            const dir = col.direction === 1 ? 'asc' : 'desc';
+                            return `${prev}${prev.includes('?') ? '&' : '?'}sort=${col.index}&order=${dir}`;
                         }
                     }
                 },
-                search: true,
-                sort: true,
                 pagination: {
-                    limit: 10
+                    limit: 10,
+                    server: {
+                        url: (prev, page, limit) => `${prev}${prev.includes('?') ? '&' : '?'}page=${page}&limit=${limit}`
+                    }
                 },
                 className: {
                     table: 'min-w-full bg-white'

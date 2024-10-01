@@ -34,14 +34,50 @@ parsed_content_service: ParsedContentService = ParsedContentService()
 
 @rss_manager_bp.route("/rss/feeds")
 @login_required
-def get_rss_feeds() -> str:
+def get_rss_feeds():
     """
-    Retrieve all RSS feeds and render the RSS manager page.
+    Retrieve RSS feeds with pagination, sorting, and searching support.
+
+    Returns:
+        dict: JSON response containing paginated RSS feeds data.
+    """
+    page = request.args.get('page', 1, type=int)
+    per_page = request.args.get('limit', 10, type=int)
+    search = request.args.get('search', '')
+    sort = request.args.get('sort', '')
+    order = request.args.get('order', 'asc')
+
+    query = RSSFeed.query
+
+    if search:
+        query = query.filter(
+            RSSFeed.url.ilike(f'%{search}%') |
+            RSSFeed.title.ilike(f'%{search}%') |
+            RSSFeed.category.ilike(f'%{search}%')
+        )
+
+    if sort:
+        column = getattr(RSSFeed, sort, None)
+        if column is not None:
+            query = query.order_by(column.asc() if order == 'asc' else column.desc())
+
+    pagination = query.paginate(page=page, per_page=per_page, error_out=False)
+    feeds = pagination.items
+
+    return jsonify({
+        'data': [feed.to_dict() for feed in feeds],
+        'total': pagination.total,
+    })
+
+@rss_manager_bp.route("/rss_manager")
+@login_required
+def rss_manager():
+    """
+    Render the RSS manager page.
 
     Returns:
         str: Rendered HTML template for the RSS manager page.
     """
-    feeds: List[RSSFeed] = rss_feed_service.get_all_feeds()
     form: AddRSSFeedForm = AddRSSFeedForm()
     csv_form: ImportCSVForm = ImportCSVForm()
     categories: List[str] = [
@@ -53,7 +89,6 @@ def get_rss_feeds() -> str:
     ]
     return render_template(
         "rss_manager.html",
-        feeds=feeds,
         form=form,
         csv_form=csv_form,
         categories=categories,
