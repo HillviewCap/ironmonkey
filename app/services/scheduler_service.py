@@ -13,11 +13,21 @@ scheduler_logger = getLogger("scheduler")
 
 
 class SchedulerService:
-    def __init__(self, app):
-        self.app = app
-        self.scheduler = BackgroundScheduler()
+    _instance = None
+
+    def __new__(cls, app):
+        if cls._instance is None:
+            cls._instance = super(SchedulerService, cls).__new__(cls)
+            cls._instance.app = app
+            cls._instance.scheduler = BackgroundScheduler()
+            cls._instance.is_running = False
+        return cls._instance
 
     def setup_scheduler(self):
+        if self.is_running:
+            logger.warning("Scheduler is already running. Skipping setup.")
+            return
+
         rss_check_interval = int(os.getenv("RSS_CHECK_INTERVAL", 30))
         summary_check_interval = int(os.getenv("SUMMARY_CHECK_INTERVAL", 31))
 
@@ -35,22 +45,26 @@ class SchedulerService:
                 minutes=summary_check_interval,
             )
             logger.info(
-                f"Scheduler started with Ollama API for summaries, check interval: {summary_check_interval} minutes"
+                f"Scheduler configured with Ollama API for summaries, check interval: {summary_check_interval} minutes"
             )
         elif summary_api_choice == "groq":
             # Add Groq-specific job here if needed
             logger.info(
-                "Scheduler started with Groq API for summaries, no automatic summary generation scheduled"
+                "Scheduler configured with Groq API for summaries, no automatic summary generation scheduled"
             )
         else:
             logger.warning(
                 f"Invalid SUMMARY_API_CHOICE: {summary_api_choice}. No summary generation scheduled."
             )
 
-        self.scheduler.start()
-        logger.info(
-            f"Scheduler started successfully with RSS check interval: {rss_check_interval} minutes"
-        )
+        if not self.is_running:
+            self.scheduler.start()
+            self.is_running = True
+            logger.info(
+                f"Scheduler started successfully with RSS check interval: {rss_check_interval} minutes"
+            )
+        else:
+            logger.info("Scheduler was already running. Jobs updated.")
 
     def check_and_process_rss_feeds(self):
         with self.app.app_context():
