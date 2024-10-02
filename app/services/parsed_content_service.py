@@ -1,6 +1,6 @@
-from app.models.relational.parsed_content import ParsedContent
-from app.models.relational.parsed_content import ParsedContentCategory
+from app.models.relational.parsed_content import ParsedContent, parsed_content_categories
 from app.extensions import db
+from sqlalchemy import delete
 from typing import List, Dict, Any
 import uuid
 
@@ -23,16 +23,16 @@ class ParsedContentService:
 
         :param feed_id: The UUID of the RSS feed
         """
-        # First, get all ParsedContent IDs associated with the feed
-        parsed_content_ids = db.session.query(ParsedContent.id).filter_by(rss_feed_id=feed_id).all()
-        parsed_content_ids = [id for (id,) in parsed_content_ids]
+        with db.session.begin():
+            # Get all ParsedContent IDs associated with the feed
+            parsed_content_ids = db.session.query(ParsedContent.id).filter_by(feed_id=feed_id).all()
+            parsed_content_ids = [id for (id,) in parsed_content_ids]
 
-        # Delete associated ParsedContentCategory entries
-        if parsed_content_ids:
-            ParsedContentCategory.query.filter(ParsedContentCategory.parsed_content_id.in_(parsed_content_ids)).delete(synchronize_session='fetch')
+            if parsed_content_ids:
+                # Delete associated entries in the parsed_content_categories table
+                db.session.execute(delete(parsed_content_categories).where(
+                    parsed_content_categories.c.parsed_content_id.in_(parsed_content_ids)
+                ))
 
-        # Delete ParsedContent entries
-        ParsedContent.query.filter_by(rss_feed_id=feed_id).delete()
-
-        # Commit the changes
-        db.session.commit()
+            # Delete ParsedContent entries
+            ParsedContent.query.filter_by(feed_id=feed_id).delete(synchronize_session='fetch')
