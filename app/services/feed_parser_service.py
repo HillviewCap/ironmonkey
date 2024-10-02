@@ -101,16 +101,30 @@ async def fetch_and_parse_feed(feed_id: str) -> int:
                 etag = response.headers.get('etag')
                 last_modified = response.headers.get('last-modified')
                 
-                if (etag and etag == feed.etag) or (last_modified and last_modified == feed.last_modified):
-                    logger.info(f"Feed {feed.url} has not been modified since last fetch")
+                if etag and etag == feed.etag:
+                    logger.info(f"Feed {feed.url} has not been modified since last fetch (etag match)")
                     return 0
+                
+                if last_modified:
+                    try:
+                        parsed_last_modified = date_parser.parse(last_modified)
+                        if feed.last_modified and parsed_last_modified <= feed.last_modified:
+                            logger.info(f"Feed {feed.url} has not been modified since last fetch (last-modified date check)")
+                            return 0
+                    except Exception as e:
+                        logger.warning(f"Could not parse last-modified header: {e}")
 
                 feed_data = feedparser.parse(response.content)
                 logger.info(f"Parsed feed data for {feed.url}")
 
                 # Update feed metadata
                 feed.etag = etag
-                feed.last_modified = last_modified
+                if last_modified:
+                    try:
+                        feed.last_modified = date_parser.parse(last_modified)
+                    except Exception as e:
+                        logger.warning(f"Could not parse last-modified header: {e}")
+                
                 if "title" in feed_data.feed:
                     feed.title = sanitize_html(feed_data.feed.title)
                 if "description" in feed_data.feed:
