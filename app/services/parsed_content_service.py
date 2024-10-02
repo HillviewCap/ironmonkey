@@ -1,4 +1,5 @@
 from app.models.relational.parsed_content import ParsedContent
+from app.models.relational.parsed_content_category import ParsedContentCategory
 from app.extensions import db
 from typing import List, Dict, Any
 import uuid
@@ -18,9 +19,20 @@ class ParsedContentService:
     @staticmethod
     def delete_parsed_content_by_feed_id(feed_id: uuid.UUID) -> None:
         """
-        Delete all parsed content associated with a specific RSS feed.
+        Delete all parsed content and associated category data for a specific RSS feed.
 
         :param feed_id: The UUID of the RSS feed
         """
+        # First, get all ParsedContent IDs associated with the feed
+        parsed_content_ids = db.session.query(ParsedContent.id).filter_by(rss_feed_id=feed_id).all()
+        parsed_content_ids = [id for (id,) in parsed_content_ids]
+
+        # Delete associated ParsedContentCategory entries
+        if parsed_content_ids:
+            ParsedContentCategory.query.filter(ParsedContentCategory.parsed_content_id.in_(parsed_content_ids)).delete(synchronize_session='fetch')
+
+        # Delete ParsedContent entries
         ParsedContent.query.filter_by(rss_feed_id=feed_id).delete()
+
+        # Commit the changes
         db.session.commit()
