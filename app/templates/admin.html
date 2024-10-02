@@ -6,22 +6,40 @@
 
     <div class="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
         <h2 class="text-2xl font-bold mb-4">Users</h2>
+        
+        <form class="mb-4">
+            <input type="text" name="search" placeholder="Search users..." class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+        </form>
+
         <table class="w-full">
             <thead>
                 <tr>
-                    <th class="px-4 py-2 text-left">Email</th>
-                    <th class="px-4 py-2 text-left">Created At</th>
+                    <th class="px-4 py-2 text-left">
+                        <a href="{{ url_for('admin.admin', sort='email') }}" class="text-blue-500 hover:text-blue-700">Email</a>
+                    </th>
+                    <th class="px-4 py-2 text-left">
+                        <a href="{{ url_for('admin.admin', sort='created_at') }}" class="text-blue-500 hover:text-blue-700">Created At</a>
+                    </th>
                 </tr>
             </thead>
             <tbody>
-                {% for user in users %}
+                {% for user in users.items %}
                 <tr>
                     <td class="border px-4 py-2">{{ user.email }}</td>
-                    <td class="border px-4 py-2">{{ user.created_at }}</td>
+                    <td class="border px-4 py-2">{{ user.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
+
+        <div class="mt-4">
+            {% if users.has_prev %}
+                <a href="{{ url_for('admin.admin', page=users.prev_num) }}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Previous</a>
+            {% endif %}
+            {% if users.has_next %}
+                <a href="{{ url_for('admin.admin', page=users.next_num) }}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Next</a>
+            {% endif %}
+        </div>
     </div>
 </div>
 {% endblock %}
