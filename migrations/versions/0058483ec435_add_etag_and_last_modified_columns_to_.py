@@ -37,7 +37,10 @@ def upgrade():
     ]
 
     for table in tables_with_uuid:
-        op.execute(f'CREATE TABLE _tmp_{table} AS SELECT * FROM {table}')
+        # Check if the temporary table already exists
+        if not op.has_table(f'_tmp_{table}'):
+            op.execute(f'CREATE TABLE _tmp_{table} AS SELECT * FROM {table}')
+        
         op.drop_table(table)
         op.execute(f'CREATE TABLE {table} AS SELECT * FROM _tmp_{table}')
         op.drop_table(f'_tmp_{table}')
@@ -67,7 +70,10 @@ def downgrade():
     ]
 
     for table in tables_with_uuid:
-        op.execute(f'CREATE TABLE _tmp_{table} AS SELECT * FROM {table}')
+        # Check if the temporary table already exists
+        if not op.has_table(f'_tmp_{table}'):
+            op.execute(f'CREATE TABLE _tmp_{table} AS SELECT * FROM {table}')
+        
         op.drop_table(table)
         op.execute(f'CREATE TABLE {table} AS SELECT * FROM _tmp_{table}')
         op.drop_table(f'_tmp_{table}')
@@ -84,19 +90,20 @@ def downgrade():
         batch_op.drop_column('last_modified')
         batch_op.drop_column('etag')
 
-    # Recreate the _alembic_tmp_allgroups table
-    op.create_table('_alembic_tmp_allgroups',
-    sa.Column('uuid', sa.NUMERIC(), nullable=False),
-    sa.Column('authors', sa.TEXT(), nullable=True),
-    sa.Column('category', sa.VARCHAR(), nullable=True),
-    sa.Column('name', sa.VARCHAR(), nullable=True),
-    sa.Column('type', sa.VARCHAR(), nullable=True),
-    sa.Column('source', sa.VARCHAR(), nullable=True),
-    sa.Column('description', sa.TEXT(), nullable=True),
-    sa.Column('tlp', sa.VARCHAR(), nullable=True),
-    sa.Column('license', sa.VARCHAR(), nullable=True),
-    sa.Column('last_db_change', sa.VARCHAR(), nullable=True),
-    sa.PrimaryKeyConstraint('uuid')
-    )
+    # Recreate the _alembic_tmp_allgroups table if it doesn't exist
+    if not op.has_table('_alembic_tmp_allgroups'):
+        op.create_table('_alembic_tmp_allgroups',
+        sa.Column('uuid', sa.NUMERIC(), nullable=False),
+        sa.Column('authors', sa.TEXT(), nullable=True),
+        sa.Column('category', sa.VARCHAR(), nullable=True),
+        sa.Column('name', sa.VARCHAR(), nullable=True),
+        sa.Column('type', sa.VARCHAR(), nullable=True),
+        sa.Column('source', sa.VARCHAR(), nullable=True),
+        sa.Column('description', sa.TEXT(), nullable=True),
+        sa.Column('tlp', sa.VARCHAR(), nullable=True),
+        sa.Column('license', sa.VARCHAR(), nullable=True),
+        sa.Column('last_db_change', sa.VARCHAR(), nullable=True),
+        sa.PrimaryKeyConstraint('uuid')
+        )
 
     # ### end Alembic commands ###
