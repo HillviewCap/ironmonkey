@@ -10,6 +10,8 @@ from sqlalchemy import String, DateTime
 from app import db
 from app.models.relational.rss_feed import RSSFeed
 
+from pydantic import BaseModel, ConfigDict
+
 class AwesomeThreatIntelBlog(db.Model):
     """
     Represents an Awesome Threat Intel Blog entry.
@@ -24,6 +26,9 @@ class AwesomeThreatIntelBlog(db.Model):
     last_checked = db.Column(DateTime, nullable=True)
 
     rss_feeds = db.relationship('RSSFeed', back_populates='awesome_blog')
+
+    class Config:
+        model_config = ConfigDict(from_attributes=True)
 
     def to_dict(self) -> dict:
         return {
