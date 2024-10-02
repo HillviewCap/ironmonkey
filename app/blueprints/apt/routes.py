@@ -1,5 +1,6 @@
 from flask import Blueprint, render_template, request, abort
 from app.models.relational.allgroups import AllGroupsValues, AllGroupsValuesNames
+from app.models.relational.alltools import AllTools
 from sqlalchemy import or_
 
 bp = Blueprint('apt', __name__)
@@ -33,3 +34,8 @@ def apt_group_detail(group_uuid):
     group = AllGroupsValues.query.get_or_404(group_uuid)
     group.names = AllGroupsValuesNames.query.filter_by(allgroups_values_uuid=group.uuid).all()
     return render_template('apt-group-detail.html', group=group)
+
+@bp.route('/apt-tool/<string:tool_name>')
+def apt_tool_detail(tool_name):
+    tool = AllTools.query.filter_by(name=tool_name).first_or_404()
+    return render_template('apt-tools.html', tool=tool)
