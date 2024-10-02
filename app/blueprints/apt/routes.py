@@ -11,7 +11,7 @@ def apt_groups():
     page = request.args.get('page', 1, type=int)
     per_page = 10
 
-    query = AllGroupsValues.query
+    query = AllGroupsValues.query.order_by(AllGroupsValues.last_card_change.desc())
     
     if search_query:
         query = query.filter(or_(
