@@ -199,18 +199,18 @@ class RSSFeedService:
             if not feed:
                 raise ValueError(f"RSS feed with ID {feed_id} not found.")
 
+            if delete_associated_data:
+                try:
+                    ParsedContentService.delete_parsed_content_by_feed_id(feed_id, session)
+                    logger.info(f"Deleted associated parsed content for feed ID: {feed_id}")
+                except Exception as e:
+                    logger.error(f"Error deleting associated parsed content: {str(e)}")
+            else:
+                logger.info(f"Associated parsed content for feed ID: {feed_id} was not deleted")
+
             session.delete(feed)
             session.commit()
             logger.info(f"Deleted RSS feed: {feed.title}")
-
-        if delete_associated_data:
-            try:
-                ParsedContentService.delete_parsed_content_by_feed_id(feed_id)
-                logger.info(f"Deleted associated parsed content for feed ID: {feed_id}")
-            except Exception as e:
-                logger.error(f"Error deleting associated parsed content: {str(e)}")
-        else:
-            logger.info(f"Associated parsed content for feed ID: {feed_id} was not deleted")
 
     @staticmethod
     def delete_associated_data(feed_id: uuid.UUID) -> None:

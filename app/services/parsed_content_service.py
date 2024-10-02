@@ -17,22 +17,25 @@ class ParsedContentService:
         return [content.to_dict() for content in latest_content]
 
     @staticmethod
-    def delete_parsed_content_by_feed_id(feed_id: uuid.UUID) -> None:
+    def delete_parsed_content_by_feed_id(feed_id: uuid.UUID, session=None) -> None:
         """
         Delete all parsed content and associated category data for a specific RSS feed.
 
         :param feed_id: The UUID of the RSS feed
+        :param session: SQLAlchemy session to use (optional)
         """
-        with db.session.begin():
-            # Get all ParsedContent IDs associated with the feed
-            parsed_content_ids = db.session.query(ParsedContent.id).filter_by(feed_id=feed_id).all()
-            parsed_content_ids = [id for (id,) in parsed_content_ids]
+        if session is None:
+            session = db.session
 
-            if parsed_content_ids:
-                # Delete associated entries in the parsed_content_categories table
-                db.session.execute(delete(parsed_content_categories).where(
-                    parsed_content_categories.c.parsed_content_id.in_(parsed_content_ids)
-                ))
+        # Get all ParsedContent IDs associated with the feed
+        parsed_content_ids = session.query(ParsedContent.id).filter_by(feed_id=feed_id).all()
+        parsed_content_ids = [id for (id,) in parsed_content_ids]
 
-            # Delete ParsedContent entries
-            ParsedContent.query.filter_by(feed_id=feed_id).delete(synchronize_session='fetch')
+        if parsed_content_ids:
+            # Delete associated entries in the parsed_content_categories table
+            session.execute(delete(parsed_content_categories).where(
+                parsed_content_categories.c.parsed_content_id.in_(parsed_content_ids)
+            ))
+
+        # Delete ParsedContent entries
+        session.query(ParsedContent).filter_by(feed_id=feed_id).delete(synchronize_session='fetch')
