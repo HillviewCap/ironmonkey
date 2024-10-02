@@ -44,12 +44,16 @@
                         <tbody>
                             <tr>
                                 <td class="border border-gray-300 px-4 py-2">{{ tool.tool }}</td>
-                                <td class="border border-gray-300 px-4 py-2">Primary</td>
+                                <td class="border border-gray-300 px-4 py-2">
+                                    <a href="{{ url_for('main.search', query='Primary') }}" class="bg-gray-200 hover:bg-gray-300 rounded-full px-3 py-1 text-sm font-semibold text-gray-700 transition duration-300">Primary</a>
+                                </td>
                             </tr>
                             {% for name in tool.names %}
                             <tr>
                                 <td class="border border-gray-300 px-4 py-2">{{ name.name }}</td>
-                                <td class="border border-gray-300 px-4 py-2">Alternative</td>
+                                <td class="border border-gray-300 px-4 py-2">
+                                    <a href="{{ url_for('main.search', query='Alternative') }}" class="bg-gray-200 hover:bg-gray-300 rounded-full px-3 py-1 text-sm font-semibold text-gray-700 transition duration-300">Alternative</a>
+                                </td>
                             </tr>
                             {% endfor %}
                         </tbody>
