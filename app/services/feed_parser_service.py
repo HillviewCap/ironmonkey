@@ -104,10 +104,12 @@ async def fetch_and_parse_feed(feed_id: str) -> int:
                 if last_modified:
                     try:
                         parsed_last_modified = date_parser.parse(last_modified)
-                        if feed.last_modified and parsed_last_modified <= feed.last_modified:
-                            return 0
+                        if feed.last_modified:
+                            feed_last_modified = date_parser.parse(feed.last_modified)
+                            if parsed_last_modified <= feed_last_modified:
+                                return 0
                     except Exception as e:
-                        logger.warning(f"Could not parse last-modified header: {e}")
+                        logger.warning(f"Could not parse or compare last-modified header: {e}")
 
                 feed_data = feedparser.parse(response.content)
 
@@ -129,10 +131,14 @@ async def fetch_and_parse_feed(feed_id: str) -> int:
                 if 'updated' in feed_data.feed:
                     try:
                         new_build_date = date_parser.parse(feed_data.feed.updated)
-                        if not feed.last_build_date or new_build_date > date_parser.parse(feed.last_build_date):
+                        if not feed.last_build_date:
                             feed.last_build_date = new_build_date.strftime("%Y-%m-%d %H:%M:%S")
+                        else:
+                            last_build_date = date_parser.parse(feed.last_build_date)
+                            if new_build_date > last_build_date:
+                                feed.last_build_date = new_build_date.strftime("%Y-%m-%d %H:%M:%S")
                     except Exception as e:
-                        logger.warning(f"Could not parse feed updated date: {e}")
+                        logger.warning(f"Could not parse or compare feed updated date: {e}")
 
                 session.commit()
 
