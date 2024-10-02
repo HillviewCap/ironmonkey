@@ -11,34 +11,50 @@
             <p class="text-lg text-gray-700 mb-4"><strong>Description:</strong> {{ tool.description }}</p>
             <p class="text-lg text-gray-700 mb-4"><strong>Category:</strong> {{ tool.category }}</p>
             <p class="text-lg text-gray-700 mb-4"><strong>Type:</strong> {{ tool.type }}</p>
-            <div class="mt-4 mb-6">
-                <h3 class="text-xl font-semibold mb-2">Information:</h3>
-                <table class="min-w-full border-collapse">
-                    <thead>
-                        <tr>
-                            <th class="border border-gray-300 px-4 py-2 bg-gray-100">URLs</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for url in tool.information.split(',') %}
-                        <tr>
-                            <td class="border border-gray-300 px-4 py-2">
-                                <a href="{{ url.strip() }}" target="_blank" class="text-blue-500 hover:underline">{{ url.strip() }}</a>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-            
-            <div class="mt-4 mb-6">
-                <h3 class="text-xl font-semibold mb-2">Names:</h3>
-                <ul class="list-disc list-inside">
-                    <li>{{ tool.tool }} (Primary)</li>
-                    {% for name in tool.names %}
-                    <li>{{ name.name }}</li>
-                    {% endfor %}
-                </ul>
+            <div class="flex flex-col md:flex-row mt-4 mb-6 space-y-4 md:space-y-0 md:space-x-4">
+                <div class="flex-1">
+                    <h3 class="text-xl font-semibold mb-2">Information:</h3>
+                    <table class="min-w-full border-collapse">
+                        <thead>
+                            <tr>
+                                <th class="border border-gray-300 px-4 py-2 bg-gray-100">URLs</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for url in tool.information.split(',') %}
+                            <tr>
+                                <td class="border border-gray-300 px-4 py-2">
+                                    <a href="{{ url.strip() }}" target="_blank" class="text-blue-500 hover:underline">{{ url.strip() }}</a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="flex-1">
+                    <h3 class="text-xl font-semibold mb-2">Names:</h3>
+                    <table class="min-w-full border-collapse">
+                        <thead>
+                            <tr>
+                                <th class="border border-gray-300 px-4 py-2 bg-gray-100">Name</th>
+                                <th class="border border-gray-300 px-4 py-2 bg-gray-100">Type</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="border border-gray-300 px-4 py-2">{{ tool.tool }}</td>
+                                <td class="border border-gray-300 px-4 py-2">Primary</td>
+                            </tr>
+                            {% for name in tool.names %}
+                            <tr>
+                                <td class="border border-gray-300 px-4 py-2">{{ name.name }}</td>
+                                <td class="border border-gray-300 px-4 py-2">Alternative</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
             </div>
             
             <p class="text-sm text-gray-500 mt-4"><strong>Last Updated:</strong> {{ tool.last_card_change }}</p>
