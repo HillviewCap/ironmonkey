@@ -14,7 +14,11 @@
             <p class="text-lg text-gray-700 mb-4"><strong>First Seen:</strong> {{ group.first_seen }}</p>
             <p class="text-lg text-gray-700 mb-4"><strong>Observed Sectors:</strong> {{ group.observed_sectors }}</p>
             <p class="text-lg text-gray-700 mb-4"><strong>Observed Countries:</strong> {{ group.observed_countries }}</p>
-            <p class="text-lg text-gray-700 mb-4"><strong>Tools:</strong> {{ group.tools }}</p>
+            <p class="text-lg text-gray-700 mb-4"><strong>Tools:</strong> 
+                {% for tool in group.tools.split(', ') %}
+                    <a href="{{ url_for('apt.apt_tool_detail', tool_name=tool.strip()) }}" class="text-blue-500 hover:underline">{{ tool.strip() }}</a>{% if not loop.last %}, {% endif %}
+                {% endfor %}
+            </p>
             <p class="text-lg text-gray-700 mb-4"><strong>Sponsor:</strong> {{ group.sponsor }}</p>
             
             {% if group.names %}
