@@ -1,5 +1,7 @@
 from app.models.relational.parsed_content import ParsedContent
+from app.extensions import db
 from typing import List, Dict, Any
+import uuid
 
 class ParsedContentService:
     @staticmethod
@@ -12,3 +14,13 @@ class ParsedContentService:
         """
         latest_content = ParsedContent.query.order_by(ParsedContent.created_at.desc()).limit(limit).all()
         return [content.to_dict() for content in latest_content]
+
+    @staticmethod
+    def delete_parsed_content_by_feed_id(feed_id: uuid.UUID) -> None:
+        """
+        Delete all parsed content associated with a specific RSS feed.
+
+        :param feed_id: The UUID of the RSS feed
+        """
+        ParsedContent.query.filter_by(rss_feed_id=feed_id).delete()
+        db.session.commit()

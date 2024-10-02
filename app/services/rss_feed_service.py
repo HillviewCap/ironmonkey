@@ -203,7 +203,11 @@ class RSSFeedService:
             logger.info(f"Deleted RSS feed: {feed.title}")
 
         # Delete associated parsed content
-        ParsedContentService.delete_parsed_content_by_feed_id(feed_id)
+        try:
+            ParsedContentService.delete_parsed_content_by_feed_id(feed_id)
+            logger.info(f"Deleted associated parsed content for feed ID: {feed_id}")
+        except Exception as e:
+            logger.error(f"Error deleting associated parsed content: {str(e)}")
 
     @staticmethod
     async def parse_feed(feed_id: uuid.UUID) -> None:
