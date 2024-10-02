@@ -1,5 +1,5 @@
 from app.models.relational.parsed_content import ParsedContent
-from app.models.relational.parsed_content_category import ParsedContentCategory
+from app.models.relational.parsed_content import ParsedContentCategory
 from app.extensions import db
 from typing import List, Dict, Any
 import uuid
