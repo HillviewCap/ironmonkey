@@ -2,6 +2,7 @@ from flask import render_template, send_from_directory, redirect, url_for, abort
 from flask_login import current_user, login_required
 import os
 from app.models.relational.parsed_content import ParsedContent
+from app.models.relational.rss_feed import RSSFeed
 from . import bp
 
 @bp.route('/')
@@ -19,12 +20,14 @@ def index():
     try:
         recent_items = (
             ParsedContent.query
+            .join(RSSFeed)
             .filter(
                 ParsedContent.title.isnot(None),
                 ParsedContent.description.isnot(None),
             )
             .order_by(ParsedContent.pub_date.desc())
             .limit(6)
+            .add_columns(RSSFeed.title.label('feed_title'))
             .all()
         )
         current_app.logger.info(f"User {current_user.id} accessed index route.")
