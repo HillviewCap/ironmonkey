@@ -1,7 +1,8 @@
 from flask import Blueprint, render_template, request, current_app, jsonify, abort
 from flask_wtf import FlaskForm
 from flask_login import login_required
-from app.models import SearchParams, ParsedContent
+from app.models import SearchParams
+from app.models.relational.parsed_content import ParsedContent
 
 search_bp = Blueprint('search', __name__)
 from app.utils.search_utils import get_search_params, perform_search, build_search_query

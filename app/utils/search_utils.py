@@ -71,7 +71,7 @@ def build_search_query(search_params: SearchParams):
 def perform_search(search_params: SearchParams, page: int = 1, per_page: int = 10, order_by=None):
     query = build_search_query(search_params)
 
-    if order_by:
+    if order_by is not None:
         query = query.order_by(order_by)
 
     try:
