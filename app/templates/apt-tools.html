@@ -1,49 +1,30 @@
 {% extends "base.html" %}
 
-{% block title %}{{ tool.name }} - APT Tool Detail{% endblock %}
+{% block title %}{{ tool.tool }} - APT Tool Detail{% endblock %}
 
 {% block content %}
 <div class="container mx-auto px-4 py-8">
-    <h1 class="text-4xl font-bold mb-8 text-center text-gray-800">{{ tool.name }}</h1>
+    <h1 class="text-4xl font-bold mb-8 text-center text-gray-800">{{ tool.tool }}</h1>
     
     <div class="bg-white rounded-lg shadow-lg overflow-hidden">
         <div class="p-6">
             <p class="text-lg text-gray-700 mb-4"><strong>Description:</strong> {{ tool.description }}</p>
             <p class="text-lg text-gray-700 mb-4"><strong>Category:</strong> {{ tool.category }}</p>
             <p class="text-lg text-gray-700 mb-4"><strong>Type:</strong> {{ tool.type }}</p>
-            <p class="text-lg text-gray-700 mb-4"><strong>Authors:</strong> {{ tool.authors }}</p>
-            <p class="text-lg text-gray-700 mb-4"><strong>Source:</strong> {{ tool.source }}</p>
-            <p class="text-lg text-gray-700 mb-4"><strong>TLP:</strong> {{ tool.tlp }}</p>
-            <p class="text-lg text-gray-700 mb-4"><strong>License:</strong> {{ tool.license }}</p>
+            <p class="text-lg text-gray-700 mb-4"><strong>Information:</strong> {{ tool.information }}</p>
             
-            {% if tool.values %}
-            <div class="mb-4">
-                <h2 class="text-2xl font-semibold mb-2">Additional Information:</h2>
-                {% for value in tool.values %}
-                <div class="mb-4 border-b pb-4">
-                    <p class="text-lg text-gray-700 mb-2"><strong>Tool:</strong> {{ value.tool }}</p>
-                    <p class="text-lg text-gray-700 mb-2"><strong>Description:</strong> {{ value.description }}</p>
-                    <p class="text-lg text-gray-700 mb-2"><strong>Category:</strong> {{ value.category }}</p>
-                    <p class="text-lg text-gray-700 mb-2"><strong>Type:</strong> {{ value.type }}</p>
-                    <p class="text-lg text-gray-700 mb-2"><strong>Information:</strong> {{ value.information }}</p>
-                    <p class="text-sm text-gray-500"><strong>Last Updated:</strong> {{ value.last_card_change }}</p>
-                    
-                    {% if value.names %}
-                    <div class="mt-2">
-                        <h3 class="text-xl font-semibold mb-1">Alternative Names:</h3>
-                        <ul class="list-disc list-inside">
-                            {% for name in value.names %}
-                            <li>{{ name.name }}</li>
-                            {% endfor %}
-                        </ul>
-                    </div>
-                    {% endif %}
-                </div>
-                {% endfor %}
+            {% if tool.names %}
+            <div class="mt-2 mb-4">
+                <h3 class="text-xl font-semibold mb-1">Alternative Names:</h3>
+                <ul class="list-disc list-inside">
+                    {% for name in tool.names %}
+                    <li>{{ name.name }}</li>
+                    {% endfor %}
+                </ul>
             </div>
             {% endif %}
             
-            <p class="text-sm text-gray-500 mt-4"><strong>Last Database Update:</strong> {{ tool.last_db_change }}</p>
+            <p class="text-sm text-gray-500 mt-4"><strong>Last Updated:</strong> {{ tool.last_card_change }}</p>
         </div>
     </div>
     
