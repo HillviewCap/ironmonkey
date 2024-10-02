@@ -45,7 +45,7 @@ def search():
     page = request.args.get('page', 1, type=int)
     if form.validate_on_submit() or request.method == "GET":
         current_app.logger.info(f"Performing search with params: {search_params.__dict__}")
-        results, total_results = perform_search(search_params, page, order_by=ParsedContent.pub_date.desc())
+        results, total_results = perform_search(search_params, page, per_page=10, order_by=ParsedContent.pub_date.desc())
         current_app.logger.info(f"Search completed. Total results: {total_results}")
         return render_template(
             "search.html",
