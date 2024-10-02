@@ -154,7 +154,7 @@ async def fetch_and_parse_feed(feed_id: str) -> int:
                         logger.info(f"Processing entry {index}/{total_entries}: {url} - {title}")
 
                         pub_date = entry.get("published", "")
-                        if pub_date:
+                        if pub_date and pub_date.lower() != "invalid date":
                             try:
                                 parsed_date = date_parser.parse(pub_date)
                                 pub_date = parsed_date.strftime("%Y-%m-%d")
@@ -164,7 +164,7 @@ async def fetch_and_parse_feed(feed_id: str) -> int:
                                 )
                                 pub_date = datetime.now().strftime("%Y-%m-%d")
                         else:
-                            logger.warning("No published date found. Using current date.")
+                            logger.warning(f"Invalid or no published date found: {pub_date}. Using current date.")
                             pub_date = datetime.now().strftime("%Y-%m-%d")
 
                         # Skip entries that are older than or equal to the most recent entry in the database
