@@ -124,3 +124,4 @@ WTForms==3.1.2
 yarl==1.9.4
 zipp==3.19.2
 langchain_groq
+python-dateutil
