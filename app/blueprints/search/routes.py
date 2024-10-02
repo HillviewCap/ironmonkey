@@ -1,10 +1,11 @@
 from flask import Blueprint, render_template, request, current_app, jsonify, abort
 from flask_wtf import FlaskForm
 from flask_login import login_required
-from app.models import SearchParams, ParsedContent
+from app.models import SearchParams
+from app.models.relational.parsed_content import ParsedContent
 
 search_bp = Blueprint('search', __name__)
-from app.utils.search_utils import get_search_params, perform_search
+from app.utils.search_utils import get_search_params, perform_search, build_search_query
 from app.services.summary_service import SummaryService
 import uuid
 
@@ -45,7 +46,7 @@ def search():
     page = request.args.get('page', 1, type=int)
     if form.validate_on_submit() or request.method == "GET":
         current_app.logger.info(f"Performing search with params: {search_params.__dict__}")
-        results, total_results = perform_search(search_params, page)
+        results, total_results = perform_search(search_params, page, per_page=10, order_by=ParsedContent.pub_date.desc())
         current_app.logger.info(f"Search completed. Total results: {total_results}")
         return render_template(
             "search.html",
