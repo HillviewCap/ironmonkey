@@ -108,7 +108,11 @@
                 <ul class="list-disc list-inside">
                     {% for technique in group.mitre_attack.split(', ') %}
                     {% if technique.strip() %}
-                    <li>{{ technique.strip() }}</li>
+                    <li>
+                        <a href="https://attack.mitre.org/techniques/{{ technique.strip() }}/" target="_blank" class="text-blue-500 hover:underline">
+                            {{ technique.strip() }}
+                        </a>
+                    </li>
                     {% endif %}
                     {% endfor %}
                 </ul>
