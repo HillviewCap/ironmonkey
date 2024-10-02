@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, request, abort
 from app.models.relational.allgroups import AllGroupsValues, AllGroupsValuesNames
-from app.models.relational.alltools import AllTools, AllToolsValues
+from app.models.relational.alltools import AllTools, AllToolsValues, AllToolsValuesNames
 from sqlalchemy import or_
 
 bp = Blueprint('apt', __name__)
