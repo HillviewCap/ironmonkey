@@ -58,8 +58,8 @@ def main():
         app.run(
             host=app.config.get("HOST", "0.0.0.0"),
             port=int(app.config.get("FLASK_PORT", 5000)),
-            use_reloader=app.config.get("USE_RELOADER", True),
-            debug=app.config.get("DEBUG", True),
+            use_reloader=app.config.get("USE_RELOADER", False),
+            debug=app.config.get("DEBUG", False),
         )
         logger.info(f"Application started in debug mode: {app.debug}")
     except Exception as e:

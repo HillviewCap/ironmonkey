@@ -21,6 +21,7 @@ class ProductionConfig(Config):
     DEBUG = False
     FLASK_ENV = 'production'
     LOG_LEVEL = 'INFO'
+    USE_RELOADER = False
 
 class TestingConfig(Config):
     TESTING = True
