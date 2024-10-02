@@ -1,9 +1,8 @@
-from flask import render_template, Blueprint, request
+from flask import render_template, request
 from .services import ParsedContentService
+from . import bp
 
-parsed_content_bp = Blueprint('parsed_content', __name__)
-
-@parsed_content_bp.route('/')
+@bp.route('/')
 def parsed_content():
     category = request.args.get('category')
     content_service = ParsedContentService()

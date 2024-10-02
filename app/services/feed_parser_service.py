@@ -8,7 +8,7 @@ and storing new entries in the database.
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Optional
+from typing import Optional, Tuple
 
 import httpx
 import feedparser
@@ -22,22 +22,16 @@ from app.utils.db_connection_manager import DBConnectionManager
 from app.utils.logging_config import setup_logger
 from app.utils.jina_api import parse_content
 
-from typing import Optional
-from datetime import datetime
-import httpx
-import feedparser
-from app.models import db, ParsedContent, RSSFeed
 import os
 import tempfile
 import time
-from app.utils.logging_config import setup_logger
 from sqlalchemy.exc import OperationalError
 import random
 
 logger = setup_logger("feed_parser_service", "feed_parser_service.log")
 
 from sqlalchemy.orm import Session
-from sqlalchemy import select
+from sqlalchemy import select, func
 
 def get_or_create_category(session: Session, name: str) -> Category:
     max_retries = 5
@@ -103,23 +97,81 @@ async def fetch_and_parse_feed(feed_id: str) -> int:
                     feed.url = str(response.url)
                     session.commit()
 
+                # Check if the feed has been modified
+                etag = response.headers.get('etag')
+                last_modified = response.headers.get('last-modified')
+                
+                if etag and etag == feed.etag:
+                    logger.info(f"Feed {feed.url} has not been modified since last fetch (etag match)")
+                    return 0
+                
+                if last_modified:
+                    try:
+                        parsed_last_modified = date_parser.parse(last_modified)
+                        if feed.last_modified and parsed_last_modified <= feed.last_modified:
+                            logger.info(f"Feed {feed.url} has not been modified since last fetch (last-modified date check)")
+                            return 0
+                    except Exception as e:
+                        logger.warning(f"Could not parse last-modified header: {e}")
+
                 feed_data = feedparser.parse(response.content)
                 logger.info(f"Parsed feed data for {feed.url}")
-                # Update the feed title and description if available
+
+                # Update feed metadata
+                feed.etag = etag
+                if last_modified:
+                    try:
+                        parsed_last_modified = date_parser.parse(last_modified)
+                        feed.last_modified = parsed_last_modified.strftime("%Y-%m-%d %H:%M:%S")
+                    except Exception as e:
+                        logger.warning(f"Could not parse last-modified header: {e}")
+                
                 if "title" in feed_data.feed:
                     feed.title = sanitize_html(feed_data.feed.title)
                 if "description" in feed_data.feed:
                     feed.description = sanitize_html(feed_data.feed.description)
+                
+                # Update last_build_date if available
+                if 'updated' in feed_data.feed:
+                    try:
+                        new_build_date = date_parser.parse(feed_data.feed.updated)
+                        if not feed.last_build_date or new_build_date > date_parser.parse(feed.last_build_date):
+                            feed.last_build_date = new_build_date.strftime("%Y-%m-%d %H:%M:%S")
+                    except Exception as e:
+                        logger.warning(f"Could not parse feed updated date: {e}")
+
                 session.commit()
 
                 total_entries = len(feed_data.entries)
                 logger.info(f"Found {total_entries} entries in feed: {feed.url}")
+
+                # Get the most recent entry's publication date from the database
+                most_recent_entry = session.query(func.max(ParsedContent.pub_date)).filter_by(feed_id=feed.id).scalar()
 
                 for index, entry in enumerate(feed_data.entries, 1):
                     try:
                         url = entry.link
                         title = entry.get("title", "")
                         logger.info(f"Processing entry {index}/{total_entries}: {url} - {title}")
+
+                        pub_date = entry.get("published", "")
+                        if pub_date and pub_date.lower() != "invalid date":
+                            try:
+                                parsed_date = date_parser.parse(pub_date)
+                                pub_date = parsed_date.strftime("%Y-%m-%d")
+                            except Exception as e:
+                                logger.warning(
+                                    f"Could not parse date: {pub_date}. Error: {str(e)}. Using current date."
+                                )
+                                pub_date = datetime.now().strftime("%Y-%m-%d")
+                        else:
+                            logger.warning(f"Invalid or no published date found: {pub_date}. Using current date.")
+                            pub_date = datetime.now().strftime("%Y-%m-%d")
+
+                        # Skip entries that are older than or equal to the most recent entry in the database
+                        if most_recent_entry and pub_date <= most_recent_entry:
+                            logger.info(f"Skipping entry {url} as it's not newer than existing entries")
+                            continue
 
                         existing_content = session.execute(
                             select(ParsedContent).filter_by(url=url, feed_id=feed.id).with_for_update(nowait=True)
@@ -129,20 +181,6 @@ async def fetch_and_parse_feed(feed_id: str) -> int:
                             logger.info(f"New content found: {url}")
                             parsed_content = await parse_content(url)
                             if parsed_content is not None:
-                                pub_date = entry.get("published", "")
-                                if pub_date:
-                                    try:
-                                        parsed_date = date_parser.parse(pub_date)
-                                        pub_date = parsed_date.strftime("%Y-%m-%d")
-                                    except Exception as e:
-                                        logger.warning(
-                                            f"Could not parse date: {pub_date}. Error: {str(e)}. Using current date."
-                                        )
-                                        pub_date = datetime.now().strftime("%Y-%m-%d")
-                                else:
-                                    logger.warning("No published date found. Using current date.")
-                                    pub_date = datetime.now().strftime("%Y-%m-%d")
-
                                 new_content = ParsedContent(
                                     content=sanitize_html(parsed_content),
                                     feed_id=feed.id,

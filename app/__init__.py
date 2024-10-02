@@ -23,8 +23,9 @@ from app.blueprints.rss_manager.routes import rss_manager_bp
 from app.blueprints.admin.routes import admin_bp
 from app.blueprints.search.routes import search_bp
 from app.blueprints.api.routes import api_bp
-from app.blueprints.parsed_content.routes import parsed_content_bp
+from app.blueprints.parsed_content import bp as parsed_content_bp
 from app.blueprints.apt.routes import bp as apt_bp
+from flask_login import login_required
 from app.utils.ollama_client import OllamaAPI
 from app.services.scheduler_service import SchedulerService
 from app.services.apt_update_service import update_databases
@@ -38,6 +39,8 @@ migrate = Migrate()
 csrf = CSRFProtect()
 login_manager = LoginManager()
 login_manager.login_view = "auth.login"
+login_manager.login_message = "Please log in to access this page."
+login_manager.login_message_category = "info"
 
 
 def create_app(config_object=None):
@@ -102,13 +105,16 @@ def create_app(config_object=None):
         (admin_bp, "/admin"),
         (search_bp, "/search"),
         (api_bp, "/api"),
-        (parsed_content_bp, "/content"),
+        (parsed_content_bp, "/parsed_content"),
         (apt_bp, "/apt"),
     ]
 
     registered_blueprints = set()
     for blueprint, url_prefix in blueprints:
         if blueprint.name not in registered_blueprints:
+            if blueprint.name == 'apt':
+                for endpoint, view_func in blueprint.view_functions.items():
+                    blueprint.view_functions[endpoint] = login_required(view_func)
             app.register_blueprint(blueprint, url_prefix=url_prefix)
             logger.info(
                 f"Registered blueprint: {blueprint.name} with url_prefix: {url_prefix}"
@@ -119,6 +125,20 @@ def create_app(config_object=None):
 
     # Initialize services
     with app.app_context():
+        # Initialize Ollama API
+        app.ollama_api = OllamaAPI()
+
+        # Setup scheduler
+        app.scheduler = SchedulerService(app)
+        app.scheduler.setup_scheduler()
+
+        # Initialize Awesome Threat Intel Blogs
+        from app.services.awesome_threat_intel_service import AwesomeThreatIntelService
+        AwesomeThreatIntelService.initialize_awesome_feeds()
+
+        # Update APT databases
+        update_databases()
+        logger.info("APT databases updated at application startup")
         # Initialize Ollama API
         app.ollama_api = OllamaAPI()
 
@@ -155,5 +175,20 @@ def create_app(config_object=None):
             return db.session.get(User, uuid_obj)
         except (ValueError, AttributeError):
             return None
+
+    # Check if there are any users in the database
+    @app.before_request
+    def check_for_users():
+        from app.models.relational.user import User
+        from flask import redirect, url_for, request
+
+        # Exclude static files, auth routes, and API routes from this check
+        if (request.endpoint and 
+            'static' not in request.endpoint and 
+            not request.endpoint.startswith('auth.') and
+            not request.endpoint.startswith('api.')):
+            user_count = db.session.query(User).count()
+            if user_count == 0:
+                return redirect(url_for('auth.register'))
 
     return app
