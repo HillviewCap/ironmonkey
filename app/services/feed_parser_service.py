@@ -121,7 +121,8 @@ async def fetch_and_parse_feed(feed_id: str) -> int:
                 feed.etag = etag
                 if last_modified:
                     try:
-                        feed.last_modified = date_parser.parse(last_modified)
+                        parsed_last_modified = date_parser.parse(last_modified)
+                        feed.last_modified = parsed_last_modified.strftime("%Y-%m-%d %H:%M:%S")
                     except Exception as e:
                         logger.warning(f"Could not parse last-modified header: {e}")
                 
@@ -134,8 +135,8 @@ async def fetch_and_parse_feed(feed_id: str) -> int:
                 if 'updated' in feed_data.feed:
                     try:
                         new_build_date = date_parser.parse(feed_data.feed.updated)
-                        if not feed.last_build_date or new_build_date > feed.last_build_date:
-                            feed.last_build_date = new_build_date
+                        if not feed.last_build_date or new_build_date > date_parser.parse(feed.last_build_date):
+                            feed.last_build_date = new_build_date.strftime("%Y-%m-%d %H:%M:%S")
                     except Exception as e:
                         logger.warning(f"Could not parse feed updated date: {e}")
 
