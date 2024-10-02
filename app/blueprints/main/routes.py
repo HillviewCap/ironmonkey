@@ -4,6 +4,18 @@ import os
 from app.models.relational.parsed_content import ParsedContent
 from app.models.relational.rss_feed import RSSFeed
 from . import bp
+from datetime import datetime
+
+@bp.app_template_filter('format_date')
+def format_date(value):
+    if isinstance(value, datetime):
+        return value.strftime('%Y-%m-%d %H:%M:%S')
+    elif isinstance(value, str):
+        try:
+            return datetime.strptime(value, '%Y-%m-%d %H:%M:%S').strftime('%Y-%m-%d %H:%M:%S')
+        except ValueError:
+            return value
+    return str(value)
 
 @bp.route('/')
 @login_required

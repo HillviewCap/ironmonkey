@@ -15,7 +15,7 @@
             <h3 class="text-lg font-semibold mb-2">{{ item.ParsedContent.title }}</h3>
             <p class="text-sm text-gray-500 mb-2">{{ item.feed_title }}</p>
             <p class="text-gray-600 mb-4">{{ item.ParsedContent.summary[:100] + '...' if item.ParsedContent.summary else 'No summary available' }}</p>
-            <p class="text-sm text-gray-500 mb-2">{{ item.ParsedContent.pub_date.strftime('%Y-%m-%d %H:%M:%S') }}</p>
+            <p class="text-sm text-gray-500 mb-2">{{ item.ParsedContent.pub_date|format_date }}</p>
             <a href="{{ url_for('main.view_item', item_id=item.ParsedContent.id) }}" class="text-blue-600 hover:underline">Read more</a>
         </div>
         {% endfor %}
