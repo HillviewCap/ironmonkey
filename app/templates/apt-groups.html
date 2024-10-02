@@ -28,20 +28,32 @@
                         <p class="text-sm text-gray-800 mb-4">{{ group.description|truncate(150) }}</p>
                         <div class="mb-4">
                             <p class="text-sm text-gray-600"><strong>First Seen:</strong> {{ group.first_seen }}</p>
-                            <p class="text-sm text-gray-600"><strong>Observed Sectors:</strong> {{ group.observed_sectors }}</p>
-                            <p class="text-sm text-gray-600"><strong>Observed Countries:</strong> {{ group.observed_countries }}</p>
+                            <p class="text-sm text-gray-600"><strong>Observed Sectors:</strong> 
+                                {% set sectors = (group.observed_sectors or '').split(', ') %}
+                                {{ sectors[:5]|join(', ') }}{% if sectors|length > 5 %}, ...{% endif %}
+                            </p>
+                            <p class="text-sm text-gray-600"><strong>Observed Countries:</strong> 
+                                {% set countries = (group.observed_countries or '').split(', ') %}
+                                {{ countries[:5]|join(', ') }}{% if countries|length > 5 %}, ...{% endif %}
+                            </p>
                         </div>
                         <div class="border-t pt-4 text-xs text-gray-500">
-                            <p><strong>Tools:</strong> {{ group.tools }}</p>
+                            <p><strong>Tools:</strong> 
+                                {% set tools = (group.tools or '').split(', ') %}
+                                {{ tools[:5]|join(', ') }}{% if tools|length > 5 %}, ...{% endif %}
+                            </p>
                             <p><strong>Last Updated:</strong> {{ group.last_card_change }}</p>
                         </div>
                         {% if group.names %}
                         <div class="mt-4">
                             <strong>Alternative Names:</strong>
                             <ul class="list-disc list-inside">
-                                {% for name in group.names %}
+                                {% for name in (group.names or [])[:5] %}
                                 <li>{{ name.name }} ({{ name.name_giver }})</li>
                                 {% endfor %}
+                                {% if (group.names or [])|length > 5 %}
+                                <li>...</li>
+                                {% endif %}
                             </ul>
                         </div>
                         {% endif %}
