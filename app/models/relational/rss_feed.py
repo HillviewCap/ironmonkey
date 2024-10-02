@@ -17,6 +17,8 @@ class RSSFeed(db.Model):
     category = Column(String(100), nullable=False)
     description = Column(Text, nullable=True)
     last_build_date = Column(String(100), nullable=True)
+    etag = Column(String(255), nullable=True)
+    last_modified = Column(String(255), nullable=True)
     
     # Relationship with ParsedContent
     parsed_items = db.relationship('ParsedContent', back_populates='feed', cascade='all, delete-orphan')
