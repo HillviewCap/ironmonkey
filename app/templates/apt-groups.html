@@ -32,7 +32,14 @@
                             <p class="text-sm text-gray-600"><strong>Observed Countries:</strong> {{ group.observed_countries }}</p>
                         </div>
                         <div class="border-t pt-4 text-xs text-gray-500">
-                            <p><strong>Tools:</strong> {{ group.tools.split(', ')[:5]|join(', ') }}{% if group.tools.split(', ')|length > 5 %}, ...{% endif %}</p>
+                            <p><strong>Tools:</strong> 
+                                {% if group.tools %}
+                                    {{ (group.tools.split(', ')[:5]|join(', ')) }}
+                                    {% if group.tools.split(', ')|length > 5 %}, ...{% endif %}
+                                {% else %}
+                                    N/A
+                                {% endif %}
+                            </p>
                             <p><strong>Last Updated:</strong> {{ group.last_card_change }}</p>
                         </div>
                         {% if group.names %}
