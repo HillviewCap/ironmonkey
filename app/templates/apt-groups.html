@@ -32,16 +32,19 @@
                             <p class="text-sm text-gray-600"><strong>Observed Countries:</strong> {{ group.observed_countries }}</p>
                         </div>
                         <div class="border-t pt-4 text-xs text-gray-500">
-                            <p><strong>Tools:</strong> {{ group.tools }}</p>
+                            <p><strong>Tools:</strong> {{ group.tools.split(', ')[:5]|join(', ') }}{% if group.tools.split(', ')|length > 5 %}, ...{% endif %}</p>
                             <p><strong>Last Updated:</strong> {{ group.last_card_change }}</p>
                         </div>
                         {% if group.names %}
                         <div class="mt-4">
                             <strong>Alternative Names:</strong>
                             <ul class="list-disc list-inside">
-                                {% for name in group.names %}
+                                {% for name in group.names[:5] %}
                                 <li>{{ name.name }} ({{ name.name_giver }})</li>
                                 {% endfor %}
+                                {% if group.names|length > 5 %}
+                                <li>...</li>
+                                {% endif %}
                             </ul>
                         </div>
                         {% endif %}
