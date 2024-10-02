@@ -33,7 +33,7 @@
                         </div>
                         <div class="border-t pt-4 text-xs text-gray-500">
                             <p><strong>Tools:</strong> 
-                                {% set tools = (group.tools or '')|split(', ') %}
+                                {% set tools = (group.tools or '').split(', ') %}
                                 {{ tools[:5]|join(', ') }}{% if tools|length > 5 %}, ...{% endif %}
                             </p>
                             <p><strong>Last Updated:</strong> {{ group.last_card_change }}</p>
@@ -42,10 +42,10 @@
                         <div class="mt-4">
                             <strong>Alternative Names:</strong>
                             <ul class="list-disc list-inside">
-                                {% for name in (group.names|default([]))[:5] %}
+                                {% for name in (group.names or [])[:5] %}
                                 <li>{{ name.name }} ({{ name.name_giver }})</li>
                                 {% endfor %}
-                                {% if (group.names|default([]))|length > 5 %}
+                                {% if (group.names or [])|length > 5 %}
                                 <li>...</li>
                                 {% endif %}
                             </ul>
