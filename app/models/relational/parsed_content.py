@@ -8,7 +8,7 @@ from app.extensions import db
 from flask import flash, current_app
 from .category import Category
 from typing import List, Dict, Any, Optional, Union
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel
 
 parsed_content_categories = Table(
     'parsed_content_categories',
@@ -37,7 +37,7 @@ class ParsedContent(db.Model):
     __table_args__ = (db.UniqueConstraint('url', 'feed_id', name='uix_url_feed'),)
 
     class Config:
-        model_config = ConfigDict(from_attributes=True)
+        from_attributes = True
 
     @classmethod
     def deduplicate(cls) -> int:

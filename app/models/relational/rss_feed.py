@@ -6,7 +6,7 @@ from sqlalchemy.dialects.postgresql import UUID
 from app.extensions import db
 from app.utils.http_client import fetch_feed_info
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel
 
 class RSSFeed(db.Model):
     """Model for storing RSS feed information."""
@@ -30,7 +30,7 @@ class RSSFeed(db.Model):
     awesome_blog = db.relationship('AwesomeThreatIntelBlog', back_populates='rss_feeds')
 
     class Config:
-        model_config = ConfigDict(from_attributes=True)
+        from_attributes = True
 
     def __init__(self, **kwargs: Any) -> None:
         super(RSSFeed, self).__init__(**kwargs)
