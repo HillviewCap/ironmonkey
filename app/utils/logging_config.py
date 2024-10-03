@@ -1,4 +1,6 @@
 import logging
+from neo4j import GraphDatabase, exceptions
+from flask import current_app
 from logging.handlers import RotatingFileHandler
 import os
 import gzip
@@ -40,7 +42,9 @@ def setup_logger(name, log_file, level=logging.INFO):
     f_handler.namer = namer
 
     # Create formatters and add them to handlers
-    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    formatter = logging.Formatter(
+        '%(asctime)s - %(name)s - %(levelname)s - %(filename)s:%(lineno)d - %(message)s'
+    )
     c_handler.setFormatter(formatter)
     f_handler.setFormatter(formatter)
 

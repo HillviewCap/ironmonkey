@@ -4,9 +4,10 @@ from app.models.relational.alltools import AllTools, AllToolsValues, AllToolsVal
 from app.models.relational.parsed_content import ParsedContent
 from sqlalchemy.orm import joinedload
 from app.utils.logging_config import setup_logger
+import logging
 
 # Initialize logger for Neo4jSyncService
-logger = setup_logger('neo4j_sync_service', 'neo4j_sync_service.log')
+logger = setup_logger('neo4j_sync_service', 'neo4j_sync_service.log', level=logging.DEBUG)
 
 class Neo4jSyncService:
     @staticmethod
@@ -20,6 +21,12 @@ class Neo4jSyncService:
         parsed_contents = ParsedContent.query.all()
         if not parsed_contents:
             logger.info('No ParsedContent records found to sync.')
+            return
+
+        logger.debug(f'Fetched {len(all_groups)} groups to sync.')
+
+        if not all_groups:
+            logger.info('No AllGroups records found to sync.')
             return
 
         with driver.session() as session:
@@ -60,7 +67,9 @@ class Neo4jSyncService:
                             id=str(content.id)
                         )
                     logger.debug(f'Synced ParsedContent node and categories for {content.title}')
-                except Exception as e:
+                except exceptions.ServiceUnavailable as e:
+                    logger.exception(f'Neo4j service unavailable: {e}')
+                    cls._driver = None
                     logger.error(f'Error syncing ParsedContent {content.id}: {e}')
 
         logger.info('Completed sync of ParsedContent to Neo4j.')
@@ -73,13 +82,14 @@ class Neo4jSyncService:
             return
 
         logger.info('Starting sync of AllGroups to Neo4j.')
+        # Fetch AllGroups with related values and names
         all_groups = AllGroups.query.options(
             joinedload(AllGroups.values).joinedload(AllGroupsValues.names)
         ).all()
         with driver.session() as session:
             for group in all_groups:
                 try:
-                    logger.debug(f'Processing group: {group.name} (UUID: {group.uuid})')
+                    logger.debug(f'Processing Group: UUID={group.uuid}, Name={group.name}')
                     # Create Group node with UUID and set properties
                     session.run(
                         """
@@ -173,7 +183,7 @@ class Neo4jSyncService:
                                 name_uuid=str(name.uuid)
                             )
                 except Exception as e:
-                    logger.error(f'Error syncing Group {group.uuid}: {e}')
+                    logger.exception(f'Error syncing Group {group.uuid}: {e}')
 
     @staticmethod
     def sync_alltools_to_neo4j():
@@ -264,4 +274,4 @@ class Neo4jSyncService:
                             )
                 except Exception as e:
                     logger.error(f'Error syncing Tool {tool.uuid}: {e}')
-    logger.info('Completed sync of AllTools to Neo4j.')
+    logger.info('Completed sync of AllGroups to Neo4j.')
