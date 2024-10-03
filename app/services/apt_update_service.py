@@ -54,7 +54,10 @@ def update_alltools(session: Session, data: List[Dict[str, Any]]) -> None:
                 try:
                     # Validate and convert UUID
                     if not isinstance(uuid_str, str):
-                        logger.error(f"Invalid UUID format for tool {tool.get('name', 'Unknown')}: UUID is not a string.")
+                        logger.error(
+                            f"Invalid UUID format for tool {tool.get('name', 'Unknown')}: "
+                            f"UUID is not a string (value: {uuid_str}, type: {type(uuid_str)})."
+                        )
                         continue  # Skip this tool
                     
                     tool_uuid = UUID(uuid_str)
@@ -86,7 +89,10 @@ def update_alltools(session: Session, data: List[Dict[str, Any]]) -> None:
                 value_uuid_str = value.get("uuid")
                 try:
                     if not isinstance(value_uuid_str, str):
-                        logger.error(f"Invalid UUID format for tool value in tool {tool.get('name', 'Unknown')}: UUID is not a string.")
+                        logger.error(
+                            f"Invalid UUID format for tool value in tool {tool.get('name', 'Unknown')}: "
+                            f"UUID is not a string (value: {value_uuid_str}, type: {type(value_uuid_str)})."
+                        )
                         continue  # Skip this value
 
                     value_uuid = UUID(value_uuid_str)
