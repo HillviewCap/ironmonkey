@@ -23,7 +23,8 @@ api_bp = Blueprint('api', __name__)
 @login_required
 def get_graph_data():
     client = GraphConnectionManager.get_client()
-    # Fetch nodes
+    if client is None:
+        return jsonify({'error': 'Graph database not available'}), 503
     vertices = client.submit("g.V().valueMap(true)").all().result()
     nodes = [
         {

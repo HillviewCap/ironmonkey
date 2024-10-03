@@ -89,11 +89,14 @@ def create_app(config_object=None):
         except json.JSONDecodeError:
             return []
 
-    # Initialize database, connection manager, and graph connection
+    # Load environment variables
+    from dotenv import load_dotenv
+    load_dotenv()
     with app.app_context():
         db.create_all()
         init_db_connection_manager(app)
         logger.info("Database tables created and connection manager initialized")
+        app.config['GRAPH_DB_HOST'] = os.getenv('GRAPH_DB_HOST')
         GraphConnectionManager.initialize(app)
         GraphConnectionManager.initialize(app)
 
