@@ -59,7 +59,7 @@
                             <td class="border px-4 py-2">
                                 {% for line in operation.activity.split('\n') %}
                                     {% if 'http' in line %}
-                                        <a href="{{ line }}" target="_blank" class="text-blue-500 underline">{{ line }}</a><br>
+                                        <a href="{{ line }}" target="_blank" rel="noopener" class="text-blue-500 underline">{{ line }}</a><br>
                                     {% else %}
                                         {{ line }}<br>
                                     {% endif %}
@@ -89,7 +89,7 @@
                             <td class="border px-4 py-2">
                                 {% for line in operation.activity.split('\n') %}
                                     {% if 'http' in line %}
-                                        <a href="{{ line }}" target="_blank" class="text-blue-500 underline">{{ line }}</a><br>
+                                        <a href="{{ line }}" target="_blank" rel="noopener" class="text-blue-500 underline">{{ line }}</a><br>
                                     {% else %}
                                         {{ line }}<br>
                                     {% endif %}
