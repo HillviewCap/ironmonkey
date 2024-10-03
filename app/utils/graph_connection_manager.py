@@ -43,7 +43,9 @@ class GraphConnectionManager:
             result = session.run("""
                 MATCH (g:Group)-[:HAS_VALUE]->(gv:GroupValue)-[:HAS_NAME]->(gn:GroupName)
                 OPTIONAL MATCH (gv)-[:USES]->(t:Tool)
-                RETURN g, gv, gn, t, g.country AS country
+                WITH g, gv, gn, t, g.country AS country
+                LIMIT 1
+                RETURN g, gv, gn, t, country
             """)
             
             nodes = []
