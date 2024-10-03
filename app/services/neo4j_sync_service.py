@@ -72,12 +72,14 @@ class Neo4jSyncService:
             return
 
         logger.info('Starting sync of AllGroups to Neo4j.')
-        all_groups = AllGroups.query.all()
+        all_groups = AllGroups.query.options(
+            joinedload(AllGroups.values).joinedload(AllGroupsValues.names)
+        ).all()
         with driver.session() as session:
             for group in all_groups:
                 try:
                     logger.debug(f'Processing group: {group.name} (UUID: {group.uuid})')
-                    # Create Group node with UUID
+                    # Create Group node with UUID and set properties
                     session.run(
                         """
                         MERGE (g:Group {uuid: $uuid})
@@ -96,9 +98,9 @@ class Neo4jSyncService:
                         tlp=group.tlp,
                         last_db_change=group.last_db_change
                     )
-                    # Process associated values
+                    # Process associated values and names
                     for value in group.values:
-                        # Create GroupValue node with UUID
+                        # Create GroupValue node with UUID and set properties
                         session.run(
                             """
                             MERGE (gv:GroupValue {uuid: $uuid})
@@ -146,7 +148,7 @@ class Neo4jSyncService:
 
                         # Process associated names
                         for name in value.names:
-                            # Create GroupName node with UUID
+                            # Create GroupName node with UUID and set properties
                             session.run(
                                 """
                                 MERGE (n:GroupName {uuid: $uuid})
@@ -178,12 +180,14 @@ class Neo4jSyncService:
             return
 
         logger.info('Starting sync of AllTools to Neo4j.')
-        all_tools = AllTools.query.all()
+        all_tools = AllTools.query.options(
+            joinedload(AllTools.values).joinedload(AllToolsValues.names)
+        ).all()
         with driver.session() as session:
             for tool in all_tools:
                 try:
                     logger.debug(f'Processing tool: {tool.name} (UUID: {tool.uuid})')
-                    # Create Tool node with UUID
+                    # Create Tool node with UUID and set properties
                     session.run(
                         """
                         MERGE (t:Tool {uuid: $uuid})
@@ -202,9 +206,9 @@ class Neo4jSyncService:
                         tlp=tool.tlp,
                         last_db_change=tool.last_db_change
                     )
-                    # Process associated values
+                    # Process associated values and names
                     for value in tool.values:
-                        # Create ToolValue node with UUID
+                        # Create ToolValue node with UUID and set properties
                         session.run(
                             """
                             MERGE (tv:ToolValue {uuid: $uuid})
@@ -236,7 +240,7 @@ class Neo4jSyncService:
 
                         # Process associated names
                         for name in value.names:
-                            # Create ToolName node with UUID
+                            # Create ToolName node with UUID and set properties
                             session.run(
                                 """
                                 MERGE (n:ToolName {uuid: $uuid})
