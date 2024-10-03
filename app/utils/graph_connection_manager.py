@@ -1,5 +1,5 @@
 from __future__ import annotations
-from gremlin_python.driver import Client
+from gremlin_python.driver.client import Client
 from typing import Optional
 
 class GraphConnectionManager:
