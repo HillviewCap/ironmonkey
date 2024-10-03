@@ -11,7 +11,7 @@ async function addFeed(event) {
     
     const formData = new FormData(form);
     const gridElement = document.getElementById("awesome-blogs-grid");
-    const addToRssFeedsUrl = gridElement.getAttribute('data-add-to-rss-feeds-url');
+    const createFeedUrl = gridElement.getAttribute('data-create-feed-url');
 
     try {
         const response = await fetch('/rss_manager/create_rss_feed', {
@@ -42,7 +42,8 @@ async function addFeed(event) {
 }
 
 function refreshExistingFeedsTable() {
-    fetch('/rss_manager/get_rss_feeds')
+    const getRssFeedsUrl = gridElement.getAttribute('data-get-rss-feeds-url');
+    fetch(getRssFeedsUrl)
         .then(response => response.text())
         .then(html => {
             const parser = new DOMParser();
