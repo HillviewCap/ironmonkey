@@ -19,14 +19,22 @@ def sync_data_to_graph():
         ).all().result()
         # Add relationships and properties as needed
 
-    # Sync Tools
-    all_tools = AllTools.query.all()
-    for tool in all_tools:
-        client.submit(
-            "g.addV('Tool').property('id', uuid).property('name', name)",
-            {'uuid': str(tool.uuid), 'name': tool.name}
-        ).all().result()
-        # Add relationships and properties as needed
-
-    # Create Relationships
-    # Implement logic to create edges between nodes based on relationships
+        # Add associated Tools
+        for value in group.values:
+            if value.tools:
+                for tool_name in value.tools.split(','):
+                    tool_name = tool_name.strip()
+                    # Add Tool nodes
+                    client.submit(
+                        "g.addV('Tool').property('name', name)",
+                        {'name': tool_name}
+                    ).all().result()
+                    
+                    # Create 'uses' edge between ThreatActor and Tool
+                    client.submit(
+                        "g.V().has('ThreatActor', 'name', actor_name)"
+                        ".as('a')"
+                        ".V().has('Tool', 'name', tool_name)"
+                        ".addE('uses').from('a')",
+                        {'actor_name': group.name, 'tool_name': tool_name}
+                    ).all().result()
