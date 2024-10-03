@@ -97,7 +97,6 @@ def create_app(config_object=None):
         init_db_connection_manager(app)
         logger.info("Database tables created and connection manager initialized")
         GraphConnectionManager.initialize(app)
-        GraphConnectionManager.initialize(app)
 
     # Register blueprints
     blueprints = [
