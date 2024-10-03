@@ -2,6 +2,14 @@
 
 {% block content %}
 <h1>Threat Mapping</h1>
+<!-- Dropdown Menu for Graph Views -->
+<label for="graph-view-selector">Select Graph View:</label>
+<select id="graph-view-selector">
+    <option value="group-overview">Group Overview</option>
+    <option value="group-tools">Group Tools</option>
+    <option value="group-techniques">Group Techniques</option>
+</select>
+
 <div id="cy" style="width: 100%; height: 600px;"></div>
 {% endblock %}
 
@@ -9,90 +17,109 @@
 <!-- Include Cytoscape.js library -->
 <script src="https://unpkg.com/cytoscape/dist/cytoscape.min.js"></script>
 
-<!-- Your custom script to fetch and render the graph -->
+<!-- Script to fetch and render the graph based on selected view -->
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    fetch('/api/v1/graph')
-        .then(response => response.json())
-        .then(data => {
-            var cy = cytoscape({
-                container: document.getElementById('cy'),
-                elements: data,
-                style: [
-                    {
-                        selector: 'node[label="Group"]',
-                        style: {
-                            'label': 'data(name)',
-                            'background-color': '#FF5733'  // Red for Group
-                        }
-                    },
-                    {
-                        selector: 'node[label="GroupValue"]',
-                        style: {
-                            'label': 'data(actor)',
-                            'background-color': '#FF8D33'  // Orange for GroupValue
-                        }
-                    },
-                    {
-                        selector: 'node[label="GroupName"]',
-                        style: {
-                            'label': 'data(name)',
-                            'background-color': '#FFC300'  // Yellow for GroupName
-                        }
-                    },
-                    {
-                        selector: 'node[label="Tool"]',
-                        style: {
-                            'label': 'data(name)',
-                            'background-color': '#33C1FF'  // Light Blue for Tool
-                        }
-                    },
-                    {
-                        selector: 'node[label="ToolValue"]',
-                        style: {
-                            'label': 'data(tool)',
-                            'background-color': '#3375FF'  // Blue for ToolValue
-                        }
-                    },
-                    {
-                        selector: 'node[label="ToolName"]',
-                        style: {
-                            'label': 'data(name)',
-                            'background-color': '#333CFF'  // Dark Blue for ToolName
-                        }
-                    },
-                    {
-                        selector: 'edge',
-                        style: {
-                            'label': 'data(label)',
-                            'line-color': '#ccc',
-                            'target-arrow-color': '#ccc',
-                            'target-arrow-shape': 'triangle',
-                            'arrow-scale': 2
-                        }
-                    }
-                ],
-                layout: {
-                    name: 'cose',
-                    idealEdgeLength: 120,
-                    nodeOverlap: 20,
-                    refresh: 20,
-                    fit: true,
-                    padding: 30,
-                    randomize: true,
-                    componentSpacing: 100,
-                    nodeRepulsion: 400000,
-                    edgeElasticity: 100,
-                    nestingFactor: 5,
-                    gravity: 80,
-                    numIter: 1000,
-                    initialTemp: 200,
-                    coolingFactor: 0.95,
-                    minTemp: 1.0
+    const viewSelector = document.getElementById('graph-view-selector');
+    const cyContainer = document.getElementById('cy');
+
+    function fetchAndRenderGraph(view) {
+        fetch(`/api/v1/graph?view=${encodeURIComponent(view)}`)
+            .then(response => response.json())
+            .then(data => {
+                // Destroy the existing graph instance, if any
+                if (window.cy) {
+                    window.cy.destroy();
                 }
-            });
-        })
-        .catch(error => console.error('Error fetching graph data:', error));
+
+                // Create a new Cytoscape instance with fetched data
+                window.cy = cytoscape({
+                    container: cyContainer,
+                    elements: data,
+                    style: [
+                        {
+                            selector: 'node[label="Group"]',
+                            style: {
+                                'label': 'data(name)',
+                                'background-color': '#FF5733'  // Red for Group
+                            }
+                        },
+                        {
+                            selector: 'node[label="GroupValue"]',
+                            style: {
+                                'label': 'data(actor)',
+                                'background-color': '#FF8D33'  // Orange for GroupValue
+                            }
+                        },
+                        {
+                            selector: 'node[label="GroupName"]',
+                            style: {
+                                'label': 'data(name)',
+                                'background-color': '#FFC300'  // Yellow for GroupName
+                            }
+                        },
+                        {
+                            selector: 'node[label="Tool"]',
+                            style: {
+                                'label': 'data(name)',
+                                'background-color': '#33C1FF'  // Light Blue for Tool
+                            }
+                        },
+                        {
+                            selector: 'node[label="ToolValue"]',
+                            style: {
+                                'label': 'data(tool)',
+                                'background-color': '#3375FF'  // Blue for ToolValue
+                            }
+                        },
+                        {
+                            selector: 'node[label="ToolName"]',
+                            style: {
+                                'label': 'data(name)',
+                                'background-color': '#333CFF'  // Dark Blue for ToolName
+                            }
+                        },
+                        {
+                            selector: 'edge',
+                            style: {
+                                'label': 'data(label)',
+                                'line-color': '#ccc',
+                                'target-arrow-color': '#ccc',
+                                'target-arrow-shape': 'triangle',
+                                'arrow-scale': 2
+                            }
+                        }
+                    ],
+                    layout: {
+                        name: 'cose',
+                        idealEdgeLength: 120,
+                        nodeOverlap: 20,
+                        refresh: 20,
+                        fit: true,
+                        padding: 30,
+                        randomize: true,
+                        componentSpacing: 100,
+                        nodeRepulsion: 400000,
+                        edgeElasticity: 100,
+                        nestingFactor: 5,
+                        gravity: 80,
+                        numIter: 1000,
+                        initialTemp: 200,
+                        coolingFactor: 0.95,
+                        minTemp: 1.0
+                    }
+                });
+            })
+            .catch(error => console.error('Error fetching graph data:', error));
+    }
+
+    // Initial graph render based on the default selected view
+    fetchAndRenderGraph(viewSelector.value);
+
+    // Update graph when the selected view changes
+    viewSelector.addEventListener('change', function() {
+        fetchAndRenderGraph(this.value);
+    });
 });
 </script>
 {% endblock %}
