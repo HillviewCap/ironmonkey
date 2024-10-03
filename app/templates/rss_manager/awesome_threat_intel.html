@@ -10,12 +10,11 @@
 
 <!-- Add the CSRF token input -->
 <input type="hidden" id="csrf_token" value="{{ csrf_token() }}">
-<div id="rss-feeds-container" class="p-6 bg-white shadow-md rounded-lg">
+<div id="awesome-blogs-container" class="p-6 bg-white shadow-md rounded-lg">
     <div
-        id="rss-feeds-grid"
-        data-get-feeds-url="{{ url_for('rss_manager.get_rss_feeds_data') }}"
-        data-delete-feed-url="{{ url_for('rss_manager.delete_rss_feed_base') }}"
-        data-edit-feed-url="{{ url_for('rss_manager.edit_feed_base') }}"
+        id="awesome-blogs-grid"
+        data-get-blogs-url="{{ url_for('rss_manager.get_awesome_threat_intel_blogs') }}"
+        data-add-to-rss-feeds-url="{{ url_for('rss_manager.add_to_rss_feeds') }}"
     ></div>
 </div>
 <script>
