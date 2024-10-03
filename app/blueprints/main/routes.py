@@ -107,3 +107,4 @@ from flask_login import login_required
 @login_required
 def threat_mapping():
     return render_template('threat_mapping.html')
+from . import main
