@@ -67,16 +67,8 @@ class RSSFeed(db.Model):
         """
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
-        result = loop.run_until_complete(fetch_feed_info(url))
-        loop.close()
+        try:
+            result = loop.run_until_complete(fetch_feed_info(url))
+        finally:
+            loop.close()
         return result['title'], result.get('description'), result.get('last_build_date')
-        """
-        Fetch RSS feed information from the given URL.
-
-        Args:
-            url (str): The URL of the RSS feed.
-
-        Returns:
-            Tuple[str, str, Optional[str]]: A tuple containing the title, description, and last build date.
-        """
-        return fetch_feed_info(url)
