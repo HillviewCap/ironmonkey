@@ -76,7 +76,7 @@ class Neo4jSyncService:
         with driver.session() as session:
             for group in all_groups:
                 try:
-                logger.debug(f'Processing group: {group.name} (UUID: {group.uuid})')
+                    logger.debug(f'Processing group: {group.name} (UUID: {group.uuid})')
                 try:
                     # Create Group node with UUID
                     session.run(
@@ -183,7 +183,7 @@ class Neo4jSyncService:
         with driver.session() as session:
             for tool in all_tools:
                 try:
-                logger.debug(f'Processing tool: {tool.name} (UUID: {tool.uuid})')
+                    logger.debug(f'Processing tool: {tool.name} (UUID: {tool.uuid})')
                 try:
                     # Create Tool node with UUID
                     session.run(
