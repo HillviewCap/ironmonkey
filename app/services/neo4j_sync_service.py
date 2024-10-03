@@ -22,3 +22,60 @@ class Neo4jSyncService:
                     title=content.title,
                     description=content.description
                 )
+                
+                # Create ThreatActor node (assuming content.creator is the actor's name)
+                if content.creator:
+                    session.run(
+                        """
+                        MERGE (ta:ThreatActor {name: $actor_name})
+                        """,
+                        actor_name=content.creator
+                    )
+                    # Create relationship between ThreatActor and Content
+                    session.run(
+                        """
+                        MATCH (c:Content {id: $content_id}), (ta:ThreatActor {name: $actor_name})
+                        MERGE (ta)-[:ASSOCIATED_WITH]->(c)
+                        """,
+                        content_id=str(content.id),
+                        actor_name=content.creator
+                    )
+                
+                # Create Location node and relationship (assuming content.geography exists)
+                if content.geography:
+                    session.run(
+                        """
+                        MERGE (loc:Location {name: $location})
+                        """,
+                        location=content.geography
+                    )
+                    # Associate ThreatActor with Location
+                    if content.creator:
+                        session.run(
+                            """
+                            MATCH (ta:ThreatActor {name: $actor_name}), (loc:Location {name: $location})
+                            MERGE (ta)-[:OPERATES_IN]->(loc)
+                            """,
+                            actor_name=content.creator,
+                            location=content.geography
+                        )
+                
+                # Create Tool nodes and relationships (assuming content.tools_used is a list)
+                if content.tools_used:
+                    for tool_name in content.tools_used:
+                        session.run(
+                            """
+                            MERGE (t:Tool {name: $tool_name})
+                            """,
+                            tool_name=tool_name
+                        )
+                        # Associate ThreatActor with Tool
+                        if content.creator:
+                            session.run(
+                                """
+                                MATCH (ta:ThreatActor {name: $actor_name}), (t:Tool {name: $tool_name})
+                                MERGE (ta)-[:USES_TOOL]->(t)
+                                """,
+                                actor_name=content.creator,
+                                tool_name=tool_name
+                            )

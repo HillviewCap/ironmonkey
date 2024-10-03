@@ -30,7 +30,7 @@ def get_graph_data():
     nodes = []
     edges = []
     def fetch_data(tx):
-        result_nodes = tx.run("MATCH (n) RETURN n")
+        result_nodes = tx.run("MATCH (n) RETURN DISTINCT n")
         for record in result_nodes:
             node = record["n"]
             nodes.append({
@@ -40,7 +40,7 @@ def get_graph_data():
                     **node._properties
                 }
             })
-        result_edges = tx.run("MATCH ()-[r]->() RETURN r")
+        result_edges = tx.run("MATCH (n)-[r]->(m) RETURN r, n, m")
         for record in result_edges:
             rel = record["r"]
             edges.append({

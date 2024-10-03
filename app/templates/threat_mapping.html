@@ -22,8 +22,29 @@ document.addEventListener('DOMContentLoaded', function() {
                     {
                         selector: 'node',
                         style: {
+                            'label': 'data(name)',
+                            'background-color': '#FF5733'  // Red for ThreatActor
+                        }
+                    },
+                    {
+                        selector: 'node[label="Content"]',
+                        style: {
                             'label': 'data(title)',
-                            'background-color': '#66B2FF'
+                            'background-color': '#66B2FF'  // Blue for Content
+                        }
+                    },
+                    {
+                        selector: 'node[label="Location"]',
+                        style: {
+                            'label': 'data(name)',
+                            'background-color': '#33FF57'  // Green for Location
+                        }
+                    },
+                    {
+                        selector: 'node[label="Tool"]',
+                        style: {
+                            'label': 'data(name)',
+                            'background-color': '#FFC300'  // Yellow for Tool
                         }
                     },
                     {
@@ -38,7 +59,14 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 ],
                 layout: {
-                    name: 'cose'
+                    name: 'cose',  // Use 'cose' for a force-directed layout
+                    idealEdgeLength: 100,
+                    nodeRepulsion: 400000,
+                    gravity: 80,
+                    numIter: 1000,
+                    initialTemp: 200,
+                    coolingFactor: 0.95,
+                    minTemp: 1.0
                 }
             });
         })

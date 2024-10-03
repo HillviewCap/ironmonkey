@@ -3,7 +3,7 @@ from datetime import datetime
 from uuid import uuid4, UUID as PyUUID  # Import standard UUID with alias
 import hashlib
 from sqlalchemy.dialects.postgresql import UUID as SA_UUID  # Alias SQLAlchemy's UUID
-from sqlalchemy import Column, String, DateTime, Text, ForeignKey, Table
+from sqlalchemy import Column, String, DateTime, Text, ForeignKey, Table, JSON
 from app.extensions import db
 from flask import flash, current_app
 from .category import Category
@@ -32,6 +32,8 @@ class ParsedContent(db.Model):
     pub_date = Column(String(100), nullable=True)
     creator = Column(String(255), nullable=True)
     categories = db.relationship('Category', secondary=parsed_content_categories, backref=db.backref('parsed_contents', lazy='dynamic'))
+    geography = Column(String(255), nullable=True)
+    tools_used = Column(JSON, nullable=True)  # Assuming tools_used is a list of tool names
     art_hash = Column(String(64), nullable=True)
 
     __table_args__ = (db.UniqueConstraint('url', 'feed_id', name='uix_url_feed'),)
