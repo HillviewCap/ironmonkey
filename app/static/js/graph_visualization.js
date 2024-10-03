@@ -11,19 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 window.cy = cytoscape({
                 container: document.getElementById('graph-container'),
-                elements: [
-                    ...data.nodes.map(node => ({
-                        data: { id: node.id, label: node.label, name: node.name }
-                    })),
-                    ...data.edges.map(edge => ({
-                        data: {
-                            id: edge.id,
-                            source: edge.outV,
-                            target: edge.inV,
-                            label: edge.label
-                        }
-                    }))
-                ],
+                elements: data.nodes.concat(data.edges),
                 style: [
                     {
                         selector: 'node',

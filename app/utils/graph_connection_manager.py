@@ -49,6 +49,7 @@ class GraphConnectionManager:
             nodes = []
             edges = []
             countries = set()
+            node_ids = set()
 
             for record in result:
                 group = record['g']
@@ -57,25 +58,38 @@ class GraphConnectionManager:
                 tool = record['t']
                 country = record['country']
 
-                nodes.append({"id": group['uuid'], "label": "Group", "name": group['name']})
-                nodes.append({"id": group_value['uuid'], "label": "GroupValue", "name": group_value['actor']})
-                nodes.append({"id": group_name['uuid'], "label": "GroupName", "name": group_name['name']})
+                # Add nodes only if they don't already exist
+                if group['uuid'] not in node_ids:
+                    nodes.append({"data": {"id": group['uuid'], "label": "Group", "name": group['name']}})
+                    node_ids.add(group['uuid'])
+
+                if group_value['uuid'] not in node_ids:
+                    nodes.append({"data": {"id": group_value['uuid'], "label": "GroupValue", "name": group_value['actor']}})
+                    node_ids.add(group_value['uuid'])
+
+                if group_name['uuid'] not in node_ids:
+                    nodes.append({"data": {"id": group_name['uuid'], "label": "GroupName", "name": group_name['name']}})
+                    node_ids.add(group_name['uuid'])
                 
-                edges.append({"id": f"{group['uuid']}_has_value_{group_value['uuid']}", "outV": group['uuid'], "inV": group_value['uuid'], "label": "HAS_VALUE"})
-                edges.append({"id": f"{group_value['uuid']}_has_name_{group_name['uuid']}", "outV": group_value['uuid'], "inV": group_name['uuid'], "label": "HAS_NAME"})
+                edges.append({"data": {"id": f"{group['uuid']}_has_value_{group_value['uuid']}", "source": group['uuid'], "target": group_value['uuid'], "label": "HAS_VALUE"}})
+                edges.append({"data": {"id": f"{group_value['uuid']}_has_name_{group_name['uuid']}", "source": group_value['uuid'], "target": group_name['uuid'], "label": "HAS_NAME"}})
 
                 if tool:
-                    nodes.append({"id": tool['uuid'], "label": "Tool", "name": tool['name']})
-                    edges.append({"id": f"{group_value['uuid']}_uses_{tool['uuid']}", "outV": group_value['uuid'], "inV": tool['uuid'], "label": "USES"})
+                    if tool['uuid'] not in node_ids:
+                        nodes.append({"data": {"id": tool['uuid'], "label": "Tool", "name": tool['name']}})
+                        node_ids.add(tool['uuid'])
+                    edges.append({"data": {"id": f"{group_value['uuid']}_uses_{tool['uuid']}", "source": group_value['uuid'], "target": tool['uuid'], "label": "USES"}})
 
                 if country:
                     countries.add(country)
 
             for country in countries:
                 country_id = f"country_{country}"
-                nodes.append({"id": country_id, "label": "Country", "name": country})
+                if country_id not in node_ids:
+                    nodes.append({"data": {"id": country_id, "label": "Country", "name": country}})
+                    node_ids.add(country_id)
                 for node in nodes:
-                    if node['label'] == "Group" and record['g']['country'] == country:
-                        edges.append({"id": f"{node['id']}_from_{country_id}", "outV": node['id'], "inV": country_id, "label": "FROM"})
+                    if node['data']['label'] == "Group" and group['country'] == country:
+                        edges.append({"data": {"id": f"{node['data']['id']}_from_{country_id}", "source": node['data']['id'], "target": country_id, "label": "FROM"}})
 
             return {"nodes": nodes, "edges": edges}
