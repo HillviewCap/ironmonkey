@@ -194,3 +194,14 @@ def create_app(config_object=None):
 
 
     return app
+from flask import Flask
+from app.blueprints.api.routes import api_blueprint
+
+def create_app():
+    app = Flask(__name__)
+    # Your existing app configuration...
+
+    # Register blueprints
+    app.register_blueprint(api_blueprint, url_prefix='/api/v1')
+
+    return app

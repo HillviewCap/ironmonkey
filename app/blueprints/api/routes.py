@@ -90,3 +90,69 @@ def get_graph_data():
         return jsonify({'error': 'Neo4j database not available'}), 503
 
     return jsonify(nodes + edges)
+from flask import Blueprint, jsonify
+from app.utils.graph_connection_manager import GraphConnectionManager
+from app.utils.logging_config import setup_logger
+
+api_blueprint = Blueprint('api', __name__)
+
+# Initialize logger for API routes
+logger = setup_logger('api_routes', 'api_routes.log')
+
+@api_blueprint.route('/api/v1/graph', methods=['GET'])
+def get_graph_data():
+    driver = GraphConnectionManager.get_driver()
+    if driver is None:
+        logger.error("Neo4j driver not initialized.")
+        return jsonify({'error': 'Neo4j driver not initialized'}), 500
+
+    with driver.session() as session:
+        query = """
+        MATCH (n)
+        OPTIONAL MATCH (n)-[r]->(m)
+        RETURN n, r, m
+        """
+        result = session.run(query)
+
+        elements = []
+        nodes_seen = set()
+
+        for record in result:
+            n = record['n']
+            r = record.get('r')
+            m = record.get('m')
+
+            # Process node 'n'
+            n_id = str(n.id)
+            if n_id not in nodes_seen:
+                nodes_seen.add(n_id)
+                elements.append({
+                    'data': {
+                        'id': n_id,
+                        'label': list(n.labels)[0],
+                        **n._properties
+                    }
+                })
+
+            # Process relationship 'r' and node 'm' if they exist
+            if r and m:
+                m_id = str(m.id)
+                if m_id not in nodes_seen:
+                    nodes_seen.add(m_id)
+                    elements.append({
+                        'data': {
+                            'id': m_id,
+                            'label': list(m.labels)[0],
+                            **m._properties
+                        }
+                    })
+                elements.append({
+                    'data': {
+                        'id': str(r.id),
+                        'source': n_id,
+                        'target': m_id,
+                        'label': r.type
+                    }
+                })
+
+    return jsonify(elements)
