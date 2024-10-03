@@ -53,13 +53,15 @@
     <!-- Content Grid -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {% for item in content %}
-        <div class="bg-white rounded-lg shadow-md p-6">
-            <h2 class="text-xl font-semibold mb-2">{{ item.title }}</h2>
+        <a href="{{ url_for('parsed_content.view_item', item_id=item.id) }}" class="block bg-white rounded-lg shadow-md p-6 hover:bg-gray-100">
+            <h2 class="text-xl font-semibold mb-2 text-blue-600 hover:underline">
+                {{ item.title }}
+            </h2>
             <p class="text-gray-600 mb-4">{{ item.description[:150] }}...</p>
             <div class="text-sm text-gray-500">
                 <span>{{ item.pub_date }}</span>
             </div>
-        </div>
+        </a>
         {% endfor %}
     </div>
 </div>

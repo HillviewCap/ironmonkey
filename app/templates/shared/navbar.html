@@ -7,8 +7,10 @@
         <div class="hidden md:flex space-x-4">
             <a href="{{ url_for('main.index') }}" class="text-white hover:text-blue-200 transition duration-300">Home</a>
             <a href="{{ url_for('rss_manager.get_rss_feeds') }}" class="text-white hover:text-blue-200 transition duration-300">RSS Feeds</a>
-            <a href="{{ url_for('parsed_content.parsed_content') }}" class="text-white hover:text-blue-200 transition duration-300">Parsed Content</a>
-            <a href="{{ url_for('search.search') }}" class="text-white hover:text-blue-200 transition duration-300">Search</a>
+            {% if current_user.is_authenticated %}
+                <a href="{{ url_for('parsed_content.parsed_content') }}" class="text-white hover:text-blue-200 transition duration-300">Parsed Content</a>
+                <a href="{{ url_for('search.search') }}" class="text-white hover:text-blue-200 transition duration-300">Search</a>
+            {% endif %}
             <a href="{{ url_for('main.apt_groups') }}" class="text-white hover:text-blue-200 transition duration-300">APT Groups</a>
             {% if current_user.is_authenticated %}
                 <a href="{{ url_for('admin.admin') }}" class="text-white hover:text-blue-200 transition duration-300">Admin</a>
@@ -16,7 +18,7 @@
             {% else %}
                 <a href="{{ url_for('auth.login') }}" class="text-white hover:text-blue-200 transition duration-300">Login</a>
             {% endif %}
-            <a href="#" class="text-white hover:text-blue-200 transition duration-300">About</a>
+            <a href="{{ url_for('main.about') }}" class="text-white hover:text-blue-200 transition duration-300">About</a>
         </div>
         <button class="md:hidden text-white focus:outline-none" id="menu-toggle">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -29,8 +31,10 @@
     <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
         <a href="{{ url_for('main.index') }}" class="text-blue-600 block px-3 py-2 rounded-md text-base font-medium hover:bg-blue-100">Home</a>
         <a href="{{ url_for('rss_manager.get_rss_feeds') }}" class="text-blue-600 block px-3 py-2 rounded-md text-base font-medium hover:bg-blue-100">RSS Feeds</a>
-        <a href="{{ url_for('parsed_content.parsed_content') }}" class="text-blue-600 block px-3 py-2 rounded-md text-base font-medium hover:bg-blue-100">Parsed Content</a>
-        <a href="{{ url_for('search.search') }}" class="text-blue-600 block px-3 py-2 rounded-md text-base font-medium hover:bg-blue-100">Search</a>
+        {% if current_user.is_authenticated %}
+            <a href="{{ url_for('parsed_content.parsed_content') }}" class="text-blue-600 block px-3 py-2 rounded-md text-base font-medium hover:bg-blue-100">Parsed Content</a>
+            <a href="{{ url_for('search.search') }}" class="text-blue-600 block px-3 py-2 rounded-md text-base font-medium hover:bg-blue-100">Search</a>
+        {% endif %}
         <a href="{{ url_for('main.apt_groups') }}" class="text-blue-600 block px-3 py-2 rounded-md text-base font-medium hover:bg-blue-100">APT Groups</a>
         {% if current_user.is_authenticated %}
             <a href="{{ url_for('admin.admin') }}" class="text-blue-600 block px-3 py-2 rounded-md text-base font-medium hover:bg-blue-100">Admin</a>
@@ -38,7 +42,7 @@
         {% else %}
             <a href="{{ url_for('auth.login') }}" class="text-blue-600 block px-3 py-2 rounded-md text-base font-medium hover:bg-blue-100">Login</a>
         {% endif %}
-        <a href="#" class="text-blue-600 block px-3 py-2 rounded-md text-base font-medium hover:bg-blue-100">About</a>
+        <a href="{{ url_for('main.about') }}" class="text-blue-600 block px-3 py-2 rounded-md text-base font-medium hover:bg-blue-100">About</a>
     </div>
 </div>
 <script>

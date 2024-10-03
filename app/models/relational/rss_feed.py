@@ -1,10 +1,13 @@
 from __future__ import annotations
 from uuid import uuid4
 from typing import Dict, Any, Tuple, Optional
+import asyncio
 from sqlalchemy import Column, String, Text, ForeignKey
 from sqlalchemy.dialects.postgresql import UUID
 from app.extensions import db
 from app.utils.http_client import fetch_feed_info
+
+from pydantic import BaseModel
 
 class RSSFeed(db.Model):
     """Model for storing RSS feed information."""
@@ -27,6 +30,9 @@ class RSSFeed(db.Model):
     awesome_blog_id = Column(UUID(as_uuid=True), ForeignKey('awesome_threat_intel_blog.id'), nullable=True)
     awesome_blog = db.relationship('AwesomeThreatIntelBlog', back_populates='rss_feeds')
 
+    class Config:
+        from_attributes = True
+
     def __init__(self, **kwargs: Any) -> None:
         super(RSSFeed, self).__init__(**kwargs)
         if not self.id:
@@ -41,6 +47,7 @@ class RSSFeed(db.Model):
         """
         return {
             'id': str(self.id),
+            'id': str(self.id),  # Include ID for actions
             'url': self.url,
             'title': self.title,
             'description': self.description,
@@ -59,4 +66,10 @@ class RSSFeed(db.Model):
         Returns:
             Tuple[str, str, Optional[str]]: A tuple containing the title, description, and last build date.
         """
-        return fetch_feed_info(url)
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        try:
+            result = loop.run_until_complete(fetch_feed_info(url))
+        finally:
+            loop.close()
+        return result['title'], result.get('description'), result.get('last_build_date')

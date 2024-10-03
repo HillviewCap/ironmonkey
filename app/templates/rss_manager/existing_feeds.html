@@ -1,0 +1,13 @@
+<div class="mb-8 p-6 bg-white shadow-md rounded-lg">
+    <h2 class="text-xl font-bold mb-4">Existing Feeds</h2>
+    <!-- CSRF Token for AJAX Requests -->
+    <input type="hidden" id="csrf_token" value="{{ csrf_token() }}">
+
+    <!-- Grid.js Container -->
+    <div
+        id="rss-feeds-grid"
+        data-get-feeds-url="{{ url_for('rss_manager.get_rss_feeds_data') }}"
+        data-delete-feed-url="{{ url_for('rss_manager.delete_rss_feed_base') }}"
+        data-edit-feed-url="{{ url_for('rss_manager.edit_feed_base') }}"
+    ></div>
+</div>

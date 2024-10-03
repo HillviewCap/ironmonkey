@@ -85,15 +85,12 @@ async def fetch_and_parse_feed(feed_id: str) -> int:
                 logger.error(f"Feed with id {feed_id} not found")
                 return 0
 
-            logger.info(f"Starting to fetch and parse feed: {feed.url}")
-
             async with httpx.AsyncClient(follow_redirects=True, timeout=30.0) as client:
                 response = await client.get(feed.url, headers=headers)
                 response.raise_for_status()
 
                 # Check if the URL has been redirected
                 if str(response.url) != feed.url:
-                    logger.info(f"Feed URL redirected from {feed.url} to {response.url}")
                     feed.url = str(response.url)
                     session.commit()
 
@@ -102,20 +99,19 @@ async def fetch_and_parse_feed(feed_id: str) -> int:
                 last_modified = response.headers.get('last-modified')
                 
                 if etag and etag == feed.etag:
-                    logger.info(f"Feed {feed.url} has not been modified since last fetch (etag match)")
                     return 0
                 
                 if last_modified:
                     try:
                         parsed_last_modified = date_parser.parse(last_modified)
-                        if feed.last_modified and parsed_last_modified <= feed.last_modified:
-                            logger.info(f"Feed {feed.url} has not been modified since last fetch (last-modified date check)")
-                            return 0
+                        if feed.last_modified:
+                            feed_last_modified = date_parser.parse(feed.last_modified)
+                            if parsed_last_modified <= feed_last_modified:
+                                return 0
                     except Exception as e:
-                        logger.warning(f"Could not parse last-modified header: {e}")
+                        logger.warning(f"Could not parse or compare last-modified header: {e}")
 
                 feed_data = feedparser.parse(response.content)
-                logger.info(f"Parsed feed data for {feed.url}")
 
                 # Update feed metadata
                 feed.etag = etag
@@ -135,24 +131,26 @@ async def fetch_and_parse_feed(feed_id: str) -> int:
                 if 'updated' in feed_data.feed:
                     try:
                         new_build_date = date_parser.parse(feed_data.feed.updated)
-                        if not feed.last_build_date or new_build_date > date_parser.parse(feed.last_build_date):
+                        if not feed.last_build_date:
                             feed.last_build_date = new_build_date.strftime("%Y-%m-%d %H:%M:%S")
+                        else:
+                            last_build_date = date_parser.parse(feed.last_build_date)
+                            if new_build_date > last_build_date:
+                                feed.last_build_date = new_build_date.strftime("%Y-%m-%d %H:%M:%S")
                     except Exception as e:
-                        logger.warning(f"Could not parse feed updated date: {e}")
+                        logger.warning(f"Could not parse or compare feed updated date: {e}")
 
                 session.commit()
 
                 total_entries = len(feed_data.entries)
-                logger.info(f"Found {total_entries} entries in feed: {feed.url}")
 
                 # Get the most recent entry's publication date from the database
                 most_recent_entry = session.query(func.max(ParsedContent.pub_date)).filter_by(feed_id=feed.id).scalar()
 
-                for index, entry in enumerate(feed_data.entries, 1):
+                for entry in feed_data.entries:
                     try:
                         url = entry.link
                         title = entry.get("title", "")
-                        logger.info(f"Processing entry {index}/{total_entries}: {url} - {title}")
 
                         pub_date = entry.get("published", "")
                         if pub_date and pub_date.lower() != "invalid date":
@@ -160,9 +158,7 @@ async def fetch_and_parse_feed(feed_id: str) -> int:
                                 parsed_date = date_parser.parse(pub_date)
                                 pub_date = parsed_date.strftime("%Y-%m-%d")
                             except Exception as e:
-                                logger.warning(
-                                    f"Could not parse date: {pub_date}. Error: {str(e)}. Using current date."
-                                )
+                                logger.warning(f"Could not parse date: {pub_date}. Error: {str(e)}. Using current date.")
                                 pub_date = datetime.now().strftime("%Y-%m-%d")
                         else:
                             logger.warning(f"Invalid or no published date found: {pub_date}. Using current date.")
@@ -170,7 +166,6 @@ async def fetch_and_parse_feed(feed_id: str) -> int:
 
                         # Skip entries that are older than or equal to the most recent entry in the database
                         if most_recent_entry and pub_date <= most_recent_entry:
-                            logger.info(f"Skipping entry {url} as it's not newer than existing entries")
                             continue
 
                         existing_content = session.execute(
@@ -178,7 +173,6 @@ async def fetch_and_parse_feed(feed_id: str) -> int:
                         ).scalar_one_or_none()
 
                         if not existing_content:
-                            logger.info(f"New content found: {url}")
                             parsed_content = await parse_content(url)
                             if parsed_content is not None:
                                 new_content = ParsedContent(
@@ -201,11 +195,8 @@ async def fetch_and_parse_feed(feed_id: str) -> int:
                                         cat_obj = get_or_create_category(session, cat_name)
                                         new_content.categories.append(cat_obj)
                                 new_entries_count += 1
-                                logger.info(f"Added new entry: {url}")
                             else:
                                 logger.warning(f"Failed to parse content for URL: {url}")
-                        else:
-                            logger.info(f"Content already exists: {url}")
                     except OperationalError as e:
                         if "database is locked" in str(e):
                             logger.warning(f"Database locked for entry {url}, skipping...")
@@ -222,9 +213,7 @@ async def fetch_and_parse_feed(feed_id: str) -> int:
 
                     session.commit()  # Commit after each successful entry processing
 
-                logger.info(
-                    f"Feed: {feed.url} - Added {new_entries_count} new entries to database"
-                )
+                logger.info(f"Feed: {feed.url} - Added {new_entries_count} new entries to database")
     except httpx.HTTPStatusError as e:
         logger.error(f"HTTP error occurred while fetching feed {feed.url}: {e}", exc_info=True)
         raise ValueError(

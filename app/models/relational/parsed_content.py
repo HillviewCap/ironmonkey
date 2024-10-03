@@ -1,31 +1,32 @@
 from __future__ import annotations
 from datetime import datetime
-from uuid import uuid4
+from uuid import uuid4, UUID as PyUUID  # Import standard UUID with alias
 import hashlib
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.dialects.postgresql import UUID as SA_UUID  # Alias SQLAlchemy's UUID
 from sqlalchemy import Column, String, DateTime, Text, ForeignKey, Table
 from app.extensions import db
 from flask import flash, current_app
 from .category import Category
 from typing import List, Dict, Any, Optional, Union
+from pydantic import BaseModel
 
 parsed_content_categories = Table(
     'parsed_content_categories',
     db.Model.metadata,
-    Column('parsed_content_id', UUID(as_uuid=True), ForeignKey('parsed_content.id')),
-    Column('category_id', UUID(as_uuid=True), ForeignKey('category.id'))
+    Column('parsed_content_id', SA_UUID(as_uuid=True), ForeignKey('parsed_content.id')),
+    Column('category_id', SA_UUID(as_uuid=True), ForeignKey('category.id'))
 )
 
 class ParsedContent(db.Model):
     """Model representing parsed content from RSS feeds."""
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    id = Column(SA_UUID(as_uuid=True), primary_key=True, default=uuid4)
     title = Column(String(255), nullable=False)
     url = Column(String(255), nullable=False)
     description = Column(Text, nullable=True)
     content = Column(Text, nullable=False)  # Jina summary from Ollama
     summary = Column(Text, nullable=True)  # Generated summary
-    feed_id = Column(UUID(as_uuid=True), ForeignKey("rss_feed.id"), nullable=False)
+    feed_id = Column(SA_UUID(as_uuid=True), ForeignKey("rss_feed.id"), nullable=False)
     feed = db.relationship("RSSFeed", back_populates="parsed_items")
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
     pub_date = Column(String(100), nullable=True)
@@ -34,6 +35,9 @@ class ParsedContent(db.Model):
     art_hash = Column(String(64), nullable=True)
 
     __table_args__ = (db.UniqueConstraint('url', 'feed_id', name='uix_url_feed'),)
+
+    class Config:
+        from_attributes = True
 
     @classmethod
     def deduplicate(cls) -> int:
@@ -70,13 +74,13 @@ class ParsedContent(db.Model):
         return deleted_count
 
     @classmethod
-    def get_by_id(cls, content_id: Union[str, UUID]) -> Optional[ParsedContent]:
+    def get_by_id(cls, content_id: Union[str, PyUUID]) -> Optional[ParsedContent]:
         """Retrieve a ParsedContent instance by its ID."""
         try:
             if isinstance(content_id, str):
                 # Try to create a UUID object directly from the string
-                content_id = UUID(content_id)
-            elif not isinstance(content_id, UUID):
+                content_id = PyUUID(content_id)
+            elif not isinstance(content_id, PyUUID):
                 raise ValueError("Invalid content_id type")
             
             return cls.query.filter(cls.id == content_id).first()

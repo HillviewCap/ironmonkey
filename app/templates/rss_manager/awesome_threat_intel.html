@@ -1,0 +1,24 @@
+<h2 class="text-2xl font-bold mb-4">Awesome Threat Intel Blogs</h2>
+<div class="mb-4 flex space-x-4">
+    <form action="{{ url_for('rss_manager.update_awesome_threat_intel') }}" method="POST" class="inline" onsubmit="return confirm('Are you sure you want to update Awesome Threat Intel Blogs?');">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+        <button type="submit" class="bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded">
+            Update Awesome Threat Intel Blogs
+        </button>
+    </form>
+</div>
+
+<!-- Add the CSRF token input -->
+<input type="hidden" id="csrf_token" value="{{ csrf_token() }}">
+<div id="awesome-blogs-container" class="p-6 bg-white shadow-md rounded-lg">
+    <div
+        id="awesome-blogs-grid"
+        data-get-blogs-url="{{ url_for('rss_manager.get_awesome_threat_intel_blogs') }}"
+        data-add-to-rss-feeds-url="{{ url_for('rss_manager.add_to_rss_feeds') }}"
+    ></div>
+</div>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    initializeAwesomeBlogsGrid();
+});
+</script>

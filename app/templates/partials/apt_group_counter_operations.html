@@ -1,0 +1,29 @@
+{% if group.counter_operations %}
+<div class="mb-4">
+    <h2 class="text-2xl font-semibold mb-2">Counter Operations:</h2>
+    <table class="min-w-full bg-white">
+        <thead>
+            <tr>
+                <th class="py-2">Date</th>
+                <th class="py-2">Activity</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for operation in group.counter_operations|json_loads %}
+            <tr>
+                <td class="border px-4 py-2">{{ operation.date }}</td>
+                <td class="border px-4 py-2">
+                    {% for line in operation.activity.split('\n') %}
+                        {% if 'http' in line %}
+                            <a href="{{ line }}" target="_blank" rel="noopener" class="text-blue-500 underline">{{ line }}</a><br>
+                        {% else %}
+                            {{ line }}<br>
+                        {% endif %}
+                    {% endfor %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}

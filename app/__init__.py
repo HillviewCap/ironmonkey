@@ -1,10 +1,6 @@
-"""
-This module initializes the Flask application and sets up all necessary configurations and extensions.
-"""
-
 import os
-import warnings
 import json
+import warnings
 from dotenv import load_dotenv
 from flask import Flask
 from flask_migrate import Migrate
@@ -25,6 +21,7 @@ from app.blueprints.search.routes import search_bp
 from app.blueprints.api.routes import api_bp
 from app.blueprints.parsed_content import bp as parsed_content_bp
 from app.blueprints.apt.routes import bp as apt_bp
+
 from flask_login import login_required
 from app.utils.ollama_client import OllamaAPI
 from app.services.scheduler_service import SchedulerService
@@ -112,7 +109,7 @@ def create_app(config_object=None):
     registered_blueprints = set()
     for blueprint, url_prefix in blueprints:
         if blueprint.name not in registered_blueprints:
-            if blueprint.name == 'apt':
+            if blueprint.name in ['apt', 'parsed_content']:
                 for endpoint, view_func in blueprint.view_functions.items():
                     blueprint.view_functions[endpoint] = login_required(view_func)
             app.register_blueprint(blueprint, url_prefix=url_prefix)
@@ -190,5 +187,6 @@ def create_app(config_object=None):
             user_count = db.session.query(User).count()
             if user_count == 0:
                 return redirect(url_for('auth.register'))
+
 
     return app
