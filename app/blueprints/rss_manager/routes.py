@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from uuid import UUID
-from typing import Tuple, Dict, Any, List
+from typing import Tuple, Dict, Any, List, Union
 
 from flask import (
     Blueprint,
@@ -148,9 +148,23 @@ def update_rss_feed(feed_id):
         return jsonify({"error": "Failed to update RSS feed"}), 500
 
 
-@rss_manager_bp.route("/rss/feed/<uuid:feed_id>", methods=["POST", "DELETE"])
+@rss_manager_bp.route("/rss/get_feeds_data", methods=["GET"])
 @login_required
-def delete_rss_feed(feed_id):
+def get_rss_feeds_data():
+    """
+    Retrieve all RSS feeds and return them as JSON for Grid.js.
+
+    Returns:
+        tuple: A tuple containing a JSON response with the feeds data or error
+               message, and an HTTP status code.
+    """
+    try:
+        feeds = RSSFeed.query.all()
+        feed_data = [feed.to_dict() for feed in feeds]
+        return jsonify(feed_data), 200
+    except Exception as e:
+        current_app.logger.error(f"Error fetching RSS feeds: {str(e)}")
+        return jsonify({"error": "Failed to fetch RSS feeds"}), 500
     """
     Delete an RSS feed.
 
@@ -158,7 +172,7 @@ def delete_rss_feed(feed_id):
         feed_id (uuid.UUID): The UUID of the RSS feed to delete.
 
     Returns:
-        werkzeug.wrappers.Response: A redirect response to the RSS feed manager page.
+        Response: A JSON response indicating success or failure.
     """
     try:
         rss_feed_service.delete_feed(feed_id)
@@ -166,7 +180,11 @@ def delete_rss_feed(feed_id):
     except Exception as e:
         current_app.logger.error(f"Error deleting RSS feed: {str(e)}")
         flash("Failed to delete RSS feed", "error")
-    return redirect(url_for("rss_manager.get_rss_feeds"))
+    if request.method == 'DELETE' or request.is_json:
+        return jsonify({'success': True}), 200
+    else:
+        flash("RSS feed deleted successfully", "success")
+        return redirect(url_for("rss_manager.get_rss_feeds"))
 
 
 @rss_manager_bp.route("/update_awesome_threat_intel", methods=["POST"])

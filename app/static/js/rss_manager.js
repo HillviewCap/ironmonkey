@@ -143,6 +143,88 @@ async function addToRssFeeds(blogName) {
     }
 }
 
+function initializeRssFeedsGrid() {
+    const gridElement = document.getElementById("rss-feeds-grid");
+    const getFeedsUrl = gridElement.getAttribute('data-get-feeds-url');
+    const deleteFeedUrl = gridElement.getAttribute('data-delete-feed-url');
+    const editFeedUrl = gridElement.getAttribute('data-edit-feed-url');
+
+    new gridjs.Grid({
+        columns: [
+            { id: 'title', name: 'Title' },
+            { id: 'category', name: 'Category' },
+            { 
+                id: 'url',
+                name: 'Feed URL',
+                formatter: (cell) => gridjs.html(`<a href="${cell}" target="_blank" rel="noopener" class="text-blue-500 hover:text-blue-700">${cell}</a>`)
+            },
+            { id: 'last_build_date', name: 'Last Updated' },
+            {
+                id: 'actions',
+                name: 'Actions',
+                formatter: (_, row) => {
+                    return gridjs.html(`
+                        <button onclick="editFeed('${row.cells[0].data}')" class="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-1 px-2 rounded text-sm">Edit</button>
+                        <button onclick="deleteFeed('${row.cells[0].data}')" class="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded text-sm">Delete</button>
+                    `);
+                }
+            }
+        ],
+        server: {
+            url: getFeedsUrl,
+            then: data => data.map(feed => [
+                feed.title,
+                feed.category,
+                feed.url,
+                feed.last_build_date
+            ])
+        },
+        search: true,
+        sort: true,
+        pagination: {
+            enabled: true,
+            limit: 10
+        },
+        className: {
+            table: 'min-w-full bg-white'
+        }
+    }).render(document.getElementById("rss-feeds-grid"));
+}
+
+function deleteFeed(feedId) {
+    const deleteFeedUrl = document.getElementById("rss-feeds-grid").getAttribute('data-delete-feed-url');
+
+    if (!confirm('Are you sure you want to delete this feed?')) {
+        return;
+    }
+
+    fetch(`${deleteFeedUrl}/${feedId}`, {
+        method: 'DELETE',
+        headers: {
+            'X-CSRFToken': document.getElementById('csrf_token').value
+        }
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.success) {
+            showNotification('Feed deleted successfully', 'success');
+            initializeRssFeedsGrid();
+        } else {
+            showNotification('Error deleting feed: ' + result.error, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error deleting feed:', error);
+        showNotification('An error occurred while deleting the feed', 'error');
+    });
+}
+
+function editFeed(feedId) {
+    const editFeedUrl = document.getElementById("rss-feeds-grid").getAttribute('data-edit-feed-url');
+    window.location.href = `${editFeedUrl}/${feedId}`;
+}
+
 document.addEventListener('DOMContentLoaded', function() {
+    initializeAwesomeBlogsGrid();
     initializeAwesomeBlogsGrid();
 });
