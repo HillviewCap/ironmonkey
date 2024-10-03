@@ -70,6 +70,7 @@ def update_alltools(session: Session, data: List[Dict[str, Any]]) -> None:
                 if not db_tool:
                     db_tool = AllTools(uuid=str(tool_uuid))
                     session.add(db_tool)
+                    session.add(db_tool)
 
                 db_tool.authors = (
                     ", ".join(tool.get("authors", []))
@@ -101,12 +102,13 @@ def update_alltools(session: Session, data: List[Dict[str, Any]]) -> None:
                     continue  # Skip this value
                 db_value = (
                     session.query(AllToolsValues)
-                    .filter(AllToolsValues.uuid == value_uuid)
+                    .filter(AllToolsValues.uuid == str(value_uuid))
                     .first()
                 )
                 if not db_value:
                     db_value = AllToolsValues(uuid=str(value_uuid))
                     db_tool.values.append(db_value)
+                    session.add(db_value)
 
                 db_value.tool = value.get("tool")
                 db_value.description = value.get("description")
