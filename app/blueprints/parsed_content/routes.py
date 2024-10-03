@@ -9,3 +9,14 @@ def parsed_content():
     latest_content = content_service.get_latest_parsed_content(category=category)
     content_stats = content_service.get_content_stats()
     return render_template('parsed_content/index.html', content=latest_content['content'], stats=content_stats, selected_category=category)
+from flask import Blueprint, render_template, abort
+from app.models.relational.parsed_content import ParsedContent
+
+parsed_content_bp = Blueprint('parsed_content', __name__)
+
+@parsed_content_bp.route('/item/<uuid:item_id>')
+def view_item(item_id):
+    item = ParsedContent.get_by_id(item_id)
+    if not item:
+        abort(404)
+    return render_template('parsed_content/view_item.html', item=item)

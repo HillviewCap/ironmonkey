@@ -192,3 +192,5 @@ def create_app(config_object=None):
                 return redirect(url_for('auth.register'))
 
     return app
+from app.blueprints.parsed_content.routes import parsed_content_bp
+app.register_blueprint(parsed_content_bp)
