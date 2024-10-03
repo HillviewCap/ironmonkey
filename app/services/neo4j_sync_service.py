@@ -99,6 +99,10 @@ class Neo4jSyncService:
                         last_db_change=group.last_db_change
                     )
                     # Process associated values and names
+                    for value in tool.values:
+                        logger.debug(f'Processing ToolValue: {value.uuid}')
+                    for value in group.values:
+                        logger.debug(f'Processing GroupValue: {value.uuid}')
                     for value in group.values:
                         # Create GroupValue node with UUID and set properties
                         session.run(
