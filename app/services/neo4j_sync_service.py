@@ -23,11 +23,7 @@ class Neo4jSyncService:
             logger.info('No ParsedContent records found to sync.')
             return
 
-        logger.debug(f'Fetched {len(all_groups)} groups to sync.')
-
-        if not all_groups:
-            logger.info('No AllGroups records found to sync.')
-            return
+        logger.debug(f'Fetched {len(parsed_contents)} parsed content records to sync.')
 
         with driver.session() as session:
             for content in parsed_contents:
