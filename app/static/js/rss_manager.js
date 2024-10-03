@@ -117,12 +117,15 @@ function initializeAwesomeBlogsGrid() {
 }
 
 async function addToRssFeeds(blogName) {
+    const gridElement = document.getElementById("awesome-blogs-grid");
+    const addToRssFeedsUrl = gridElement.getAttribute('data-add-to-rss-feeds-url');
+
     try {
         const response = await fetch(addToRssFeedsUrl, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRFToken': document.querySelector('input[name="csrf_token"]').value
+                'X-CSRFToken': document.getElementById('csrf_token').value
             },
             body: JSON.stringify({ blog: blogName })
         });
@@ -135,6 +138,7 @@ async function addToRssFeeds(blogName) {
             showNotification('Error adding blog to RSS feeds: ' + result.error, 'error');
         }
     } catch (error) {
+        console.error('Error in addToRssFeeds:', error);
         showNotification('An error occurred while adding the blog to RSS feeds', 'error');
     }
 }

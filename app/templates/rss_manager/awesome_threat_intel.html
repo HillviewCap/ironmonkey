@@ -7,6 +7,9 @@
         </button>
     </form>
 </div>
+
+<!-- Add the CSRF token input -->
+<input type="hidden" id="csrf_token" value="{{ csrf_token() }}">
 <div id="awesome-blogs-container" class="p-6 bg-white shadow-md rounded-lg">
     <div
         id="awesome-blogs-grid"
