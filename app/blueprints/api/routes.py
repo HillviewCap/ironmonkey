@@ -40,7 +40,7 @@ def get_graph_data():
                     **node._properties
                 }
             })
-        result_edges = tx.run("MATCH (n)-[r]->(m) RETURN r")
+        result_edges = tx.run("MATCH ()-[r]->() RETURN r")
         for record in result_edges:
             rel = record["r"]
             edges.append({
