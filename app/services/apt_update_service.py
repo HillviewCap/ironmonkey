@@ -65,7 +65,7 @@ def update_alltools(session: Session, data: List[Dict[str, Any]]) -> None:
                     session.query(AllTools).filter(AllTools.uuid == tool_uuid).first()
                 )
                 if not db_tool:
-                    db_tool = AllTools(uuid=tool_uuid)
+                    db_tool = AllTools(uuid=str(tool_uuid))
                     session.add(db_tool)
 
                 db_tool.authors = (
@@ -99,7 +99,7 @@ def update_alltools(session: Session, data: List[Dict[str, Any]]) -> None:
                     .first()
                 )
                 if not db_value:
-                    db_value = AllToolsValues(uuid=value_uuid)
+                    db_value = AllToolsValues(uuid=str(value_uuid))
                     db_tool.values.append(db_value)
 
                 db_value.tool = value.get("tool")
@@ -129,7 +129,7 @@ def update_alltools(session: Session, data: List[Dict[str, Any]]) -> None:
                     if not db_name:
                         db_name = AllToolsValuesNames(
                             name=name,
-                            uuid=uuid.uuid4(),  # Generate a new UUID object
+                            uuid=str(uuid.uuid4()),  # Generate a new UUID string
                             alltools_values_uuid=db_value.uuid,
                         )
                         db_value.names.append(db_name)
