@@ -13,7 +13,7 @@ class Neo4jSyncService:
         logger.info('Starting sync of ParsedContent to Neo4j.')
         driver = GraphConnectionManager.get_driver()
         driver = GraphConnectionManager.get_driver()
-            logger.warning('Neo4j driver not initialized.')
+        if driver is None:
             return
 
         # Fetch all ParsedContent records
