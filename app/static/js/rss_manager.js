@@ -79,25 +79,23 @@ function initializeAwesomeBlogsGrid() {
                 id: 'actions',
                 name: 'Actions',
                 formatter: (_, row) => {
-                    const isInRssFeeds = row.cells[7].data;
+                    const isInRssFeeds = row.cells[5].data;
                     if (isInRssFeeds) {
                         return gridjs.html('<p class="text-sm text-green-500 font-bold">Already in RSS Feeds</p>');
+                    } else {
+                        return gridjs.html(`<button onclick="addToRssFeeds('${row.cells[0].data}')" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-2 rounded text-sm">Add to RSS Feeds</button>`);
                     }
-                    return '';
                 }
-            },
-            { id: 'id', name: 'ID', hidden: true },
-            { id: 'is_in_rss_feeds', name: 'Is In RSS Feeds', hidden: true }
+            }
         ],
         server: {
-            url: '/rss_manager/get_awesome_threat_intel',
+            url: '/rss_manager/get_awesome_threat_intel_blogs',
             then: response => response.map(blog => [
                 blog.blog,
                 blog.blog_category,
                 blog.type,
                 blog.blog_link,
                 blog.feed_link,
-                blog.id,
                 blog.is_in_rss_feeds
             ])
         },
@@ -108,6 +106,29 @@ function initializeAwesomeBlogsGrid() {
             table: 'min-w-full bg-white'
         }
     }).render(document.getElementById("awesome-blogs-grid"));
+}
+
+async function addToRssFeeds(blogName) {
+    try {
+        const response = await fetch('/rss_manager/add_to_rss_feeds', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('input[name="csrf_token"]').value
+            },
+            body: JSON.stringify({ blog: blogName })
+        });
+        const result = await response.json();
+        if (response.ok) {
+            showNotification('Blog added to RSS feeds successfully', 'success');
+            grid.forceRender();
+            refreshExistingFeedsTable();
+        } else {
+            showNotification('Error adding blog to RSS feeds: ' + result.error, 'error');
+        }
+    } catch (error) {
+        showNotification('An error occurred while adding the blog to RSS feeds', 'error');
+    }
 }
 
 document.addEventListener('DOMContentLoaded', function() {
