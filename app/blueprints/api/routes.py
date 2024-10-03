@@ -13,6 +13,9 @@ and for summarizing content using the Ollama API.
 """
 
 from flask import Blueprint, jsonify, current_app
+from app.models.relational.parsed_content import ParsedContent
+from app.models.relational.rss_feed import RSSFeed
+from app.extensions import db
 from neo4j.exceptions import ServiceUnavailable
 from flask_login import login_required
 from app.utils.graph_connection_manager import GraphConnectionManager
