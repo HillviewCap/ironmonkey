@@ -55,9 +55,9 @@ your_flask_project/
 
 * Prefer `httpx` over `requests` for making HTTP requests.
 * Use `SQLAlchemy` as the ORM for interacting with the relational database.
-* Use `gremlinpython` for interacting with the graph database.
+* Use `neo4j` Python driver for interacting with the graph database.
+* Use Cypher queries to interact with Neo4j.
 * Use `Cytoscape.js` for frontend graph visualization.
-* Use `PyGremlin` for interacting with the graph database.
 * Use `Ollama` for local language model integration.
 * Use `langchain-community` for all AI/ML/NER/NLP functions.
 * Use  `flask_migrade` for all database changes.
