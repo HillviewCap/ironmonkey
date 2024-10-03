@@ -112,7 +112,7 @@ def create_app(config_object=None):
     registered_blueprints = set()
     for blueprint, url_prefix in blueprints:
         if blueprint.name not in registered_blueprints:
-            if blueprint.name == 'apt':
+            if blueprint.name in ['apt', 'parsed_content']:
                 for endpoint, view_func in blueprint.view_functions.items():
                     blueprint.view_functions[endpoint] = login_required(view_func)
             app.register_blueprint(blueprint, url_prefix=url_prefix)
