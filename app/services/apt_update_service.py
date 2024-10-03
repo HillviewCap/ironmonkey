@@ -65,7 +65,7 @@ def update_alltools(session: Session, data: List[Dict[str, Any]]) -> None:
                     logger.error(f"Invalid UUID for tool {tool.get('name', 'Unknown')} - UUID: {uuid_str}")
                     continue  # Skip this tool
                 db_tool = (
-                    session.query(AllTools).filter(AllTools.uuid == tool_uuid).first()
+                    session.query(AllTools).filter(AllTools.uuid == str(tool_uuid)).first()
                 )
                 if not db_tool:
                     db_tool = AllTools(uuid=str(tool_uuid))
