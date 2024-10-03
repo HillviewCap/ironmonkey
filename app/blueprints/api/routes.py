@@ -22,33 +22,40 @@ api_bp = Blueprint('api', __name__)
 @api_bp.route('/v1/graph', methods=['GET'])
 @login_required
 def get_graph_data():
-    client = GraphConnectionManager.get_client()
-    if client is None:
+    driver = GraphConnectionManager.get_driver()
+    if driver is None:
         return jsonify({'error': 'Graph database not available'}), 503
-    vertices = client.submit("g.V().valueMap(true)").all().result()
-    nodes = [
-        {
-            'data': {
-                'id': str(v[T.id]),
-                'label': v['label'][0],
-                **{k: v[k][0] for k in v if k != 'label'}
-            }
-        }
-        for v in vertices
-    ]
 
-    # Fetch edges
-    edges_result = client.submit("g.E().elementMap()").all().result()
-    edges = [
-        {
-            'data': {
-                'id': str(e[T.id]),
-                'source': str(e[T.outV]),
-                'target': str(e[T.inV]),
-                'label': e['label']
-            }
-        }
-        for e in edges_result
-    ]
+    nodes = []
+    edges = []
+    def fetch_data(tx):
+        result_nodes = tx.run("MATCH (n) RETURN n")
+        for record in result_nodes:
+            node = record["n"]
+            nodes.append({
+                'data': {
+                    'id': str(node.id),
+                    'label': list(node.labels)[0] if node.labels else 'Node',
+                    **node._properties
+                }
+            })
+        result_edges = tx.run("MATCH (n)-[r]->(m) RETURN r")
+        for record in result_edges:
+            rel = record["r"]
+            edges.append({
+                'data': {
+                    'id': str(rel.id),
+                    'source': str(rel.start_node.id),
+                    'target': str(rel.end_node.id),
+                    'label': rel.type,
+                }
+            })
+
+    try:
+        with driver.session() as session:
+            session.read_transaction(fetch_data)
+    except ServiceUnavailable as e:
+        current_app.logger.error(f'Neo4j Service Unavailable: {e}')
+        return jsonify({'error': 'Neo4j database not available'}), 503
 
     return jsonify({'nodes': nodes, 'edges': edges})

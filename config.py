@@ -11,7 +11,9 @@ class Config:
     SUMMARY_CHECK_INTERVAL = int(os.getenv('SUMMARY_CHECK_INTERVAL', 60))
     SUMMARY_API_CHOICE = os.getenv('SUMMARY_API_CHOICE', 'groq')
     FLASK_PORT = int(os.getenv('FLASK_PORT', '5000'))
-    GRAPH_DB_URL = os.getenv('GRAPH_DB_URL')
+    NEO4J_URI = os.getenv('NEO4J_URI', 'bolt://localhost:7687')
+    NEO4J_USER = os.getenv('NEO4J_USER', 'neo4j')
+    NEO4J_PASSWORD = os.getenv('NEO4J_PASSWORD', 'password')
 
 class DevelopmentConfig(Config):
     DEBUG = True
