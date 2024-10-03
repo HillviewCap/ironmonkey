@@ -10,6 +10,7 @@ from flask_login import LoginManager
 from .extensions import db
 from app.utils.logging_config import setup_logger
 from app.utils.db_connection_manager import init_db_connection_manager
+from app.hello import hello
 
 # Suppress Pydantic deprecation warning
 warnings.filterwarnings("ignore", category=DeprecationWarning, module="pydantic")
