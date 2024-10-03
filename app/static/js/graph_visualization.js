@@ -22,7 +22,20 @@ document.addEventListener('DOMContentLoaded', () => {
                         selector: 'node',
                         style: {
                             'label': 'data(name)',
-                            'background-color': '#0074D9'
+                            'background-color': '#0074D9',
+                            'color': '#fff',
+                            'text-valign': 'center',
+                            'text-halign': 'center',
+                            'width': '50',
+                            'height': '50',
+                            'shape': 'ellipse'
+                        }
+                    },
+                    {
+                        selector: 'node[label="Tool"]',
+                        style: {
+                            'shape': 'diamond',
+                            'background-color': '#FF4136'
                         }
                     },
                     {

@@ -1,6 +1,6 @@
 from __future__ import annotations
-from app.models.relational.allgroups import AllGroups
-from app.models.relational.alltools import AllTools
+from app.models.relational.allgroups import AllGroups, AllGroupsValues
+from app.models.relational.alltools import AllTools, AllToolsValues
 from app.utils.graph_connection_manager import GraphConnectionManager
 from gremlin_python.process.traversal import T
 
