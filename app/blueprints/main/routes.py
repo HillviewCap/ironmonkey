@@ -1,4 +1,4 @@
-from flask import send_from_directory, redirect, url_for, abort, current_app
+from flask import render_template, send_from_directory, redirect, url_for, abort, current_app
 from .about import about
 from flask_login import current_user, login_required
 import os
