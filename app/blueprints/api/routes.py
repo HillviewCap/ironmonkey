@@ -12,7 +12,8 @@ It defines various endpoints for retrieving content, feeds, users,
 and for summarizing content using the Ollama API.
 """
 
-from flask import Blueprint, jsonify
+from flask import Blueprint, jsonify, current_app
+from neo4j.exceptions import ServiceUnavailable
 from flask_login import login_required
 from app.utils.graph_connection_manager import GraphConnectionManager
 from gremlin_python.process.traversal import T
@@ -58,4 +59,4 @@ def get_graph_data():
         current_app.logger.error(f'Neo4j Service Unavailable: {e}')
         return jsonify({'error': 'Neo4j database not available'}), 503
 
-    return jsonify({'nodes': nodes, 'edges': edges})
+    return jsonify(nodes + edges)

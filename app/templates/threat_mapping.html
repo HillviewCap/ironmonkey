@@ -1,6 +1,49 @@
 {% extends 'base.html' %}
 
+{% extends "base.html" %}
 {% block content %}
+<h1>Threat Mapping</h1>
+<div id="cy" style="width: 100%; height: 600px;"></div>
+
+<!-- Include Cytoscape.js library -->
+<script src="https://unpkg.com/cytoscape@3.24.0/dist/cytoscape.min.js"></script>
+
+<!-- Your custom script to fetch and render the graph -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    fetch('/api/v1/graph')
+        .then(response => response.json())
+        .then(data => {
+            var cy = cytoscape({
+                container: document.getElementById('cy'),
+                elements: data,
+                style: [
+                    {
+                        selector: 'node',
+                        style: {
+                            'label': 'data(title)',
+                            'background-color': '#66B2FF'
+                        }
+                    },
+                    {
+                        selector: 'edge',
+                        style: {
+                            'label': 'data(label)',
+                            'line-color': '#ccc',
+                            'target-arrow-color': '#ccc',
+                            'target-arrow-shape': 'triangle',
+                            'arrow-scale': 2
+                        }
+                    }
+                ],
+                layout: {
+                    name: 'cose'
+                }
+            });
+        })
+        .catch(error => console.error('Error fetching graph data:', error));
+});
+</script>
 <div class="container mx-auto my-4">
     <h1 class="text-2xl font-bold mb-4">Threat Actor Mapping</h1>
     <div id="graph-container" style="width: 100%; height: 600px;"></div>

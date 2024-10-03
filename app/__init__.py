@@ -27,6 +27,7 @@ from app.utils.ollama_client import OllamaAPI
 from app.services.scheduler_service import SchedulerService
 from app.services.apt_update_service import update_databases
 from app.utils.graph_connection_manager import GraphConnectionManager
+from app.services.neo4j_sync_service import Neo4jSyncService
 
 load_dotenv()
 
@@ -97,6 +98,7 @@ def create_app(config_object=None):
         init_db_connection_manager(app)
         logger.info("Database tables created and connection manager initialized")
         GraphConnectionManager.initialize(app)
+        Neo4jSyncService.sync_parsed_content_to_neo4j()
 
     # Register blueprints
     blueprints = [
