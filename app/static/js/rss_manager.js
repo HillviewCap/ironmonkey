@@ -193,7 +193,7 @@ function initializeRssFeedsGrid() {
 
 function deleteFeed(feedId) {
     const deleteFeedBaseUrl = document.getElementById("rss-feeds-grid").getAttribute('data-delete-feed-url');
-    const deleteFeedUrl = deleteFeedBaseUrl.replace('FEED_ID_PLACEHOLDER', feedId);
+    const deleteFeedUrl = deleteFeedBaseUrl + encodeURIComponent(feedId);
 
     if (!confirm('Are you sure you want to delete this feed?')) {
         return;
@@ -223,7 +223,7 @@ function deleteFeed(feedId) {
 
 function editFeed(feedId) {
     const editFeedBaseUrl = document.getElementById("rss-feeds-grid").getAttribute('data-edit-feed-url');
-    const editFeedUrl = editFeedBaseUrl.replace('FEED_ID_PLACEHOLDER', feedId);
+    const editFeedUrl = editFeedBaseUrl + encodeURIComponent(feedId) + '/';
     window.location.href = editFeedUrl;
 }
 

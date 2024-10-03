@@ -148,9 +148,18 @@ def update_rss_feed(feed_id):
         return jsonify({"error": "Failed to update RSS feed"}), 500
 
 
-@rss_manager_bp.route("/rss/feed/<uuid:feed_id>", methods=["DELETE"])
+@rss_manager_bp.route("/rss/feed/delete/")
+@login_required
+def delete_rss_feed_base():
+    pass  # Placeholder route
+
+@rss_manager_bp.route("/rss/feed/<feed_id>", methods=["DELETE"])
 @login_required
 def delete_rss_feed(feed_id):
+    try:
+        feed_uuid = UUID(feed_id)
+    except ValueError:
+        abort(400, description="Invalid feed ID format")
     """
     Delete an RSS feed.
 
@@ -198,9 +207,18 @@ def update_awesome_threat_intel():
     return redirect(url_for("rss_manager.get_rss_feeds"))
 
 
-@rss_manager_bp.route("/rss/feed/edit/<uuid:feed_id>", methods=["GET", "POST"])
+@rss_manager_bp.route("/rss/feed/edit/")
+@login_required
+def edit_feed_base():
+    pass  # Placeholder route
+
+@rss_manager_bp.route("/rss/feed/edit/<feed_id>/", methods=["GET", "POST"])
 @login_required
 def edit_feed(feed_id):
+    try:
+        feed_uuid = UUID(feed_id)
+    except ValueError:
+        abort(400, description="Invalid feed ID format")
     """
     Edit an existing RSS feed.
 
