@@ -50,7 +50,17 @@ def update_alltools(session: Session, data: List[Dict[str, Any]]) -> None:
     for tool in data:
         try:
             with session.no_autoflush:
-                tool_uuid = UUID(tool["uuid"])  # Convert string UUID to UUID object
+                uuid_str = tool.get("uuid")
+                try:
+                    # Validate and convert UUID
+                    if not isinstance(uuid_str, str):
+                        logger.error(f"Invalid UUID format for tool {tool.get('name', 'Unknown')}: UUID is not a string.")
+                        continue  # Skip this tool
+                    
+                    tool_uuid = UUID(uuid_str)
+                except (ValueError, TypeError) as e:
+                    logger.error(f"Invalid UUID for tool {tool.get('name', 'Unknown')} - UUID: {uuid_str}")
+                    continue  # Skip this tool
                 db_tool = (
                     session.query(AllTools).filter(AllTools.uuid == tool_uuid).first()
                 )
@@ -73,7 +83,16 @@ def update_alltools(session: Session, data: List[Dict[str, Any]]) -> None:
             db_tool.last_db_change = tool.get("last-db-change")
 
             for value in tool.get("values", []):
-                value_uuid = UUID(str(value["uuid"]))  # Convert string to UUID object
+                value_uuid_str = value.get("uuid")
+                try:
+                    if not isinstance(value_uuid_str, str):
+                        logger.error(f"Invalid UUID format for tool value in tool {tool.get('name', 'Unknown')}: UUID is not a string.")
+                        continue  # Skip this value
+
+                    value_uuid = UUID(value_uuid_str)
+                except (ValueError, TypeError) as e:
+                    logger.error(f"Invalid UUID for tool value in tool {tool.get('name', 'Unknown')} - UUID: {value_uuid_str}")
+                    continue  # Skip this value
                 db_value = (
                     session.query(AllToolsValues)
                     .filter(AllToolsValues.uuid == value_uuid)
