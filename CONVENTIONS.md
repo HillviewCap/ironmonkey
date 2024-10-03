@@ -55,6 +55,8 @@ your_flask_project/
 
 * Prefer `httpx` over `requests` for making HTTP requests.
 * Use `SQLAlchemy` as the ORM for interacting with the relational database.
+* Use `gremlinpython` for interacting with the graph database.
+* Use `Cytoscape.js` for frontend graph visualization.
 * Use `PyGremlin` for interacting with the graph database.
 * Use `Ollama` for local language model integration.
 * Use `langchain-community` for all AI/ML/NER/NLP functions.
@@ -63,6 +65,7 @@ your_flask_project/
 **Type Hints and Annotations**
 
 * Use type hints and annotations everywhere possible to ensure code readability and maintainability.
+* Ensure all new code related to the graph database uses type hints and annotations.
 * Use `from __future__ import annotations` to enable postponed evaluation of type hints.
 
 **Database and Data Storage**

@@ -93,3 +93,19 @@ def example():
     return jsonify({"message": "This is an example API route"})
 
 # Add other API routes here
+from flask import jsonify
+from flask_login import login_required
+from app.utils.graph_connection_manager import GraphConnectionManager
+from gremlin_python.process.traversal import T
+
+@api.route('/api/v1/graph')
+@login_required
+def get_graph_data():
+    client = GraphConnectionManager.get_client()
+    vertices = client.submit("g.V().elementMap()").all().result()
+    edges = client.submit("g.E().elementMap()").all().result()
+    graph_data = {
+        'nodes': vertices,
+        'edges': edges
+    }
+    return jsonify(graph_data)
