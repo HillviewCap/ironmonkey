@@ -2,6 +2,7 @@ from app.utils.graph_connection_manager import GraphConnectionManager
 from app.models.relational.allgroups import AllGroups, AllGroupsValues, AllGroupsValuesNames
 from app.models.relational.alltools import AllTools, AllToolsValues, AllToolsValuesNames
 from app.models.relational.parsed_content import ParsedContent
+from sqlalchemy.orm import joinedload
 from app.utils.logging_config import setup_logger
 
 # Initialize logger for Neo4jSyncService
@@ -99,8 +100,6 @@ class Neo4jSyncService:
                         last_db_change=group.last_db_change
                     )
                     # Process associated values and names
-                    for value in tool.values:
-                        logger.debug(f'Processing ToolValue: {value.uuid}')
                     for value in group.values:
                         logger.debug(f'Processing GroupValue: {value.uuid}')
                     for value in group.values:
