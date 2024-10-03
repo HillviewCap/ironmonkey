@@ -70,7 +70,6 @@ def update_alltools(session: Session, data: List[Dict[str, Any]]) -> None:
                 if not db_tool:
                     db_tool = AllTools(uuid=str(tool_uuid))
                     session.add(db_tool)
-                    session.add(db_tool)
 
                 db_tool.authors = (
                     ", ".join(tool.get("authors", []))
@@ -108,7 +107,6 @@ def update_alltools(session: Session, data: List[Dict[str, Any]]) -> None:
                 if not db_value:
                     db_value = AllToolsValues(uuid=str(value_uuid))
                     db_tool.values.append(db_value)
-                    session.add(db_value)
 
                 db_value.tool = value.get("tool")
                 db_value.description = value.get("description")
@@ -143,11 +141,16 @@ def update_alltools(session: Session, data: List[Dict[str, Any]]) -> None:
                         db_value.names.append(db_name)
         except Exception as e:
             logger.error(
-                f"Error processing tool {tool.get('name', 'Unknown')}: {str(e)}"
+                f"Error processing tool {tool.get('name', 'Unknown')}: {str(e)}",
+                exc_info=True
             )
             session.rollback()
         else:
-            session.commit()
+            try:
+                session.commit()
+            except Exception as commit_error:
+                logger.error(f"Error committing changes: {str(commit_error)}", exc_info=True)
+                session.rollback()
 
 
 def update_allgroups(session: Session, data: List[Dict[str, Any]]) -> None:
