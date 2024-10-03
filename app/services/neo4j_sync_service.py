@@ -6,6 +6,7 @@ from sqlalchemy.orm import joinedload
 from app.utils.logging_config import setup_logger
 from neo4j import exceptions
 import logging
+from tqdm import tqdm
 
 # Initialize logger for Neo4jSyncService
 logger = setup_logger('neo4j_sync_service', 'neo4j_sync_service.log', level=logging.INFO)
@@ -27,8 +28,7 @@ class Neo4jSyncService:
         logger.info(f'Fetched {len(parsed_contents)} parsed content records to sync.')
 
         with driver.session() as session:
-            for content in parsed_contents:
-                logger.info(f'Processing ParsedContent: {content.title} (ID: {content.id})')
+            for content in tqdm(parsed_contents, desc="Syncing ParsedContent"):
                 try:
                     # Create ParsedContent node with UUID
                     session.run(
@@ -63,7 +63,6 @@ class Neo4jSyncService:
                             category_name=category.name,
                             id=str(content.id)
                         )
-                    logger.info(f'Synced ParsedContent node and categories for {content.title}')
                 except exceptions.ServiceUnavailable as e:
                     logger.exception(f'Neo4j service unavailable: {e}')
                     logger.error(f'Error syncing ParsedContent {content.id}: {e}')
@@ -195,9 +194,8 @@ class Neo4jSyncService:
             joinedload(AllTools.values).joinedload(AllToolsValues.names)
         ).all()
         with driver.session() as session:
-            for tool in all_tools:
+            for tool in tqdm(all_tools, desc="Syncing AllTools"):
                 try:
-                    logger.info(f'Processing tool: {tool.name} (UUID: {tool.uuid})')
                     # Create Tool node with UUID and set properties
                     session.run(
                         """
@@ -272,4 +270,4 @@ class Neo4jSyncService:
                             )
                 except Exception as e:
                     logger.error(f'Error syncing Tool {tool.uuid}: {e}')
-    logger.info('Completed sync of AllGroups to Neo4j.')
+        logger.info('Completed sync of AllTools to Neo4j.')
