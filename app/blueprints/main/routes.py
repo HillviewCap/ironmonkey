@@ -6,6 +6,11 @@ from app.models.relational.rss_feed import RSSFeed
 from . import bp
 from datetime import datetime
 
+@bp.route('/about')
+def about():
+    """Render the About page."""
+    return render_template('about.html')
+
 @bp.app_template_filter('format_date')
 def format_date(value):
     if isinstance(value, datetime):
