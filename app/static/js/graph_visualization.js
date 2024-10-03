@@ -1,8 +1,15 @@
 document.addEventListener('DOMContentLoaded', () => {
-    fetch('/api/v1/graph')
-        .then(response => response.json())
-        .then(data => {
-            const cy = cytoscape({
+    const viewSelector = document.getElementById('graph-view-selector');
+    
+    function fetchAndRenderGraph(view) {
+        fetch(`/api/v1/graph?view=${encodeURIComponent(view)}`)
+            .then(response => response.json())
+            .then(data => {
+                if (window.cy) {
+                    window.cy.destroy();
+                }
+                
+                window.cy = cytoscape({
                 container: document.getElementById('graph-container'),
                 elements: [
                     ...data.nodes.map(node => ({
@@ -48,14 +55,40 @@ document.addEventListener('DOMContentLoaded', () => {
                         }
                     }
                 ],
-                layout: { name: 'cose' }
-            });
+                    layout: { 
+                        name: 'cose',
+                        idealEdgeLength: 100,
+                        nodeOverlap: 20,
+                        refresh: 20,
+                        fit: true,
+                        padding: 30,
+                        randomize: false,
+                        componentSpacing: 100,
+                        nodeRepulsion: 400000,
+                        edgeElasticity: 100,
+                        nestingFactor: 5,
+                        gravity: 80,
+                        numIter: 1000,
+                        initialTemp: 200,
+                        coolingFactor: 0.95,
+                        minTemp: 1.0
+                    }
+                });
 
-            // Optional: Add event listeners for interactivity
-            cy.on('tap', 'node', function(evt){
-                var node = evt.target;
-                // Implement drill-down functionality
-                alert('Node clicked: ' + node.data('name'));
+                // Optional: Add event listeners for interactivity
+                cy.on('tap', 'node', function(evt){
+                    var node = evt.target;
+                    // Implement drill-down functionality
+                    alert('Node clicked: ' + node.data('name'));
+                });
             });
-        });
+    }
+
+    // Initial graph render
+    fetchAndRenderGraph(viewSelector.value);
+
+    // Update graph when view changes
+    viewSelector.addEventListener('change', function() {
+        fetchAndRenderGraph(this.value);
+    });
 });

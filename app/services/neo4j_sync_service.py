@@ -95,7 +95,8 @@ class Neo4jSyncService:
                             g.type = $type,
                             g.description = $description,
                             g.tlp = $tlp,
-                            g.last_db_change = $last_db_change
+                            g.last_db_change = $last_db_change,
+                            g.country = $country
                         """,
                         uuid=str(group.uuid),
                         name=group.name,
@@ -103,7 +104,8 @@ class Neo4jSyncService:
                         type=group.type,
                         description=group.description,
                         tlp=group.tlp,
-                        last_db_change=group.last_db_change
+                        last_db_change=group.last_db_change,
+                        country=group.country if hasattr(group, 'country') else None
                     )
                     # Process associated values and names
                     for value in group.values:

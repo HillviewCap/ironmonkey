@@ -32,3 +32,50 @@ class GraphConnectionManager:
     @classmethod
     def get_driver(cls):
         return cls._driver
+
+    @classmethod
+    def get_groups_tools_countries_graph(cls):
+        driver = cls.get_driver()
+        if driver is None:
+            return None
+
+        with driver.session() as session:
+            result = session.run("""
+                MATCH (g:Group)-[:HAS_VALUE]->(gv:GroupValue)-[:HAS_NAME]->(gn:GroupName)
+                OPTIONAL MATCH (gv)-[:USES]->(t:Tool)
+                RETURN g, gv, gn, t, g.country AS country
+            """)
+            
+            nodes = []
+            edges = []
+            countries = set()
+
+            for record in result:
+                group = record['g']
+                group_value = record['gv']
+                group_name = record['gn']
+                tool = record['t']
+                country = record['country']
+
+                nodes.append({"id": group['uuid'], "label": "Group", "name": group['name']})
+                nodes.append({"id": group_value['uuid'], "label": "GroupValue", "name": group_value['actor']})
+                nodes.append({"id": group_name['uuid'], "label": "GroupName", "name": group_name['name']})
+                
+                edges.append({"id": f"{group['uuid']}_has_value_{group_value['uuid']}", "outV": group['uuid'], "inV": group_value['uuid'], "label": "HAS_VALUE"})
+                edges.append({"id": f"{group_value['uuid']}_has_name_{group_name['uuid']}", "outV": group_value['uuid'], "inV": group_name['uuid'], "label": "HAS_NAME"})
+
+                if tool:
+                    nodes.append({"id": tool['uuid'], "label": "Tool", "name": tool['name']})
+                    edges.append({"id": f"{group_value['uuid']}_uses_{tool['uuid']}", "outV": group_value['uuid'], "inV": tool['uuid'], "label": "USES"})
+
+                if country:
+                    countries.add(country)
+
+            for country in countries:
+                country_id = f"country_{country}"
+                nodes.append({"id": country_id, "label": "Country", "name": country})
+                for node in nodes:
+                    if node['label'] == "Group" and record['g']['country'] == country:
+                        edges.append({"id": f"{node['id']}_from_{country_id}", "outV": node['id'], "inV": country_id, "label": "FROM"})
+
+            return {"nodes": nodes, "edges": edges}
