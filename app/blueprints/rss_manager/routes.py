@@ -148,23 +148,9 @@ def update_rss_feed(feed_id):
         return jsonify({"error": "Failed to update RSS feed"}), 500
 
 
-@rss_manager_bp.route("/rss/get_feeds_data", methods=["GET"])
+@rss_manager_bp.route("/rss/feed/<uuid:feed_id>", methods=["DELETE"])
 @login_required
-def get_rss_feeds_data():
-    """
-    Retrieve all RSS feeds and return them as JSON for Grid.js.
-
-    Returns:
-        tuple: A tuple containing a JSON response with the feeds data or error
-               message, and an HTTP status code.
-    """
-    try:
-        feeds = RSSFeed.query.all()
-        feed_data = [feed.to_dict() for feed in feeds]
-        return jsonify(feed_data), 200
-    except Exception as e:
-        current_app.logger.error(f"Error fetching RSS feeds: {str(e)}")
-        return jsonify({"error": "Failed to fetch RSS feeds"}), 500
+def delete_rss_feed(feed_id):
     """
     Delete an RSS feed.
 
