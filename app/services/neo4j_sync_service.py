@@ -1,26 +1,32 @@
 from app.utils.graph_connection_manager import GraphConnectionManager
 from app.models.relational.allgroups import AllGroups, AllGroupsValues, AllGroupsValuesNames
 from app.models.relational.alltools import AllTools, AllToolsValues, AllToolsValuesNames
-from flask import current_app
+from app.utils.logging_config import setup_logger
+
+# Initialize logger for Neo4jSyncService
+logger = setup_logger('neo4j_sync_service', 'neo4j_sync_service.log')
 
 class Neo4jSyncService:
     @staticmethod
     def sync_parsed_content_to_neo4j():
+        logger.info('Starting sync of ParsedContent to Neo4j.')
         driver = GraphConnectionManager.get_driver()
         if driver is None:
-            current_app.logger.warning('Neo4j driver not initialized.')
+            logger.warning('Neo4j driver not initialized.')
             return
 
     @staticmethod
     def sync_allgroups_to_neo4j():
         driver = GraphConnectionManager.get_driver()
         if driver is None:
-            current_app.logger.warning('Neo4j driver not initialized.')
+            logger.warning('Neo4j driver not initialized.')
             return
 
+        logger.info('Starting sync of AllGroups to Neo4j.')
         all_groups = AllGroups.query.all()
         with driver.session() as session:
             for group in all_groups:
+                logger.debug(f'Processing group: {group.name} (UUID: {group.uuid})')
                 # Create Group node with UUID
                 session.run(
                     """
@@ -116,12 +122,14 @@ class Neo4jSyncService:
     def sync_alltools_to_neo4j():
         driver = GraphConnectionManager.get_driver()
         if driver is None:
-            current_app.logger.warning('Neo4j driver not initialized.')
+            logger.warning('Neo4j driver not initialized.')
             return
 
+        logger.info('Starting sync of AllTools to Neo4j.')
         all_tools = AllTools.query.all()
         with driver.session() as session:
             for tool in all_tools:
+                logger.debug(f'Processing tool: {tool.name} (UUID: {tool.uuid})')
                 # Create Tool node with UUID
                 session.run(
                     """
@@ -194,3 +202,6 @@ class Neo4jSyncService:
                             value_uuid=str(value.uuid),
                             name_uuid=str(name.uuid)
                         )
+        logger.info('Completed sync of ParsedContent to Neo4j.')
+        logger.info('Completed sync of AllGroups to Neo4j.')
+        logger.info('Completed sync of AllTools to Neo4j.')
