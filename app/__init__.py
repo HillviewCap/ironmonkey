@@ -195,7 +195,7 @@ def create_app(config_object=None):
 
     return app
 from flask import Flask
-from app.blueprints.api.routes import api_blueprint
+from app.blueprints.api.routes import api_bp
 
 def create_app():
     app = Flask(__name__)
