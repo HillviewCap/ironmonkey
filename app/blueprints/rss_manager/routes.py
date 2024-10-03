@@ -310,7 +310,24 @@ def add_to_rss_feeds():
         if existing_feed:
             return jsonify({"error": "Blog already exists in RSS feeds"}), 400
 
-        new_feed = RSSFeed(url=blog.feed_link, category=blog.blog_category)
+        # Fetch the feed information to get the title
+        try:
+            title, description, last_build_date = RSSFeed.fetch_feed_info(blog.feed_link)
+        except Exception as e:
+            current_app.logger.error(f"Error fetching feed info: {str(e)}")
+            title = blog.blog  # Fallback to using the blog's name as the title
+            description = None
+            last_build_date = None
+
+        # Create the new RSSFeed object with the title
+        new_feed = RSSFeed(
+            url=blog.feed_link,
+            title=title,
+            category=blog.blog_category,
+            description=description,
+            last_build_date=last_build_date,
+            awesome_blog_id=blog.id
+        )
         db.session.add(new_feed)
         db.session.commit()
         return jsonify({"message": "Blog added to RSS feeds successfully"}), 200
