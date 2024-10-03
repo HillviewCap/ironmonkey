@@ -16,6 +16,26 @@ from flask import Blueprint, jsonify, current_app
 from app.models.relational.parsed_content import ParsedContent
 from app.models.relational.rss_feed import RSSFeed
 from app.extensions import db
+
+parsed_contents = db.session.query(
+    ParsedContent.id,
+    ParsedContent.title,
+    ParsedContent.url,
+    ParsedContent.description,
+    ParsedContent.content,
+    ParsedContent.summary,
+    ParsedContent.feed_id,
+    ParsedContent.created_at,
+    ParsedContent.pub_date,
+    ParsedContent.creator,
+    ParsedContent.geography,
+    ParsedContent.tools_used,
+    ParsedContent.art_hash,
+    RSSFeed.title.label('feed_title')
+).join(RSSFeed).filter(
+    ParsedContent.title.isnot(None),
+    ParsedContent.description.isnot(None)
+).order_by(ParsedContent.pub_date.desc()).limit(6).offset(0)
 from neo4j.exceptions import ServiceUnavailable
 from flask_login import login_required
 from app.utils.graph_connection_manager import GraphConnectionManager
