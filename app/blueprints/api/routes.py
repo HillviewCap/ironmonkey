@@ -35,19 +35,19 @@ def get_graph_data():
             node = record["n"]
             nodes.append({
                 'data': {
-                    'id': str(node.id),
-                    'label': list(node.labels)[0] if node.labels else 'Node',
+                    'id': str(node['uuid']),
+                    'label': list(node.labels)[0],
                     **node._properties
                 }
             })
-        result_edges = tx.run("MATCH (n)-[r]->(m) RETURN r, n, m")
+        result_edges = tx.run("MATCH (n)-[r]->(m) RETURN r")
         for record in result_edges:
             rel = record["r"]
             edges.append({
                 'data': {
                     'id': str(rel.id),
-                    'source': str(rel.start_node.id),
-                    'target': str(rel.end_node.id),
+                    'source': str(rel.start_node['uuid']),
+                    'target': str(rel.end_node['uuid']),
                     'label': rel.type,
                 }
             })

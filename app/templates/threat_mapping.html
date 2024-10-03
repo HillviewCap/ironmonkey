@@ -20,31 +20,45 @@ document.addEventListener('DOMContentLoaded', function() {
                 elements: data,
                 style: [
                     {
-                        selector: 'node',
+                        selector: 'node[label="Group"]',
                         style: {
                             'label': 'data(name)',
-                            'background-color': '#FF5733'  // Red for ThreatActor
+                            'background-color': '#FF5733'  // Red for Group
                         }
                     },
                     {
-                        selector: 'node[label="Content"]',
+                        selector: 'node[label="GroupValue"]',
                         style: {
-                            'label': 'data(title)',
-                            'background-color': '#66B2FF'  // Blue for Content
+                            'label': 'data(actor)',
+                            'background-color': '#FF8D33'  // Orange for GroupValue
                         }
                     },
                     {
-                        selector: 'node[label="Location"]',
+                        selector: 'node[label="GroupName"]',
                         style: {
                             'label': 'data(name)',
-                            'background-color': '#33FF57'  // Green for Location
+                            'background-color': '#FFC300'  // Yellow for GroupName
                         }
                     },
                     {
                         selector: 'node[label="Tool"]',
                         style: {
                             'label': 'data(name)',
-                            'background-color': '#FFC300'  // Yellow for Tool
+                            'background-color': '#33C1FF'  // Light Blue for Tool
+                        }
+                    },
+                    {
+                        selector: 'node[label="ToolValue"]',
+                        style: {
+                            'label': 'data(tool)',
+                            'background-color': '#3375FF'  // Blue for ToolValue
+                        }
+                    },
+                    {
+                        selector: 'node[label="ToolName"]',
+                        style: {
+                            'label': 'data(name)',
+                            'background-color': '#333CFF'  // Dark Blue for ToolName
                         }
                     },
                     {
@@ -59,9 +73,17 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 ],
                 layout: {
-                    name: 'cose',  // Use 'cose' for a force-directed layout
-                    idealEdgeLength: 100,
+                    name: 'cose',
+                    idealEdgeLength: 120,
+                    nodeOverlap: 20,
+                    refresh: 20,
+                    fit: true,
+                    padding: 30,
+                    randomize: true,
+                    componentSpacing: 100,
                     nodeRepulsion: 400000,
+                    edgeElasticity: 100,
+                    nestingFactor: 5,
                     gravity: 80,
                     numIter: 1000,
                     initialTemp: 200,
