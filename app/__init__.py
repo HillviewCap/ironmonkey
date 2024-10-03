@@ -13,7 +13,7 @@ from app.utils.db_connection_manager import init_db_connection_manager
 
 # Suppress Pydantic deprecation warning
 warnings.filterwarnings("ignore", category=DeprecationWarning, module="pydantic")
-from app.blueprints.main.routes import bp as main_bp
+from app.blueprints.main import bp as main_bp
 from app.blueprints.auth.routes import bp as auth_bp
 from app.blueprints.rss_manager.routes import rss_manager_bp
 from app.blueprints.admin.routes import admin_bp
