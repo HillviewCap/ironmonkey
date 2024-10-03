@@ -4,6 +4,18 @@
 
 This Flask-based web application is designed for threat research and analysis. It provides features for parsing RSS feeds, tagging content using NLP, searching through parsed content, and managing APT groups.
 
+## How to Install
+1. Clone the repository to your machine
+2. Copy the .env.example and rename to .env
+3. Fill out the .env with your api keys
+4. Create a virtual environment: conda create -n ironmonkey python=3.11 -y
+5. activate ironmonkey
+6. cd into the ironmonkey directory
+7. install the requirements: pip install -r requirements.txt -U
+8. start the service: python run.py
+9. navigate to the home page: http://127.0.0.1:5000/
+10. Create an account and log in
+
 ## Key Features
 
 - User authentication (login, logout, registration)
