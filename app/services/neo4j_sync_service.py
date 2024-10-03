@@ -1,6 +1,7 @@
 from app.utils.graph_connection_manager import GraphConnectionManager
 from app.models.relational.allgroups import AllGroups, AllGroupsValues, AllGroupsValuesNames
 from app.models.relational.alltools import AllTools, AllToolsValues, AllToolsValuesNames
+from app.models.relational.parsed_content import ParsedContent
 from app.utils.logging_config import setup_logger
 
 # Initialize logger for Neo4jSyncService
@@ -11,9 +12,50 @@ class Neo4jSyncService:
     def sync_parsed_content_to_neo4j():
         logger.info('Starting sync of ParsedContent to Neo4j.')
         driver = GraphConnectionManager.get_driver()
-        if driver is None:
+        driver = GraphConnectionManager.get_driver()
             logger.warning('Neo4j driver not initialized.')
             return
+
+        # Fetch all ParsedContent records
+        parsed_contents = ParsedContent.query.all()
+        if not parsed_contents:
+            logger.info('No ParsedContent records found to sync.')
+            return
+
+        with driver.session() as session:
+            for content in parsed_contents:
+                logger.debug(f'Processing ParsedContent: {content.title} (UUID: {content.uuid})')
+                try:
+                    # Create ParsedContent node with UUID
+                    session.run(
+                        """
+                        MERGE (pc:ParsedContent {uuid: $uuid})
+                        SET pc.title = $title,
+                            pc.creator = $creator,
+                            pc.pub_date = $pub_date,
+                            pc.category = $category,
+                            pc.summary = $summary,
+                            pc.link = $link,
+                            pc.image_link = $image_link,
+                            pc.parsed_date = $parsed_date,
+                            pc.feed_title = $feed_title
+                        """,
+                        uuid=str(content.uuid),
+                        title=content.title,
+                        creator=content.creator,
+                        pub_date=content.pub_date.strftime('%Y-%m-%d %H:%M:%S') if content.pub_date else None,
+                        category=content.category,
+                        summary=content.summary,
+                        link=content.link,
+                        image_link=content.image_link,
+                        parsed_date=content.parsed_date.strftime('%Y-%m-%d %H:%M:%S') if content.parsed_date else None,
+                        feed_title=content.rss_feed.title if content.rss_feed else None
+                    )
+                    logger.debug(f'Synced ParsedContent node for {content.title}')
+                except Exception as e:
+                    logger.error(f'Error syncing ParsedContent {content.uuid}: {e}')
+
+        logger.info('Completed sync of ParsedContent to Neo4j.')
 
     @staticmethod
     def sync_allgroups_to_neo4j():
@@ -202,6 +244,4 @@ class Neo4jSyncService:
                             value_uuid=str(value.uuid),
                             name_uuid=str(name.uuid)
                         )
-        logger.info('Completed sync of ParsedContent to Neo4j.')
-        logger.info('Completed sync of AllGroups to Neo4j.')
-        logger.info('Completed sync of AllTools to Neo4j.')
+    logger.info('Completed sync of AllTools to Neo4j.')
