@@ -26,7 +26,7 @@ class ParsedContent(db.Model):
     description = Column(Text, nullable=True)
     content = Column(Text, nullable=False)  # Jina summary from Ollama
     summary = Column(Text, nullable=True)  # Generated summary
-    feed_id = Column(UUID(as_uuid=True), ForeignKey("rss_feed.id"), nullable=False)
+    feed_id = Column(SA_UUID(as_uuid=True), ForeignKey("rss_feed.id"), nullable=False)
     feed = db.relationship("RSSFeed", back_populates="parsed_items")
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
     pub_date = Column(String(100), nullable=True)
