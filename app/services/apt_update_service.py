@@ -65,10 +65,10 @@ def update_alltools(session: Session, data: List[Dict[str, Any]]) -> None:
                     logger.error(f"Invalid UUID for tool {tool.get('name', 'Unknown')} - UUID: {uuid_str}")
                     continue  # Skip this tool
                 db_tool = (
-                    session.query(AllTools).filter(AllTools.uuid == str(tool_uuid)).first()
+                    session.query(AllTools).filter(AllTools.uuid == tool_uuid).first()
                 )
                 if not db_tool:
-                    db_tool = AllTools(uuid=str(tool_uuid))
+                    db_tool = AllTools(uuid=tool_uuid)
                     session.add(db_tool)
 
                 db_tool.authors = (
@@ -101,11 +101,11 @@ def update_alltools(session: Session, data: List[Dict[str, Any]]) -> None:
                     continue  # Skip this value
                 db_value = (
                     session.query(AllToolsValues)
-                    .filter(AllToolsValues.uuid == str(value_uuid))
+                    .filter(AllToolsValues.uuid == value_uuid)
                     .first()
                 )
                 if not db_value:
-                    db_value = AllToolsValues(uuid=str(value_uuid))
+                    db_value = AllToolsValues(uuid=value_uuid)
                     db_tool.values.append(db_value)
 
                 db_value.tool = value.get("tool")
