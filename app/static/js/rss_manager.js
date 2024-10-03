@@ -10,6 +10,9 @@ async function addFeed(event) {
     submitButton.textContent = 'Processing...';
     
     const formData = new FormData(form);
+    const gridElement = document.getElementById("awesome-blogs-grid");
+    const addToRssFeedsUrl = gridElement.getAttribute('data-add-to-rss-feeds-url');
+
     try {
         const response = await fetch('/rss_manager/create_rss_feed', {
             method: 'POST',
@@ -60,6 +63,9 @@ function showNotification(message, type) {
 }
 
 function initializeAwesomeBlogsGrid() {
+    const gridElement = document.getElementById("awesome-blogs-grid");
+    const getBlogsUrl = gridElement.getAttribute('data-get-blogs-url');
+
     grid = new gridjs.Grid({
         columns: [
             { id: 'blog', name: 'Blog' },
@@ -89,7 +95,7 @@ function initializeAwesomeBlogsGrid() {
             }
         ],
         server: {
-            url: '/rss_manager/get_awesome_threat_intel_blogs',
+            url: getBlogsUrl,
             then: response => response.map(blog => [
                 blog.blog,
                 blog.blog_category,
@@ -110,7 +116,7 @@ function initializeAwesomeBlogsGrid() {
 
 async function addToRssFeeds(blogName) {
     try {
-        const response = await fetch('/rss_manager/add_to_rss_feeds', {
+        const response = await fetch(addToRssFeedsUrl, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
