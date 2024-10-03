@@ -82,9 +82,8 @@ class Neo4jSyncService:
             joinedload(AllGroups.values).joinedload(AllGroupsValues.names)
         ).all()
         with driver.session() as session:
-            for group in all_groups:
+            for group in tqdm(all_groups, desc="Syncing AllGroups"):
                 try:
-                    logger.info(f'Processing Group: UUID={group.uuid}, Name={group.name}')
                     # Create Group node with UUID and set properties
                     session.run(
                         """
@@ -107,8 +106,6 @@ class Neo4jSyncService:
                         country=group.country if hasattr(group, 'country') else None
                     )
                     # Process associated values and names
-                    for value in group.values:
-                        logger.debug(f'Processing GroupValue: {value.uuid}')
                     for value in group.values:
                         # Create GroupValue node with UUID and set properties
                         session.run(
@@ -181,6 +178,8 @@ class Neo4jSyncService:
                             )
                 except Exception as e:
                     logger.exception(f'Error syncing Group {group.uuid}: {e}')
+
+        logger.info('Completed sync of AllGroups to Neo4j.')
 
     @staticmethod
     def sync_alltools_to_neo4j():
