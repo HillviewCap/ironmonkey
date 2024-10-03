@@ -3,7 +3,6 @@ import json
 import warnings
 from dotenv import load_dotenv
 from flask import Flask
-from .hello import hello
 from flask_migrate import Migrate
 from flask_wtf.csrf import CSRFProtect
 from flask_login import LoginManager
@@ -23,7 +22,6 @@ from app.blueprints.api.routes import api_bp
 from app.blueprints.parsed_content import bp as parsed_content_bp
 from app.blueprints.apt.routes import bp as apt_bp
 
-hello()
 from flask_login import login_required
 from app.utils.ollama_client import OllamaAPI
 from app.services.scheduler_service import SchedulerService
