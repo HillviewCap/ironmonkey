@@ -59,7 +59,7 @@ function showNotification(message, type) {
     setTimeout(() => notification.remove(), 3000);
 }
 
-document.addEventListener('DOMContentLoaded', async function() {
+function initializeAwesomeBlogsGrid() {
     grid = new gridjs.Grid({
         columns: [
             { id: 'blog', name: 'Blog' },
@@ -90,8 +90,8 @@ document.addEventListener('DOMContentLoaded', async function() {
             { id: 'is_in_rss_feeds', name: 'Is In RSS Feeds', hidden: true }
         ],
         server: {
-            url: '/rss_manager/get_awesome_blogs',
-            then: response => response.data.map(blog => [
+            url: '/rss_manager/get_awesome_threat_intel',
+            then: response => response.map(blog => [
                 blog.blog,
                 blog.blog_category,
                 blog.type,
@@ -108,4 +108,8 @@ document.addEventListener('DOMContentLoaded', async function() {
             table: 'min-w-full bg-white'
         }
     }).render(document.getElementById("awesome-blogs-grid"));
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    initializeAwesomeBlogsGrid();
 });
