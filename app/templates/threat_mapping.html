@@ -22,6 +22,11 @@
 <!-- Script to fetch and render the graph based on selected view -->
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Ensure Cytoscape is loaded
+    if (typeof cytoscape === 'undefined') {
+        console.error('Cytoscape library not loaded. Please check your internet connection and try again.');
+        return;
+    }
     const viewSelector = document.getElementById('graph-view-selector');
     const cyContainer = document.getElementById('cy');
 
@@ -30,8 +35,12 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(response => response.json())
             .then(data => {
                 // Destroy the existing graph instance, if any
-                if (window.cy) {
+                if (window.cy && typeof window.cy.destroy === 'function') {
                     window.cy.destroy();
+                }
+                // If destroy is not available, remove the container's contents
+                else if (window.cy) {
+                    cyContainer.innerHTML = '';
                 }
 
                 // Create a new Cytoscape instance with fetched data
