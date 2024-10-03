@@ -4,6 +4,7 @@ from app.models.relational.alltools import AllTools, AllToolsValues, AllToolsVal
 from app.models.relational.parsed_content import ParsedContent
 from sqlalchemy.orm import joinedload
 from app.utils.logging_config import setup_logger
+from neo4j import exceptions
 import logging
 
 # Initialize logger for Neo4jSyncService
@@ -65,7 +66,6 @@ class Neo4jSyncService:
                     logger.debug(f'Synced ParsedContent node and categories for {content.title}')
                 except exceptions.ServiceUnavailable as e:
                     logger.exception(f'Neo4j service unavailable: {e}')
-                    cls._driver = None
                     logger.error(f'Error syncing ParsedContent {content.id}: {e}')
 
         logger.info('Completed sync of ParsedContent to Neo4j.')
