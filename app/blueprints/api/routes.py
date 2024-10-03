@@ -28,8 +28,6 @@ parsed_contents = db.session.query(
     ParsedContent.created_at,
     ParsedContent.pub_date,
     ParsedContent.creator,
-    ParsedContent.geography,
-    ParsedContent.tools_used,
     ParsedContent.art_hash,
     RSSFeed.title.label('feed_title')
 ).join(RSSFeed).filter(
