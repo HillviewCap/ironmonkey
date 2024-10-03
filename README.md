@@ -15,11 +15,22 @@ This Flask-based web application is designed for threat research and analysis. I
 - RESTful API for data access
 - Scheduled tasks for processing feeds and generating summaries
 
+## Graph Database Setup
+
+- Install and configure your graph database (e.g., Apache TinkerPop with Gremlin Server).
+- Ensure the Gremlin Server is running and accessible at the configured host and port.
+
 ## Setup and Configuration
 
 1. Ensure Python 3.x is installed on your system.
 2. Install required dependencies: `pip install -r requirements.txt`
 3. Set up environment variables in a `.env` file:
+
+    ```bash
+    pip install -r requirements.txt
+    ```
+
+  - For frontend dependencies, include them via CDN or manage them appropriately.
    - DIFFBOT_API_KEY
    - SUMMARY_API_CHOICE (options: "ollama" or "groq")
    - OLLAMA_BASE_URL (if using Ollama)

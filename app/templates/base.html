@@ -34,6 +34,16 @@
 </head>
 <body class="bg-gray-100 flex flex-col min-h-screen">
     {% include "shared/navbar.html" %}
+    <div class="container mx-auto">
+        <div class="flex items-center justify-between h-16">
+            <!-- Other menu items -->
+            <div>
+                <a href="{{ url_for('main.threat_mapping') }}" class="text-white px-3 py-2 rounded-md text-sm font-medium">
+                    Threat Mapping
+                </a>
+            </div>
+        </div>
+    </div>
     <div class="container mx-auto mt-8 flex-grow">
         {% include "shared/flash_messages.html" %}
         {% block content %}{% endblock %}

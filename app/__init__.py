@@ -26,6 +26,7 @@ from flask_login import login_required
 from app.utils.ollama_client import OllamaAPI
 from app.services.scheduler_service import SchedulerService
 from app.services.apt_update_service import update_databases
+from app.utils.graph_connection_manager import GraphConnectionManager
 
 load_dotenv()
 
@@ -88,11 +89,12 @@ def create_app(config_object=None):
         except json.JSONDecodeError:
             return []
 
-    # Initialize database and connection manager
+    # Initialize database, connection manager, and graph connection
     with app.app_context():
         db.create_all()
         init_db_connection_manager(app)
         logger.info("Database tables created and connection manager initialized")
+        GraphConnectionManager.initialize(app)
 
     # Register blueprints
     blueprints = [
@@ -120,9 +122,9 @@ def create_app(config_object=None):
         else:
             logger.warning(f"Blueprint {blueprint.name} already registered, skipping.")
 
-    # Initialize services
+    # Initialize services and scheduler
     with app.app_context():
-        # Initialize Ollama API
+        # Initialize Ollama API and scheduler
         app.ollama_api = OllamaAPI()
 
         # Setup scheduler
