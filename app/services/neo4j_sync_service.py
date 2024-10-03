@@ -24,12 +24,12 @@ class Neo4jSyncService:
 
         with driver.session() as session:
             for content in parsed_contents:
-                logger.debug(f'Processing ParsedContent: {content.title} (UUID: {content.uuid})')
+                logger.debug(f'Processing ParsedContent: {content.title} (ID: {content.id})')
                 try:
                     # Create ParsedContent node with UUID
                     session.run(
                         """
-                        MERGE (pc:ParsedContent {uuid: $uuid})
+                        MERGE (pc:ParsedContent {id: $id})
                         SET pc.title = $title,
                             pc.creator = $creator,
                             pc.pub_date = $pub_date,
@@ -40,7 +40,7 @@ class Neo4jSyncService:
                             pc.parsed_date = $parsed_date,
                             pc.feed_title = $feed_title
                         """,
-                        uuid=str(content.uuid),
+                        id=str(content.id),
                         title=content.title,
                         creator=content.creator,
                         pub_date=content.pub_date.strftime('%Y-%m-%d %H:%M:%S') if content.pub_date else None,
