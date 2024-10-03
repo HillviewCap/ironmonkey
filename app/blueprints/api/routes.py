@@ -46,6 +46,7 @@ def get_parsed_contents():
 @api_bp.route('/v1/graph', methods=['GET'])
 @login_required
 def get_graph_data():
+    driver = GraphConnectionManager.get_driver()
     if driver is None:
         logger.error("Neo4j driver not initialized.")
         return jsonify({'error': 'Neo4j driver not initialized'}), 500
