@@ -19,7 +19,7 @@ from gremlin_python.process.traversal import T
 
 api_bp = Blueprint('api', __name__)
 
-@api_bp.route('/api/v1/graph', methods=['GET'])
+@api_bp.route('/v1/graph', methods=['GET'])
 @login_required
 def get_graph_data():
     client = GraphConnectionManager.get_client()
