@@ -1,10 +1,3 @@
-"""
-This module initializes the Flask application and sets up all necessary configurations and extensions.
-"""
-
-import os
-import warnings
-import json
 from dotenv import load_dotenv
 from flask import Flask
 from flask_migrate import Migrate
