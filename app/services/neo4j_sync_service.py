@@ -34,9 +34,8 @@ class Neo4jSyncService:
                             pc.creator = $creator,
                             pc.pub_date = $pub_date,
                             pc.summary = $summary,
-                            pc.link = $link,
-                            pc.image_link = $image_link,
-                            pc.parsed_date = $parsed_date,
+                            pc.url = $url,
+                            pc.created_at = $created_at,
                             pc.feed_title = $feed_title
                         """,
                         id=str(content.id),
@@ -44,10 +43,9 @@ class Neo4jSyncService:
                         creator=content.creator,
                         pub_date=content.pub_date if content.pub_date else None,
                         summary=content.summary,
-                        link=content.link,
-                        image_link=content.image_link,
-                        parsed_date=content.parsed_date.strftime('%Y-%m-%d %H:%M:%S') if content.parsed_date else None,
-                        feed_title=content.rss_feed.title if content.rss_feed else None
+                        url=content.url,
+                        created_at=content.created_at.strftime('%Y-%m-%d %H:%M:%S') if content.created_at else None,
+                        feed_title=content.feed.title if content.feed else None
                     )
                     # Sync categories associated with ParsedContent
                     for category in content.categories:
