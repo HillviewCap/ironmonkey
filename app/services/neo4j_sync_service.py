@@ -43,7 +43,7 @@ class Neo4jSyncService:
                         id=str(content.id),
                         title=content.title,
                         creator=content.creator,
-                        pub_date=content.pub_date.strftime('%Y-%m-%d %H:%M:%S') if content.pub_date else None,
+                        pub_date=content.pub_date if content.pub_date else None,
                         category=content.category,
                         summary=content.summary,
                         link=content.link,
@@ -53,7 +53,7 @@ class Neo4jSyncService:
                     )
                     logger.debug(f'Synced ParsedContent node for {content.title}')
                 except Exception as e:
-                    logger.error(f'Error syncing ParsedContent {content.uuid}: {e}')
+                    logger.error(f'Error syncing ParsedContent {content.id}: {e}')
 
         logger.info('Completed sync of ParsedContent to Neo4j.')
 
