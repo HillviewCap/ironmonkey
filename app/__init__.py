@@ -18,7 +18,6 @@ from app.blueprints.auth.routes import bp as auth_bp
 from app.blueprints.rss_manager.routes import rss_manager_bp
 from app.blueprints.admin.routes import admin_bp
 from app.blueprints.search.routes import search_bp
-from app.blueprints.api.routes import api_bp
 from app.blueprints.parsed_content import bp as parsed_content_bp
 from app.blueprints.apt.routes import bp as apt_bp
 
