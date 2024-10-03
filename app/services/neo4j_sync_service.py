@@ -52,6 +52,7 @@ class Neo4jSyncService:
                         session.run(
                             """
                             MERGE (c:Category {name: $category_name})
+                            WITH c
                             MATCH (pc:ParsedContent {id: $id})
                             MERGE (pc)-[:HAS_CATEGORY]->(c)
                             """,
