@@ -96,7 +96,6 @@ def create_app(config_object=None):
         db.create_all()
         init_db_connection_manager(app)
         logger.info("Database tables created and connection manager initialized")
-        app.config['GRAPH_DB_HOST'] = os.getenv('GRAPH_DB_HOST')
         GraphConnectionManager.initialize(app)
         GraphConnectionManager.initialize(app)
 
