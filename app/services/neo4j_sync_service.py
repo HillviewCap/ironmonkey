@@ -8,7 +8,7 @@ from neo4j import exceptions
 import logging
 
 # Initialize logger for Neo4jSyncService
-logger = setup_logger('neo4j_sync_service', 'neo4j_sync_service.log', level=logging.DEBUG)
+logger = setup_logger('neo4j_sync_service', 'neo4j_sync_service.log', level=logging.INFO)
 
 class Neo4jSyncService:
     @staticmethod
@@ -24,11 +24,11 @@ class Neo4jSyncService:
             logger.info('No ParsedContent records found to sync.')
             return
 
-        logger.debug(f'Fetched {len(parsed_contents)} parsed content records to sync.')
+        logger.info(f'Fetched {len(parsed_contents)} parsed content records to sync.')
 
         with driver.session() as session:
             for content in parsed_contents:
-                logger.debug(f'Processing ParsedContent: {content.title} (ID: {content.id})')
+                logger.info(f'Processing ParsedContent: {content.title} (ID: {content.id})')
                 try:
                     # Create ParsedContent node with UUID
                     session.run(
@@ -63,7 +63,7 @@ class Neo4jSyncService:
                             category_name=category.name,
                             id=str(content.id)
                         )
-                    logger.debug(f'Synced ParsedContent node and categories for {content.title}')
+                    logger.info(f'Synced ParsedContent node and categories for {content.title}')
                 except exceptions.ServiceUnavailable as e:
                     logger.exception(f'Neo4j service unavailable: {e}')
                     logger.error(f'Error syncing ParsedContent {content.id}: {e}')
@@ -85,7 +85,7 @@ class Neo4jSyncService:
         with driver.session() as session:
             for group in all_groups:
                 try:
-                    logger.debug(f'Processing Group: UUID={group.uuid}, Name={group.name}')
+                    logger.info(f'Processing Group: UUID={group.uuid}, Name={group.name}')
                     # Create Group node with UUID and set properties
                     session.run(
                         """
@@ -195,7 +195,7 @@ class Neo4jSyncService:
         with driver.session() as session:
             for tool in all_tools:
                 try:
-                    logger.debug(f'Processing tool: {tool.name} (UUID: {tool.uuid})')
+                    logger.info(f'Processing tool: {tool.name} (UUID: {tool.uuid})')
                     # Create Tool node with UUID and set properties
                     session.run(
                         """
