@@ -192,25 +192,26 @@ function initializeRssFeedsGrid() {
 }
 
 function deleteFeed(feedId) {
-    const deleteFeedUrl = document.getElementById("rss-feeds-grid").getAttribute('data-delete-feed-url');
+    const deleteFeedBaseUrl = document.getElementById("rss-feeds-grid").getAttribute('data-delete-feed-url');
 
     if (!confirm('Are you sure you want to delete this feed?')) {
         return;
     }
 
-    fetch(`${deleteFeedUrl}/${feedId}`, {
+    fetch(`${deleteFeedBaseUrl}/${feedId}`, {
         method: 'DELETE',
         headers: {
             'X-CSRFToken': document.getElementById('csrf_token').value
         }
     })
-    .then(response => response.json())
-    .then(result => {
-        if (result.success) {
+    .then(response => {
+        if (response.ok) {
             showNotification('Feed deleted successfully', 'success');
-            initializeRssFeedsGrid();
+            initializeRssFeedsGrid(); // Refresh the grid
         } else {
-            showNotification('Error deleting feed: ' + result.error, 'error');
+            response.json().then(result => {
+                showNotification('Error deleting feed: ' + result.error, 'error');
+            });
         }
     })
     .catch(error => {
@@ -220,11 +221,11 @@ function deleteFeed(feedId) {
 }
 
 function editFeed(feedId) {
-    const editFeedUrl = document.getElementById("rss-feeds-grid").getAttribute('data-edit-feed-url');
-    window.location.href = `${editFeedUrl}/${feedId}`;
+    const editFeedBaseUrl = document.getElementById("rss-feeds-grid").getAttribute('data-edit-feed-url');
+    window.location.href = `${editFeedBaseUrl}${feedId}`;
 }
 
 document.addEventListener('DOMContentLoaded', function() {
-    initializeAwesomeBlogsGrid();
+    initializeRssFeedsGrid();
     initializeAwesomeBlogsGrid();
 });

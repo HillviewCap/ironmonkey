@@ -345,3 +345,16 @@ def add_to_rss_feeds():
     except Exception as e:
         current_app.logger.error(f"Unexpected error in add_to_rss_feeds: {str(e)}")
         return jsonify({"error": "An unexpected error occurred"}), 500
+@rss_manager_bp.route("/get_rss_feeds_data", methods=["GET"])
+@login_required
+def get_rss_feeds_data():
+    """
+    Retrieve all RSS feeds as JSON data for Grid.js.
+    """
+    try:
+        feeds = RSSFeed.query.all()
+        feeds_data = [feed.to_dict() for feed in feeds]
+        return jsonify(feeds_data), 200
+    except Exception as e:
+        current_app.logger.error(f"Error fetching RSS feeds data: {str(e)}")
+        return jsonify({"error": "Failed to fetch RSS feeds data"}), 500

@@ -47,6 +47,7 @@ class RSSFeed(db.Model):
         """
         return {
             'id': str(self.id),
+            'id': str(self.id),  # Include ID for actions
             'url': self.url,
             'title': self.title,
             'description': self.description,

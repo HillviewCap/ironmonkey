@@ -1,29 +1,13 @@
 <div class="mb-8 p-6 bg-white shadow-md rounded-lg">
     <h2 class="text-xl font-bold mb-4">Existing Feeds</h2>
-    <div class="overflow-x-auto">
-        <table class="min-w-full bg-white">
-            <thead>
-                <tr>
-                    <th class="py-2 px-4 border-b">URL</th>
-                    <th class="py-2 px-4 border-b">Category</th>
-                    <th class="py-2 px-4 border-b">Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for feed in feeds %}
-                <tr>
-                    <td class="py-2 px-4 border-b">{{ feed.url }}</td>
-                    <td class="py-2 px-4 border-b">{{ feed.category }}</td>
-                    <td class="py-2 px-4 border-b">
-                        <a href="{{ url_for('rss_manager.edit_feed', feed_id=feed.id) }}" class="text-blue-500 hover:text-blue-700" title="Edit this feed">Edit</a>
-                        <form action="{{ url_for('rss_manager.delete_rss_feed', feed_id=feed.id) }}" method="POST" class="inline" onsubmit="return confirm('Are you sure you want to delete this feed?');">
-                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                            <button type="submit" class="text-red-500 hover:text-red-700 ml-2">Delete</button>
-                        </form>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
+    <!-- CSRF Token for AJAX Requests -->
+    <input type="hidden" id="csrf_token" value="{{ csrf_token() }}">
+
+    <!-- Grid.js Container -->
+    <div
+        id="rss-feeds-grid"
+        data-get-feeds-url="{{ url_for('rss_manager.get_rss_feeds_data') }}"
+        data-delete-feed-url="{{ url_for('rss_manager.delete_rss_feed', feed_id='') }}"
+        data-edit-feed-url="{{ url_for('rss_manager.edit_feed', feed_id='') }}"
+    ></div>
 </div>
