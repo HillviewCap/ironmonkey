@@ -13,6 +13,7 @@ async function addFeed(event) {
     const gridElement = document.getElementById("awesome-blogs-grid");
     const createFeedUrl = gridElement.getAttribute('data-create-feed-url');
 
+    const addToRssFeedsUrl = gridElement.getAttribute('data-add-to-rss-feeds-url');
     try {
         const response = await fetch('/rss_manager/create_rss_feed', {
             method: 'POST',
