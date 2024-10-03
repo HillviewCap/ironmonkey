@@ -120,8 +120,6 @@ def create_app(config_object=None):
                 f"Registered blueprint: {blueprint.name} with url_prefix: {url_prefix}"
             )
             registered_blueprints.add(blueprint.name)
-        else:
-            logger.warning(f"Blueprint {blueprint.name} already registered, skipping.")
 
     # Initialize services and scheduler
     with app.app_context():
