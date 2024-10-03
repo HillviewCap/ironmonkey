@@ -15,7 +15,7 @@
         id="rss-feeds-grid"
         data-get-feeds-url="{{ url_for('rss_manager.get_rss_feeds_data') }}"
         data-delete-feed-url="{{ url_for('rss_manager.delete_rss_feed', feed_id='') }}"
-        data-edit-feed-url="{{ url_for('rss_manager.edit_feed') }}"
+        data-edit-feed-url="{{ url_for('rss_manager.edit_feed', feed_id='') }}"
     ></div>
 </div>
 <script>
