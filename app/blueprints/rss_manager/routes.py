@@ -229,9 +229,9 @@ def edit_feed(feed_id):
     return render_template("edit_rss_feed.html", form=form, feed=feed)
 
 
-@rss_manager_bp.route("/awesome_blogs", methods=["GET"])
+@rss_manager_bp.route("/get_awesome_threat_intel_blogs", methods=["GET"])
 @login_required
-def get_awesome_blogs():
+def get_awesome_threat_intel_blogs():
     """
     Retrieve all Awesome Threat Intel Blogs.
 
@@ -244,8 +244,8 @@ def get_awesome_blogs():
 
     Note:
         - The function requires the user to be logged in.
-        - Each blog is converted to a dictionary using the to_dict() method.
-        - The response includes the blog information.
+        - Each blog is converted to a dictionary with specific fields.
+        - The response includes whether each blog is already in RSS feeds.
 
     Raises:
         Exception: If an error occurs during the database query or JSON conversion,
@@ -261,16 +261,66 @@ def get_awesome_blogs():
             feed.url for feed in RSSFeed.query.with_entities(RSSFeed.url).all()
         )
 
-        blog_data = []
-        for blog in blogs:
-            blog_dict = blog.to_dict()
-            blog_dict["is_in_rss_feeds"] = (
-                blog.feed_link in rss_feed_urls if blog.feed_link else False
-            )
-            blog_data.append(blog_dict)
+        blog_data = [{
+            'blog': blog.blog,
+            'blog_category': blog.blog_category,
+            'type': blog.type,
+            'blog_link': blog.blog_link,
+            'feed_link': blog.feed_link,
+            'is_in_rss_feeds': blog.feed_link in rss_feed_urls if blog.feed_link else False
+        } for blog in blogs]
 
         current_app.logger.info(f"Returning {len(blog_data)} blogs")
-        return jsonify({"data": blog_data}), 200
+        return jsonify(blog_data), 200
     except Exception as e:
         current_app.logger.error(f"Error fetching awesome blogs: {str(e)}")
         return jsonify({"error": "Failed to fetch awesome blogs"}), 500
+
+@rss_manager_bp.route("/add_to_rss_feeds", methods=["POST"])
+@login_required
+def add_to_rss_feeds():
+    """
+    Add a blog to RSS feeds.
+
+    This function adds a blog from Awesome Threat Intel Blogs to the RSS feeds.
+
+    Returns:
+        tuple: A tuple containing a JSON response with a success or error message,
+               and an HTTP status code.
+
+    Note:
+        - The function requires the user to be logged in.
+        - It expects a JSON payload with a 'blog' field containing the blog name.
+
+    Raises:
+        BadRequest: If the request data is missing or invalid.
+        IntegrityError: If there's a database integrity error (e.g., duplicate entry).
+    """
+    try:
+        data = request.get_json()
+        if not data or 'blog' not in data:
+            raise BadRequest("Missing 'blog' in request data")
+
+        blog_name = data['blog']
+        blog = AwesomeThreatIntelBlog.query.filter_by(blog=blog_name).first()
+        if not blog or not blog.feed_link:
+            return jsonify({"error": "Blog not found or has no feed link"}), 404
+
+        existing_feed = RSSFeed.query.filter_by(url=blog.feed_link).first()
+        if existing_feed:
+            return jsonify({"error": "Blog already exists in RSS feeds"}), 400
+
+        new_feed = RSSFeed(url=blog.feed_link, category=blog.blog_category)
+        db.session.add(new_feed)
+        db.session.commit()
+        return jsonify({"message": "Blog added to RSS feeds successfully"}), 200
+    except BadRequest as e:
+        current_app.logger.error(f"Bad request: {str(e)}")
+        return jsonify({"error": str(e)}), 400
+    except IntegrityError as e:
+        db.session.rollback()
+        current_app.logger.error(f"Database integrity error: {str(e)}")
+        return jsonify({"error": "Failed to add blog due to database constraint"}), 500
+    except Exception as e:
+        current_app.logger.error(f"Unexpected error in add_to_rss_feeds: {str(e)}")
+        return jsonify({"error": "An unexpected error occurred"}), 500
