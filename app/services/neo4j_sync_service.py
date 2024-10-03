@@ -12,7 +12,6 @@ class Neo4jSyncService:
     def sync_parsed_content_to_neo4j():
         logger.info('Starting sync of ParsedContent to Neo4j.')
         driver = GraphConnectionManager.get_driver()
-        driver = GraphConnectionManager.get_driver()
         if driver is None:
             return
 
@@ -76,97 +75,101 @@ class Neo4jSyncService:
         all_groups = AllGroups.query.all()
         with driver.session() as session:
             for group in all_groups:
+                try:
                 logger.debug(f'Processing group: {group.name} (UUID: {group.uuid})')
-                # Create Group node with UUID
-                session.run(
-                    """
-                    MERGE (g:Group {uuid: $uuid})
-                    SET g.name = $name,
-                        g.category = $category,
-                        g.type = $type,
-                        g.description = $description,
-                        g.tlp = $tlp,
-                        g.last_db_change = $last_db_change
-                    """,
-                    uuid=str(group.uuid),
-                    name=group.name,
-                    category=group.category,
-                    type=group.type,
-                    description=group.description,
-                    tlp=group.tlp,
-                    last_db_change=group.last_db_change
-                )
-                # Process associated values
-                for value in group.values:
-                    # Create GroupValue node with UUID
+                try:
+                    # Create Group node with UUID
                     session.run(
                         """
-                        MERGE (gv:GroupValue {uuid: $uuid})
-                        SET gv.actor = $actor,
-                            gv.country = $country,
-                            gv.description = $description,
-                            gv.information = $information,
-                            gv.last_card_change = $last_card_change,
-                            gv.motivation = $motivation,
-                            gv.first_seen = $first_seen,
-                            gv.observed_sectors = $observed_sectors,
-                            gv.observed_countries = $observed_countries,
-                            gv.operations = $operations,
-                            gv.sponsor = $sponsor,
-                            gv.counter_operations = $counter_operations,
-                            gv.mitre_attack = $mitre_attack,
-                            gv.playbook = $playbook
+                        MERGE (g:Group {uuid: $uuid})
+                        SET g.name = $name,
+                            g.category = $category,
+                            g.type = $type,
+                            g.description = $description,
+                            g.tlp = $tlp,
+                            g.last_db_change = $last_db_change
                         """,
-                        uuid=str(value.uuid),
-                        actor=value.actor,
-                        country=value.country,
-                        description=value.description,
-                        information=value.information,
-                        last_card_change=value.last_card_change,
-                        motivation=value.motivation,
-                        first_seen=value.first_seen,
-                        observed_sectors=value.observed_sectors,
-                        observed_countries=value.observed_countries,
-                        operations=value.operations,
-                        sponsor=value.sponsor,
-                        counter_operations=value.counter_operations,
-                        mitre_attack=value.mitre_attack,
-                        playbook=value.playbook
+                        uuid=str(group.uuid),
+                        name=group.name,
+                        category=group.category,
+                        type=group.type,
+                        description=group.description,
+                        tlp=group.tlp,
+                        last_db_change=group.last_db_change
                     )
-
-                    # Create relationship between Group and GroupValue
-                    session.run(
-                        """
-                        MATCH (g:Group {uuid: $group_uuid}), (gv:GroupValue {uuid: $value_uuid})
-                        MERGE (g)-[:HAS_VALUE]->(gv)
-                        """,
-                        group_uuid=str(group.uuid),
-                        value_uuid=str(value.uuid)
-                    )
-
-                    # Process associated names
-                    for name in value.names:
-                        # Create GroupName node with UUID
+                    # Process associated values
+                    for value in group.values:
+                        # Create GroupValue node with UUID
                         session.run(
                             """
-                            MERGE (n:GroupName {uuid: $uuid})
-                            SET n.name = $name,
-                                n.name_giver = $name_giver
+                            MERGE (gv:GroupValue {uuid: $uuid})
+                            SET gv.actor = $actor,
+                                gv.country = $country,
+                                gv.description = $description,
+                                gv.information = $information,
+                                gv.last_card_change = $last_card_change,
+                                gv.motivation = $motivation,
+                                gv.first_seen = $first_seen,
+                                gv.observed_sectors = $observed_sectors,
+                                gv.observed_countries = $observed_countries,
+                                gv.operations = $operations,
+                                gv.sponsor = $sponsor,
+                                gv.counter_operations = $counter_operations,
+                                gv.mitre_attack = $mitre_attack,
+                                gv.playbook = $playbook
                             """,
-                            uuid=str(name.uuid),
-                            name=name.name,
-                            name_giver=name.name_giver
+                            uuid=str(value.uuid),
+                            actor=value.actor,
+                            country=value.country,
+                            description=value.description,
+                            information=value.information,
+                            last_card_change=value.last_card_change,
+                            motivation=value.motivation,
+                            first_seen=value.first_seen,
+                            observed_sectors=value.observed_sectors,
+                            observed_countries=value.observed_countries,
+                            operations=value.operations,
+                            sponsor=value.sponsor,
+                            counter_operations=value.counter_operations,
+                            mitre_attack=value.mitre_attack,
+                            playbook=value.playbook
                         )
 
-                        # Create relationship between GroupValue and GroupName
+                        # Create relationship between Group and GroupValue
                         session.run(
                             """
-                            MATCH (gv:GroupValue {uuid: $value_uuid}), (n:GroupName {uuid: $name_uuid})
-                            MERGE (gv)-[:HAS_NAME]->(n)
+                            MATCH (g:Group {uuid: $group_uuid}), (gv:GroupValue {uuid: $value_uuid})
+                            MERGE (g)-[:HAS_VALUE]->(gv)
                             """,
-                            value_uuid=str(value.uuid),
-                            name_uuid=str(name.uuid)
+                            group_uuid=str(group.uuid),
+                            value_uuid=str(value.uuid)
                         )
+
+                        # Process associated names
+                        for name in value.names:
+                            # Create GroupName node with UUID
+                            session.run(
+                                """
+                                MERGE (n:GroupName {uuid: $uuid})
+                                SET n.name = $name,
+                                    n.name_giver = $name_giver
+                                """,
+                                uuid=str(name.uuid),
+                                name=name.name,
+                                name_giver=name.name_giver
+                            )
+
+                            # Create relationship between GroupValue and GroupName
+                            session.run(
+                                """
+                                MATCH (gv:GroupValue {uuid: $value_uuid}), (n:GroupName {uuid: $name_uuid})
+                                MERGE (gv)-[:HAS_NAME]->(n)
+                                """,
+                                value_uuid=str(value.uuid),
+                                name_uuid=str(name.uuid)
+                            )
+                except Exception as e:
+                    logger.error(f'Error syncing Group {group.uuid}: {e}')
 
     @staticmethod
     def sync_alltools_to_neo4j():
@@ -179,77 +182,81 @@ class Neo4jSyncService:
         all_tools = AllTools.query.all()
         with driver.session() as session:
             for tool in all_tools:
+                try:
                 logger.debug(f'Processing tool: {tool.name} (UUID: {tool.uuid})')
-                # Create Tool node with UUID
-                session.run(
-                    """
-                    MERGE (t:Tool {uuid: $uuid})
-                    SET t.name = $name,
-                        t.category = $category,
-                        t.type = $type,
-                        t.description = $description,
-                        t.tlp = $tlp,
-                        t.last_db_change = $last_db_change
-                    """,
-                    uuid=str(tool.uuid),
-                    name=tool.name,
-                    category=tool.category,
-                    type=tool.type,
-                    description=tool.description,
-                    tlp=tool.tlp,
-                    last_db_change=tool.last_db_change
-                )
-                # Process associated values
-                for value in tool.values:
-                    # Create ToolValue node with UUID
+                try:
+                    # Create Tool node with UUID
                     session.run(
                         """
-                        MERGE (tv:ToolValue {uuid: $uuid})
-                        SET tv.tool = $tool_name,
-                            tv.description = $description,
-                            tv.category = $category,
-                            tv.type = $type,
-                            tv.information = $information,
-                            tv.last_card_change = $last_card_change
+                        MERGE (t:Tool {uuid: $uuid})
+                        SET t.name = $name,
+                            t.category = $category,
+                            t.type = $type,
+                            t.description = $description,
+                            t.tlp = $tlp,
+                            t.last_db_change = $last_db_change
                         """,
-                        uuid=str(value.uuid),
-                        tool_name=value.tool,
-                        description=value.description,
-                        category=value.category,
-                        type=value.type,
-                        information=value.information,
-                        last_card_change=value.last_card_change
+                        uuid=str(tool.uuid),
+                        name=tool.name,
+                        category=tool.category,
+                        type=tool.type,
+                        description=tool.description,
+                        tlp=tool.tlp,
+                        last_db_change=tool.last_db_change
                     )
-
-                    # Create relationship between Tool and ToolValue
-                    session.run(
-                        """
-                        MATCH (t:Tool {uuid: $tool_uuid}), (tv:ToolValue {uuid: $value_uuid})
-                        MERGE (t)-[:HAS_VALUE]->(tv)
-                        """,
-                        tool_uuid=str(tool.uuid),
-                        value_uuid=str(value.uuid)
-                    )
-
-                    # Process associated names
-                    for name in value.names:
-                        # Create ToolName node with UUID
+                    # Process associated values
+                    for value in tool.values:
+                        # Create ToolValue node with UUID
                         session.run(
                             """
-                            MERGE (n:ToolName {uuid: $uuid})
-                            SET n.name = $name
+                            MERGE (tv:ToolValue {uuid: $uuid})
+                            SET tv.tool = $tool_name,
+                                tv.description = $description,
+                                tv.category = $category,
+                                tv.type = $type,
+                                tv.information = $information,
+                                tv.last_card_change = $last_card_change
                             """,
-                            uuid=str(name.uuid),
-                            name=name.name
+                            uuid=str(value.uuid),
+                            tool_name=value.tool,
+                            description=value.description,
+                            category=value.category,
+                            type=value.type,
+                            information=value.information,
+                            last_card_change=value.last_card_change
                         )
 
-                        # Create relationship between ToolValue and ToolName
+                        # Create relationship between Tool and ToolValue
                         session.run(
                             """
-                            MATCH (tv:ToolValue {uuid: $value_uuid}), (n:ToolName {uuid: $name_uuid})
-                            MERGE (tv)-[:HAS_NAME]->(n)
+                            MATCH (t:Tool {uuid: $tool_uuid}), (tv:ToolValue {uuid: $value_uuid})
+                            MERGE (t)-[:HAS_VALUE]->(tv)
                             """,
-                            value_uuid=str(value.uuid),
-                            name_uuid=str(name.uuid)
+                            tool_uuid=str(tool.uuid),
+                            value_uuid=str(value.uuid)
                         )
+
+                        # Process associated names
+                        for name in value.names:
+                            # Create ToolName node with UUID
+                            session.run(
+                                """
+                                MERGE (n:ToolName {uuid: $uuid})
+                                SET n.name = $name
+                                """,
+                                uuid=str(name.uuid),
+                                name=name.name
+                            )
+
+                            # Create relationship between ToolValue and ToolName
+                            session.run(
+                                """
+                                MATCH (tv:ToolValue {uuid: $value_uuid}), (n:ToolName {uuid: $name_uuid})
+                                MERGE (tv)-[:HAS_NAME]->(n)
+                                """,
+                                value_uuid=str(value.uuid),
+                                name_uuid=str(name.uuid)
+                            )
+                except Exception as e:
+                    logger.error(f'Error syncing Tool {tool.uuid}: {e}')
     logger.info('Completed sync of AllTools to Neo4j.')
