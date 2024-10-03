@@ -1,4 +1,5 @@
-from flask import render_template, send_from_directory, redirect, url_for, abort, current_app
+from flask import send_from_directory, redirect, url_for, abort, current_app
+from .about import about
 from flask_login import current_user, login_required
 import os
 from app.models.relational.parsed_content import ParsedContent
@@ -6,10 +7,6 @@ from app.models.relational.rss_feed import RSSFeed
 from . import bp
 from datetime import datetime
 
-@bp.route('/about')
-def about():
-    """Render the About page."""
-    return render_template('about.html')
 
 @bp.app_template_filter('format_date')
 def format_date(value):
