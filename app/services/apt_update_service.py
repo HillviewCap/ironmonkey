@@ -341,11 +341,3 @@ from app.services.neo4j_sync_service import Neo4jSyncService
 
 if __name__ == "__main__":
     update_databases()
-    # Synchronize Neo4j after updating the databases
-    Neo4jSyncService.sync_allgroups_to_neo4j()
-    Neo4jSyncService.sync_alltools_to_neo4j()
-    Neo4jSyncService.sync_parsed_content_to_neo4j()
-    # Synchronize Neo4j after updating the databases
-    Neo4jSyncService.sync_allgroups_to_neo4j()
-    Neo4jSyncService.sync_alltools_to_neo4j()
-    Neo4jSyncService.sync_parsed_content_to_neo4j()
