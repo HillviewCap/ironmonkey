@@ -33,7 +33,6 @@ class Neo4jSyncService:
                         SET pc.title = $title,
                             pc.creator = $creator,
                             pc.pub_date = $pub_date,
-                            pc.category = $category,
                             pc.summary = $summary,
                             pc.link = $link,
                             pc.image_link = $image_link,
@@ -44,14 +43,24 @@ class Neo4jSyncService:
                         title=content.title,
                         creator=content.creator,
                         pub_date=content.pub_date if content.pub_date else None,
-                        category=content.category,
                         summary=content.summary,
                         link=content.link,
                         image_link=content.image_link,
                         parsed_date=content.parsed_date.strftime('%Y-%m-%d %H:%M:%S') if content.parsed_date else None,
                         feed_title=content.rss_feed.title if content.rss_feed else None
                     )
-                    logger.debug(f'Synced ParsedContent node for {content.title}')
+                    # Sync categories associated with ParsedContent
+                    for category in content.categories:
+                        session.run(
+                            """
+                            MERGE (c:Category {name: $category_name})
+                            MATCH (pc:ParsedContent {id: $id})
+                            MERGE (pc)-[:HAS_CATEGORY]->(c)
+                            """,
+                            category_name=category.name,
+                            id=str(content.id)
+                        )
+                    logger.debug(f'Synced ParsedContent node and categories for {content.title}')
                 except Exception as e:
                     logger.error(f'Error syncing ParsedContent {content.id}: {e}')
 
