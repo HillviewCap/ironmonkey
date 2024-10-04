@@ -98,7 +98,7 @@ def create_app(config_object=None):
         init_db_connection_manager(app)
         logger.info("Database tables created and connection manager initialized")
         GraphConnectionManager.initialize(app)
-        Neo4jSyncService.sync_parsed_content_to_neo4j()
+        Neo4jSyncService.create_uniqueness_constraints()
         Neo4jSyncService.sync_allgroups_to_neo4j()
         Neo4jSyncService.sync_alltools_to_neo4j()
 

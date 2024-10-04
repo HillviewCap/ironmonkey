@@ -13,7 +13,29 @@ logger = setup_logger('neo4j_sync_service', 'neo4j_sync_service.log', level=logg
 
 class Neo4jSyncService:
     @staticmethod
-    def sync_parsed_content_to_neo4j():
+    def create_uniqueness_constraints():
+        driver = GraphConnectionManager.get_driver()
+        if driver is None:
+            logger.warning('Neo4j driver not initialized.')
+            return
+
+        with driver.session() as session:
+            # ParsedContent node constraint
+            session.run("CREATE CONSTRAINT parsedContentId IF NOT EXISTS FOR (pc:ParsedContent) REQUIRE pc.id IS UNIQUE")
+            # Category node constraint
+            session.run("CREATE CONSTRAINT categoryName IF NOT EXISTS FOR (c:Category) REQUIRE c.name IS UNIQUE")
+            # Group node constraint
+            session.run("CREATE CONSTRAINT groupUuid IF NOT EXISTS FOR (g:Group) REQUIRE g.uuid IS UNIQUE")
+            # GroupValue node constraint
+            session.run("CREATE CONSTRAINT groupValueUuid IF NOT EXISTS FOR (gv:GroupValue) REQUIRE gv.uuid IS UNIQUE")
+            # GroupName node constraint
+            session.run("CREATE CONSTRAINT groupNameUuid IF NOT EXISTS FOR (n:GroupName) REQUIRE n.uuid IS UNIQUE")
+            # Tool node constraint
+            session.run("CREATE CONSTRAINT toolUuid IF NOT EXISTS FOR (t:Tool) REQUIRE t.uuid IS UNIQUE")
+            # ToolValue node constraint
+            session.run("CREATE CONSTRAINT toolValueUuid IF NOT EXISTS FOR (tv:ToolValue) REQUIRE tv.uuid IS UNIQUE")
+            # ToolName node constraint
+            session.run("CREATE CONSTRAINT toolNameUuid IF NOT EXISTS FOR (n:ToolName) REQUIRE n.uuid IS UNIQUE")
         logger.info('Starting sync of ParsedContent to Neo4j.')
         driver = GraphConnectionManager.get_driver()
         if driver is None:
@@ -58,7 +80,7 @@ class Neo4jSyncService:
                             MERGE (c:Category {name: $category_name})
                             WITH c
                             MATCH (pc:ParsedContent {id: $id})
-                            MERGE (pc)-[:HAS_CATEGORY]->(c)
+                            MERGE (pc)-[r:HAS_CATEGORY]->(c)
                             """,
                             category_name=category.name,
                             id=str(content.id)
@@ -147,7 +169,7 @@ class Neo4jSyncService:
                         session.run(
                             """
                             MATCH (g:Group {uuid: $group_uuid}), (gv:GroupValue {uuid: $value_uuid})
-                            MERGE (g)-[:HAS_VALUE]->(gv)
+                            MERGE (g)-[r:HAS_VALUE]->(gv)
                             """,
                             group_uuid=str(group.uuid),
                             value_uuid=str(value.uuid)
@@ -171,12 +193,13 @@ class Neo4jSyncService:
                             session.run(
                                 """
                                 MATCH (gv:GroupValue {uuid: $value_uuid}), (n:GroupName {uuid: $name_uuid})
-                                MERGE (gv)-[:HAS_NAME]->(n)
+                                MERGE (gv)-[r:HAS_NAME]->(n)
                                 """,
                                 value_uuid=str(value.uuid),
                                 name_uuid=str(name.uuid)
                             )
-                except Exception as e:
+                except exceptions.ConstraintError as e:
+                    logger.error(f'Constraint violation: {e}')
                     logger.exception(f'Error syncing Group {group.uuid}: {e}')
 
         logger.info('Completed sync of AllGroups to Neo4j.')
@@ -240,7 +263,7 @@ class Neo4jSyncService:
                         session.run(
                             """
                             MATCH (t:Tool {uuid: $tool_uuid}), (tv:ToolValue {uuid: $value_uuid})
-                            MERGE (t)-[:HAS_VALUE]->(tv)
+                            MERGE (t)-[r:HAS_VALUE]->(tv)
                             """,
                             tool_uuid=str(tool.uuid),
                             value_uuid=str(value.uuid)
@@ -262,7 +285,7 @@ class Neo4jSyncService:
                             session.run(
                                 """
                                 MATCH (tv:ToolValue {uuid: $value_uuid}), (n:ToolName {uuid: $name_uuid})
-                                MERGE (tv)-[:HAS_NAME]->(n)
+                                MERGE (tv)-[r:HAS_NAME]->(n)
                                 """,
                                 value_uuid=str(value.uuid),
                                 name_uuid=str(name.uuid)
