@@ -50,44 +50,45 @@ class Neo4jSyncService:
         logger.info(f'Fetched {len(parsed_contents)} parsed content records to sync.')
 
         with driver.session() as session:
-            for content in tqdm(parsed_contents, desc="Syncing ParsedContent"):
-                try:
-                    # Create ParsedContent node with UUID
-                    session.run(
-                        """
-                        MERGE (pc:ParsedContent {id: $id})
-                        SET pc.title = $title,
-                            pc.creator = $creator,
-                            pc.pub_date = $pub_date,
-                            pc.summary = $summary,
-                            pc.url = $url,
-                            pc.created_at = $created_at,
-                            pc.feed_title = $feed_title
-                        """,
-                        id=str(content.id),
-                        title=content.title,
-                        creator=content.creator,
-                        pub_date=content.pub_date if content.pub_date else None,
-                        summary=content.summary,
-                        url=content.url,
-                        created_at=content.created_at.strftime('%Y-%m-%d %H:%M:%S') if content.created_at else None,
-                        feed_title=content.feed.title if content.feed else None
-                    )
-                    # Sync categories associated with ParsedContent
-                    for category in content.categories:
-                        session.run(
+            with session.begin_transaction() as tx:
+                for content in tqdm(parsed_contents, desc="Syncing ParsedContent"):
+                    try:
+                        # Create ParsedContent node with UUID
+                        tx.run(
                             """
-                            MERGE (c:Category {name: $category_name})
-                            WITH c
-                            MATCH (pc:ParsedContent {id: $id})
-                            MERGE (pc)-[r:HAS_CATEGORY]->(c)
+                            MERGE (pc:ParsedContent {id: $id})
+                            SET pc.title = $title,
+                                pc.creator = $creator,
+                                pc.pub_date = $pub_date,
+                                pc.summary = $summary,
+                                pc.url = $url,
+                                pc.created_at = $created_at,
+                                pc.feed_title = $feed_title
                             """,
-                            category_name=category.name,
-                            id=str(content.id)
+                            id=str(content.id),
+                            title=content.title,
+                            creator=content.creator,
+                            pub_date=content.pub_date if content.pub_date else None,
+                            summary=content.summary,
+                            url=content.url,
+                            created_at=content.created_at.strftime('%Y-%m-%d %H:%M:%S') if content.created_at else None,
+                            feed_title=content.feed.title if content.feed else None
                         )
-                except exceptions.ServiceUnavailable as e:
-                    logger.exception(f'Neo4j service unavailable: {e}')
-                    logger.error(f'Error syncing ParsedContent {content.id}: {e}')
+                        # Sync categories associated with ParsedContent
+                        for category in content.categories:
+                            tx.run(
+                                """
+                                MERGE (c:Category {name: $category_name})
+                                WITH c
+                                MATCH (pc:ParsedContent {id: $id})
+                                MERGE (pc)-[r:HAS_CATEGORY]->(c)
+                                """,
+                                category_name=category.name,
+                                id=str(content.id)
+                            )
+                    except exceptions.ServiceUnavailable as e:
+                        logger.exception(f'Neo4j service unavailable: {e}')
+                        logger.error(f'Error syncing ParsedContent {content.id}: {e}')
 
         logger.info('Completed sync of ParsedContent to Neo4j.')
 
