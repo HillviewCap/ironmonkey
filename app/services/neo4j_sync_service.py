@@ -238,8 +238,8 @@ class Neo4jSyncService:
                         tlp=tool.tlp,
                         last_db_change=tool.last_db_change
                     )
-                    # Process associated values and names
-                    for value in tool.values:
+                    # Add progress bar for ToolValues
+                    for value in tqdm(tool.values, desc=f"Processing Values for {tool.name}", leave=False):
                         # Create ToolValue node with UUID and set properties
                         session.run(
                             """
@@ -270,8 +270,8 @@ class Neo4jSyncService:
                             value_uuid=str(value.uuid)
                         )
 
-                        # Process associated names
-                        for name in value.names:
+                        # Add progress bar for ToolNames
+                        for name in tqdm(value.names, desc=f"Processing Names for {value.tool}", leave=False):
                             # Create ToolName node with UUID and set properties
                             session.run(
                                 """
