@@ -191,7 +191,7 @@ function initializeRssFeedsGrid() {
         sort: true,
         pagination: {
             enabled: true,
-            limit: 10
+            limit: 5
         },
         className: {
             table: 'min-w-full bg-white'
