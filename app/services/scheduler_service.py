@@ -3,7 +3,7 @@ import os
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.executors.pool import ThreadPoolExecutor
 from app.models.relational import ParsedContent, RSSFeed
-from app.services.rss_feed_service import fetch_and_parse_feed_sync
+from app.services.feed_parser_service import fetch_and_parse_feed_sync
 from app.services.summary_service import SummaryService
 from flask import current_app
 from app.utils.db_connection_manager import DBConnectionManager
