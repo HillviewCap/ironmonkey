@@ -162,7 +162,7 @@ function initializeRssFeedsGrid() {
             { 
                 id: 'url',
                 name: 'Feed URL',
-                formatter: (cell) => gridjs.html(`<a href="${cell}" target="_blank" rel="noopener" class="text-blue-500 hover:text-blue-700">${cell}</a>`)
+                formatter: (cell) => gridjs.html(`<button onclick="window.open('${cell}', '_blank')" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-2 rounded text-sm">Visit Feed</button>`)
             },
             { id: 'last_build_date', name: 'Last Updated' },
             {
@@ -171,7 +171,7 @@ function initializeRssFeedsGrid() {
                 formatter: (_, row) => {
                     const feedId = row.cells[4].data; // Assuming the ID is in the 5th column
                     return gridjs.html(`
-                        <button onclick="editFeed('${feedId}')" class="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-1 px-2 rounded text-sm">Edit</button>
+                        <button onclick="editFeed('${feedId}')" class="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-1 px-2 rounded text-sm mr-1">Edit</button>
                         <button onclick="deleteFeed('${feedId}')" class="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded text-sm">Delete</button>
                     `);
                 }
