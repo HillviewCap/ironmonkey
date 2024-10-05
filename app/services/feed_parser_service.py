@@ -136,6 +136,9 @@ async def fetch_and_parse_feed(feed_id: str) -> int:
                             feed.last_build_date = new_build_date.strftime("%Y-%m-%d %H:%M:%S")
                         else:
                             last_build_date = date_parser.parse(feed.last_build_date)
+                            # Remove timezone info to make both datetimes naive
+                            new_build_date = new_build_date.replace(tzinfo=None)
+                            last_build_date = last_build_date.replace(tzinfo=None)
                             if new_build_date > last_build_date:
                                 feed.last_build_date = new_build_date.strftime("%Y-%m-%d %H:%M:%S")
                     except Exception as e:
