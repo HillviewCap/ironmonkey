@@ -348,7 +348,13 @@ def get_rss_feeds_data():
     """
     try:
         feeds = RSSFeed.query.all()
-        feeds_data = [feed.to_dict() for feed in feeds]
+        feeds_data = [{
+            'id': str(feed.id),  # Convert UUID to string
+            'title': feed.title,
+            'category': feed.category,
+            'url': feed.url,
+            'last_build_date': feed.last_build_date.isoformat() if feed.last_build_date else None
+        } for feed in feeds]
         return jsonify(feeds_data), 200
     except Exception as e:
         current_app.logger.error(f"Error fetching RSS feeds data: {str(e)}")

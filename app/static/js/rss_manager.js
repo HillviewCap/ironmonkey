@@ -163,9 +163,10 @@ function initializeRssFeedsGrid() {
                 id: 'actions',
                 name: 'Actions',
                 formatter: (_, row) => {
+                    const feedId = row.cells[4].data; // Assuming the ID is in the 5th column
                     return gridjs.html(`
-                        <button onclick="editFeed('${row.cells[0].data}')" class="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-1 px-2 rounded text-sm">Edit</button>
-                        <button onclick="deleteFeed('${row.cells[0].data}')" class="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded text-sm">Delete</button>
+                        <button onclick="editFeed('${feedId}')" class="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-1 px-2 rounded text-sm">Edit</button>
+                        <button onclick="deleteFeed('${feedId}')" class="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded text-sm">Delete</button>
                     `);
                 }
             }
@@ -176,7 +177,8 @@ function initializeRssFeedsGrid() {
                 feed.title,
                 feed.category,
                 feed.url,
-                feed.last_build_date
+                feed.last_build_date,
+                feed.id // Include the feed ID in the data
             ])
         },
         search: true,
@@ -193,7 +195,7 @@ function initializeRssFeedsGrid() {
 
 function deleteFeed(feedId) {
     const deleteFeedBaseUrl = document.getElementById("rss-feeds-grid").getAttribute('data-delete-feed-url');
-    const deleteFeedUrl = deleteFeedBaseUrl + feedId;
+    const deleteFeedUrl = `${deleteFeedBaseUrl}${feedId}`;
 
     if (!confirm('Are you sure you want to delete this feed?')) {
         return;
@@ -210,20 +212,20 @@ function deleteFeed(feedId) {
             showNotification('Feed deleted successfully', 'success');
             initializeRssFeedsGrid(); // Refresh the grid
         } else {
-            response.json().then(result => {
-                showNotification('Error deleting feed: ' + result.error, 'error');
+            return response.json().then(result => {
+                throw new Error(result.error || 'Unknown error occurred');
             });
         }
     })
     .catch(error => {
         console.error('Error deleting feed:', error);
-        showNotification('An error occurred while deleting the feed', 'error');
+        showNotification(`Error deleting feed: ${error.message}`, 'error');
     });
 }
 
 function editFeed(feedId) {
     const editFeedBaseUrl = document.getElementById("rss-feeds-grid").getAttribute('data-edit-feed-url');
-    const editFeedUrl = editFeedBaseUrl + feedId + '/';
+    const editFeedUrl = `${editFeedBaseUrl}${feedId}/`;
     window.location.href = editFeedUrl;
 }
 
