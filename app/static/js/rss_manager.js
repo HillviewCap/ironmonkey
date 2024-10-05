@@ -143,13 +143,19 @@ async function addToRssFeeds(blogName) {
     }
 }
 
+let rssFeedsGrid;
+
 function initializeRssFeedsGrid() {
     const gridElement = document.getElementById("rss-feeds-grid");
     const getFeedsUrl = gridElement.getAttribute('data-get-feeds-url');
     const deleteFeedUrl = gridElement.getAttribute('data-delete-feed-url');
     const editFeedUrl = gridElement.getAttribute('data-edit-feed-url');
 
-    new gridjs.Grid({
+    if (rssFeedsGrid) {
+        rssFeedsGrid.destroy();
+    }
+
+    rssFeedsGrid = new gridjs.Grid({
         columns: [
             { id: 'title', name: 'Title' },
             { id: 'category', name: 'Category' },
