@@ -353,7 +353,7 @@ def get_rss_feeds_data():
             'title': feed.title,
             'category': feed.category,
             'url': feed.url,
-            'last_build_date': feed.last_build_date.isoformat() if feed.last_build_date else None
+            'last_build_date': feed.last_build_date.isoformat() if hasattr(feed.last_build_date, 'isoformat') else str(feed.last_build_date)
         } for feed in feeds]
         return jsonify(feeds_data), 200
     except Exception as e:
