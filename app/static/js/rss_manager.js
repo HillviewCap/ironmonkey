@@ -132,6 +132,12 @@ async function addToRssFeeds(blogName) {
         const result = await response.json();
         if (response.ok) {
             showNotification('Blog added to RSS feeds successfully', 'success');
+            // Update the button immediately
+            const button = event.target;
+            button.textContent = 'Already in RSS Feeds';
+            button.disabled = true;
+            button.classList.remove('bg-blue-500', 'hover:bg-blue-700');
+            button.classList.add('bg-green-500', 'text-white', 'font-bold', 'py-1', 'px-2', 'rounded', 'text-sm');
             initializeRssFeedsGrid(); // Refresh the Existing Feeds table
             initializeAwesomeBlogsGrid(); // Refresh the Awesome Threat Intel Blogs table
         } else {
