@@ -55,10 +55,12 @@ class SummaryService:
         # Validate UUID
         try:
             uuid_obj = UUID(content_id, version=4)
-            if str(uuid_obj) != content_id.lower():
-                logger.warning(f"Invalid UUID format for content_id: {content_id}")
-                return False
         except ValueError:
+            logger.warning(f"Invalid UUID format for content_id: {content_id}")
+            return False
+
+        # Normalize both UUIDs to compare their hex values without hyphens
+        if uuid_obj.hex != content_id.lower().replace('-', ''):
             logger.warning(f"Invalid UUID format for content_id: {content_id}")
             return False
 
