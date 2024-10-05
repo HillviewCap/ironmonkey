@@ -93,6 +93,7 @@ class RSSFeedService:
                 if last_build_date:
                     try:
                         parsed_date = date_parser.parse(last_build_date)
+                        parsed_date = parsed_date.replace(tzinfo=None)
                         last_build_date = parsed_date.strftime("%Y-%m-%d %H:%M:%S")
                     except Exception as e:
                         logger.warning(f"Could not parse last_build_date: {e}")
@@ -172,6 +173,7 @@ class RSSFeedService:
                 if last_build_date:
                     try:
                         parsed_date = date_parser.parse(last_build_date)
+                        parsed_date = parsed_date.replace(tzinfo=None)
                         feed.last_build_date = parsed_date.strftime("%Y-%m-%d %H:%M:%S")
                     except Exception as e:
                         logger.warning(f"Could not parse last_build_date: {e}")
