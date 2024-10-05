@@ -15,6 +15,7 @@ import feedparser
 from dateutil import parser as date_parser
 from app.services.html_sanitizer_service import sanitize_html
 from flask import current_app
+import asyncio
 from sqlalchemy.orm import Session
 
 from app.models import ParsedContent, RSSFeed, Category
