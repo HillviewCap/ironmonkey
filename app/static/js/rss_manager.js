@@ -132,8 +132,8 @@ async function addToRssFeeds(blogName) {
         const result = await response.json();
         if (response.ok) {
             showNotification('Blog added to RSS feeds successfully', 'success');
-            grid.forceRender();
-            refreshExistingFeedsTable();
+            initializeRssFeedsGrid(); // Refresh the Existing Feeds table
+            initializeAwesomeBlogsGrid(); // Refresh the Awesome Threat Intel Blogs table
         } else {
             showNotification('Error adding blog to RSS feeds: ' + result.error, 'error');
         }
