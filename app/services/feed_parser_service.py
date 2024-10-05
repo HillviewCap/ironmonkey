@@ -236,3 +236,5 @@ async def fetch_and_parse_feed(feed_id: str) -> int:
         raise RuntimeError(f"Unexpected error: {str(e)}")
     finally:
         return new_entries_count
+def fetch_and_parse_feed_sync(feed_id: str) -> int:
+    return asyncio.run(fetch_and_parse_feed(feed_id))
