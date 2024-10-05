@@ -91,7 +91,7 @@ function initializeAwesomeBlogsGrid() {
                     if (isInRssFeeds) {
                         return gridjs.html('<p class="text-sm text-green-500 font-bold">Already in RSS Feeds</p>');
                     } else {
-                        return gridjs.html(`<button onclick="addToRssFeeds('${row.cells[0].data}')" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-2 rounded text-sm">Add to RSS Feeds</button>`);
+                        return gridjs.html(`<button onclick="addToRssFeeds('${row.cells[0].data}', this)" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-2 rounded text-sm">Add to RSS Feeds</button>`);
                     }
                 }
             }
@@ -116,7 +116,7 @@ function initializeAwesomeBlogsGrid() {
     }).render(document.getElementById("awesome-blogs-grid"));
 }
 
-async function addToRssFeeds(blogName) {
+async function addToRssFeeds(blogName, button) {
     const gridElement = document.getElementById("awesome-blogs-grid");
     const addToRssFeedsUrl = gridElement.getAttribute('data-add-to-rss-feeds-url');
 
@@ -133,7 +133,6 @@ async function addToRssFeeds(blogName) {
         if (response.ok) {
             showNotification('Blog added to RSS feeds successfully', 'success');
             // Update the button immediately
-            const button = event.target;
             button.textContent = 'Already in RSS Feeds';
             button.disabled = true;
             button.classList.remove('bg-blue-500', 'hover:bg-blue-700');
