@@ -9,6 +9,7 @@ import os
 import sys
 import logging
 from dotenv import load_dotenv
+from hello import hello
 from app import create_app
 from app.extensions import db
 from app.models.relational.user import User
