@@ -148,18 +148,9 @@ def update_rss_feed(feed_id):
         return jsonify({"error": "Failed to update RSS feed"}), 500
 
 
-@rss_manager_bp.route("/rss/feed/delete/")
-@login_required
-def delete_rss_feed_base():
-    pass  # Placeholder route
-
-@rss_manager_bp.route("/rss/feed/<feed_id>", methods=["DELETE"])
+@rss_manager_bp.route("/rss/feed/<uuid:feed_id>", methods=["DELETE"])
 @login_required
 def delete_rss_feed(feed_id):
-    try:
-        feed_uuid = UUID(feed_id)
-    except ValueError:
-        abort(400, description="Invalid feed ID format")
     """
     Delete an RSS feed.
 
@@ -171,15 +162,10 @@ def delete_rss_feed(feed_id):
     """
     try:
         rss_feed_service.delete_feed(feed_id)
-        flash("RSS feed deleted successfully", "success")
+        return jsonify({'success': True, 'message': 'RSS feed deleted successfully'}), 200
     except Exception as e:
         current_app.logger.error(f"Error deleting RSS feed: {str(e)}")
-        flash("Failed to delete RSS feed", "error")
-    if request.method == 'DELETE' or request.is_json:
-        return jsonify({'success': True}), 200
-    else:
-        flash("RSS feed deleted successfully", "success")
-        return redirect(url_for("rss_manager.get_rss_feeds"))
+        return jsonify({'success': False, 'error': 'Failed to delete RSS feed'}), 500
 
 
 @rss_manager_bp.route("/update_awesome_threat_intel", methods=["POST"])
@@ -207,18 +193,9 @@ def update_awesome_threat_intel():
     return redirect(url_for("rss_manager.get_rss_feeds"))
 
 
-@rss_manager_bp.route("/rss/feed/edit/")
-@login_required
-def edit_feed_base():
-    pass  # Placeholder route
-
-@rss_manager_bp.route("/rss/feed/edit/<feed_id>/", methods=["GET", "POST"])
+@rss_manager_bp.route("/rss/feed/edit/<uuid:feed_id>/", methods=["GET", "POST"])
 @login_required
 def edit_feed(feed_id):
-    try:
-        feed_uuid = UUID(feed_id)
-    except ValueError:
-        abort(400, description="Invalid feed ID format")
     """
     Edit an existing RSS feed.
 
