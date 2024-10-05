@@ -54,14 +54,14 @@ def main():
             logger.info("Running from Flask CLI")
             return
         
-        # Otherwise, use the manual configuration
-        app.run(
+        # Otherwise, use the manual configuration with Waitress
+        from waitress import serve
+        serve(
+            app,
             host=app.config.get("HOST", "0.0.0.0"),
-            port=int(app.config.get("FLASK_PORT", 5000)),
-            use_reloader=app.config.get("USE_RELOADER", False),
-            debug=app.config.get("DEBUG", False),
+            port=int(app.config.get("FLASK_PORT", 5000))
         )
-        logger.info(f"Application started in debug mode: {app.debug}")
+        logger.info("Application started with Waitress")
     except Exception as e:
         logger.error(f"Error starting the application: {e}")
 
