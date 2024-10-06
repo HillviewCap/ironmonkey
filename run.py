@@ -15,8 +15,10 @@ from app.models.relational.user import User
 from config import get_config
 
 # Check if .env file exists
-if not os.path.exists('.env'):
-    print("Error: .env file not found. Please create a .env file with the necessary environment variables.")
+if not os.path.exists(".env"):
+    print(
+        "Error: .env file not found. Please create a .env file with the necessary environment variables."
+    )
     sys.exit(1)
 
 load_dotenv()
@@ -50,18 +52,19 @@ def main():
     """
     try:
         # Use Flask's CLI configuration if available
-        if os.getenv('FLASK_RUN_FROM_CLI') == 'true':
+        if os.getenv("FLASK_RUN_FROM_CLI") == "true":
             logger.info("Running from Flask CLI")
             return
-        
-        # Otherwise, use the manual configuration
-        app.run(
+
+        # Otherwise, use the manual configuration with Waitress
+        from waitress import serve
+
+        serve(
+            app,
             host=app.config.get("HOST", "0.0.0.0"),
             port=int(app.config.get("FLASK_PORT", 5000)),
-            use_reloader=app.config.get("USE_RELOADER", False),
-            debug=app.config.get("DEBUG", False),
         )
-        logger.info(f"Application started in debug mode: {app.debug}")
+        logger.info("Application started with Waitress")
     except Exception as e:
         logger.error(f"Error starting the application: {e}")
 

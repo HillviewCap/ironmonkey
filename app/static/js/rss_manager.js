@@ -91,7 +91,7 @@ function initializeAwesomeBlogsGrid() {
                     if (isInRssFeeds) {
                         return gridjs.html('<p class="text-sm text-green-500 font-bold">Already in RSS Feeds</p>');
                     } else {
-                        return gridjs.html(`<button onclick="addToRssFeeds('${row.cells[0].data}')" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-2 rounded text-sm">Add to RSS Feeds</button>`);
+                        return gridjs.html(`<button onclick="addToRssFeeds('${row.cells[0].data}', this)" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-2 rounded text-sm">Add to RSS Feeds</button>`);
                     }
                 }
             }
@@ -116,7 +116,7 @@ function initializeAwesomeBlogsGrid() {
     }).render(document.getElementById("awesome-blogs-grid"));
 }
 
-async function addToRssFeeds(blogName) {
+async function addToRssFeeds(blogName, button) {
     const gridElement = document.getElementById("awesome-blogs-grid");
     const addToRssFeedsUrl = gridElement.getAttribute('data-add-to-rss-feeds-url');
 
@@ -132,8 +132,13 @@ async function addToRssFeeds(blogName) {
         const result = await response.json();
         if (response.ok) {
             showNotification('Blog added to RSS feeds successfully', 'success');
-            grid.forceRender();
-            refreshExistingFeedsTable();
+            // Update the button immediately
+            button.textContent = 'Already in RSS Feeds';
+            button.disabled = true;
+            button.classList.remove('bg-blue-500', 'hover:bg-blue-700');
+            button.classList.add('bg-green-500', 'text-white', 'font-bold', 'py-1', 'px-2', 'rounded', 'text-sm');
+            initializeRssFeedsGrid(); // Refresh the Existing Feeds table
+            initializeAwesomeBlogsGrid(); // Refresh the Awesome Threat Intel Blogs table
         } else {
             showNotification('Error adding blog to RSS feeds: ' + result.error, 'error');
         }
@@ -143,29 +148,36 @@ async function addToRssFeeds(blogName) {
     }
 }
 
+let rssFeedsGrid;
+
 function initializeRssFeedsGrid() {
     const gridElement = document.getElementById("rss-feeds-grid");
     const getFeedsUrl = gridElement.getAttribute('data-get-feeds-url');
     const deleteFeedUrl = gridElement.getAttribute('data-delete-feed-url');
     const editFeedUrl = gridElement.getAttribute('data-edit-feed-url');
 
-    new gridjs.Grid({
+    if (rssFeedsGrid) {
+        rssFeedsGrid.destroy();
+    }
+
+    rssFeedsGrid = new gridjs.Grid({
         columns: [
             { id: 'title', name: 'Title' },
             { id: 'category', name: 'Category' },
             { 
                 id: 'url',
                 name: 'Feed URL',
-                formatter: (cell) => gridjs.html(`<a href="${cell}" target="_blank" rel="noopener" class="text-blue-500 hover:text-blue-700">${cell}</a>`)
+                formatter: (cell) => gridjs.html(`<button onclick="window.open('${cell}', '_blank')" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-2 rounded text-sm">Visit Feed</button>`)
             },
             { id: 'last_build_date', name: 'Last Updated' },
             {
                 id: 'actions',
                 name: 'Actions',
                 formatter: (_, row) => {
+                    const feedId = row.cells[4].data; // Assuming the ID is in the 5th column
                     return gridjs.html(`
-                        <button onclick="editFeed('${row.cells[0].data}')" class="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-1 px-2 rounded text-sm">Edit</button>
-                        <button onclick="deleteFeed('${row.cells[0].data}')" class="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded text-sm">Delete</button>
+                        <button onclick="editFeed('${feedId}')" class="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-1 px-2 rounded text-sm mr-1">Edit</button>
+                        <button onclick="deleteFeed('${feedId}')" class="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded text-sm">Delete</button>
                     `);
                 }
             }
@@ -176,14 +188,15 @@ function initializeRssFeedsGrid() {
                 feed.title,
                 feed.category,
                 feed.url,
-                feed.last_build_date
+                feed.last_build_date,
+                feed.id // Include the feed ID in the data
             ])
         },
         search: true,
         sort: true,
         pagination: {
             enabled: true,
-            limit: 10
+            limit: 5
         },
         className: {
             table: 'min-w-full bg-white'
@@ -193,7 +206,7 @@ function initializeRssFeedsGrid() {
 
 function deleteFeed(feedId) {
     const deleteFeedBaseUrl = document.getElementById("rss-feeds-grid").getAttribute('data-delete-feed-url');
-    const deleteFeedUrl = deleteFeedBaseUrl + encodeURIComponent(feedId);
+    const deleteFeedUrl = `${deleteFeedBaseUrl}${feedId}`;
 
     if (!confirm('Are you sure you want to delete this feed?')) {
         return;
@@ -210,20 +223,20 @@ function deleteFeed(feedId) {
             showNotification('Feed deleted successfully', 'success');
             initializeRssFeedsGrid(); // Refresh the grid
         } else {
-            response.json().then(result => {
-                showNotification('Error deleting feed: ' + result.error, 'error');
+            return response.json().then(result => {
+                throw new Error(result.error || 'Unknown error occurred');
             });
         }
     })
     .catch(error => {
         console.error('Error deleting feed:', error);
-        showNotification('An error occurred while deleting the feed', 'error');
+        showNotification(`Error deleting feed: ${error.message}`, 'error');
     });
 }
 
 function editFeed(feedId) {
     const editFeedBaseUrl = document.getElementById("rss-feeds-grid").getAttribute('data-edit-feed-url');
-    const editFeedUrl = editFeedBaseUrl + encodeURIComponent(feedId) + '/';
+    const editFeedUrl = `${editFeedBaseUrl}${feedId}/`;
     window.location.href = editFeedUrl;
 }
 

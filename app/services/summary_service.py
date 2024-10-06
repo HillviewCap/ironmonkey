@@ -46,16 +46,21 @@ class SummaryService:
         api = self._initialize_api()
         return await api.generate("threat_intel_summary", text_to_summarize)
 
+    def enhance_summary_sync(self, content_id: str) -> bool:
+        return asyncio.run(self.enhance_summary(content_id))
+
     async def enhance_summary(self, content_id: str) -> bool:
         logger.info(f"Processing record {content_id}")
 
         # Validate UUID
         try:
             uuid_obj = UUID(content_id, version=4)
-            if str(uuid_obj) != content_id.lower():
-                logger.warning(f"Invalid UUID format for content_id: {content_id}")
-                return False
         except ValueError:
+            logger.warning(f"Invalid UUID format for content_id: {content_id}")
+            return False
+
+        # Normalize both UUIDs to compare their hex values without hyphens
+        if uuid_obj.hex != content_id.lower().replace('-', ''):
             logger.warning(f"Invalid UUID format for content_id: {content_id}")
             return False
 
@@ -110,7 +115,7 @@ class SummaryService:
             parsed_content = session.query(ParsedContent).filter(
                 ParsedContent.id == UUID(content_id),
                 ParsedContent.summary == None
-            ).with_for_update(nowait=True).first()
+            ).first()  # Removed with_for_update(nowait=True)
             return parsed_content
         except OperationalError:
             return None

@@ -1,8 +1,9 @@
 import asyncio
 import os
 from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.executors.pool import ThreadPoolExecutor
 from app.models.relational import ParsedContent, RSSFeed
-from app.services.rss_feed_service import fetch_and_parse_feed
+from app.services.feed_parser_service import fetch_and_parse_feed_sync
 from app.services.summary_service import SummaryService
 from flask import current_app
 from app.utils.db_connection_manager import DBConnectionManager
@@ -19,7 +20,10 @@ class SchedulerService:
         if cls._instance is None:
             cls._instance = super(SchedulerService, cls).__new__(cls)
             cls._instance.app = app
-            cls._instance.scheduler = BackgroundScheduler()
+            executors = {
+                'default': ThreadPoolExecutor(max_workers=5)  # Adjust max_workers as needed
+            }
+            cls._instance.scheduler = BackgroundScheduler(executors=executors)
             cls._instance.is_running = False
         return cls._instance
 
@@ -40,7 +44,7 @@ class SchedulerService:
         summary_api_choice = os.getenv("SUMMARY_API_CHOICE", "ollama").lower()
         if summary_api_choice == "ollama":
             self.scheduler.add_job(
-                func=lambda: asyncio.run(self.start_check_empty_summaries()),
+                func=self.start_check_empty_summaries,
                 trigger="interval",
                 minutes=summary_check_interval,
             )
@@ -82,7 +86,7 @@ class SchedulerService:
                         feed = session.query(RSSFeed).get(feed_id)
                         if feed:
                             scheduler_logger.info(f"Processing feed: {feed.url}")
-                            new_articles = asyncio.run(fetch_and_parse_feed(feed_id))
+                            new_articles = fetch_and_parse_feed_sync(feed_id)
                             if new_articles is not None:
                                 new_articles_count += new_articles
                                 # Query for the feed again to ensure we have an attached instance
@@ -118,7 +122,10 @@ class SchedulerService:
                     f"Finished processing {processed_feeds}/{total_feeds} RSS feeds, added {new_articles_count} new articles"
                 )
 
-    async def start_check_empty_summaries(self):
+    def start_check_empty_summaries(self):
+        asyncio.run(self._start_check_empty_summaries_async())
+
+    async def _start_check_empty_summaries_async(self):
         with self.app.app_context():
             processed_count = 0
             summary_service = SummaryService()
@@ -127,7 +134,7 @@ class SchedulerService:
                 empty_summary_ids = (
                     session.query(ParsedContent.id)
                     .filter(ParsedContent.summary.is_(None))
-                    .limit(10)
+                    .limit(50)
                     .all()
                 )
 
@@ -136,9 +143,7 @@ class SchedulerService:
                     with DBConnectionManager.get_session() as session:
                         content = session.query(ParsedContent).get(content_id)
                         if content:
-                            success = await summary_service.enhance_summary(
-                                str(content.id)
-                            )
+                            success = await summary_service.enhance_summary(content.id.hex)
                             if success:
                                 processed_count += 1
                             else:
