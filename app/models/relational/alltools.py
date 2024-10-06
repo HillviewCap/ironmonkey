@@ -46,6 +46,12 @@ class AllToolsValues(db.Model):
     alltool: Mapped[Optional["AllTools"]] = relationship("AllTools", back_populates="values")
     names: Mapped[List["AllToolsValuesNames"]] = relationship("AllToolsValuesNames", back_populates="alltools_value", cascade="all, delete-orphan")
 
+    threat_actors = relationship(
+        "AllGroupsValues",
+        secondary="tool_threat_actor_association",
+        back_populates="tools"
+    )
+
     __table_args__ = (Index('idx_alltools_values_uuid', uuid),)
 
 class AllToolsValuesNames(db.Model):
@@ -59,3 +65,10 @@ class AllToolsValuesNames(db.Model):
     alltools_values_uuid: Mapped[UUID] = mapped_column(UUID(as_uuid=True), ForeignKey('alltools_values.uuid'))
 
     alltools_value: Mapped[Optional["AllToolsValues"]] = relationship("AllToolsValues", back_populates="names")
+from sqlalchemy import Table
+
+tool_threat_actor_association = Table(
+    'tool_threat_actor_association',
+    db.Column('tool_uuid', UUID(as_uuid=True), db.ForeignKey('alltools_values.uuid'), primary_key=True),
+    db.Column('threat_actor_uuid', UUID(as_uuid=True), db.ForeignKey('allgroups_values.uuid'), primary_key=True)
+)

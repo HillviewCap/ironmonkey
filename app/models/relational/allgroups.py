@@ -46,6 +46,11 @@ class AllGroupsValues(db.Model):
     observed_sectors = Column(Text)
     observed_countries = Column(Text)
     tools = Column(Text)
+    threat_actors = relationship(
+        "AllToolsValues",
+        secondary="tool_threat_actor_association",
+        back_populates="threat_actors"
+    )
     operations = Column(Text)
     sponsor = Column(Text)
     counter_operations = Column(Text)

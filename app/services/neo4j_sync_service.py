@@ -29,6 +29,8 @@ class Neo4jSyncService:
             session.run("CREATE CONSTRAINT toolUuid IF NOT EXISTS FOR (t:Tool) REQUIRE t.uuid IS UNIQUE")
             session.run("CREATE CONSTRAINT sectorName IF NOT EXISTS FOR (s:Sector) REQUIRE s.name IS UNIQUE")
             session.run("CREATE CONSTRAINT countryName IF NOT EXISTS FOR (c:Country) REQUIRE c.name IS UNIQUE")
+        # Add a uniqueness constraint on Tool name
+        session.run("CREATE CONSTRAINT toolName IF NOT EXISTS FOR (t:Tool) REQUIRE t.name IS UNIQUE")
         logger.info('Starting sync of ParsedContent to Neo4j.')
         driver = GraphConnectionManager.get_driver()
         if driver is None:
@@ -174,6 +176,19 @@ class Neo4jSyncService:
                                 country_name=country_name.strip(),
                                 uuid=str(actor.uuid)
                             )
+                    # Create USES relationships with Tools
+                    if actor.tools:
+                        tool_names = [name.strip() for name in actor.tools.split(',')]
+                        for tool_name in tool_names:
+                            session.run(
+                                """
+                                MATCH (ta:ThreatActor {uuid: $actor_uuid})
+                                MATCH (t:Tool {name: $tool_name})
+                                MERGE (ta)-[:USES]->(t)
+                                """,
+                                actor_uuid=str(actor.uuid),
+                                tool_name=tool_name
+                            )
                 except Exception as e:
                     logger.error(f'Error syncing ThreatActor {actor.uuid}: {e}')
 
@@ -211,19 +226,6 @@ class Neo4jSyncService:
                         last_card_change=tool.last_card_change
                     )
 
-                    # Establish USES relationships
-                    # Assuming there's a relationship in the database between tools and threat actors
-                    if tool.threat_actors:
-                        for actor in tool.threat_actors:
-                            session.run(
-                                """
-                                MATCH (ta:ThreatActor {uuid: $actor_uuid})
-                                MATCH (t:Tool {uuid: $tool_uuid})
-                                MERGE (ta)-[:USES]->(t)
-                                """,
-                                actor_uuid=str(actor.uuid),
-                                tool_uuid=str(tool.uuid)
-                            )
                 except Exception as e:
                     logger.error(f'Error syncing Tool {tool.uuid}: {e}')
         logger.info('Completed sync of Tools to Neo4j.')
