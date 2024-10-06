@@ -24,18 +24,11 @@ class Neo4jSyncService:
             session.run("CREATE CONSTRAINT parsedContentId IF NOT EXISTS FOR (pc:ParsedContent) REQUIRE pc.id IS UNIQUE")
             # Category node constraint
             session.run("CREATE CONSTRAINT categoryName IF NOT EXISTS FOR (c:Category) REQUIRE c.name IS UNIQUE")
-            # Group node constraint
-            session.run("CREATE CONSTRAINT groupUuid IF NOT EXISTS FOR (g:Group) REQUIRE g.uuid IS UNIQUE")
-            # GroupValue node constraint
-            session.run("CREATE CONSTRAINT groupValueUuid IF NOT EXISTS FOR (gv:GroupValue) REQUIRE gv.uuid IS UNIQUE")
-            # GroupName node constraint
-            session.run("CREATE CONSTRAINT groupNameUuid IF NOT EXISTS FOR (n:GroupName) REQUIRE n.uuid IS UNIQUE")
-            # Tool node constraint
+            # Add uniqueness constraints for new nodes
+            session.run("CREATE CONSTRAINT threatActorUuid IF NOT EXISTS FOR (ta:ThreatActor) REQUIRE ta.uuid IS UNIQUE")
             session.run("CREATE CONSTRAINT toolUuid IF NOT EXISTS FOR (t:Tool) REQUIRE t.uuid IS UNIQUE")
-            # ToolValue node constraint
-            session.run("CREATE CONSTRAINT toolValueUuid IF NOT EXISTS FOR (tv:ToolValue) REQUIRE tv.uuid IS UNIQUE")
-            # ToolName node constraint
-            session.run("CREATE CONSTRAINT toolNameUuid IF NOT EXISTS FOR (n:ToolName) REQUIRE n.uuid IS UNIQUE")
+            session.run("CREATE CONSTRAINT sectorName IF NOT EXISTS FOR (s:Sector) REQUIRE s.name IS UNIQUE")
+            session.run("CREATE CONSTRAINT countryName IF NOT EXISTS FOR (c:Country) REQUIRE c.name IS UNIQUE")
         logger.info('Starting sync of ParsedContent to Neo4j.')
         driver = GraphConnectionManager.get_driver()
         if driver is None:
@@ -93,117 +86,98 @@ class Neo4jSyncService:
         logger.info('Completed sync of ParsedContent to Neo4j.')
 
     @staticmethod
-    def sync_allgroups_to_neo4j():
+    def sync_threat_actors_to_neo4j():
         driver = GraphConnectionManager.get_driver()
         if driver is None:
             logger.warning('Neo4j driver not initialized.')
             return
 
-        logger.info('Starting sync of AllGroups to Neo4j.')
-        # Fetch AllGroups with related values and names
-        all_groups = AllGroups.query.options(
-            joinedload(AllGroups.values).joinedload(AllGroupsValues.names)
-        ).all()
+        logger.info('Starting sync of ThreatActors to Neo4j.')
+
+        # Fetch ThreatActor records from the relational database
+        threat_actors = AllGroupsValues.query.all()
+        if not threat_actors:
+            logger.info('No ThreatActor records found to sync.')
+            return
+
         with driver.session() as session:
-            for group in tqdm(all_groups, desc="Syncing AllGroups"):
+            for actor in tqdm(threat_actors, desc="Syncing ThreatActors"):
                 try:
-                    # Create Group node with UUID and set properties
+                    # Create or update ThreatActor node
                     session.run(
                         """
-                        MERGE (g:Group {uuid: $uuid})
-                        SET g.name = $name,
-                            g.category = $category,
-                            g.type = $type,
-                            g.description = $description,
-                            g.tlp = $tlp,
-                            g.last_db_change = $last_db_change,
-                            g.country = $country
+                        MERGE (ta:ThreatActor {uuid: $uuid})
+                        SET ta.actor = $actor,
+                            ta.country = $country,
+                            ta.description = $description,
+                            ta.motivation = $motivation,
+                            ta.first_seen = $first_seen,
+                            ta.observed_sectors = $observed_sectors,
+                            ta.observed_countries = $observed_countries,
+                            ta.operations = $operations,
+                            ta.sponsor = $sponsor,
+                            ta.counter_operations = $counter_operations,
+                            ta.mitre_attack = $mitre_attack,
+                            ta.playbook = $playbook
                         """,
-                        uuid=str(group.uuid),
-                        name=group.name,
-                        category=group.category,
-                        type=group.type,
-                        description=group.description,
-                        tlp=group.tlp,
-                        last_db_change=group.last_db_change,
-                        country=group.country if hasattr(group, 'country') else None
+                        uuid=str(actor.uuid),
+                        actor=actor.actor,
+                        country=actor.country,
+                        description=actor.description,
+                        motivation=actor.motivation,
+                        first_seen=actor.first_seen,
+                        observed_sectors=actor.observed_sectors,
+                        observed_countries=actor.observed_countries,
+                        operations=actor.operations,
+                        sponsor=actor.sponsor,
+                        counter_operations=actor.counter_operations,
+                        mitre_attack=actor.mitre_attack,
+                        playbook=actor.playbook
                     )
-                    # Process associated values and names
-                    for value in group.values:
-                        # Create GroupValue node with UUID and set properties
+
+                    # Create ORIGINATES_FROM relationship with Country
+                    if actor.country:
                         session.run(
                             """
-                            MERGE (gv:GroupValue {uuid: $uuid})
-                            SET gv.actor = $actor,
-                                gv.country = $country,
-                                gv.description = $description,
-                                gv.information = $information,
-                                gv.last_card_change = $last_card_change,
-                                gv.motivation = $motivation,
-                                gv.first_seen = $first_seen,
-                                gv.observed_sectors = $observed_sectors,
-                                gv.observed_countries = $observed_countries,
-                                gv.operations = $operations,
-                                gv.sponsor = $sponsor,
-                                gv.counter_operations = $counter_operations,
-                                gv.mitre_attack = $mitre_attack,
-                                gv.playbook = $playbook
+                            MERGE (c:Country {name: $country_name})
+                            MERGE (ta:ThreatActor {uuid: $uuid})
+                            MERGE (ta)-[:ORIGINATES_FROM]->(c)
                             """,
-                            uuid=str(value.uuid),
-                            actor=value.actor,
-                            country=value.country,
-                            description=value.description,
-                            information=value.information,
-                            last_card_change=value.last_card_change,
-                            motivation=value.motivation,
-                            first_seen=value.first_seen,
-                            observed_sectors=value.observed_sectors,
-                            observed_countries=value.observed_countries,
-                            operations=value.operations,
-                            sponsor=value.sponsor,
-                            counter_operations=value.counter_operations,
-                            mitre_attack=value.mitre_attack,
-                            playbook=value.playbook
+                            country_name=actor.country,
+                            uuid=str(actor.uuid)
                         )
 
-                        # Create relationship between Group and GroupValue
-                        session.run(
-                            """
-                            MATCH (g:Group {uuid: $group_uuid}), (gv:GroupValue {uuid: $value_uuid})
-                            MERGE (g)-[r:HAS_VALUE]->(gv)
-                            """,
-                            group_uuid=str(group.uuid),
-                            value_uuid=str(value.uuid)
-                        )
-
-                        # Process associated names
-                        for name in value.names:
-                            # Create GroupName node with UUID and set properties
+                    # Create TARGETS_SECTOR relationships
+                    if actor.observed_sectors:
+                        sectors = actor.observed_sectors.split(', ')
+                        for sector_name in sectors:
                             session.run(
                                 """
-                                MERGE (n:GroupName {uuid: $uuid})
-                                SET n.name = $name,
-                                    n.name_giver = $name_giver
+                                MERGE (s:Sector {name: $sector_name})
+                                MERGE (ta:ThreatActor {uuid: $uuid})
+                                MERGE (ta)-[:TARGETS_SECTOR]->(s)
                                 """,
-                                uuid=str(name.uuid),
-                                name=name.name,
-                                name_giver=name.name_giver
+                                sector_name=sector_name.strip(),
+                                uuid=str(actor.uuid)
                             )
 
-                            # Create relationship between GroupValue and GroupName
+                    # Create TARGETS_COUNTRY relationships
+                    if actor.observed_countries:
+                        countries = actor.observed_countries.split(', ')
+                        for country_name in countries:
                             session.run(
                                 """
-                                MATCH (gv:GroupValue {uuid: $value_uuid}), (n:GroupName {uuid: $name_uuid})
-                                MERGE (gv)-[r:HAS_NAME]->(n)
+                                MERGE (c:Country {name: $country_name})
+                                MERGE (ta:ThreatActor {uuid: $uuid})
+                                MERGE (ta)-[:TARGETS_COUNTRY]->(c)
                                 """,
-                                value_uuid=str(value.uuid),
-                                name_uuid=str(name.uuid)
+                                country_name=country_name.strip(),
+                                uuid=str(actor.uuid)
                             )
-                except exceptions.ConstraintError as e:
-                    logger.error(f'Constraint violation: {e}')
-                    logger.exception(f'Error syncing Group {group.uuid}: {e}')
+                except Exception as e:
+                    logger.error(f'Error syncing ThreatActor {actor.uuid}: {e}')
 
-        logger.info('Completed sync of AllGroups to Neo4j.')
+        logger.info('Completed sync of ThreatActors to Neo4j.')
 
     @staticmethod
     def sync_alltools_to_neo4j():
@@ -212,85 +186,44 @@ class Neo4jSyncService:
             logger.warning('Neo4j driver not initialized.')
             return
 
-        logger.info('Starting sync of AllTools to Neo4j.')
-        all_tools = AllTools.query.options(
-            joinedload(AllTools.values).joinedload(AllToolsValues.names)
-        ).all()
+        logger.info('Starting sync of Tools to Neo4j.')
+        all_tools_values = AllToolsValues.query.all()
         with driver.session() as session:
-            for tool in tqdm(all_tools, desc="Syncing AllTools"):
+            for tool in tqdm(all_tools_values, desc="Syncing Tools"):
                 try:
-                    # Create Tool node with UUID and set properties
+                    # Create or update Tool node
                     session.run(
                         """
                         MERGE (t:Tool {uuid: $uuid})
-                        SET t.name = $name,
+                        SET t.tool = $tool_name,
+                            t.description = $description,
                             t.category = $category,
                             t.type = $type,
-                            t.description = $description,
-                            t.tlp = $tlp,
-                            t.last_db_change = $last_db_change
+                            t.information = $information,
+                            t.last_card_change = $last_card_change
                         """,
                         uuid=str(tool.uuid),
-                        name=tool.name,
+                        tool_name=tool.tool,
+                        description=tool.description,
                         category=tool.category,
                         type=tool.type,
-                        description=tool.description,
-                        tlp=tool.tlp,
-                        last_db_change=tool.last_db_change
+                        information=tool.information,
+                        last_card_change=tool.last_card_change
                     )
-                    # Add progress bar for ToolValues
-                    for value in tqdm(tool.values, desc=f"Processing Values for {tool.name}", leave=False):
-                        # Create ToolValue node with UUID and set properties
-                        session.run(
-                            """
-                            MERGE (tv:ToolValue {uuid: $uuid})
-                            SET tv.tool = $tool_name,
-                                tv.description = $description,
-                                tv.category = $category,
-                                tv.type = $type,
-                                tv.information = $information,
-                                tv.last_card_change = $last_card_change
-                            """,
-                            uuid=str(value.uuid),
-                            tool_name=value.tool,
-                            description=value.description,
-                            category=value.category,
-                            type=value.type,
-                            information=value.information,
-                            last_card_change=value.last_card_change
-                        )
 
-                        # Create relationship between Tool and ToolValue
-                        session.run(
-                            """
-                            MATCH (t:Tool {uuid: $tool_uuid}), (tv:ToolValue {uuid: $value_uuid})
-                            MERGE (t)-[r:HAS_VALUE]->(tv)
-                            """,
-                            tool_uuid=str(tool.uuid),
-                            value_uuid=str(value.uuid)
-                        )
-
-                        # Add progress bar for ToolNames
-                        for name in tqdm(value.names, desc=f"Processing Names for {value.tool}", leave=False):
-                            # Create ToolName node with UUID and set properties
+                    # Establish USES relationships
+                    # Assuming there's a relationship in the database between tools and threat actors
+                    if tool.threat_actors:
+                        for actor in tool.threat_actors:
                             session.run(
                                 """
-                                MERGE (n:ToolName {uuid: $uuid})
-                                SET n.name = $name
+                                MATCH (ta:ThreatActor {uuid: $actor_uuid})
+                                MATCH (t:Tool {uuid: $tool_uuid})
+                                MERGE (ta)-[:USES]->(t)
                                 """,
-                                uuid=str(name.uuid),
-                                name=name.name
-                            )
-
-                            # Create relationship between ToolValue and ToolName
-                            session.run(
-                                """
-                                MATCH (tv:ToolValue {uuid: $value_uuid}), (n:ToolName {uuid: $name_uuid})
-                                MERGE (tv)-[r:HAS_NAME]->(n)
-                                """,
-                                value_uuid=str(value.uuid),
-                                name_uuid=str(name.uuid)
+                                actor_uuid=str(actor.uuid),
+                                tool_uuid=str(tool.uuid)
                             )
                 except Exception as e:
                     logger.error(f'Error syncing Tool {tool.uuid}: {e}')
-        logger.info('Completed sync of AllTools to Neo4j.')
+        logger.info('Completed sync of Tools to Neo4j.')
