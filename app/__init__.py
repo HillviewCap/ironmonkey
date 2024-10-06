@@ -130,28 +130,11 @@ def create_app(config_object=None):
     with app.app_context():
         # Initialize Ollama API and scheduler
         app.ollama_api = OllamaAPI()
-
-        # Setup scheduler
         app.scheduler = SchedulerService(app)
         app.scheduler.setup_scheduler()
 
         # Initialize Awesome Threat Intel Blogs
         from app.services.awesome_threat_intel_service import AwesomeThreatIntelService
-        AwesomeThreatIntelService.initialize_awesome_feeds()
-
-        # Update APT databases
-        update_databases()
-        logger.info("APT databases updated at application startup")
-        # Initialize Ollama API
-        app.ollama_api = OllamaAPI()
-
-        # Setup scheduler
-        app.scheduler = SchedulerService(app)
-        app.scheduler.setup_scheduler()
-
-        # Initialize Awesome Threat Intel Blogs
-        from app.services.awesome_threat_intel_service import AwesomeThreatIntelService
-
         AwesomeThreatIntelService.initialize_awesome_feeds()
 
         # Update APT databases
