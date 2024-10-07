@@ -98,7 +98,7 @@ def create_app(config_object=None):
 
     with app.app_context():
         # Apply migrations
-        upgrade()
+        # upgrade()
 
 
         # Register blueprints
