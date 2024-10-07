@@ -28,11 +28,13 @@ async function addFeed(event) {
         });
         const result = await response.json();
         if (response.ok) {
-            showNotification('Feed added successfully', 'success');
+            if (result.warning) {
+                showNotification(result.warning, 'warning');
+            } else {
+                showNotification('Feed added successfully', 'success');
+            }
             form.reset();
-            refreshExistingFeedsTable();
-            if (grid) {
-                grid.forceRender();
+            initializeRssFeedsGrid(); // Refresh the existing feeds grid
             }
         } else {
             showNotification('Error adding feed: ' + result.error, 'error');
@@ -62,7 +64,21 @@ function refreshExistingFeedsTable() {
 function showNotification(message, type) {
     const notification = document.createElement('div');
     notification.textContent = message;
-    notification.className = `fixed top-4 right-4 p-4 rounded-md ${type === 'success' ? 'bg-green-500' : 'bg-red-500'} text-white`;
+    let bgColor;
+    switch (type) {
+        case 'success':
+            bgColor = 'bg-green-500';
+            break;
+        case 'error':
+            bgColor = 'bg-red-500';
+            break;
+        case 'warning':
+            bgColor = 'bg-yellow-500';
+            break;
+        default:
+            bgColor = 'bg-gray-500';
+    }
+    notification.className = `fixed top-4 right-4 p-4 rounded-md ${bgColor} text-white`;
     document.body.appendChild(notification);
     setTimeout(() => notification.remove(), 3000);
 }

@@ -121,10 +121,30 @@ async def create_rss_feed() -> Tuple[Response, int]:
         return jsonify({"error": str(e)}), 400
     except Exception as e:
         current_app.logger.error(
-            f"Unexpected error in create_rss_feed: {str(e)}", exc_info=True
+            f"Unexpected error during feed creation: {str(e)}", exc_info=True
         )
-        current_app.logger.debug(f"Exception details: {e}")
-        return jsonify({"error": f"An unexpected error occurred: {str(e)}"}), 500
+        return jsonify({"error": f"An unexpected error occurred during feed creation: {str(e)}"}), 500
+
+    # Try to parse the new feed, but handle exceptions separately
+    try:
+        current_app.logger.info(f"Attempting to parse new feed: {new_feed.id}")
+        await rss_feed_service.parse_feed(new_feed.id)
+        current_app.logger.info(f"Successfully parsed new feed: {new_feed.id}")
+    except Exception as e:
+        current_app.logger.error(f"Error parsing new feed: {str(e)}")
+        # Optionally, include a warning in the response
+        response_data = {
+            "feed": new_feed.to_dict(),
+            "warning": f"Feed added, but parsing failed: {str(e)}",
+        }
+        return jsonify(response_data), 201
+
+    # If everything went fine
+    response_data = {
+        "feed": new_feed.to_dict(),
+    }
+    current_app.logger.info("Sending response with new feed")
+    return jsonify(response_data), 201
 
 
 @rss_manager_bp.route("/rss/feed/<uuid:feed_id>", methods=["PUT"])
