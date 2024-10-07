@@ -131,34 +131,34 @@ class SchedulerService:
             summary_service = SummaryService()
 
             with DBConnectionManager.get_session() as session:
-                empty_summary_ids = (
-                    session.query(ParsedContent.id)
+                empty_summary_query = (
+                    session.query(ParsedContent.id, ParsedContent.user_id, RSSFeed.user_id.label('feed_user_id'))
+                    .join(RSSFeed, ParsedContent.feed_id == RSSFeed.id)
                     .filter(ParsedContent.summary.is_(None))
                     .limit(50)
-                    .all()
                 )
+                empty_summary_results = empty_summary_query.all()
 
-            for (content_id,) in empty_summary_ids:
+            for content in empty_summary_results:
                 try:
-                    with DBConnectionManager.get_session() as session:
-                        content = session.query(ParsedContent).get(content_id)
-                        if content:
-                            success = await summary_service.enhance_summary(content.id.hex)
-                            if success:
-                                processed_count += 1
-                            else:
-                                scheduler_logger.warning(
-                                    f"Failed to generate summary for content {content.id}"
-                                )
-                        else:
-                            scheduler_logger.warning(
-                                f"Content with id {content_id} not found"
-                            )
+                    # Use the feed's user_id if ParsedContent's user_id is None
+                    user_id = content.user_id or content.feed_user_id
+                    if user_id is None:
+                        scheduler_logger.warning(f"No user associated with content {content.id}")
+                        continue
+
+                    success = await summary_service.enhance_summary(content.id.hex, user_id.hex)
+                    if success:
+                        processed_count += 1
+                    else:
+                        scheduler_logger.warning(
+                            f"Failed to generate summary for content {content.id} of user {user_id}"
+                        )
                 except Exception as e:
                     scheduler_logger.error(
-                        f"Error generating summary for content {content_id}: {str(e)}"
+                        f"Error generating summary for content {content.id}: {str(e)}"
                     )
 
             scheduler_logger.info(
-                f"Processed {processed_count} out of {len(empty_summary_ids)} empty summaries"
+                f"Processed {processed_count} out of {len(empty_summary_results)} empty summaries"
             )

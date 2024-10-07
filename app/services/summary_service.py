@@ -49,31 +49,26 @@ class SummaryService:
     def enhance_summary_sync(self, content_id: str) -> bool:
         return asyncio.run(self.enhance_summary(content_id))
 
-    async def enhance_summary(self, content_id: str) -> bool:
-        logger.info(f"Processing record {content_id}")
+    async def enhance_summary(self, content_id: str, user_id: str) -> bool:
+        logger.info(f"Processing record {content_id} for user {user_id}")
 
-        # Validate UUID
         try:
             uuid_obj = UUID(content_id, version=4)
+            user_uuid = UUID(user_id, version=4)
         except ValueError:
-            logger.warning(f"Invalid UUID format for content_id: {content_id}")
-            return False
-
-        # Normalize both UUIDs to compare their hex values without hyphens
-        if uuid_obj.hex != content_id.lower().replace('-', ''):
-            logger.warning(f"Invalid UUID format for content_id: {content_id}")
+            logger.warning(f"Invalid UUID format for content_id: {content_id} or user_id: {user_id}")
             return False
 
         for attempt in range(self.max_retries):
             try:
                 with DBConnectionManager.get_session() as session:
-                    parsed_content = self._lock_content(session, content_id)
+                    parsed_content = self._lock_content(session, content_id, user_id)
                     if not parsed_content:
-                        logger.warning(f"ParsedContent not found or locked for id {content_id}")
+                        logger.warning(f"ParsedContent not found or locked for id {content_id} and user {user_id}")
                         return False
 
                     if parsed_content.summary:
-                        logger.info(f"Record {content_id} already has a summary. Skipping.")
+                        logger.info(f"Record {content_id} for user {user_id} already has a summary. Skipping.")
                         return True
 
                     # Check if content exists and is not empty, if empty check description
@@ -84,17 +79,17 @@ class SummaryService:
                         text_to_summarize = parsed_content.description
                     
                     if not text_to_summarize:
-                        logger.warning(f"Record {content_id} has no content or description. Skipping summary generation.")
+                        logger.warning(f"Record {content_id} for user {user_id} has no content or description. Skipping summary generation.")
                         return False
 
                     summary = await self.generate_summary(content_id, text_to_summarize)
                     if not summary:
-                        logger.warning(f"Empty summary generated for record {content_id}. Attempt {attempt + 1}/{self.max_retries}")
+                        logger.warning(f"Empty summary generated for record {content_id} of user {user_id}. Attempt {attempt + 1}/{self.max_retries}")
                         continue
 
                     parsed_content.summary = summary.strip()
                     session.commit()
-                    logger.info(f"Updated summary for record {content_id}")
+                    logger.info(f"Updated summary for record {content_id} of user {user_id}")
                     return True
 
             except OperationalError as e:
@@ -103,18 +98,21 @@ class SummaryService:
                     logger.warning(f"Database locked, retrying in {wait_time:.2f} seconds... (attempt {attempt + 1}/{self.max_retries})")
                     await asyncio.sleep(wait_time)
                     continue
-                logger.error(f"Operational error for record {content_id}: {str(e)}. Attempt {attempt + 1}/{self.max_retries}", exc_info=True)
+                logger.error(f"Operational error for record {content_id} of user {user_id}: {str(e)}. Attempt {attempt + 1}/{self.max_retries}", exc_info=True)
             except Exception as e:
-                logger.error(f"Error generating summary for record {content_id}: {str(e)}. Attempt {attempt + 1}/{self.max_retries}", exc_info=True)
+                logger.error(f"Error generating summary for record {content_id} of user {user_id}: {str(e)}. Attempt {attempt + 1}/{self.max_retries}", exc_info=True)
 
-        logger.error(f"Failed to generate summary for record {content_id} after {self.max_retries} attempts.")
+        logger.error(f"Failed to generate summary for record {content_id} of user {user_id} after {self.max_retries} attempts.")
         return False
 
-    def _lock_content(self, session: Session, content_id: str) -> Optional[ParsedContent]:
+    def _lock_content(self, session: Session, content_id: str, user_id: str) -> Optional[ParsedContent]:
         try:
             parsed_content = session.query(ParsedContent).filter(
-                ParsedContent.id == UUID(content_id),
-                ParsedContent.summary == None
+                and_(
+                    ParsedContent.id == UUID(content_id),
+                    ParsedContent.user_id == UUID(user_id),
+                    ParsedContent.summary == None
+                )
             ).first()  # Removed with_for_update(nowait=True)
             return parsed_content
         except OperationalError:
@@ -130,14 +128,17 @@ class SummaryService:
                 return
 
             parsed_contents = session.query(ParsedContent).filter(
-                ParsedContent.feed_id == feed_id,
-                ParsedContent.summary == None
+                and_(
+                    ParsedContent.feed_id == feed_id,
+                    ParsedContent.summary == None,
+                    ParsedContent.user_id == feed.user_id
+                )
             ).all()
 
             async def process_content(content):
-                success = await self.enhance_summary(content.id.hex)
+                success = await self.enhance_summary(content.id.hex, content.user_id.hex)
                 if not success:
-                    logger.warning(f"Failed to generate summary for content {content.id}")
+                    logger.warning(f"Failed to generate summary for content {content.id} of user {content.user_id}")
 
             await asyncio.gather(*(process_content(content) for content in parsed_contents))
 
