@@ -13,6 +13,7 @@ from app import db
 import csv
 from datetime import datetime
 from app.utils.logging_config import logger
+from app.models.relational.awesome_threat_intel_blog import AwesomeThreatIntelBlog
 
 class AwesomeThreatIntelService:
     """
@@ -115,6 +116,7 @@ class AwesomeThreatIntelService:
                   - 'status': Either "Up to date" if there's a last_checked timestamp,
                               or "Never updated" if there isn't.
         """
+        from app.models.relational.awesome_threat_intel_blog import AwesomeThreatIntelBlog
         last_checked = db.session.query(db.func.max(AwesomeThreatIntelBlog.last_checked)).scalar()
         return {
             "last_updated": last_checked.isoformat() if last_checked else None,

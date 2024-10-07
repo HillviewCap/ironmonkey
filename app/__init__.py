@@ -92,8 +92,6 @@ def create_app(config_object=None):
         # Apply migrations
         upgrade()
 
-        # Initialize database and connection manager
-        init_db_connection_manager(app)
 
         # Register blueprints
         blueprints = [
