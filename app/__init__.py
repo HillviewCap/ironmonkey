@@ -93,8 +93,12 @@ def create_app(config_object=None):
         init_db_connection_manager(app)
         migrate.init_app(app, db)
         db.create_all()  # Ensure tables are created before running migrations
-        upgrade()
-        logger.info("Database tables created and migrations initialized")
+        try:
+            upgrade()
+            logger.info("Database tables created and migrations initialized")
+        except Exception as e:
+            logger.error(f"Error during migration: {str(e)}")
+            # You might want to handle this error more gracefully
 
     # Register blueprints
     blueprints = [
