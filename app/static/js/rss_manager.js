@@ -5,20 +5,23 @@ async function addFeed(event) {
     const form = document.getElementById('add-single-feed-form');
     const submitButton = form.querySelector('button[type="submit"]');
     const originalButtonText = submitButton.textContent;
-    
+
     submitButton.disabled = true;
     submitButton.textContent = 'Processing...';
-    
+
     const formData = new FormData(form);
-    const createFeedUrl = form.getAttribute('data-create-feed-url');
+    const blogName = formData.get('url'); // Assuming 'url' is used as the blog name
+    const gridElement = document.getElementById("awesome-blogs-grid");
+    const addToRssFeedsUrl = gridElement.getAttribute('data-add-to-rss-feeds-url');
+
     try {
-        const response = await fetch(createFeedUrl, {
+        const response = await fetch(addToRssFeedsUrl, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'X-CSRFToken': document.querySelector('input[name="csrf_token"]').value
             },
-            body: JSON.stringify(Object.fromEntries(formData))
+            body: JSON.stringify({ blog: blogName })
         });
         const result = await response.json();
         if (response.ok) {
