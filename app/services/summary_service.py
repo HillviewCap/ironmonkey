@@ -6,6 +6,7 @@ SummaryService: A service to enhance summaries of parsed content using OllamaAPI
 from __future__ import annotations
 from app.utils.logging_config import setup_logger
 from sqlalchemy.orm import Session
+from sqlalchemy import and_
 from app.models.relational.parsed_content import ParsedContent
 from app.models.relational.rss_feed import RSSFeed
 from app.utils.db_connection_manager import DBConnectionManager
