@@ -123,6 +123,7 @@ async def create_rss_feed() -> Tuple[Response, int]:
         current_app.logger.error(
             f"Unexpected error in create_rss_feed: {str(e)}", exc_info=True
         )
+        current_app.logger.debug(f"Exception details: {e}")
         return jsonify({"error": f"An unexpected error occurred: {str(e)}"}), 500
 
 
