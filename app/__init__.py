@@ -24,6 +24,14 @@ from app.blueprints.apt.routes import bp as apt_bp
 
 from flask_login import login_required
 from app.utils.ollama_client import OllamaAPI
+
+# Import models so Alembic can detect them
+from app.models.relational.allgroups import AllGroups, AllGroupsValues, AllGroupsValuesNames
+from app.models.relational.awesome_threat_intel_blog import AwesomeThreatIntelBlog
+from app.models.relational.parsed_content import ParsedContent
+from app.models.relational.rss_feed import RSSFeed
+from app.models.relational.user import User
+from app.models.relational.user_questionnaire import UserQuestionnaire
 from app.services.scheduler_service import SchedulerService
 from app.services.apt_update_service import update_databases
 
