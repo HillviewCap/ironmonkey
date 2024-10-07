@@ -92,7 +92,7 @@ def create_app(config_object=None):
     with app.app_context():
         init_db_connection_manager(app)
         migrate.init_app(app, db)
-        db.create_all()  # Ensure tables are created before running migrations
+        # db.create_all()  # Ensure tables are created before running migrations
         try:
             upgrade()
             logger.info("Database tables created and migrations initialized")
