@@ -93,12 +93,6 @@ def create_app(config_object=None):
         init_db_connection_manager(app)
         migrate.init_app(app, db)
         # db.create_all()  # Ensure tables are created before running migrations
-        try:
-            upgrade()
-            logger.info("Database tables created and migrations initialized")
-        except Exception as e:
-            logger.error(f"Error during migration: {str(e)}")
-            # You might want to handle this error more gracefully
 
     # Register blueprints
     blueprints = [
@@ -128,20 +122,6 @@ def create_app(config_object=None):
 
     # Initialize services
     with app.app_context():
-        # Initialize Ollama API
-        app.ollama_api = OllamaAPI()
-
-        # Setup scheduler
-        app.scheduler = SchedulerService(app)
-        app.scheduler.setup_scheduler()
-
-        # Initialize Awesome Threat Intel Blogs
-        from app.services.awesome_threat_intel_service import AwesomeThreatIntelService
-        AwesomeThreatIntelService.initialize_awesome_feeds()
-
-        # Update APT databases
-        update_databases()
-        logger.info("APT databases updated at application startup")
         # Initialize Ollama API
         app.ollama_api = OllamaAPI()
 
