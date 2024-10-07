@@ -42,6 +42,20 @@ class RSSFeedService:
             return session.query(RSSFeed).all()
 
     @staticmethod
+    def get_user_feeds(user_id: UUID) -> List[RSSFeed]:
+        """
+        Retrieve all RSS feeds for a specific user.
+
+        Args:
+            user_id (UUID): The ID of the user.
+
+        Returns:
+            List[RSSFeed]: A list of RSS feeds associated with the user.
+        """
+        with Session(db.engine) as session:
+            return session.query(RSSFeed).filter_by(user_id=user_id).all()
+
+    @staticmethod
     def get_feed_by_id(feed_id: uuid.UUID) -> RSSFeed:
         """
         Retrieve an RSS feed by its ID.
