@@ -176,3 +176,5 @@ def create_app(config_object=None):
 
 
     return app
+# Add this import
+from app.models import relational

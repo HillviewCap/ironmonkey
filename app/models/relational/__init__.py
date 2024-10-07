@@ -24,3 +24,4 @@ __all__ = [
     "AllGroupsValues",
     "AllGroupsValuesNames",
 ]
+from .user_questionnaire import UserQuestionnaire

@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h2>User Information Questionnaire</h2>
+  <form method="POST" action="">
+    {{ form.hidden_tag() }}
+    <div class="form-group">
+      {{ form.role.label }} {{ form.role(size=32, class="form-control") }}
+    </div>
+    <div class="form-group">
+      {{ form.organization.label }} {{ form.organization(size=32, class="form-control") }}
+    </div>
+    <!-- Add other form fields similarly -->
+    <div class="form-group">
+      {{ form.submit(class="btn btn-primary") }}
+    </div>
+  </form>
+{% endblock %}
