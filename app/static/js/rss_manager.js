@@ -10,10 +10,7 @@ async function addFeed(event) {
     submitButton.textContent = 'Processing...';
     
     const formData = new FormData(form);
-    const gridElement = document.getElementById("awesome-blogs-grid");
-    const createFeedUrl = gridElement.getAttribute('data-create-feed-url');
-
-    const addToRssFeedsUrl = gridElement.getAttribute('data-add-to-rss-feeds-url');
+    const createFeedUrl = form.getAttribute('data-create-feed-url');
     try {
         const response = await fetch(createFeedUrl, {
             method: 'POST',
