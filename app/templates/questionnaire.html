@@ -10,7 +10,36 @@
     <div class="form-group">
       {{ form.organization.label }} {{ form.organization(size=32, class="form-control") }}
     </div>
-    <!-- Add other form fields similarly -->
+    <div class="form-group">
+      {{ form.location.label }} {{ form.location(class="form-control") }}
+    </div>
+    <div class="form-group">
+      {{ form.department.label }} {{ form.department(class="form-control") }}
+    </div>
+    <div class="form-group">
+      {{ form.job_function.label }} {{ form.job_function(class="form-control") }}
+    </div>
+    <div class="form-group">
+      {{ form.risk_tolerance.label }} {{ form.risk_tolerance(class="form-control") }}
+    </div>
+    <div class="form-group">
+      {{ form.alert_threshold.label }} {{ form.alert_threshold(class="form-control") }}
+    </div>
+    <div class="form-group">
+      {{ form.alert_frequency.label }} {{ form.alert_frequency(class="form-control") }}
+    </div>
+    <div class="form-group">
+      {{ form.threat_focus_areas.label }} {{ form.threat_focus_areas(class="form-control") }}
+    </div>
+    <div class="form-group">
+      {{ form.analysis_scope.label }} {{ form.analysis_scope(class="form-control") }}
+    </div>
+    <div class="form-group">
+      {{ form.compliance_requirements.label }} {{ form.compliance_requirements(class="form-control") }}
+    </div>
+    <div class="form-group">
+      {{ form.industry_specific_threats.label }} {{ form.industry_specific_threats(class="form-control") }}
+    </div>
     <div class="form-group">
       {{ form.submit(class="btn btn-primary") }}
     </div>
