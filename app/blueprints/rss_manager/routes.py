@@ -75,17 +75,22 @@ async def create_rss_feed() -> Tuple[Response, int]:
         BadRequest: If the request data is missing or invalid.
     """
     current_app.logger.info("Received request to create RSS feed")
+    current_app.logger.debug(f"Request headers: {request.headers}")
+    current_app.logger.debug(f"Request data: {request.data}")
     data: Dict[str, Any] = request.get_json()
     current_app.logger.debug(f"Received data: {data}")
 
     if not data:
         current_app.logger.error("No JSON data received")
+        current_app.logger.debug(f"Request data: {request.data}")
         return jsonify({"error": "No JSON data received"}), 400
     if "url" not in data:
         current_app.logger.error("Missing URL in request data")
+        current_app.logger.debug(f"Received data: {data}")
         return jsonify({"error": "Missing URL in request data"}), 400
     if "category" not in data:
         current_app.logger.error("Missing category in request data")
+        current_app.logger.debug(f"Received data: {data}")
         return jsonify({"error": "Missing category in request data"}), 400
 
     try:
