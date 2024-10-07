@@ -59,12 +59,21 @@ def questionnaire():
             db.session.add(questionnaire)
         db.session.commit()
         flash('Your information has been submitted successfully.', 'success')
-        return redirect(url_for('main.dashboard'))
+        return redirect(url_for('main.index'))
     else:
         # Pre-fill form if data exists
         existing_entry = UserQuestionnaire.query.filter_by(user_id=current_user.id).first()
         if existing_entry:
             form.role.data = existing_entry.role
             form.organization.data = existing_entry.organization
-            # (Pre-fill other fields similarly)
+            form.location.data = existing_entry.location
+            form.department.data = existing_entry.department
+            form.job_function.data = existing_entry.job_function
+            form.risk_tolerance.data = existing_entry.risk_tolerance
+            form.alert_threshold.data = existing_entry.alert_threshold
+            form.alert_frequency.data = existing_entry.alert_frequency
+            form.threat_focus_areas.data = existing_entry.threat_focus_areas
+            form.analysis_scope.data = existing_entry.analysis_scope
+            form.compliance_requirements.data = existing_entry.compliance_requirements
+            form.industry_specific_threats.data = existing_entry.industry_specific_threats
     return render_template('questionnaire.html', form=form)

@@ -23,5 +23,6 @@ __all__ = [
     "AllGroups",
     "AllGroupsValues",
     "AllGroupsValuesNames",
+    "UserQuestionnaire",
 ]
 from .user_questionnaire import UserQuestionnaire

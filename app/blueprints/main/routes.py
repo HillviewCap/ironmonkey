@@ -4,6 +4,9 @@ import os
 from app.models.relational.parsed_content import ParsedContent
 from app.models.relational.rss_feed import RSSFeed
 from . import bp
+from app.forms import QuestionnaireForm
+from app.models.relational.user_questionnaire import UserQuestionnaire
+from app import db
 from datetime import datetime
 
 @bp.route('/about')

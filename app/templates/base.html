@@ -33,6 +33,13 @@
     {% block extra_head %}{% endblock %}
 </head>
 <body class="bg-gray-100 flex flex-col min-h-screen">
+    <nav>
+        <ul>
+            <li class="nav-item">
+                <a class="nav-link" href="{{ url_for('main.questionnaire') }}">User Information</a>
+            </li>
+        </ul>
+    </nav>
     {% include "shared/navbar.html" %}
     <div class="container mx-auto mt-8 flex-grow">
         {% include "shared/flash_messages.html" %}
