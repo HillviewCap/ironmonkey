@@ -75,7 +75,7 @@ async def create_rss_feed() -> Tuple[Response, int]:
         BadRequest: If the request data is missing or invalid.
     """
     current_app.logger.info("Received request to create RSS feed")
-    data: Dict[str, Any] = request.get_json()
+    data: Dict[str, Any] = await request.get_json()
     current_app.logger.debug(f"Received data: {data}")
 
     if not data:
