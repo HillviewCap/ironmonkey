@@ -18,7 +18,7 @@ from app.forms.questionnaire_form import QuestionnaireForm
 from app.models.relational.user_questionnaire import UserQuestionnaire
 from app import db
 
-@main_blueprint.route('/questionnaire', methods=['GET', 'POST'])
+@bp.route('/questionnaire', methods=['GET', 'POST'])
 @login_required
 def questionnaire():
     form = QuestionnaireForm()
