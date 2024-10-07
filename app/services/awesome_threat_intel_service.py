@@ -8,10 +8,12 @@ retrieving the update status.
 import os
 import uuid
 from flask import current_app
+from sqlalchemy import inspect
 from app.models.relational.awesome_threat_intel_blog import AwesomeThreatIntelBlog
 from app import db
 import csv
 from datetime import datetime
+from app.utils.logging_config import logger
 
 class AwesomeThreatIntelService:
     """
@@ -128,5 +130,14 @@ class AwesomeThreatIntelService:
         This method checks if there are any entries in the AwesomeThreatIntelBlog table.
         If the table is empty, it calls the update_from_csv method to load the feeds.
         """
-        if AwesomeThreatIntelBlog.query.first() is None:
-            AwesomeThreatIntelService.update_from_csv()
+        engine = db.engine
+        inspector = inspect(engine)
+
+        if 'awesome_threat_intel_blog' in inspector.get_table_names():
+            if AwesomeThreatIntelBlog.query.first() is None:
+                AwesomeThreatIntelService.update_from_csv()
+                logger.info("Awesome Threat Intel Blogs initialized from CSV.")
+            else:
+                logger.info("Awesome Threat Intel Blogs already initialized.")
+        else:
+            logger.info("Table 'awesome_threat_intel_blog' does not exist yet. Skipping initialization.")
