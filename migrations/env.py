@@ -10,8 +10,6 @@ from flask import current_app
 # Initialize the Flask application
 app = create_app()
 
-# Push the application context
-app.app_context().push()
 
 from alembic import context
 
@@ -81,13 +79,15 @@ def run_migrations_offline():
 
     """
     ensure_versions_directory()
-    url = config.get_main_option("sqlalchemy.url")
-    context.configure(
-        url=url, target_metadata=target_metadata, literal_binds=True
-    )
 
-    with context.begin_transaction():
-        context.run_migrations()
+    with app.app_context():
+        url = config.get_main_option("sqlalchemy.url")
+        context.configure(
+            url=url, target_metadata=target_metadata, literal_binds=True
+        )
+
+        with context.begin_transaction():
+            context.run_migrations()
 
 
 def run_migrations_online():
@@ -109,18 +109,19 @@ def run_migrations_online():
                 directives[:] = []
                 logger.info('No changes in schema detected.')
 
-    connectable = get_engine()
+    with app.app_context():
+        connectable = get_engine()
 
-    with connectable.connect() as connection:
-        context.configure(
-            connection=connection,
-            target_metadata=target_metadata,
-            process_revision_directives=process_revision_directives,
-            **current_app.extensions['migrate'].configure_args
-        )
+        with connectable.connect() as connection:
+            context.configure(
+                connection=connection,
+                target_metadata=target_metadata,
+                process_revision_directives=process_revision_directives,
+                **current_app.extensions['migrate'].configure_args
+            )
 
-        with context.begin_transaction():
-            context.run_migrations()
+            with context.begin_transaction():
+                context.run_migrations()
 
 
 if context.is_offline_mode():
