@@ -34,6 +34,10 @@ class ParsedContent(db.Model):
     categories = db.relationship('Category', secondary=parsed_content_categories, backref=db.backref('parsed_contents', lazy='dynamic'))
     art_hash = Column(String(64), nullable=True)
 
+    # Relationship with User
+    user_id = Column(SA_UUID(as_uuid=True), ForeignKey('user.id'), nullable=False)
+    user = db.relationship('User', back_populates='parsed_contents')
+
     __table_args__ = (db.UniqueConstraint('url', 'feed_id', name='uix_url_feed'),)
 
     class Config:

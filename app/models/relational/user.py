@@ -23,6 +23,10 @@ class User(UserMixin, db.Model):
     notification_preferences = Column(JSON, nullable=False, default={})
     custom_categories = Column(JSON, nullable=False, default=[])
 
+    # Relationships
+    rss_feeds = db.relationship('RSSFeed', back_populates='user', cascade='all, delete-orphan')
+    parsed_contents = db.relationship('ParsedContent', back_populates='user', cascade='all, delete-orphan')
+
     def get_id(self) -> str:
         """Return the user ID as a string."""
         return str(self.id)

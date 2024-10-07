@@ -30,6 +30,10 @@ class RSSFeed(db.Model):
     awesome_blog_id = Column(UUID(as_uuid=True), ForeignKey('awesome_threat_intel_blog.id'), nullable=True)
     awesome_blog = db.relationship('AwesomeThreatIntelBlog', back_populates='rss_feeds')
 
+    # Relationship with User
+    user_id = Column(UUID(as_uuid=True), ForeignKey('user.id'), nullable=False)
+    user = db.relationship('User', back_populates='rss_feeds')
+
     class Config:
         from_attributes = True
 

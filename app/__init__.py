@@ -141,23 +141,26 @@ def create_app(config_object=None):
 
         # Initialize user settings
         from app.models.relational.user import User
+        from app.models.relational.rss_feed import RSSFeed
+        from app.models.relational.parsed_content import ParsedContent
         from sqlalchemy import inspect, text
 
         inspector = inspect(db.engine)
-        if not inspector.has_table(User.__tablename__):
-            User.__table__.create(db.engine)
-            logger.info(f"Created table: {User.__tablename__}")
-        else:
-            existing_columns = set(column['name'] for column in inspector.get_columns(User.__tablename__))
-            for column in User.__table__.columns:
-                if column.name not in existing_columns:
-                    column_type = column.type.compile(db.engine.dialect)
-                    with db.engine.connect() as connection:
-                        connection.execute(text(f'ALTER TABLE {User.__tablename__} ADD COLUMN {column.name} {column_type}'))
-                        connection.commit()
-                    logger.info(f"Added column {column.name} to {User.__tablename__}")
+        for model in [User, RSSFeed, ParsedContent]:
+            if not inspector.has_table(model.__tablename__):
+                model.__table__.create(db.engine)
+                logger.info(f"Created table: {model.__tablename__}")
+            else:
+                existing_columns = set(column['name'] for column in inspector.get_columns(model.__tablename__))
+                for column in model.__table__.columns:
+                    if column.name not in existing_columns:
+                        column_type = column.type.compile(db.engine.dialect)
+                        with db.engine.connect() as connection:
+                            connection.execute(text(f'ALTER TABLE {model.__tablename__} ADD COLUMN {column.name} {column_type}'))
+                            connection.commit()
+                        logger.info(f"Added column {column.name} to {model.__tablename__}")
 
-        logger.info("User settings initialized")
+        logger.info("Database tables and columns initialized")
 
     @login_manager.user_loader
     def load_user(user_id):
