@@ -175,6 +175,11 @@ def create_app(config_object=None):
                 return redirect(url_for('auth.register'))
 
 
+    # Register CLI commands
+    from app import commands
+    app.cli.add_command(commands.initialize_awesome_feeds_command)
+    app.cli.add_command(commands.update_apt_databases_command)
+
     return app
 # Add this import
 from app.models import relational

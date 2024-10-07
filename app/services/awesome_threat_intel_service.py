@@ -29,7 +29,6 @@ class AwesomeThreatIntelService:
         This method reads the CSV file, compares it with existing entries in the database,
         adds new entries, updates existing ones, and removes entries that are no longer in the CSV.
         """
-        from app.models.relational.awesome_threat_intel_blog import AwesomeThreatIntelBlog
         csv_file_path = os.path.join(current_app.root_path, 'static', 'Awesome Threat Intel Blogs - MASTER.csv')
         existing_blogs = {blog.blog: blog for blog in AwesomeThreatIntelBlog.query.all()}
         csv_blogs = set()
@@ -116,7 +115,6 @@ class AwesomeThreatIntelService:
                   - 'status': Either "Up to date" if there's a last_checked timestamp,
                               or "Never updated" if there isn't.
         """
-        from app.models.relational.awesome_threat_intel_blog import AwesomeThreatIntelBlog
         last_checked = db.session.query(db.func.max(AwesomeThreatIntelBlog.last_checked)).scalar()
         return {
             "last_updated": last_checked.isoformat() if last_checked else None,
