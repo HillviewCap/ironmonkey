@@ -86,138 +86,115 @@ async def fetch_and_parse_feed(feed_id: str) -> int:
                 logger.error(f"Feed with id {feed_id} not found")
                 return 0
 
+            logger.info(f"Fetching feed: {feed.url}")
             async with httpx.AsyncClient(follow_redirects=True, timeout=30.0) as client:
                 response = await client.get(feed.url, headers=headers)
                 response.raise_for_status()
 
-                # Check if the URL has been redirected
-                if str(response.url) != feed.url:
-                    feed.url = str(response.url)
-                    session.commit()
+            logger.info(f"Feed fetched successfully: {feed.url}")
+            feed_data = feedparser.parse(response.content)
+            logger.info(f"Feed parsed. Number of entries: {len(feed_data.entries)}")
 
-                # Check if the feed has been modified
-                etag = response.headers.get('etag')
-                last_modified = response.headers.get('last-modified')
-                
-                if etag and etag == feed.etag:
-                    return 0
-                
-                if last_modified:
-                    try:
-                        parsed_last_modified = date_parser.parse(last_modified)
-                        if feed.last_modified:
-                            feed_last_modified = date_parser.parse(feed.last_modified)
-                            if parsed_last_modified <= feed_last_modified:
-                                return 0
-                    except Exception as e:
-                        logger.warning(f"Could not parse or compare last-modified header: {e}")
+            # Update feed metadata
+            if "title" in feed_data.feed:
+                feed.title = sanitize_html(feed_data.feed.title)
+            if "description" in feed_data.feed:
+                feed.description = sanitize_html(feed_data.feed.description)
+            
+            # Update last_build_date if available
+            if 'updated' in feed_data.feed:
+                try:
+                    new_build_date = date_parser.parse(feed_data.feed.updated)
+                    feed.last_build_date = new_build_date.strftime("%Y-%m-%d %H:%M:%S")
+                except Exception as e:
+                    logger.warning(f"Could not parse feed updated date: {e}")
 
-                feed_data = feedparser.parse(response.content)
+            session.commit()
 
-                # Update feed metadata
-                feed.etag = etag
-                if last_modified:
-                    try:
-                        parsed_last_modified = date_parser.parse(last_modified)
-                        feed.last_modified = parsed_last_modified.strftime("%Y-%m-%d %H:%M:%S")
-                    except Exception as e:
-                        logger.warning(f"Could not parse last-modified header: {e}")
-                
-                if "title" in feed_data.feed:
-                    feed.title = sanitize_html(feed_data.feed.title)
-                if "description" in feed_data.feed:
-                    feed.description = sanitize_html(feed_data.feed.description)
-                
-                # Update last_build_date if available
-                if 'updated' in feed_data.feed:
-                    try:
-                        new_build_date = date_parser.parse(feed_data.feed.updated)
-                        if not feed.last_build_date:
-                            feed.last_build_date = new_build_date.strftime("%Y-%m-%d %H:%M:%S")
-                        else:
-                            last_build_date = date_parser.parse(feed.last_build_date)
-                            # Remove timezone info to make both datetimes naive
-                            new_build_date = new_build_date.replace(tzinfo=None)
-                            last_build_date = last_build_date.replace(tzinfo=None)
-                            if new_build_date > last_build_date:
-                                feed.last_build_date = new_build_date.strftime("%Y-%m-%d %H:%M:%S")
-                    except Exception as e:
-                        logger.warning(f"Could not parse or compare feed updated date: {e}")
+            # Get the most recent entry's publication date from the database
+            most_recent_entry = session.query(func.max(ParsedContent.pub_date)).filter_by(feed_id=feed.id).scalar()
+            logger.info(f"Most recent entry date in database: {most_recent_entry}")
 
-                session.commit()
+            for entry in feed_data.entries:
+                try:
+                    url = entry.link
+                    title = entry.get("title", "")
+                    pub_date = entry.get("published", "")
+                    
+                    logger.info(f"Processing entry: {title} - {pub_date}")
 
-                total_entries = len(feed_data.entries)
-
-                # Get the most recent entry's publication date from the database
-                most_recent_entry = session.query(func.max(ParsedContent.pub_date)).filter_by(feed_id=feed.id).scalar()
-
-                for entry in feed_data.entries:
-                    try:
-                        url = entry.link
-                        title = entry.get("title", "")
-
-                        pub_date = entry.get("published", "")
-                        if pub_date and pub_date.lower() != "invalid date":
-                            try:
-                                parsed_date = date_parser.parse(pub_date)
-                                pub_date = parsed_date.strftime("%Y-%m-%d")
-                            except Exception as e:
-                                logger.warning(f"Could not parse date: {pub_date}. Error: {str(e)}. Using current date.")
-                                pub_date = datetime.now().strftime("%Y-%m-%d")
-                        else:
-                            logger.warning(f"Invalid or no published date found: {pub_date}. Using current date.")
+                    if pub_date and pub_date.lower() != "invalid date":
+                        try:
+                            parsed_date = date_parser.parse(pub_date)
+                            pub_date = parsed_date.strftime("%Y-%m-%d")
+                        except Exception as e:
+                            logger.warning(f"Could not parse date: {pub_date}. Error: {str(e)}. Using current date.")
                             pub_date = datetime.now().strftime("%Y-%m-%d")
+                    else:
+                        logger.warning(f"Invalid or no published date found: {pub_date}. Using current date.")
+                        pub_date = datetime.now().strftime("%Y-%m-%d")
 
-                        # Skip entries that are older than or equal to the most recent entry in the database
-                        if most_recent_entry and pub_date <= most_recent_entry:
-                            continue
+                    logger.info(f"Parsed date: {pub_date}")
 
-                        existing_content = session.execute(
-                            select(ParsedContent).filter_by(url=url, feed_id=feed.id).with_for_update(nowait=True)
-                        ).scalar_one_or_none()
+                    # Skip entries that are older than or equal to the most recent entry in the database
+                    if most_recent_entry and pub_date <= most_recent_entry:
+                        logger.info(f"Skipping entry {title} - {pub_date} as it's not newer than the most recent entry")
+                        continue
 
-                        if not existing_content:
-                            parsed_content = await parse_content(url)
-                            if parsed_content is not None:
-                                new_content = ParsedContent(
-                                    content=sanitize_html(parsed_content),
-                                    feed_id=feed.id,
-                                    url=url,
-                                    title=sanitize_html(title),
-                                    description=sanitize_html(entry.get("description", "")),
-                                    pub_date=pub_date,
-                                    creator=sanitize_html(entry.get("author", "")),
-                                )
-                                session.add(new_content)
-                                session.flush()  # This will assign the UUID to new_content
+                    existing_content = session.execute(
+                        select(ParsedContent).filter_by(url=url, feed_id=feed.id).with_for_update(nowait=True)
+                    ).scalar_one_or_none()
 
-                                # Handle categories
-                                categories = entry.get("tags", [])
-                                for category in categories:
-                                    cat_name = sanitize_html(category.get("term", ""))
-                                    if cat_name:
-                                        cat_obj = get_or_create_category(session, cat_name)
-                                        new_content.categories.append(cat_obj)
-                                new_entries_count += 1
-                            else:
-                                logger.warning(f"Failed to parse content for URL: {url}")
-                    except OperationalError as e:
-                        if "database is locked" in str(e):
-                            logger.warning(f"Database locked for entry {url}, skipping...")
-                            continue
+                    if not existing_content:
+                        logger.info(f"Parsing content for URL: {url}")
+                        parsed_content = await parse_content(url)
+                        if parsed_content is not None:
+                            logger.info(f"Content parsed successfully for URL: {url}")
+                            new_content = ParsedContent(
+                                content=sanitize_html(parsed_content),
+                                feed_id=feed.id,
+                                url=url,
+                                title=sanitize_html(title),
+                                description=sanitize_html(entry.get("description", "")),
+                                pub_date=pub_date,
+                                creator=sanitize_html(entry.get("author", "")),
+                            )
+                            session.add(new_content)
+                            session.flush()  # This will assign the UUID to new_content
+
+                            # Handle categories
+                            categories = entry.get("tags", [])
+                            for category in categories:
+                                cat_name = sanitize_html(category.get("term", ""))
+                                if cat_name:
+                                    cat_obj = get_or_create_category(session, cat_name)
+                                    new_content.categories.append(cat_obj)
+                            new_entries_count += 1
+                            logger.info(f"New entry added: {title}")
                         else:
-                            raise
-                    except Exception as entry_error:
-                        logger.error(
-                            f"Error processing entry {entry.get('link', 'Unknown')} from feed {feed.url}: {str(entry_error)}",
-                            exc_info=True
-                        )
-                        session.rollback()
-                        continue  # Continue with the next entry
+                            logger.warning(f"Failed to parse content for URL: {url}")
+                    else:
+                        logger.info(f"Entry already exists: {title}")
 
-                    session.commit()  # Commit after each successful entry processing
+                except OperationalError as e:
+                    if "database is locked" in str(e):
+                        logger.warning(f"Database locked for entry {url}, retrying...")
+                        # Implement retry logic here
+                        continue
+                    else:
+                        raise
+                except Exception as entry_error:
+                    logger.error(
+                        f"Error processing entry {entry.get('link', 'Unknown')} from feed {feed.url}: {str(entry_error)}",
+                        exc_info=True
+                    )
+                    session.rollback()
+                    continue  # Continue with the next entry
 
-                logger.info(f"Feed: {feed.url} - Added {new_entries_count} new entries to database")
+            logger.info(f"Committing changes to database")
+            session.commit()  # Commit after processing all entries
+            logger.info(f"Feed: {feed.url} - Added {new_entries_count} new entries to database")
+
     except httpx.HTTPStatusError as e:
         logger.error(f"HTTP error occurred while fetching feed {feed.url}: {e}", exc_info=True)
         raise ValueError(
