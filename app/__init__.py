@@ -21,6 +21,7 @@ from app.blueprints.search.routes import search_bp
 from app.blueprints.api.routes import api_bp
 from app.blueprints.parsed_content import bp as parsed_content_bp
 from app.blueprints.apt.routes import bp as apt_bp
+from app.blueprints.user_settings.routes import bp as user_settings_bp
 
 from flask_login import login_required
 from app.utils.ollama_client import OllamaAPI
@@ -104,12 +105,13 @@ def create_app(config_object=None):
         (api_bp, "/api"),
         (parsed_content_bp, "/parsed_content"),
         (apt_bp, "/apt"),
+        (user_settings_bp, "/settings"),
     ]
 
     registered_blueprints = set()
     for blueprint, url_prefix in blueprints:
         if blueprint.name not in registered_blueprints:
-            if blueprint.name in ['apt', 'parsed_content']:
+            if blueprint.name in ['apt', 'parsed_content', 'user_settings']:
                 for endpoint, view_func in blueprint.view_functions.items():
                     blueprint.view_functions[endpoint] = login_required(view_func)
             app.register_blueprint(blueprint, url_prefix=url_prefix)
@@ -136,21 +138,24 @@ def create_app(config_object=None):
         # Update APT databases
         update_databases()
         logger.info("APT databases updated at application startup")
-        # Initialize Ollama API
-        app.ollama_api = OllamaAPI()
 
-        # Setup scheduler
-        app.scheduler = SchedulerService(app)
-        app.scheduler.setup_scheduler()
+        # Initialize user settings
+        from app.models.relational.user import User
+        from sqlalchemy import inspect
 
-        # Initialize Awesome Threat Intel Blogs
-        from app.services.awesome_threat_intel_service import AwesomeThreatIntelService
+        inspector = inspect(db.engine)
+        if not inspector.has_table(User.__tablename__):
+            User.__table__.create(db.engine)
+            logger.info(f"Created table: {User.__tablename__}")
+        else:
+            existing_columns = set(column['name'] for column in inspector.get_columns(User.__tablename__))
+            for column in User.__table__.columns:
+                if column.name not in existing_columns:
+                    column_type = column.type.compile(db.engine.dialect)
+                    db.engine.execute(f'ALTER TABLE {User.__tablename__} ADD COLUMN {column.name} {column_type}')
+                    logger.info(f"Added column {column.name} to {User.__tablename__}")
 
-        AwesomeThreatIntelService.initialize_awesome_feeds()
-
-        # Update APT databases
-        update_databases()
-        logger.info("APT databases updated at application startup")
+        logger.info("User settings initialized")
 
     @login_manager.user_loader
     def load_user(user_id):
@@ -187,6 +192,5 @@ def create_app(config_object=None):
             user_count = db.session.query(User).count()
             if user_count == 0:
                 return redirect(url_for('auth.register'))
-
 
     return app
