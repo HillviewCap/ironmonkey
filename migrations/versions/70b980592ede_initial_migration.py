@@ -66,15 +66,37 @@ def upgrade():
 
     # Proceed with other table alterations
 
-    with op.batch_alter_table('allgroups_values', schema=None) as batch_op:
-        batch_op.alter_column('uuid',
-               existing_type=sa.NUMERIC(),
-               type_=sa.UUID(),
-               existing_nullable=False)
-        batch_op.alter_column('allgroups_uuid',
-               existing_type=sa.NUMERIC(),
-               type_=sa.UUID(),
-               existing_nullable=True)
+    if 'allgroups_values' not in tables:
+        op.create_table('allgroups_values',
+            sa.Column('uuid', sa.UUID(), nullable=False),
+            sa.Column('actor', sa.Text(), nullable=True),
+            sa.Column('country', sa.Text(), nullable=True),
+            sa.Column('description', sa.Text(), nullable=True),
+            sa.Column('information', sa.Text(), nullable=True),
+            sa.Column('last_card_change', sa.Text(), nullable=True),
+            sa.Column('motivation', sa.Text(), nullable=True),
+            sa.Column('first_seen', sa.Text(), nullable=True),
+            sa.Column('observed_sectors', sa.Text(), nullable=True),
+            sa.Column('observed_countries', sa.Text(), nullable=True),
+            sa.Column('tools', sa.Text(), nullable=True),
+            sa.Column('operations', sa.Text(), nullable=True),
+            sa.Column('sponsor', sa.Text(), nullable=True),
+            sa.Column('counter_operations', sa.Text(), nullable=True),
+            sa.Column('mitre_attack', sa.Text(), nullable=True),
+            sa.Column('playbook', sa.Text(), nullable=True),
+            sa.Column('allgroups_uuid', sa.UUID(), sa.ForeignKey('allgroups.uuid'), nullable=True),
+            sa.PrimaryKeyConstraint('uuid')
+        )
+    else:
+        with op.batch_alter_table('allgroups_values', schema=None) as batch_op:
+            batch_op.alter_column('uuid',
+                   existing_type=sa.NUMERIC(),
+                   type_=sa.UUID(),
+                   existing_nullable=False)
+            batch_op.alter_column('allgroups_uuid',
+                   existing_type=sa.NUMERIC(),
+                   type_=sa.UUID(),
+                   existing_nullable=True)
 
     with op.batch_alter_table('allgroups_values_names', schema=None) as batch_op:
         batch_op.alter_column('uuid',
