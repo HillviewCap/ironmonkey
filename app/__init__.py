@@ -141,7 +141,7 @@ def create_app(config_object=None):
 
         # Initialize user settings
         from app.models.relational.user import User
-        from sqlalchemy import inspect
+        from sqlalchemy import inspect, text
 
         inspector = inspect(db.engine)
         if not inspector.has_table(User.__tablename__):
@@ -152,7 +152,9 @@ def create_app(config_object=None):
             for column in User.__table__.columns:
                 if column.name not in existing_columns:
                     column_type = column.type.compile(db.engine.dialect)
-                    db.engine.execute(f'ALTER TABLE {User.__tablename__} ADD COLUMN {column.name} {column_type}')
+                    with db.engine.connect() as connection:
+                        connection.execute(text(f'ALTER TABLE {User.__tablename__} ADD COLUMN {column.name} {column_type}'))
+                        connection.commit()
                     logger.info(f"Added column {column.name} to {User.__tablename__}")
 
         logger.info("User settings initialized")
