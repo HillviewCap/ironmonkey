@@ -91,8 +91,8 @@ def create_app(config_object=None):
     # Initialize database and connection manager
     with app.app_context():
         init_db_connection_manager(app)
-        db.create_all()
         migrate.init_app(app, db)
+        upgrade()
         logger.info("Database tables created and migrations initialized")
 
     # Register blueprints
