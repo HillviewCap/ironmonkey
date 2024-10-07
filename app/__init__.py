@@ -3,7 +3,7 @@ import json
 import warnings
 from dotenv import load_dotenv
 from flask import Flask
-from flask_migrate import Migrate
+from flask_migrate import Migrate, upgrade
 from flask_wtf.csrf import CSRFProtect
 from flask_login import LoginManager
 
@@ -32,7 +32,7 @@ load_dotenv()
 # Configure logging
 logger = setup_logger("app", "app.log")
 
-migrate = Migrate()
+migrate = Migrate(compare_type=True)
 csrf = CSRFProtect()
 login_manager = LoginManager()
 login_manager.login_view = "auth.login"
@@ -90,9 +90,9 @@ def create_app(config_object=None):
 
     # Initialize database and connection manager
     with app.app_context():
-        db.create_all()
         init_db_connection_manager(app)
-        logger.info("Database tables created and connection manager initialized")
+        upgrade()
+        logger.info("Database migrations applied and connection manager initialized")
 
     # Register blueprints
     blueprints = [
