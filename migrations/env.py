@@ -4,7 +4,14 @@ import logging
 import os
 from logging.config import fileConfig
 
+from app import create_app
 from flask import current_app
+
+# Initialize the Flask application
+app = create_app()
+
+# Push the application context
+app.app_context().push()
 
 from alembic import context
 
@@ -35,10 +42,13 @@ def get_engine_url():
         return str(get_engine().url).replace('%', '%%')
 
 
-# add your model's MetaData object here
-# for 'autogenerate' support
-# from myapp import mymodel
-# target_metadata = mymodel.Base.metadata
+# Import models for Alembic to detect them
+from app.models.relational.allgroups import AllGroups, AllGroupsValues, AllGroupsValuesNames
+from app.models.relational.awesome_threat_intel_blog import AwesomeThreatIntelBlog
+from app.models.relational.parsed_content import ParsedContent
+from app.models.relational.rss_feed import RSSFeed
+from app.models.relational.user import User
+from app.models.relational.user_questionnaire import UserQuestionnaire
 config.set_main_option('sqlalchemy.url', get_engine_url())
 target_db = current_app.extensions['migrate'].db
 
@@ -48,10 +58,7 @@ target_db = current_app.extensions['migrate'].db
 # ... etc.
 
 
-def get_metadata():
-    if hasattr(target_db, 'metadatas'):
-        return target_db.metadatas[None]
-    return target_db.metadata
+target_metadata = target_db.metadata
 
 
 def ensure_versions_directory():
