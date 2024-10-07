@@ -1,6 +1,7 @@
 from __future__ import with_statement
 
 import logging
+import os
 from logging.config import fileConfig
 
 from flask import current_app
@@ -53,6 +54,13 @@ def get_metadata():
     return target_db.metadata
 
 
+def ensure_versions_directory():
+    """Ensure that the versions directory exists."""
+    versions_path = os.path.join(os.path.dirname(__file__), 'versions')
+    if not os.path.exists(versions_path):
+        os.makedirs(versions_path)
+        logger.info(f"Created versions directory: {versions_path}")
+
 def run_migrations_offline():
     """Run migrations in 'offline' mode.
 
@@ -65,6 +73,7 @@ def run_migrations_offline():
     script output.
 
     """
+    ensure_versions_directory()
     url = config.get_main_option("sqlalchemy.url")
     context.configure(
         url=url, target_metadata=get_metadata(), literal_binds=True
@@ -81,6 +90,7 @@ def run_migrations_online():
     and associate a connection with the context.
 
     """
+    ensure_versions_directory()
 
     # this callback is used to prevent an auto-migration from being generated
     # when there are no changes to the schema
