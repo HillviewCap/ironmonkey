@@ -35,16 +35,15 @@ async function addFeed(event) {
             }
             form.reset();
             initializeRssFeedsGrid(); // Refresh the existing feeds grid
-            }
-        } else {
-            showNotification('Error adding feed: ' + result.error, 'error');
         }
-    } catch (error) {
-        showNotification('An error occurred while adding the feed', 'error');
-    } finally {
-        submitButton.disabled = false;
-        submitButton.textContent = originalButtonText;
+    } else {
+        showNotification('Error adding feed: ' + result.error, 'error');
     }
+} catch (error) {
+    showNotification('An error occurred while adding the feed', 'error');
+} finally {
+    submitButton.disabled = false;
+    submitButton.textContent = originalButtonText;
 }
 
 function refreshExistingFeedsTable() {
