@@ -14,7 +14,7 @@ class AllGroups(db.Model):
     """
     __tablename__ = 'allgroups'
 
-    uuid = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    uuid = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, nullable=False)
     authors = Column(Text)
     category = Column(String)
     name = Column(String)
@@ -35,7 +35,7 @@ class AllGroupsValues(db.Model):
     """
     __tablename__ = 'allgroups_values'
 
-    uuid = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    uuid = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, nullable=False)
     actor = Column(String)
     country = Column(Text)
     description = Column(Text)
@@ -64,7 +64,7 @@ class AllGroupsValuesNames(db.Model):
     """
     __tablename__ = 'allgroups_values_names'
 
-    uuid = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    uuid = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, nullable=False)
     name = Column(String)
     name_giver = Column(String)
     allgroups_values_uuid = Column(UUID(as_uuid=True), ForeignKey('allgroups_values.uuid'))
