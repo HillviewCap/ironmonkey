@@ -14,7 +14,7 @@ from flask import (
     redirect,
     url_for,
 )
-from flask_login import login_required
+from flask_login import login_required, current_user
 from werkzeug.exceptions import BadRequest
 from werkzeug.wrappers import Response
 
