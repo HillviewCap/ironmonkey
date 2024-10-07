@@ -15,7 +15,7 @@ async function addFeed(event) {
 
     const addToRssFeedsUrl = gridElement.getAttribute('data-add-to-rss-feeds-url');
     try {
-        const response = await fetch('/rss_manager/create_rss_feed', {
+        const response = await fetch('/rss/feed', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
