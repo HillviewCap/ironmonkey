@@ -36,12 +36,12 @@ parsed_content_service: ParsedContentService = ParsedContentService()
 @login_required
 def get_rss_feeds() -> str:
     """
-    Retrieve all RSS feeds and render the RSS manager page.
+    Retrieve all RSS feeds for the current user and render the RSS manager page.
 
     Returns:
         str: Rendered HTML template for the RSS manager page.
     """
-    feeds: List[RSSFeed] = rss_feed_service.get_all_feeds()
+    feeds: List[RSSFeed] = rss_feed_service.get_user_feeds(current_user.id)
     form: AddRSSFeedForm = AddRSSFeedForm()
     csv_form: ImportCSVForm = ImportCSVForm()
     categories: List[str] = [
