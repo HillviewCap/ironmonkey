@@ -10,18 +10,21 @@ async function addFeed(event) {
     submitButton.textContent = 'Processing...';
 
     const formData = new FormData(form);
-    const blogName = formData.get('url'); // Assuming 'url' is used as the blog name
-    const gridElement = document.getElementById("awesome-blogs-grid");
-    const addToRssFeedsUrl = gridElement.getAttribute('data-add-to-rss-feeds-url');
+    const url = formData.get('url');
+    const category = formData.get('category');
+    const addFeedUrl = form.getAttribute('action');
 
     try {
-        const response = await fetch(addToRssFeedsUrl, {
+        const response = await fetch(addFeedUrl, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRFToken': document.querySelector('input[name="csrf_token"]').value
+                'X-CSRFToken': form.querySelector('input[name="csrf_token"]').value
             },
-            body: JSON.stringify({ blog: blogName })
+            body: JSON.stringify({
+                url: url,
+                category: category
+            })
         });
         const result = await response.json();
         if (response.ok) {
