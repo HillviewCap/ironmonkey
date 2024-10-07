@@ -6,6 +6,7 @@ from sqlalchemy import Column, String, Text, ForeignKey
 from sqlalchemy.dialects.postgresql import UUID
 from app.extensions import db
 from app.utils.http_client import fetch_feed_info
+from flask_login import current_user
 
 from pydantic import BaseModel
 
@@ -41,6 +42,8 @@ class RSSFeed(db.Model):
         super(RSSFeed, self).__init__(**kwargs)
         if not self.id:
             self.id = uuid4()
+        if not self.user_id and current_user and current_user.is_authenticated:
+            self.user_id = current_user.id
 
     def to_dict(self) -> Dict[str, Any]:
         """
