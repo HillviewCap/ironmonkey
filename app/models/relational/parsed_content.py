@@ -29,7 +29,7 @@ class ParsedContent(db.Model):
     feed_id = Column(SA_UUID(as_uuid=True), ForeignKey("rss_feed.id"), nullable=False)
     feed = db.relationship("RSSFeed", back_populates="parsed_items")
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
-    pub_date = Column(String(100), nullable=True)
+    pub_date = Column(DateTime, nullable=False)  # Changed from String to DateTime
     creator = Column(String(255), nullable=True)
     categories = db.relationship('Category', secondary=parsed_content_categories, backref=db.backref('parsed_contents', lazy='dynamic'))
     art_hash = Column(String(64), nullable=True)
@@ -115,7 +115,7 @@ class ParsedContent(db.Model):
             'summary': self.summary,
             'feed_id': str(self.feed_id),
             'created_at': self.created_at.isoformat() if self.created_at else None,
-            'pub_date': self.pub_date,
+            'pub_date': self.pub_date.isoformat() if self.pub_date else None,  # Updated to use isoformat()
             'creator': self.creator,
             'art_hash': self.art_hash
         }
