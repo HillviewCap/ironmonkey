@@ -6,12 +6,12 @@ logger = setup_logger('elevenlabs_tts', 'elevenlabs_tts.log')
 
 class ElevenLabsTTS:
     def __init__(self):
-        self.api_key = os.getenv("ELEVENLABS_API_KEY")
+        self.api_key = os.getenv("ELEVEN_API_KEY")
         if not self.api_key:
-            logger.error("ELEVENLABS_API_KEY must be set in the .env file")
-            raise ValueError("ELEVENLABS_API_KEY must be set in the .env file")
+            logger.error("ELEVEN_API_KEY must be set in the .env file")
+            raise ValueError("ELEVEN_API_KEY must be set in the .env file")
         
-        self.tts_tool = ElevenLabsText2SpeechTool(elevenlabs_api_key=self.api_key)
+        self.tts_tool = ElevenLabsText2SpeechTool(eleven_api_key=self.api_key)
 
     def generate_audio(self, text: str, output_path: str) -> str:
         try:
