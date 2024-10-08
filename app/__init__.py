@@ -6,6 +6,7 @@ from flask import Flask, jsonify
 from flask_migrate import Migrate
 from flask_wtf.csrf import CSRFProtect
 from flask_login import LoginManager
+from flask_markdown import Markdown
 
 from .extensions import db
 from app.utils.logging_config import setup_logger
@@ -141,21 +142,9 @@ def create_app(config_object=None):
         # Update APT databases
         update_databases()
         logger.info("APT databases updated at application startup")
-        # Initialize Ollama API
-        app.ollama_api = OllamaAPI()
 
-        # Setup scheduler
-        app.scheduler = SchedulerService(app)
-        app.scheduler.setup_scheduler()
-
-        # Initialize Awesome Threat Intel Blogs
-        from app.services.awesome_threat_intel_service import AwesomeThreatIntelService
-
-        AwesomeThreatIntelService.initialize_awesome_feeds()
-
-        # Update APT databases
-        update_databases()
-        logger.info("APT databases updated at application startup")
+        # Initialize Markdown
+        Markdown(app)
 
     @login_manager.user_loader
     def load_user(user_id):

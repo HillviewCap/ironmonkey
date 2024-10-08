@@ -56,13 +56,15 @@ class NewsRollupService:
         if not content:
             return "No recent news articles found."
         
-        formatted_content = ""
+        formatted_content = "Here are the recent articles for your briefing:\n\n"
         for item in content:
             formatted_content += f"Title: {item.title}\n"
             formatted_content += f"Published: {item.pub_date.strftime('%Y-%m-%d %H:%M:%S UTC')}\n"
             formatted_content += f"Description: {item.description or 'No description available'}\n"
             formatted_content += f"Summary: {item.summary or 'No summary available'}\n"
             formatted_content += f"Source URL: {item.url}\n\n"
+        
+        formatted_content += "\nPlease use this information to create a structured briefing as outlined in the prompt."
         return formatted_content
 
     async def generate_all_rollups(self) -> Dict[str, str]:
