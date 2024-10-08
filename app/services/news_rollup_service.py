@@ -2,7 +2,7 @@ import os
 from datetime import datetime, timedelta
 from typing import List, Dict
 from app.models.relational.parsed_content import ParsedContent
-from app.utils.ollama_client import OllamaAPI
+from app.utils.experimental_ollama_client import ExperimentalOllamaAPI
 from app.utils.groq_api import GroqAPI
 from app.utils.logging_config import setup_logger
 from app.extensions import db
@@ -14,17 +14,17 @@ class NewsRollupService:
     def __init__(self):
         api_choice = os.getenv("SUMMARY_API_CHOICE", "ollama").lower()
         if api_choice == "ollama":
-            self.api = OllamaAPI()
+            self.api = ExperimentalOllamaAPI()
         elif api_choice == "groq":
             self.api = GroqAPI()
         else:
             raise ValueError(f"Invalid SUMMARY_API_CHOICE: {api_choice}")
 
-    async def generate_rollup(self, rollup_type: str) -> str:
+    async def generate_rollup(self, rollup_type: str) -> Dict:
         content = self._get_content_for_rollup(rollup_type)
         formatted_content = self._format_content(content)
-        prompt_type = f"{rollup_type}_rollup"
-        return await self.api.generate(prompt_type, formatted_content)
+        prompt_type = f"{rollup_type}_rollup_json"
+        return await self.api.generate_json(prompt_type, formatted_content)
 
     def _get_content_for_rollup(self, rollup_type: str) -> List[ParsedContent]:
         now = datetime.utcnow()
@@ -65,7 +65,7 @@ class NewsRollupService:
             formatted_content += f"Source URL: {item.url}\n\n"
         return formatted_content
 
-    async def generate_all_rollups(self) -> Dict[str, str]:
+    async def generate_all_rollups(self) -> Dict[str, Dict]:
         return {
             "morning": await self.generate_rollup("morning"),
             "midday": await self.generate_rollup("midday"),
