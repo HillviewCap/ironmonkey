@@ -1,10 +1,12 @@
-from flask import render_template, send_from_directory, redirect, url_for, abort, current_app
+from flask import render_template, send_from_directory, redirect, url_for, abort, current_app, jsonify
 from flask_login import current_user, login_required
 import os
 from app.models.relational.parsed_content import ParsedContent
 from app.models.relational.rss_feed import RSSFeed
 from . import bp
-from datetime import datetime
+from datetime import datetime, time
+from sqlalchemy import desc
+from app.services.news_rollup_service import NewsRollupService
 
 @bp.route('/about')
 def about():
@@ -47,11 +49,32 @@ def index():
             .add_columns(RSSFeed.title.label('feed_title'))
             .all()
         )
+        current_time = datetime.now().time()
+        midday_time = time(12, 0)
+        end_of_day_time = time(18, 0)
         current_app.logger.info(f"User {current_user.id} accessed index route.")
-        return render_template('index.html', recent_items=recent_items)
+        return render_template('index.html', 
+                               recent_items=recent_items,
+                               current_time=current_time,
+                               midday_time=midday_time,
+                               end_of_day_time=end_of_day_time)
     except Exception as e:
         current_app.logger.error(f"Error in index route: {str(e)}")
         abort(500)  # Return a 500 Internal Server Error
+
+@bp.route('/generate_rollup/<rollup_type>')
+@login_required
+async def generate_single_rollup(rollup_type):
+    service = NewsRollupService()
+    try:
+        rollup = await service.generate_rollup(rollup_type)
+        return render_template('rollup.html', rollup_type=rollup_type, rollup_content=rollup)
+    except ValueError as e:
+        current_app.logger.error(f"Invalid rollup type: {str(e)}")
+        return jsonify({"error": "Invalid rollup type"}), 400
+    except Exception as e:
+        current_app.logger.error(f"Error generating rollup: {str(e)}")
+        return jsonify({"error": "Failed to generate rollup"}), 500
 
 @bp.route('/apt-groups')
 def apt_groups():
