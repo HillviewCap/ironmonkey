@@ -40,16 +40,25 @@ class NewsRollupService:
         else:
             raise ValueError(f"Invalid rollup_type: {rollup_type}")
 
-        return ParsedContent.query.filter(
-            ParsedContent.pub_date.between(start_time.isoformat(), end_time.isoformat())
-        ).order_by(ParsedContent.pub_date.desc()).all()
+        content = ParsedContent.query.filter(
+            ParsedContent.created_at.between(start_time, end_time)
+        ).order_by(ParsedContent.created_at.desc()).limit(10).all()
+
+        if not content:
+            # If no content found for today, get the latest 10 entries
+            content = ParsedContent.query.order_by(ParsedContent.created_at.desc()).limit(10).all()
+
+        return content
 
     def _format_content(self, content: List[ParsedContent]) -> str:
+        if not content:
+            return "No recent news articles found."
+        
         formatted_content = ""
         for item in content:
             formatted_content += f"Title: {item.title}\n"
-            formatted_content += f"Description: {item.description}\n"
-            formatted_content += f"Summary: {item.summary}\n"
+            formatted_content += f"Description: {item.description or 'No description available'}\n"
+            formatted_content += f"Summary: {item.summary or 'No summary available'}\n"
             formatted_content += f"Source URL: {item.url}\n\n"
         return formatted_content
 
