@@ -160,16 +160,18 @@ async def fetch_and_parse_feed(feed_id: str) -> int:
                         if pub_date and pub_date.lower() != "invalid date":
                             try:
                                 parsed_date = date_parser.parse(pub_date)
-                                pub_date = parsed_date.strftime("%Y-%m-%d")
+                                # Ensure the datetime is timezone-aware
+                                if parsed_date.tzinfo is None:
+                                    parsed_date = parsed_date.replace(tzinfo=datetime.timezone.utc)
                             except Exception as e:
-                                logger.warning(f"Could not parse date: {pub_date}. Error: {str(e)}. Using current date.")
-                                pub_date = datetime.now().strftime("%Y-%m-%d")
+                                logger.warning(f"Could not parse date: {pub_date}. Error: {str(e)}. Using current date and time.")
+                                parsed_date = datetime.now(datetime.timezone.utc)
                         else:
-                            logger.warning(f"Invalid or no published date found: {pub_date}. Using current date.")
-                            pub_date = datetime.now().strftime("%Y-%m-%d")
+                            logger.warning(f"Invalid or no published date found: {pub_date}. Using current date and time.")
+                            parsed_date = datetime.now(datetime.timezone.utc)
 
                         # Skip entries that are older than or equal to the most recent entry in the database
-                        if most_recent_entry and pub_date <= most_recent_entry:
+                        if most_recent_entry and parsed_date <= most_recent_entry:
                             continue
 
                         existing_content = session.execute(
@@ -185,7 +187,7 @@ async def fetch_and_parse_feed(feed_id: str) -> int:
                                     url=url,
                                     title=sanitize_html(title),
                                     description=sanitize_html(entry.get("description", "")),
-                                    pub_date=pub_date,
+                                    pub_date=parsed_date,
                                     creator=sanitize_html(entry.get("author", "")),
                                 )
                                 session.add(new_content)
