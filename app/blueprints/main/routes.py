@@ -68,13 +68,16 @@ async def generate_single_rollup(rollup_type):
     service = NewsRollupService()
     try:
         rollup = await service.generate_rollup(rollup_type)
+        if isinstance(rollup, dict) and 'error' in rollup:
+            current_app.logger.error(f"Error in rollup generation: {rollup['error']}")
+            return render_template('rollup.html', rollup_type=rollup_type, rollup_content=rollup)
         return render_template('rollup.html', rollup_type=rollup_type, rollup_content=rollup)
     except ValueError as e:
         current_app.logger.error(f"Invalid rollup type: {str(e)}")
-        return jsonify({"error": "Invalid rollup type"}), 400
+        return render_template('rollup.html', rollup_type=rollup_type, rollup_content={'error': "Invalid rollup type"})
     except Exception as e:
         current_app.logger.error(f"Error generating rollup: {str(e)}")
-        return jsonify({"error": "Failed to generate rollup"}), 500
+        return render_template('rollup.html', rollup_type=rollup_type, rollup_content={'error': "Failed to generate rollup"})
 
 @bp.route('/apt-groups')
 def apt_groups():
