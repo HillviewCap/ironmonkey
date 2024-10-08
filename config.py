@@ -11,6 +11,7 @@ class Config:
     SUMMARY_CHECK_INTERVAL = int(os.getenv('SUMMARY_CHECK_INTERVAL', 60))
     SUMMARY_API_CHOICE = os.getenv('SUMMARY_API_CHOICE', 'groq')
     FLASK_PORT = int(os.getenv('FLASK_PORT', '5000'))
+    ELEVENLABS_API_KEY = os.getenv('ELEVENLABS_API_KEY')
 
 class DevelopmentConfig(Config):
     DEBUG = True
