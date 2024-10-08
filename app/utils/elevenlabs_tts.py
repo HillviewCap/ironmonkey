@@ -15,10 +15,7 @@ class ElevenLabsTTS:
 
     def generate_audio(self, text: str, output_path: str) -> str:
         try:
-            audio_file = self.tts_tool.run({
-                "text": text,
-                "output_path": output_path
-            })
+            audio_file = self.tts_tool.run({"text": text, "file_path": output_path})
             logger.info(f"Generated audio file: {audio_file}")
             return audio_file
         except Exception as e:
