@@ -1,9 +1,10 @@
-from flask import Blueprint, render_template, current_app
+from flask import Blueprint, render_template, current_app, jsonify
 from flask_login import login_required
 from app.models.relational.parsed_content import ParsedContent
 from app.models.relational.rss_feed import RSSFeed
 from sqlalchemy import desc
 from datetime import datetime, time
+from app.services.news_rollup_service import NewsRollupService
 
 bp = Blueprint('main', __name__)
 
@@ -28,6 +29,20 @@ def index():
                            current_time=current_time,
                            midday_time=midday_time,
                            end_of_day_time=end_of_day_time)
+
+@bp.route('/generate_rollup/<rollup_type>')
+@login_required
+async def generate_single_rollup(rollup_type):
+    service = NewsRollupService()
+    try:
+        rollup = await service.generate_rollup(rollup_type)
+        return render_template('rollup.html', rollup_type=rollup_type, rollup_content=rollup)
+    except ValueError as e:
+        current_app.logger.error(f"Invalid rollup type: {str(e)}")
+        return jsonify({"error": "Invalid rollup type"}), 400
+    except Exception as e:
+        current_app.logger.error(f"Error generating rollup: {str(e)}")
+        return jsonify({"error": "Failed to generate rollup"}), 500
 
 from . import routes
 
