@@ -1,6 +1,7 @@
 import os
 from datetime import datetime, timedelta
-from typing import List, Dict
+from typing import List, Dict, Union
+import json
 from app.models.relational.parsed_content import ParsedContent
 from app.utils.experimental_ollama_client import ExperimentalOllamaAPI
 from app.utils.groq_api import GroqAPI
@@ -27,6 +28,12 @@ class NewsRollupService:
         result = await self.api.generate_json(prompt_type, formatted_content)
         if isinstance(result, dict):
             return result
+        elif isinstance(result, str):
+            try:
+                return json.loads(result)
+            except json.JSONDecodeError:
+                logger.error(f"Failed to parse result as JSON: {result}")
+                return {"error": "Failed to generate valid JSON"}
         else:
             logger.error(f"Unexpected result type: {type(result)}")
             return {"error": "Failed to generate valid JSON"}
@@ -57,9 +64,13 @@ class NewsRollupService:
 
         return content
 
-    def _format_content(self, content: List[ParsedContent]) -> str:
+    def _format_content(self, content: Union[List[ParsedContent], Dict]) -> str:
         if not content:
             return "No recent news articles found."
+        
+        if isinstance(content, dict):
+            # If content is already a dictionary, return it as a JSON string
+            return json.dumps(content, indent=2)
         
         formatted_content = ""
         for item in content:
