@@ -27,7 +27,7 @@ class GroqAPI:
             logger.error("GROQ_API_KEY must be set in the .env file")
             raise ValueError("GROQ_API_KEY must be set in the .env file")
         
-        self.model = "mixtral-8x7b-32768"  # You can change this to the desired Groq model
+        self.model = "llama-3.2-3b-preview"  # You can change this to the desired Groq model
         self.chat_model = ChatGroq(groq_api_key=self.api_key, model_name=self.model)
         self.prompts = self.load_prompts()
 
