@@ -5,21 +5,22 @@
     <h1 class="text-3xl font-bold mb-6">{{ rollup_type|title }} Intelligence Briefing</h1>
     <div class="bg-white shadow-md rounded-lg p-6">
         <div class="prose max-w-none">
-            {% for section in rollup_content.split('\n\n') %}
-                {% if section.startswith('Title:') %}
-                    <h2 class="text-xl font-semibold mt-6 mb-2 text-blue-600">{{ section[6:].strip() }}</h2>
-                {% elif section.startswith('Published:') %}
-                    <p class="text-sm text-gray-500 mb-2">{{ section[10:].strip() }}</p>
-                {% elif section.startswith('Description:') %}
-                    <p class="text-gray-700 mb-2"><strong>Description:</strong> {{ section[12:].strip() }}</p>
-                {% elif section.startswith('Summary:') %}
-                    <p class="text-gray-800 mb-2"><strong>Summary:</strong> {{ section[8:].strip() }}</p>
-                {% elif section.startswith('Source URL:') %}
-                    <p class="text-sm text-blue-500 mb-4">
-                        <a href="{{ section[11:].strip() }}" target="_blank" rel="noopener noreferrer" class="hover:underline">
-                            Read full article
-                        </a>
-                    </p>
+            {% for section in rollup_content.split('\n') %}
+                {% if section.startswith('**') and section.endswith('**') %}
+                    <h2 class="text-2xl font-bold mt-6 mb-4">{{ section.strip('*') }}</h2>
+                {% elif section.startswith('###') %}
+                    <h3 class="text-xl font-semibold mt-4 mb-2">{{ section.strip('#') }}</h3>
+                {% elif section.startswith('*   **') %}
+                    <div class="mb-4">
+                        <h4 class="text-lg font-semibold">{{ section.split('**')[1] }}</h4>
+                        <p>{{ section.split('**')[2] }}</p>
+                    </div>
+                {% elif section.startswith('*') %}
+                    <ul class="list-disc list-inside mb-4">
+                        <li>{{ section.strip('* ') }}</li>
+                    </ul>
+                {% elif '---' in section %}
+                    <hr class="my-4">
                 {% else %}
                     <p class="mb-2">{{ section }}</p>
                 {% endif %}
