@@ -5,26 +5,34 @@
     <h1 class="text-3xl font-bold mb-6">{{ rollup_type|title }} Intelligence Briefing</h1>
     <div class="bg-white shadow-md rounded-lg p-6">
         <div class="prose max-w-none">
-            {% for section in rollup_content.split('\n') %}
-                {% if section.startswith('**') and section.endswith('**') %}
-                    <h2 class="text-2xl font-bold mt-6 mb-4">{{ section.strip('*') }}</h2>
-                {% elif section.startswith('###') %}
-                    <h3 class="text-xl font-semibold mt-4 mb-2">{{ section.strip('#') }}</h3>
-                {% elif section.startswith('*   **') %}
+            {% if rollup_content.timestamp %}
+                <p class="text-sm text-gray-600 mb-4">Generated on: {{ rollup_content.timestamp }}</p>
+            {% endif %}
+
+            {% if rollup_content.summary %}
+                <h2 class="text-2xl font-bold mt-6 mb-4">Summary</h2>
+                <p class="mb-4">{{ rollup_content.summary }}</p>
+            {% endif %}
+
+            {% if rollup_content.top_stories %}
+                <h2 class="text-2xl font-bold mt-6 mb-4">Top Stories</h2>
+                {% for story in rollup_content.top_stories %}
                     <div class="mb-4">
-                        <h4 class="text-lg font-semibold">{{ section.split('**')[1] }}</h4>
-                        <p>{{ section.split('**')[2] }}</p>
+                        <h3 class="text-xl font-semibold">{{ story.title }}</h3>
+                        <p>{{ story.summary }}</p>
+                        {% if story.source_url %}
+                            <a href="{{ story.source_url }}" target="_blank" rel="noopener noreferrer" class="text-blue-500 hover:underline">Read more</a>
+                        {% endif %}
+                        {% if story.is_new_development %}
+                            <span class="ml-2 bg-yellow-200 text-yellow-800 px-2 py-1 rounded-full text-xs font-semibold">New Development</span>
+                        {% endif %}
                     </div>
-                {% elif section.startswith('*') %}
-                    <ul class="list-disc list-inside mb-4">
-                        <li>{{ section.strip('* ') }}</li>
-                    </ul>
-                {% elif '---' in section %}
-                    <hr class="my-4">
-                {% else %}
-                    <p class="mb-2">{{ section }}</p>
-                {% endif %}
-            {% endfor %}
+                {% endfor %}
+            {% endif %}
+
+            {% if rollup_content.error %}
+                <p class="text-red-500">Error: {{ rollup_content.error }}</p>
+            {% endif %}
         </div>
     </div>
     <div class="mt-8">
