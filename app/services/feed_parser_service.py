@@ -150,6 +150,8 @@ async def fetch_and_parse_feed(feed_id: str) -> int:
 
                 # Get the most recent entry's publication date from the database
                 most_recent_entry = session.query(func.max(ParsedContent.pub_date)).filter_by(feed_id=feed.id).scalar()
+                if most_recent_entry and most_recent_entry.tzinfo is None:
+                    most_recent_entry = most_recent_entry.replace(tzinfo=datetime.timezone.utc)
 
                 for entry in feed_data.entries:
                     try:
@@ -171,8 +173,9 @@ async def fetch_and_parse_feed(feed_id: str) -> int:
                             parsed_date = datetime.now(datetime.timezone.utc)
 
                         # Skip entries that are older than or equal to the most recent entry in the database
-                        if most_recent_entry and parsed_date <= most_recent_entry:
-                            continue
+                        if most_recent_entry:
+                            if parsed_date <= most_recent_entry:
+                                continue
 
                         existing_content = session.execute(
                             select(ParsedContent).filter_by(url=url, feed_id=feed.id).with_for_update(nowait=True)
