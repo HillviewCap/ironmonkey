@@ -26,6 +26,7 @@ from flask_login import login_required
 from app.utils.ollama_client import OllamaAPI
 from app.services.scheduler_service import SchedulerService
 from app.services.apt_update_service import update_databases
+from app.services.news_rollup_service import NewsRollupService
 
 load_dotenv()
 
@@ -188,5 +189,16 @@ def create_app(config_object=None):
             if user_count == 0:
                 return redirect(url_for('auth.register'))
 
+
+    @app.route('/generate_rollups', methods=['GET'])
+    @login_required
+    async def generate_rollups():
+        service = NewsRollupService()
+        try:
+            rollups = await service.generate_all_rollups()
+            return jsonify(rollups), 200
+        except Exception as e:
+            logger.error(f"Error generating rollups: {str(e)}")
+            return jsonify({"error": "Failed to generate rollups"}), 500
 
     return app

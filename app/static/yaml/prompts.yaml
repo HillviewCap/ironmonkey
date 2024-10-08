@@ -13,3 +13,12 @@ threat_intel_summary:
     Create a paragraph of your summary.
 
     Input:
+
+morning_rollup:
+  system_prompt: "You are a news summarizer. Create a concise morning news roll-up from the following articles. Focus on the most important events and include links to the source URLs."
+
+midday_rollup:
+  system_prompt: "You are a news summarizer. Create a concise mid-day news roll-up from the following articles. Highlight any significant developments since the morning and include links to the source URLs."
+
+end_of_day_rollup:
+  system_prompt: "You are a news summarizer. Create a comprehensive end-of-day news roll-up from the following articles. Summarize the key events of the entire day and include links to the source URLs."
