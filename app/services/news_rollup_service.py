@@ -1,5 +1,5 @@
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import List, Dict
 from app.models.relational.parsed_content import ParsedContent
 from app.utils.ollama_client import OllamaAPI
@@ -27,21 +27,21 @@ class NewsRollupService:
 
     def _get_content_for_rollup(self, rollup_type: str) -> List[ParsedContent]:
         now = datetime.utcnow()
-        today = now.date().isoformat()
+        today = now.date()
         if rollup_type == "morning":
-            start_time = f"{today}T00:00:00"
-            end_time = f"{today}T12:00:00"
+            start_time = datetime.combine(today, datetime.min.time())
+            end_time = datetime.combine(today, datetime.strptime("12:00:00", "%H:%M:%S").time())
         elif rollup_type == "midday":
-            start_time = f"{today}T12:00:00"
-            end_time = f"{today}T18:00:00"
+            start_time = datetime.combine(today, datetime.strptime("12:00:00", "%H:%M:%S").time())
+            end_time = datetime.combine(today, datetime.strptime("18:00:00", "%H:%M:%S").time())
         elif rollup_type == "end_of_day":
-            start_time = f"{today}T18:00:00"
-            end_time = f"{today}T23:59:59"
+            start_time = datetime.combine(today, datetime.strptime("18:00:00", "%H:%M:%S").time())
+            end_time = datetime.combine(today + timedelta(days=1), datetime.min.time())
         else:
             raise ValueError(f"Invalid rollup_type: {rollup_type}")
 
         return ParsedContent.query.filter(
-            ParsedContent.pub_date.between(start_time, end_time)
+            ParsedContent.pub_date.between(start_time.isoformat(), end_time.isoformat())
         ).order_by(ParsedContent.pub_date.desc()).all()
 
     def _format_content(self, content: List[ParsedContent]) -> str:

@@ -201,4 +201,18 @@ def create_app(config_object=None):
             logger.error(f"Error generating rollups: {str(e)}")
             return jsonify({"error": "Failed to generate rollups"}), 500
 
+    @app.route('/generate_rollup/<rollup_type>', methods=['GET'])
+    @login_required
+    async def generate_single_rollup(rollup_type):
+        service = NewsRollupService()
+        try:
+            rollup = await service.generate_rollup(rollup_type)
+            return jsonify({rollup_type: rollup}), 200
+        except ValueError as e:
+            logger.error(f"Invalid rollup type: {str(e)}")
+            return jsonify({"error": "Invalid rollup type"}), 400
+        except Exception as e:
+            logger.error(f"Error generating rollup: {str(e)}")
+            return jsonify({"error": "Failed to generate rollup"}), 500
+
     return app
