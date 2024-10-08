@@ -2,7 +2,7 @@ import os
 import json
 import warnings
 from dotenv import load_dotenv
-from flask import Flask
+from flask import Flask, jsonify
 from flask_migrate import Migrate
 from flask_wtf.csrf import CSRFProtect
 from flask_login import LoginManager
