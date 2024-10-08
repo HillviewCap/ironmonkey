@@ -24,7 +24,12 @@ class NewsRollupService:
         content = self._get_content_for_rollup(rollup_type)
         formatted_content = self._format_content(content)
         prompt_type = f"{rollup_type}_rollup_json"
-        return await self.api.generate_json(prompt_type, formatted_content)
+        result = await self.api.generate_json(prompt_type, formatted_content)
+        if isinstance(result, dict):
+            return result
+        else:
+            logger.error(f"Unexpected result type: {type(result)}")
+            return {"error": "Failed to generate valid JSON"}
 
     def _get_content_for_rollup(self, rollup_type: str) -> List[ParsedContent]:
         now = datetime.utcnow()

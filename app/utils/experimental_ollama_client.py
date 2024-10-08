@@ -50,9 +50,14 @@ class ExperimentalOllamaAPI:
             if current_app.debug:
                 logger.debug(f"Generated response: {output}")
             
+            # Remove any leading text before the JSON content
+            json_start = output.find('{')
+            if json_start != -1:
+                output = output[json_start:]
+            
             # Attempt to parse the output as JSON
             try:
-                json_output = json.loads(output)
+                json_output = json.loads(output.strip())
                 return json_output
             except json.JSONDecodeError:
                 logger.error(f"Failed to parse response as JSON: {output}")
