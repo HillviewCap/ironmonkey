@@ -71,7 +71,11 @@ async def generate_single_rollup(rollup_type):
         if isinstance(rollup, dict) and 'error' in rollup:
             current_app.logger.error(f"Error in rollup generation: {rollup['error']}")
             return render_template('rollup.html', rollup_type=rollup_type, rollup_content=rollup)
-        return render_template('rollup.html', rollup_type=rollup_type, rollup_content=rollup)
+        
+        audio_file = service.generate_audio_rollup(rollup, rollup_type)
+        audio_url = url_for('static', filename=f'audio/{os.path.basename(audio_file)}') if audio_file else None
+        
+        return render_template('rollup.html', rollup_type=rollup_type, rollup_content=rollup, audio_url=audio_url)
     except ValueError as e:
         current_app.logger.error(f"Invalid rollup type: {str(e)}")
         return render_template('rollup.html', rollup_type=rollup_type, rollup_content={'error': "Invalid rollup type"})
