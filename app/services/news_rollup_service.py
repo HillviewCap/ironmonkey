@@ -6,6 +6,7 @@ from app.utils.ollama_client import OllamaAPI
 from app.utils.groq_api import GroqAPI
 from app.utils.logging_config import setup_logger
 from app.extensions import db
+from sqlalchemy import func
 
 logger = setup_logger('news_rollup_service', 'news_rollup_service.log')
 
@@ -28,6 +29,7 @@ class NewsRollupService:
     def _get_content_for_rollup(self, rollup_type: str) -> List[ParsedContent]:
         now = datetime.utcnow()
         today = now.date()
+        
         if rollup_type == "morning":
             start_time = datetime.combine(today, datetime.min.time())
             end_time = datetime.combine(today, datetime.strptime("12:00:00", "%H:%M:%S").time())
@@ -41,12 +43,12 @@ class NewsRollupService:
             raise ValueError(f"Invalid rollup_type: {rollup_type}")
 
         content = ParsedContent.query.filter(
-            ParsedContent.created_at.between(start_time, end_time)
-        ).order_by(ParsedContent.created_at.desc()).limit(10).all()
+            ParsedContent.pub_date.between(start_time, end_time)
+        ).order_by(ParsedContent.pub_date.desc()).limit(10).all()
 
         if not content:
-            # If no content found for today, get the latest 10 entries
-            content = ParsedContent.query.order_by(ParsedContent.created_at.desc()).limit(10).all()
+            # If no content found for the specified time range, get the latest 10 entries
+            content = ParsedContent.query.order_by(ParsedContent.pub_date.desc()).limit(10).all()
 
         return content
 
@@ -57,6 +59,7 @@ class NewsRollupService:
         formatted_content = ""
         for item in content:
             formatted_content += f"Title: {item.title}\n"
+            formatted_content += f"Published: {item.pub_date.strftime('%Y-%m-%d %H:%M:%S UTC')}\n"
             formatted_content += f"Description: {item.description or 'No description available'}\n"
             formatted_content += f"Summary: {item.summary or 'No summary available'}\n"
             formatted_content += f"Source URL: {item.url}\n\n"
