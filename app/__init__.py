@@ -76,7 +76,6 @@ def create_app(config_object=None):
     # Initialize extensions
     db.init_app(app)
     csrf.init_app(app)
-    migrate.init_app(app, db)
     login_manager.init_app(app)
 
     # Register json_loads filter
@@ -91,6 +90,11 @@ def create_app(config_object=None):
 
     # Initialize database and connection manager
     with app.app_context():
+        from app.models.relational.parsed_content import ParsedContent
+        from app.models.relational.category import Category
+        from app.models.relational.user import User
+        from app.models.relational.rss_feed import RSSFeed
+        
         db.create_all()
         init_db_connection_manager(app)
         logger.info("Database tables created and connection manager initialized")
