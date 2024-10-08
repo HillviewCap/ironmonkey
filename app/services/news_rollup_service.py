@@ -5,6 +5,7 @@ import json
 from app.models.relational.parsed_content import ParsedContent
 from app.utils.experimental_ollama_client import ExperimentalOllamaAPI
 from app.utils.groq_api import GroqAPI
+from app.utils.elevenlabs_tts import ElevenLabsTTS
 from app.utils.logging_config import setup_logger
 from app.extensions import db
 from sqlalchemy import func
@@ -20,6 +21,8 @@ class NewsRollupService:
             self.api = GroqAPI()
         else:
             raise ValueError(f"Invalid SUMMARY_API_CHOICE: {api_choice}")
+        
+        self.tts = ElevenLabsTTS()
 
     async def generate_rollup(self, rollup_type: str) -> Dict:
         content = self._get_content_for_rollup(rollup_type)
@@ -37,6 +40,27 @@ class NewsRollupService:
         else:
             logger.error(f"Unexpected result type: {type(result)}")
             return {"error": "Failed to generate valid JSON"}
+
+    def generate_audio_rollup(self, rollup_content: Dict, rollup_type: str) -> str:
+        try:
+            text_to_speak = self._format_rollup_for_speech(rollup_content)
+            output_path = os.path.join(os.getcwd(), 'app', 'static', 'audio', f'{rollup_type}_rollup.mp3')
+            audio_file = self.tts.generate_audio(text_to_speak, output_path)
+            return audio_file
+        except Exception as e:
+            logger.error(f"Error generating audio rollup: {str(e)}")
+            return ""
+
+    def _format_rollup_for_speech(self, rollup_content: Dict) -> str:
+        speech_text = f"Here's your {rollup_content.get('timestamp', 'latest')} intelligence briefing.\n\n"
+        speech_text += f"Summary: {rollup_content.get('summary', 'No summary available.')}\n\n"
+        
+        if 'top_stories' in rollup_content:
+            speech_text += "Top Stories:\n"
+            for story in rollup_content['top_stories']:
+                speech_text += f"- {story.get('title', 'Untitled')}: {story.get('summary', 'No summary available.')}\n"
+        
+        return speech_text
 
     def _get_content_for_rollup(self, rollup_type: str) -> List[ParsedContent]:
         now = datetime.utcnow()
