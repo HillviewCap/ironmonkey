@@ -51,17 +51,20 @@ class ParsedContentService:
         :return: A dictionary containing various statistics
         """
         today = datetime.utcnow().date()
-        yesterday = today - timedelta(days=1)
+        today_start = datetime.combine(today, datetime.min.time())
+        today_end = datetime.combine(today, datetime.max.time())
 
-        # Number of articles today
-        articles_today = ParsedContent.query.filter(func.date(ParsedContent.created_at) == today).count()
+        # Number of articles published today
+        articles_today = ParsedContent.query.filter(
+            ParsedContent.pub_date.between(today_start, today_end)
+        ).count()
 
         # Top 3 sites with article count for today
         top_sites = db.session.query(
             RSSFeed.title,
             func.count(ParsedContent.id).label('article_count')
         ).join(RSSFeed, ParsedContent.feed_id == RSSFeed.id)\
-         .filter(func.date(ParsedContent.created_at) == today)\
+         .filter(ParsedContent.pub_date.between(today_start, today_end))\
          .group_by(RSSFeed.title)\
          .order_by(func.count(ParsedContent.id).desc())\
          .limit(3)\
@@ -71,7 +74,7 @@ class ParsedContentService:
         top_authors = db.session.query(
             ParsedContent.creator,
             func.count(ParsedContent.id).label('article_count')
-        ).filter(func.date(ParsedContent.created_at) == today)\
+        ).filter(ParsedContent.pub_date.between(today_start, today_end))\
          .group_by(ParsedContent.creator)\
          .order_by(func.count(ParsedContent.id).desc())\
          .limit(3)\
