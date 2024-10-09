@@ -44,7 +44,70 @@
     {% if item.summary %}
     <div class="mb-6">
         <h2 class="text-xl font-semibold mb-2">Summary</h2>
-        <p>{{ item.summary }}</p>
+        {% set summary = item.summary | from_json %}
+        {% if summary %}
+            <h3 class="text-lg font-semibold mt-2">Main Topic</h3>
+            <p>{{ summary.main_topic }}</p>
+            
+            <h3 class="text-lg font-semibold mt-2">Key Points</h3>
+            <ul class="list-disc pl-5">
+                {% for point in summary.key_points %}
+                    <li>{{ point }}</li>
+                {% endfor %}
+            </ul>
+            
+            {% if summary.threat_actors %}
+                <h3 class="text-lg font-semibold mt-2">Threat Actors</h3>
+                <ul class="list-disc pl-5">
+                    {% for actor in summary.threat_actors %}
+                        <li>{{ actor }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+            
+            {% if summary.ttps %}
+                <h3 class="text-lg font-semibold mt-2">TTPs</h3>
+                <ul class="list-disc pl-5">
+                    {% for ttp in summary.ttps %}
+                        <li>{{ ttp }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+            
+            {% if summary.iocs %}
+                <h3 class="text-lg font-semibold mt-2">IoCs</h3>
+                <ul class="list-disc pl-5">
+                    {% for ioc in summary.iocs %}
+                        <li>{{ ioc }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+            
+            {% if summary.affected_systems %}
+                <h3 class="text-lg font-semibold mt-2">Affected Systems</h3>
+                <ul class="list-disc pl-5">
+                    {% for system in summary.affected_systems %}
+                        <li>{{ system }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+            
+            {% if summary.mitigations %}
+                <h3 class="text-lg font-semibold mt-2">Mitigations</h3>
+                <ul class="list-disc pl-5">
+                    {% for mitigation in summary.mitigations %}
+                        <li>{{ mitigation }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+            
+            {% if summary.conclusion %}
+                <h3 class="text-lg font-semibold mt-2">Conclusion</h3>
+                <p>{{ summary.conclusion }}</p>
+            {% endif %}
+        {% else %}
+            <p>{{ item.summary }}</p>
+        {% endif %}
     </div>
     {% endif %}
     

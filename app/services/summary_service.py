@@ -11,12 +11,10 @@ from app.models.relational.rss_feed import RSSFeed
 from app.utils.db_connection_manager import DBConnectionManager
 import os
 import asyncio
-import tempfile
-import time
-from typing import Optional, Union
-from uuid import UUID, uuid4
-from app.utils.ollama_client import OllamaAPI, OllamaAPI
-from app.utils.groq_api import GroqAPI
+import json
+from typing import Optional
+from uuid import UUID
+from app.utils.experimental_ollama_client import ExperimentalOllamaAPI
 
 logger = setup_logger('summary_service', 'summary_service.log')
 
@@ -25,26 +23,24 @@ from sqlalchemy.exc import OperationalError
 import random
 
 class SummaryService:
-    """A service to enhance summaries of parsed content using OllamaAPI or GroqAPI."""
+    """A service to enhance summaries of parsed content using ExperimentalOllamaAPI."""
     def __init__(self, max_retries: int = 3, lock_timeout: int = 60):
         self.max_retries = max_retries
         self.lock_timeout = lock_timeout
-        self.api: Optional[Union[OllamaAPI, GroqAPI]] = None
+        self.api: Optional[ExperimentalOllamaAPI] = None
 
-    def _initialize_api(self) -> Union[OllamaAPI, GroqAPI]:
+    def _initialize_api(self) -> ExperimentalOllamaAPI:
         if self.api is None:
-            api_choice = os.getenv("SUMMARY_API_CHOICE", "ollama").lower()
-            if api_choice == "ollama":
-                self.api = OllamaAPI()
-            elif api_choice == "groq":
-                self.api = GroqAPI()
-            else:
-                raise ValueError(f"Unsupported API choice: {api_choice}. Please set SUMMARY_API_CHOICE to 'ollama' or 'groq' in the .env file.")
+            self.api = ExperimentalOllamaAPI()
         return self.api
 
     async def generate_summary(self, content_id: str, text_to_summarize: str) -> Optional[str]:
         api = self._initialize_api()
-        return await api.generate("threat_intel_summary", text_to_summarize)
+        json_summary = await api.generate_json("threat_intel_summary_json", text_to_summarize)
+        
+        # Convert the JSON summary to a string format
+        summary_str = json.dumps(json_summary, indent=2)
+        return summary_str
 
     def enhance_summary_sync(self, content_id: str) -> bool:
         return asyncio.run(self.enhance_summary(content_id))
