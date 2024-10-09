@@ -103,9 +103,21 @@ def create_app(config_object=None):
         from app.models.relational.user import User
         from app.models.relational.rss_feed import RSSFeed
         
+        # Reflect the current state of the database
+        db.reflect()
+        
+        # Create or update tables
         db.create_all()
+        
+        # Check if the last_checked column exists in the RSSFeed table
+        inspector = db.inspect(db.engine)
+        if 'last_checked' not in [c['name'] for c in inspector.get_columns('rss_feeds')]:
+            # Add the last_checked column if it doesn't exist
+            with db.engine.connect() as conn:
+                conn.execute(db.text("ALTER TABLE rss_feeds ADD COLUMN last_checked DATETIME"))
+        
         init_db_connection_manager(app)
-        logger.info("Database tables created and connection manager initialized")
+        logger.info("Database tables created/updated and connection manager initialized")
 
     # Register blueprints
     blueprints = [
