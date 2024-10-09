@@ -114,8 +114,9 @@ class ParsedContent(db.Model):
             'content': self.content,
             'summary': self.summary,
             'feed_id': str(self.feed_id),
+            'rss_feed_title': self.feed.title if self.feed else None,
             'created_at': self.created_at.isoformat() if self.created_at else None,
-            'pub_date': self.pub_date.isoformat() if self.pub_date else None,  # Updated to use isoformat()
+            'pub_date': self.pub_date.isoformat() if self.pub_date else None,
             'creator': self.creator,
             'art_hash': self.art_hash
         }
