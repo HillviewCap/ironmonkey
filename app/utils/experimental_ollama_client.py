@@ -2,6 +2,7 @@ import os
 import yaml
 import asyncio
 import json
+import re
 from dotenv import load_dotenv
 from langchain_community.llms import Ollama
 from app.utils.logging_config import setup_logger
@@ -50,18 +51,20 @@ class ExperimentalOllamaAPI:
             if current_app.debug:
                 logger.debug(f"Generated response: {output}")
             
-            # Remove any leading text before the JSON content
-            json_start = output.find('{')
-            if json_start != -1:
-                output = output[json_start:]
-            
-            # Attempt to parse the output as JSON
-            try:
-                json_output = json.loads(output.strip())
-                return json_output
-            except json.JSONDecodeError:
-                logger.error(f"Failed to parse response as JSON: {output}")
-                return {"error": "Failed to generate valid JSON"}
+            # Use regex to extract JSON object
+            json_match = re.search(r'(\{.*\})', output, re.DOTALL)
+            if json_match:
+                json_str = json_match.group(1)
+                # Attempt to parse the extracted JSON
+                try:
+                    json_output = json.loads(json_str)
+                    return json_output
+                except json.JSONDecodeError as e:
+                    logger.error(f"Failed to parse extracted JSON: {e}")
+                    return {"error": "Failed to parse extracted JSON"}
+            else:
+                logger.error("No JSON object found in the response")
+                return {"error": "No JSON object found in the response"}
 
         except Exception as exc:
             logger.error(f"Error occurred while generating response: {exc}")
