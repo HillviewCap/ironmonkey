@@ -7,7 +7,7 @@ and storing new entries in the database.
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional, Tuple
 
 import httpx
@@ -105,8 +105,16 @@ async def fetch_and_parse_feed(feed_id: str) -> int:
                 if last_modified:
                     try:
                         parsed_last_modified = date_parser.parse(last_modified)
+                        # Ensure parsed_last_modified is timezone-aware
+                        if parsed_last_modified.tzinfo is None:
+                            parsed_last_modified = parsed_last_modified.replace(tzinfo=timezone.utc)
+                        
                         if feed.last_modified:
                             feed_last_modified = date_parser.parse(feed.last_modified)
+                            # Ensure feed_last_modified is timezone-aware
+                            if feed_last_modified.tzinfo is None:
+                                feed_last_modified = feed_last_modified.replace(tzinfo=timezone.utc)
+                            
                             if parsed_last_modified <= feed_last_modified:
                                 return 0
                     except Exception as e:
@@ -132,13 +140,18 @@ async def fetch_and_parse_feed(feed_id: str) -> int:
                 if 'updated' in feed_data.feed:
                     try:
                         new_build_date = date_parser.parse(feed_data.feed.updated)
+                        # Ensure new_build_date is timezone-aware
+                        if new_build_date.tzinfo is None:
+                            new_build_date = new_build_date.replace(tzinfo=timezone.utc)
+                        
                         if not feed.last_build_date:
                             feed.last_build_date = new_build_date.strftime("%Y-%m-%d %H:%M:%S")
                         else:
                             last_build_date = date_parser.parse(feed.last_build_date)
-                            # Remove timezone info to make both datetimes naive
-                            new_build_date = new_build_date.replace(tzinfo=None)
-                            last_build_date = last_build_date.replace(tzinfo=None)
+                            # Ensure last_build_date is timezone-aware
+                            if last_build_date.tzinfo is None:
+                                last_build_date = last_build_date.replace(tzinfo=timezone.utc)
+                            
                             if new_build_date > last_build_date:
                                 feed.last_build_date = new_build_date.strftime("%Y-%m-%d %H:%M:%S")
                     except Exception as e:
