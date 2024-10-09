@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 from typing import List, Dict, Union
 import json
 from app.models.relational.parsed_content import ParsedContent
+from app.models import Rollup
 from app.utils.experimental_ollama_client import ExperimentalOllamaAPI
 from app.utils.groq_api import GroqAPI
 from app.utils.elevenlabs_tts import ElevenLabsTTS
@@ -111,3 +112,29 @@ class NewsRollupService:
             "midday": await self.generate_rollup("midday"),
             "end_of_day": await self.generate_rollup("end_of_day")
         }
+
+    async def create_and_store_rollup(self, rollup_type: str):
+        rollup_content = await self.generate_rollup(rollup_type)
+        audio_file = self.generate_audio_rollup(rollup_content, rollup_type)
+        
+        # Store the rollup in the database
+        rollup = Rollup(
+            type=rollup_type,
+            content=rollup_content,
+            audio_file=audio_file
+        )
+        db.session.add(rollup)
+        db.session.commit()
+        
+        logger.info(f"Created and stored {rollup_type} rollup")
+
+    @staticmethod
+    def get_latest_rollup(rollup_type: str) -> Dict:
+        rollup = Rollup.query.filter_by(type=rollup_type).order_by(Rollup.created_at.desc()).first()
+        if rollup:
+            return {
+                "content": rollup.content,
+                "audio_file": rollup.audio_file,
+                "created_at": rollup.created_at
+            }
+        return None

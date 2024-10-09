@@ -7,6 +7,7 @@ from .relational.search_params import SearchParams
 from .relational.awesome_threat_intel_blog import AwesomeThreatIntelBlog
 from .relational.alltools import AllTools, AllToolsValues, AllToolsValuesNames
 from .relational.allgroups import AllGroups, AllGroupsValues, AllGroupsValuesNames
+from .relational.rollup import Rollup
 
 __all__ = [
     "db",
@@ -22,4 +23,5 @@ __all__ = [
     "AllGroups",
     "AllGroupsValues",
     "AllGroupsValuesNames",
+    "Rollup",
 ]
