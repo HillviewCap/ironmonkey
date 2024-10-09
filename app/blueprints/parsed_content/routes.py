@@ -4,9 +4,8 @@ from . import bp
 
 @bp.route('/')
 def parsed_content():
-    category = request.args.get('category')
-    latest_content = ParsedContentService.get_latest_parsed_content(category=category, limit=10)
-    return render_template('parsed_content/index.html', content=latest_content['content'], stats=latest_content['stats'], selected_category=category)
+    latest_content = ParsedContentService.get_latest_parsed_content(limit=10)
+    return render_template('parsed_content/index.html', content=latest_content['content'], stats=latest_content['stats'])
 from app.models.relational.parsed_content import ParsedContent
 
 @bp.route('/item/<uuid:item_id>')
