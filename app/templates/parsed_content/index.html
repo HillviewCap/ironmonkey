@@ -31,25 +31,6 @@
         </div>
     </div>
 
-    <!-- Quick Filter Buttons -->
-    <div class="flex justify-center space-x-4 mb-8">
-        <a href="{{ url_for('parsed_content.parsed_content', category='Malware') }}" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded">
-            Malware
-        </a>
-        <a href="{{ url_for('parsed_content.parsed_content', category='Ransomware') }}" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded">
-            Ransomware
-        </a>
-        <a href="{{ url_for('parsed_content.parsed_content', category='Nationstate') }}" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded">
-            Nationstate
-        </a>
-        <a href="{{ url_for('parsed_content.parsed_content', category='Threat Actor') }}" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded">
-            Threat Actor
-        </a>
-        <a href="{{ url_for('parsed_content.parsed_content') }}" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded">
-            Clear Filter
-        </a>
-    </div>
-
     <!-- Content Grid -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {% for item in content %}
