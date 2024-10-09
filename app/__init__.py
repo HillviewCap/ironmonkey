@@ -11,6 +11,12 @@ from .extensions import db
 from app.utils.logging_config import setup_logger
 from app.utils.db_connection_manager import init_db_connection_manager
 
+def from_json(value):
+    try:
+        return json.loads(value)
+    except:
+        return None
+
 # Suppress Pydantic deprecation warning
 warnings.filterwarnings("ignore", category=DeprecationWarning, module="pydantic")
 from app.blueprints.main.routes import bp as main_bp
@@ -57,6 +63,8 @@ def create_app(config_object=None):
         static_url_path="/static",
         template_folder="templates",
     )
+
+    app.jinja_env.filters['from_json'] = from_json
 
     # Load the default config if no config_object is provided
     if config_object is None:
