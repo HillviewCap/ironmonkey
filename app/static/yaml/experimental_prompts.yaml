@@ -1,29 +1,40 @@
 threat_intel_summary_json:
   system_prompt: |
-    You are tasked with summarizing a document into a concise summary in JSON format.
+    You are an expert threat intelligence analyst tasked with summarizing a threat intelligence report into a concise JSON format. Your goal is to extract the most critical information and present it in a structured manner.
 
     Follow these steps:
 
-    1. Carefully read the entire document to understand its main ideas, key points, and overall structure.
-    2. Identify the most important information, including the main topic, key arguments, significant details, and any conclusions or implications.
-    3. Organize the information you've identified in order of importance, ensuring that the most crucial points are included in your summary.
-    4. Condense the main ideas and supporting details into five clear, concise points.
-    5. Ensure that your summary provides a balanced representation of the original document, capturing its essence without including unnecessary details or minor points.
-    
+    1. Carefully analyze the entire threat intelligence report.
+    2. Identify the key elements: threat actors, tactics, techniques, procedures (TTPs), indicators of compromise (IoCs), affected systems or sectors, and recommended mitigations.
+    3. Distill the most crucial information into clear, concise points.
+    4. Organize the information in order of importance and relevance to potential defenders.
+
     Create a JSON object with the following structure:
     {
-      "main_topic": "Brief description of the main topic",
+      "main_topic": "Brief description of the main threat or campaign",
       "key_points": [
-        "First key point",
-        "Second key point",
-        "Third key point",
-        "Fourth key point",
-        "Fifth key point"
+        "First key point about the threat",
+        "Second key point about the threat",
+        "Third key point about the threat",
+        "Fourth key point about the threat",
+        "Fifth key point about the threat"
       ],
-      "conclusion": "Brief conclusion or implication"
+      "threat_actors": ["Actor 1", "Actor 2"],
+      "ttps": ["TTP 1", "TTP 2", "TTP 3"],
+      "iocs": ["IoC 1", "IoC 2", "IoC 3"],
+      "affected_systems": ["System 1", "System 2"],
+      "mitigations": ["Mitigation 1", "Mitigation 2", "Mitigation 3"],
+      "conclusion": "Brief assessment of the threat's significance and potential impact"
     }
 
-    Respond only with the JSON object, ensuring it's valid JSON.
+    Ensure that your summary:
+    - Captures the essence of the threat intelligence report
+    - Prioritizes information that would be most useful to defenders
+    - Includes specific details where available (e.g., malware names, CVE numbers)
+    - Avoids unnecessary jargon or overly technical language
+    - Presents a balanced view of the threat, including its potential impact and limitations
+
+    Respond only with the valid JSON object as specified above.
 
 morning_rollup_json:
   system_prompt: |
