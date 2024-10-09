@@ -130,7 +130,11 @@ class NewsRollupService:
 
     @staticmethod
     def get_latest_rollup(rollup_type: str) -> Dict:
-        rollup = Rollup.query.filter_by(type=rollup_type).order_by(Rollup.created_at.desc()).first()
+        today = datetime.utcnow().date()
+        rollup = Rollup.query.filter(
+            Rollup.type == rollup_type,
+            func.date(Rollup.created_at) == today
+        ).order_by(Rollup.created_at.desc()).first()
         if rollup:
             return {
                 "content": rollup.content,
@@ -138,3 +142,9 @@ class NewsRollupService:
                 "created_at": rollup.created_at
             }
         return None
+
+    @staticmethod
+    def get_rollup_types_for_today():
+        today = datetime.utcnow().date()
+        rollups = Rollup.query.filter(func.date(Rollup.created_at) == today).all()
+        return [rollup.type for rollup in rollups]

@@ -13,17 +13,29 @@
         <div class="bg-white shadow-md rounded-lg p-6">
             <h3 class="text-lg font-semibold mb-2">Morning Briefing</h3>
             <p class="text-gray-600 mb-4">Start your day with the latest threat intelligence updates.</p>
-            <a href="{{ url_for('main.generate_single_rollup', rollup_type='morning') }}" class="text-blue-600 hover:underline">View Morning Briefing</a>
+            {% if 'morning' in existing_rollups %}
+                <a href="{{ url_for('main.generate_single_rollup', rollup_type='morning') }}" class="text-blue-600 hover:underline">View Morning Briefing</a>
+            {% else %}
+                <a href="{{ url_for('main.generate_single_rollup', rollup_type='morning') }}" class="text-blue-600 hover:underline">Generate Morning Briefing</a>
+            {% endif %}
         </div>
         <div class="bg-white shadow-md rounded-lg p-6">
             <h3 class="text-lg font-semibold mb-2">Midday Briefing</h3>
             <p class="text-gray-600 mb-4">Stay informed with midday updates on emerging threats.</p>
-            <a href="{{ url_for('main.generate_single_rollup', rollup_type='midday') }}" class="text-blue-600 hover:underline">View Midday Briefing</a>
+            {% if 'midday' in existing_rollups %}
+                <a href="{{ url_for('main.generate_single_rollup', rollup_type='midday') }}" class="text-blue-600 hover:underline">View Midday Briefing</a>
+            {% else %}
+                <a href="{{ url_for('main.generate_single_rollup', rollup_type='midday') }}" class="text-blue-600 hover:underline">Generate Midday Briefing</a>
+            {% endif %}
         </div>
         <div class="bg-white shadow-md rounded-lg p-6">
             <h3 class="text-lg font-semibold mb-2">End of Day Briefing</h3>
             <p class="text-gray-600 mb-4">Wrap up your day with a comprehensive threat intelligence summary.</p>
-            <a href="{{ url_for('main.generate_single_rollup', rollup_type='end_of_day') }}" class="text-blue-600 hover:underline">View End of Day Briefing</a>
+            {% if 'end_of_day' in existing_rollups %}
+                <a href="{{ url_for('main.generate_single_rollup', rollup_type='end_of_day') }}" class="text-blue-600 hover:underline">View End of Day Briefing</a>
+            {% else %}
+                <a href="{{ url_for('main.generate_single_rollup', rollup_type='end_of_day') }}" class="text-blue-600 hover:underline">Generate End of Day Briefing</a>
+            {% endif %}
         </div>
     </div>
 

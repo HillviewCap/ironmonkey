@@ -52,12 +52,17 @@ def index():
         current_time = datetime.now().time()
         midday_time = time(12, 0)
         end_of_day_time = time(18, 0)
+        
+        # Get the rollup types that already exist for today
+        existing_rollups = NewsRollupService.get_rollup_types_for_today()
+        
         current_app.logger.info(f"User {current_user.id} accessed index route.")
         return render_template('index.html', 
                                recent_items=recent_items,
                                current_time=current_time,
                                midday_time=midday_time,
-                               end_of_day_time=end_of_day_time)
+                               end_of_day_time=end_of_day_time,
+                               existing_rollups=existing_rollups)
     except Exception as e:
         current_app.logger.error(f"Error in index route: {str(e)}")
         abort(500)  # Return a 500 Internal Server Error
@@ -67,13 +72,21 @@ def index():
 async def generate_single_rollup(rollup_type):
     service = NewsRollupService()
     try:
-        rollup = await service.generate_rollup(rollup_type)
-        if isinstance(rollup, dict) and 'error' in rollup:
-            current_app.logger.error(f"Error in rollup generation: {rollup['error']}")
-            return render_template('rollup.html', rollup_type=rollup_type, rollup_content=rollup)
-        
-        audio_file = service.generate_audio_rollup(rollup, rollup_type)
-        audio_url = url_for('static', filename=f'audio/{os.path.basename(audio_file)}') if audio_file else None
+        existing_rollup = service.get_latest_rollup(rollup_type)
+        if existing_rollup:
+            rollup = existing_rollup['content']
+            audio_url = url_for('static', filename=f'audio/{os.path.basename(existing_rollup["audio_file"])}') if existing_rollup['audio_file'] else None
+        else:
+            rollup = await service.generate_rollup(rollup_type)
+            if isinstance(rollup, dict) and 'error' in rollup:
+                current_app.logger.error(f"Error in rollup generation: {rollup['error']}")
+                return render_template('rollup.html', rollup_type=rollup_type, rollup_content=rollup)
+            
+            audio_file = service.generate_audio_rollup(rollup, rollup_type)
+            audio_url = url_for('static', filename=f'audio/{os.path.basename(audio_file)}') if audio_file else None
+            
+            # Store the new rollup
+            await service.create_and_store_rollup(rollup_type)
         
         return render_template('rollup.html', rollup_type=rollup_type, rollup_content=rollup, audio_url=audio_url)
     except ValueError as e:
