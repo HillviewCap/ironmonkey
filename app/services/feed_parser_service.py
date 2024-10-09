@@ -62,12 +62,12 @@ async def fetch_and_parse_feed(feed_id: str, force_update: bool = False) -> int:
     Fetch and parse a single RSS feed.
 
     This function retrieves the content of an RSS feed, parses it, and stores new entries
-    in the database. It handles redirects, updates feed metadata, and processes individual
-    entries.
+    in the database. It handles redirects, updates feed metadata, and processes all
+    entries every time.
 
     Args:
         feed_id (str): The ID of the RSS feed to fetch and parse.
-        force_update (bool): If True, bypass etag and last-modified checks.
+        force_update (bool): Not used, kept for compatibility.
 
     Returns:
         int: The number of new entries added to the database.
@@ -91,47 +91,6 @@ async def fetch_and_parse_feed(feed_id: str, force_update: bool = False) -> int:
                 response = await client.get(feed.url, headers=headers)
                 response.raise_for_status()
 
-                # Check if it's time for a forced update
-                time_since_last_update = datetime.now(timezone.utc) - feed.last_checked
-                logger.info(f"Time since last update for feed {feed.url}: {time_since_last_update}")
-                
-                if not force_update and time_since_last_update <= timedelta(hours=24):
-                    logger.info(f"Checking for modifications on feed {feed.url}")
-                    
-                    # Check if the feed has been modified
-                    etag = response.headers.get('etag')
-                    last_modified = response.headers.get('last-modified')
-                    
-                    logger.info(f"Current etag: {etag}, Feed etag: {feed.etag}")
-                    logger.info(f"Current last-modified: {last_modified}, Feed last-modified: {feed.last_modified}")
-                    
-                    if etag and etag == feed.etag:
-                        logger.info(f"Feed {feed.url} not modified (etag match)")
-                        return 0
-                    
-                    if last_modified:
-                        try:
-                            parsed_last_modified = date_parser.parse(last_modified)
-                            if parsed_last_modified.tzinfo is None:
-                                parsed_last_modified = parsed_last_modified.replace(tzinfo=timezone.utc)
-                            
-                            if feed.last_modified:
-                                feed_last_modified = date_parser.parse(feed.last_modified)
-                                if feed_last_modified.tzinfo is None:
-                                    feed_last_modified = feed_last_modified.replace(tzinfo=timezone.utc)
-                                
-                                logger.info(f"Parsed last-modified: {parsed_last_modified}, Feed last-modified: {feed_last_modified}")
-                                
-                                if parsed_last_modified <= feed_last_modified:
-                                    logger.info(f"Feed {feed.url} not modified (last-modified date comparison)")
-                                    return 0
-                            else:
-                                logger.info(f"Feed {feed.url} has no stored last-modified date")
-                        except Exception as e:
-                            logger.warning(f"Could not parse or compare last-modified header: {e}")
-                else:
-                    logger.info(f"Forced update or more than 24 hours since last check for feed {feed.url}")
-
                 # Check if the URL has been redirected
                 if str(response.url) != feed.url:
                     feed.url = str(response.url)
@@ -139,32 +98,7 @@ async def fetch_and_parse_feed(feed_id: str, force_update: bool = False) -> int:
 
             feed_data = feedparser.parse(response.content)
 
-            # Compare the most recent entry date
-            if feed_data.entries:
-                most_recent_entry_date = get_most_recent_entry_date(feed_data.entries)
-                db_most_recent_entry = session.query(func.max(ParsedContent.pub_date)).filter_by(feed_id=feed.id).scalar()
-                
-                if db_most_recent_entry:
-                    if db_most_recent_entry.tzinfo is None:
-                        db_most_recent_entry = db_most_recent_entry.replace(tzinfo=timezone.utc)
-                    else:
-                        db_most_recent_entry = db_most_recent_entry.astimezone(timezone.utc)
-
-                if db_most_recent_entry and most_recent_entry_date <= db_most_recent_entry:
-                    logger.info(f"No new entries for feed {feed.url}")
-                    feed.last_checked = datetime.now(timezone.utc)
-                    session.commit()
-                    return 0
-
             # Update feed metadata
-            feed.etag = response.headers.get('etag')
-            if last_modified:
-                try:
-                    parsed_last_modified = date_parser.parse(last_modified)
-                    feed.last_modified = parsed_last_modified.strftime("%Y-%m-%d %H:%M:%S")
-                except Exception as e:
-                    logger.warning(f"Could not parse last-modified header: {e}")
-            
             if "title" in feed_data.feed:
                 feed.title = sanitize_html(feed_data.feed.title)
             if "description" in feed_data.feed:
@@ -176,18 +110,9 @@ async def fetch_and_parse_feed(feed_id: str, force_update: bool = False) -> int:
                     new_build_date = date_parser.parse(feed_data.feed.updated)
                     if new_build_date.tzinfo is None:
                         new_build_date = new_build_date.replace(tzinfo=timezone.utc)
-                    
-                    if not feed.last_build_date:
-                        feed.last_build_date = new_build_date.strftime("%Y-%m-%d %H:%M:%S")
-                    else:
-                        last_build_date = date_parser.parse(feed.last_build_date)
-                        if last_build_date.tzinfo is None:
-                            last_build_date = last_build_date.replace(tzinfo=timezone.utc)
-                        
-                        if new_build_date > last_build_date:
-                            feed.last_build_date = new_build_date.strftime("%Y-%m-%d %H:%M:%S")
+                    feed.last_build_date = new_build_date.strftime("%Y-%m-%d %H:%M:%S")
                 except Exception as e:
-                    logger.warning(f"Could not parse or compare feed updated date: {e}")
+                    logger.warning(f"Could not parse feed updated date: {e}")
 
             feed.last_checked = datetime.now(timezone.utc)
             session.commit()
@@ -280,22 +205,5 @@ async def fetch_and_parse_feed(feed_id: str, force_update: bool = False) -> int:
         raise RuntimeError(f"Unexpected error: {str(e)}")
     finally:
         return new_entries_count
-def get_most_recent_entry_date(entries: List[dict]) -> datetime:
-    most_recent_date = None
-    for entry in entries:
-        pub_date = entry.get("published", "")
-        if pub_date and pub_date.lower() != "invalid date":
-            try:
-                parsed_date = date_parser.parse(pub_date)
-                if parsed_date.tzinfo is None:
-                    parsed_date = parsed_date.replace(tzinfo=timezone.utc)
-                else:
-                    parsed_date = parsed_date.astimezone(timezone.utc)
-                if most_recent_date is None or parsed_date > most_recent_date:
-                    most_recent_date = parsed_date
-            except Exception as e:
-                logger.warning(f"Could not parse date: {pub_date}. Error: {str(e)}.")
-    return most_recent_date or datetime.now(timezone.utc)
-
 def fetch_and_parse_feed_sync(feed_id: str, force_update: bool = False) -> int:
     return asyncio.run(fetch_and_parse_feed(feed_id, force_update))
