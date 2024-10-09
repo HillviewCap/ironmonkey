@@ -3,7 +3,7 @@ from app.models.relational.rss_feed import RSSFeed
 from app.extensions import db
 from typing import List, Dict, Any, Optional
 from datetime import datetime, timedelta
-from sqlalchemy import func
+from sqlalchemy import func, desc
 
 class ParsedContentService:
     @staticmethod
@@ -21,6 +21,7 @@ class ParsedContentService:
                 'summary': content.summary
             }
         return None
+
     @staticmethod
     def get_latest_parsed_content(limit: int = 20, category: Optional[str] = None) -> Dict[str, Any]:
         """
@@ -30,7 +31,7 @@ class ParsedContentService:
         :param category: Optional category to filter the content
         :return: A dictionary containing parsed content data and content stats
         """
-        query = ParsedContent.query.order_by(ParsedContent.created_at.desc())
+        query = ParsedContent.query.order_by(desc(ParsedContent.pub_date))
         
         if category:
             query = query.filter(ParsedContent.category.has(name=category))
