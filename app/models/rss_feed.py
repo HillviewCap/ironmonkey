@@ -7,7 +7,7 @@ Base = declarative_base()
 class RSSFeed(Base):
     """Model for storing RSS feed information."""
 
-    __tablename__ = 'rss_feeds'
+    __tablename__ = 'rss_feed'
 
     id = Column(String(36), primary_key=True)
     url = Column(String(2048), unique=True, nullable=False)
