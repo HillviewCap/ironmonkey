@@ -129,6 +129,12 @@ async def fetch_and_parse_feed(feed_id: str, force_update: bool = False) -> int:
                 most_recent_entry_date = get_most_recent_entry_date(feed_data.entries)
                 db_most_recent_entry = session.query(func.max(ParsedContent.pub_date)).filter_by(feed_id=feed.id).scalar()
                 
+                if db_most_recent_entry:
+                    if db_most_recent_entry.tzinfo is None:
+                        db_most_recent_entry = db_most_recent_entry.replace(tzinfo=timezone.utc)
+                    else:
+                        db_most_recent_entry = db_most_recent_entry.astimezone(timezone.utc)
+
                 if db_most_recent_entry and most_recent_entry_date <= db_most_recent_entry:
                     logger.info(f"No new entries for feed {feed.url}")
                     feed.last_checked = datetime.now(timezone.utc)
@@ -268,6 +274,8 @@ def get_most_recent_entry_date(entries: List[dict]) -> datetime:
                 parsed_date = date_parser.parse(pub_date)
                 if parsed_date.tzinfo is None:
                     parsed_date = parsed_date.replace(tzinfo=timezone.utc)
+                else:
+                    parsed_date = parsed_date.astimezone(timezone.utc)
                 if most_recent_date is None or parsed_date > most_recent_date:
                     most_recent_date = parsed_date
             except Exception as e:
