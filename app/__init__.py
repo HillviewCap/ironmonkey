@@ -111,10 +111,10 @@ def create_app(config_object=None):
         
         # Check if the last_checked column exists in the RSSFeed table
         inspector = db.inspect(db.engine)
-        if 'last_checked' not in [c['name'] for c in inspector.get_columns('rss_feeds')]:
+        if 'last_checked' not in [c['name'] for c in inspector.get_columns('rss_feed')]:
             # Add the last_checked column if it doesn't exist
             with db.engine.connect() as conn:
-                conn.execute(db.text("ALTER TABLE rss_feeds ADD COLUMN last_checked DATETIME"))
+                conn.execute(db.text("ALTER TABLE rss_feed ADD COLUMN last_checked DATETIME"))
         
         init_db_connection_manager(app)
         logger.info("Database tables created/updated and connection manager initialized")
