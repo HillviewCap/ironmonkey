@@ -31,8 +31,7 @@ def apply_patch():
             description TEXT,
             content TEXT,
             link TEXT,
-            pub_date TIMESTAMP,
-            -- Add other columns as needed
+            pub_date TIMESTAMP
         )
         """)
 
