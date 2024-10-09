@@ -76,7 +76,7 @@ class SchedulerService:
             minute=0
         )
         self.scheduler.add_job(
-            func=self.create_afternoon_rollup,
+            func=self.create_end_of_day_rollup,
             trigger="cron",
             hour=16,
             minute=0
@@ -192,6 +192,6 @@ class SchedulerService:
         with self.app.app_context():
             asyncio.run(NewsRollupService().create_and_store_rollup("midday"))
 
-    def create_afternoon_rollup(self):
+    def create_end_of_day_rollup(self):
         with self.app.app_context():
-            asyncio.run(NewsRollupService().create_and_store_rollup("afternoon"))
+            asyncio.run(NewsRollupService().create_and_store_rollup("end_of_day"))
