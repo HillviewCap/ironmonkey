@@ -82,7 +82,7 @@ async def fetch_and_parse_feed(feed_id: str, force_update: bool = False) -> int:
     }
     try:
         with DBConnectionManager.get_session() as session:
-            feed = session.query(RSSFeed).get(feed_id)
+            feed = session.get(RSSFeed, feed_id)
             if not feed:
                 logger.error(f"Feed with id {feed_id} not found")
                 return 0
