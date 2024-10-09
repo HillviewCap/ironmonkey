@@ -5,6 +5,7 @@ from apscheduler.executors.pool import ThreadPoolExecutor
 from app.models.relational import ParsedContent, RSSFeed
 from app.services.feed_parser_service import fetch_and_parse_feed_sync
 from app.services.summary_service import SummaryService
+from app.services.news_rollup_service import NewsRollupService
 from flask import current_app
 from app.utils.db_connection_manager import DBConnectionManager
 from logging import getLogger
@@ -60,6 +61,26 @@ class SchedulerService:
             logger.warning(
                 f"Invalid SUMMARY_API_CHOICE: {summary_api_choice}. No summary generation scheduled."
             )
+
+        # Add jobs for creating rollups
+        self.scheduler.add_job(
+            func=self.create_morning_rollup,
+            trigger="cron",
+            hour=6,
+            minute=0
+        )
+        self.scheduler.add_job(
+            func=self.create_midday_rollup,
+            trigger="cron",
+            hour=12,
+            minute=0
+        )
+        self.scheduler.add_job(
+            func=self.create_afternoon_rollup,
+            trigger="cron",
+            hour=16,
+            minute=0
+        )
 
         if not self.is_running:
             self.scheduler.start()
@@ -162,3 +183,15 @@ class SchedulerService:
             scheduler_logger.info(
                 f"Processed {processed_count} out of {len(empty_summary_ids)} empty summaries"
             )
+
+    def create_morning_rollup(self):
+        with self.app.app_context():
+            asyncio.run(NewsRollupService().create_and_store_rollup("morning"))
+
+    def create_midday_rollup(self):
+        with self.app.app_context():
+            asyncio.run(NewsRollupService().create_and_store_rollup("midday"))
+
+    def create_afternoon_rollup(self):
+        with self.app.app_context():
+            asyncio.run(NewsRollupService().create_and_store_rollup("afternoon"))
