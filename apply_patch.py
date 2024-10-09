@@ -37,24 +37,35 @@ def apply_patch():
         log("Creating new table...", Fore.YELLOW)
         cursor.execute("""
         CREATE TABLE parsed_content_new (
-            id INTEGER PRIMARY KEY,
-            title TEXT,
+            id TEXT PRIMARY KEY,
+            title TEXT NOT NULL,
+            url TEXT NOT NULL,
             description TEXT,
-            content TEXT,
-            link TEXT,
-            pub_date TIMESTAMP
+            content TEXT NOT NULL,
+            summary TEXT,
+            feed_id TEXT NOT NULL,
+            created_at TIMESTAMP NOT NULL,
+            pub_date TIMESTAMP NOT NULL,
+            creator TEXT,
+            art_hash TEXT
         )
         """)
 
         log("Copying data to new table...", Fore.YELLOW)
         cursor.execute("""
-        INSERT INTO parsed_content_new (id, title, description, content, link, pub_date)
-        SELECT id, title, description, content, link, 
-               CASE 
-                   WHEN pub_date IS NOT NULL AND pub_date != '' 
-                   THEN datetime(pub_date) 
-                   ELSE NULL 
-               END
+        INSERT INTO parsed_content_new (
+            id, title, url, description, content, summary, feed_id, 
+            created_at, pub_date, creator, art_hash
+        )
+        SELECT 
+            id, title, url, description, content, summary, feed_id,
+            COALESCE(created_at, CURRENT_TIMESTAMP),
+            CASE 
+                WHEN pub_date IS NOT NULL AND pub_date != '' 
+                THEN datetime(pub_date) 
+                ELSE CURRENT_TIMESTAMP 
+            END,
+            creator, art_hash
         FROM parsed_content
         """)
 
