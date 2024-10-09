@@ -39,7 +39,7 @@ class ParsedContentService:
         latest_content = query.limit(limit).all()
         content_stats = ParsedContentService.get_content_stats()
         return {
-            'content': [content.to_dict() if hasattr(content, 'to_dict') else str(content) for content in latest_content],
+            'content': [content.to_dict() for content in latest_content],
             'stats': content_stats
         }
 
