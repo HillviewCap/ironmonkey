@@ -7,8 +7,8 @@ and storing new entries in the database.
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
-from typing import Optional, Tuple
+from datetime import datetime, timezone, timedelta
+from typing import Optional, Tuple, List
 
 import httpx
 import feedparser
@@ -57,7 +57,7 @@ def get_or_create_category(session: Session, name: str) -> Category:
                 logger.error(f"Failed to get or create category after {max_retries} attempts: {e}")
                 raise
 
-async def fetch_and_parse_feed(feed_id: str) -> int:
+async def fetch_and_parse_feed(feed_id: str, force_update: bool = False) -> int:
     """
     Fetch and parse a single RSS feed.
 
@@ -67,6 +67,7 @@ async def fetch_and_parse_feed(feed_id: str) -> int:
 
     Args:
         feed_id (str): The ID of the RSS feed to fetch and parse.
+        force_update (bool): If True, bypass etag and last-modified checks.
 
     Returns:
         int: The number of new entries added to the database.
@@ -86,15 +87,9 @@ async def fetch_and_parse_feed(feed_id: str) -> int:
                 logger.error(f"Feed with id {feed_id} not found")
                 return 0
 
-            async with httpx.AsyncClient(follow_redirects=True, timeout=30.0) as client:
-                response = await client.get(feed.url, headers=headers)
-                response.raise_for_status()
-
-                # Check if the URL has been redirected
-                if str(response.url) != feed.url:
-                    feed.url = str(response.url)
-                    session.commit()
-
+            # Check if it's time for a forced update
+            time_since_last_update = datetime.now(timezone.utc) - feed.last_checked
+            if not force_update and time_since_last_update <= timedelta(hours=24):
                 # Check if the feed has been modified
                 etag = response.headers.get('etag')
                 last_modified = response.headers.get('last-modified')
@@ -105,13 +100,11 @@ async def fetch_and_parse_feed(feed_id: str) -> int:
                 if last_modified:
                     try:
                         parsed_last_modified = date_parser.parse(last_modified)
-                        # Ensure parsed_last_modified is timezone-aware
                         if parsed_last_modified.tzinfo is None:
                             parsed_last_modified = parsed_last_modified.replace(tzinfo=timezone.utc)
                         
                         if feed.last_modified:
                             feed_last_modified = date_parser.parse(feed.last_modified)
-                            # Ensure feed_last_modified is timezone-aware
                             if feed_last_modified.tzinfo is None:
                                 feed_last_modified = feed_last_modified.replace(tzinfo=timezone.utc)
                             
@@ -120,122 +113,130 @@ async def fetch_and_parse_feed(feed_id: str) -> int:
                     except Exception as e:
                         logger.warning(f"Could not parse or compare last-modified header: {e}")
 
-                feed_data = feedparser.parse(response.content)
+            async with httpx.AsyncClient(follow_redirects=True, timeout=30.0) as client:
+                response = await client.get(feed.url, headers=headers)
+                response.raise_for_status()
 
-                # Update feed metadata
-                feed.etag = etag
-                if last_modified:
-                    try:
-                        parsed_last_modified = date_parser.parse(last_modified)
-                        feed.last_modified = parsed_last_modified.strftime("%Y-%m-%d %H:%M:%S")
-                    except Exception as e:
-                        logger.warning(f"Could not parse last-modified header: {e}")
+                # Check if the URL has been redirected
+                if str(response.url) != feed.url:
+                    feed.url = str(response.url)
+                    session.commit()
+
+            feed_data = feedparser.parse(response.content)
+
+            # Compare the most recent entry date
+            if feed_data.entries:
+                most_recent_entry_date = get_most_recent_entry_date(feed_data.entries)
+                db_most_recent_entry = session.query(func.max(ParsedContent.pub_date)).filter_by(feed_id=feed.id).scalar()
                 
-                if "title" in feed_data.feed:
-                    feed.title = sanitize_html(feed_data.feed.title)
-                if "description" in feed_data.feed:
-                    feed.description = sanitize_html(feed_data.feed.description)
-                
-                # Update last_build_date if available
-                if 'updated' in feed_data.feed:
-                    try:
-                        new_build_date = date_parser.parse(feed_data.feed.updated)
-                        # Ensure new_build_date is timezone-aware
-                        if new_build_date.tzinfo is None:
-                            new_build_date = new_build_date.replace(tzinfo=timezone.utc)
+                if db_most_recent_entry and most_recent_entry_date <= db_most_recent_entry:
+                    logger.info(f"No new entries for feed {feed.url}")
+                    feed.last_checked = datetime.now(timezone.utc)
+                    session.commit()
+                    return 0
+
+            # Update feed metadata
+            feed.etag = response.headers.get('etag')
+            if last_modified:
+                try:
+                    parsed_last_modified = date_parser.parse(last_modified)
+                    feed.last_modified = parsed_last_modified.strftime("%Y-%m-%d %H:%M:%S")
+                except Exception as e:
+                    logger.warning(f"Could not parse last-modified header: {e}")
+            
+            if "title" in feed_data.feed:
+                feed.title = sanitize_html(feed_data.feed.title)
+            if "description" in feed_data.feed:
+                feed.description = sanitize_html(feed_data.feed.description)
+            
+            # Update last_build_date if available
+            if 'updated' in feed_data.feed:
+                try:
+                    new_build_date = date_parser.parse(feed_data.feed.updated)
+                    if new_build_date.tzinfo is None:
+                        new_build_date = new_build_date.replace(tzinfo=timezone.utc)
+                    
+                    if not feed.last_build_date:
+                        feed.last_build_date = new_build_date.strftime("%Y-%m-%d %H:%M:%S")
+                    else:
+                        last_build_date = date_parser.parse(feed.last_build_date)
+                        if last_build_date.tzinfo is None:
+                            last_build_date = last_build_date.replace(tzinfo=timezone.utc)
                         
-                        if not feed.last_build_date:
+                        if new_build_date > last_build_date:
                             feed.last_build_date = new_build_date.strftime("%Y-%m-%d %H:%M:%S")
-                        else:
-                            last_build_date = date_parser.parse(feed.last_build_date)
-                            # Ensure last_build_date is timezone-aware
-                            if last_build_date.tzinfo is None:
-                                last_build_date = last_build_date.replace(tzinfo=timezone.utc)
-                            
-                            if new_build_date > last_build_date:
-                                feed.last_build_date = new_build_date.strftime("%Y-%m-%d %H:%M:%S")
-                    except Exception as e:
-                        logger.warning(f"Could not parse or compare feed updated date: {e}")
+                except Exception as e:
+                    logger.warning(f"Could not parse or compare feed updated date: {e}")
 
-                session.commit()
+            feed.last_checked = datetime.now(timezone.utc)
+            session.commit()
 
-                total_entries = len(feed_data.entries)
+            total_entries = len(feed_data.entries)
 
-                # Get the most recent entry's publication date from the database
-                most_recent_entry = session.query(func.max(ParsedContent.pub_date)).filter_by(feed_id=feed.id).scalar()
-                if most_recent_entry and most_recent_entry.tzinfo is None:
-                    most_recent_entry = most_recent_entry.replace(tzinfo=datetime.timezone.utc)
+            for entry in feed_data.entries:
+                try:
+                    url = entry.link
+                    title = entry.get("title", "")
 
-                for entry in feed_data.entries:
-                    try:
-                        url = entry.link
-                        title = entry.get("title", "")
-
-                        pub_date = entry.get("published", "")
-                        if pub_date and pub_date.lower() != "invalid date":
-                            try:
-                                parsed_date = date_parser.parse(pub_date)
-                                # Ensure the datetime is timezone-aware
-                                if parsed_date.tzinfo is None:
-                                    parsed_date = parsed_date.replace(tzinfo=datetime.timezone.utc)
-                            except Exception as e:
-                                logger.warning(f"Could not parse date: {pub_date}. Error: {str(e)}. Using current date and time.")
-                                parsed_date = datetime.now(datetime.timezone.utc)
-                        else:
-                            logger.warning(f"Invalid or no published date found: {pub_date}. Using current date and time.")
+                    pub_date = entry.get("published", "")
+                    if pub_date and pub_date.lower() != "invalid date":
+                        try:
+                            parsed_date = date_parser.parse(pub_date)
+                            if parsed_date.tzinfo is None:
+                                parsed_date = parsed_date.replace(tzinfo=datetime.timezone.utc)
+                        except Exception as e:
+                            logger.warning(f"Could not parse date: {pub_date}. Error: {str(e)}. Using current date and time.")
                             parsed_date = datetime.now(datetime.timezone.utc)
+                    else:
+                        logger.warning(f"Invalid or no published date found: {pub_date}. Using current date and time.")
+                        parsed_date = datetime.now(datetime.timezone.utc)
 
-                        # Skip entries that are older than or equal to the most recent entry in the database
-                        if most_recent_entry:
-                            if parsed_date <= most_recent_entry:
-                                continue
+                    existing_content = session.execute(
+                        select(ParsedContent).filter_by(url=url, feed_id=feed.id).with_for_update(nowait=True)
+                    ).scalar_one_or_none()
 
-                        existing_content = session.execute(
-                            select(ParsedContent).filter_by(url=url, feed_id=feed.id).with_for_update(nowait=True)
-                        ).scalar_one_or_none()
+                    if not existing_content:
+                        parsed_content = await parse_content(url)
+                        if parsed_content is not None:
+                            new_content = ParsedContent(
+                                content=sanitize_html(parsed_content),
+                                feed_id=feed.id,
+                                url=url,
+                                title=sanitize_html(title),
+                                description=sanitize_html(entry.get("description", "")),
+                                pub_date=parsed_date,
+                                creator=sanitize_html(entry.get("author", "")),
+                            )
+                            session.add(new_content)
+                            session.flush()  # This will assign the UUID to new_content
 
-                        if not existing_content:
-                            parsed_content = await parse_content(url)
-                            if parsed_content is not None:
-                                new_content = ParsedContent(
-                                    content=sanitize_html(parsed_content),
-                                    feed_id=feed.id,
-                                    url=url,
-                                    title=sanitize_html(title),
-                                    description=sanitize_html(entry.get("description", "")),
-                                    pub_date=parsed_date,
-                                    creator=sanitize_html(entry.get("author", "")),
-                                )
-                                session.add(new_content)
-                                session.flush()  # This will assign the UUID to new_content
-
-                                # Handle categories
-                                categories = entry.get("tags", [])
-                                for category in categories:
-                                    cat_name = sanitize_html(category.get("term", ""))
-                                    if cat_name:
-                                        cat_obj = get_or_create_category(session, cat_name)
-                                        new_content.categories.append(cat_obj)
-                                new_entries_count += 1
-                            else:
-                                logger.warning(f"Failed to parse content for URL: {url}")
-                    except OperationalError as e:
-                        if "database is locked" in str(e):
-                            logger.warning(f"Database locked for entry {url}, skipping...")
-                            continue
+                            # Handle categories
+                            categories = entry.get("tags", [])
+                            for category in categories:
+                                cat_name = sanitize_html(category.get("term", ""))
+                                if cat_name:
+                                    cat_obj = get_or_create_category(session, cat_name)
+                                    new_content.categories.append(cat_obj)
+                            new_entries_count += 1
                         else:
-                            raise
-                    except Exception as entry_error:
-                        logger.error(
-                            f"Error processing entry {entry.get('link', 'Unknown')} from feed {feed.url}: {str(entry_error)}",
-                            exc_info=True
-                        )
-                        session.rollback()
-                        continue  # Continue with the next entry
+                            logger.warning(f"Failed to parse content for URL: {url}")
+                except OperationalError as e:
+                    if "database is locked" in str(e):
+                        logger.warning(f"Database locked for entry {url}, skipping...")
+                        continue
+                    else:
+                        raise
+                except Exception as entry_error:
+                    logger.error(
+                        f"Error processing entry {entry.get('link', 'Unknown')} from feed {feed.url}: {str(entry_error)}",
+                        exc_info=True
+                    )
+                    session.rollback()
+                    continue  # Continue with the next entry
 
-                    session.commit()  # Commit after each successful entry processing
+                session.commit()  # Commit after each successful entry processing
 
-                logger.info(f"Feed: {feed.url} - Added {new_entries_count} new entries to database")
+            logger.info(f"Feed: {feed.url} - Added {new_entries_count} new entries to database")
     except httpx.HTTPStatusError as e:
         logger.error(f"HTTP error occurred while fetching feed {feed.url}: {e}", exc_info=True)
         raise ValueError(
@@ -258,5 +259,20 @@ async def fetch_and_parse_feed(feed_id: str) -> int:
         raise RuntimeError(f"Unexpected error: {str(e)}")
     finally:
         return new_entries_count
-def fetch_and_parse_feed_sync(feed_id: str) -> int:
-    return asyncio.run(fetch_and_parse_feed(feed_id))
+def get_most_recent_entry_date(entries: List[dict]) -> datetime:
+    most_recent_date = None
+    for entry in entries:
+        pub_date = entry.get("published", "")
+        if pub_date and pub_date.lower() != "invalid date":
+            try:
+                parsed_date = date_parser.parse(pub_date)
+                if parsed_date.tzinfo is None:
+                    parsed_date = parsed_date.replace(tzinfo=timezone.utc)
+                if most_recent_date is None or parsed_date > most_recent_date:
+                    most_recent_date = parsed_date
+            except Exception as e:
+                logger.warning(f"Could not parse date: {pub_date}. Error: {str(e)}.")
+    return most_recent_date or datetime.now(timezone.utc)
+
+def fetch_and_parse_feed_sync(feed_id: str, force_update: bool = False) -> int:
+    return asyncio.run(fetch_and_parse_feed(feed_id, force_update))
