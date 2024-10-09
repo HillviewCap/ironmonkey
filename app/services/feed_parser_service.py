@@ -87,35 +87,35 @@ async def fetch_and_parse_feed(feed_id: str, force_update: bool = False) -> int:
                 logger.error(f"Feed with id {feed_id} not found")
                 return 0
 
-            # Check if it's time for a forced update
-            time_since_last_update = datetime.now(timezone.utc) - feed.last_checked
-            if not force_update and time_since_last_update <= timedelta(hours=24):
-                # Check if the feed has been modified
-                etag = response.headers.get('etag')
-                last_modified = response.headers.get('last-modified')
-                
-                if etag and etag == feed.etag:
-                    return 0
-                
-                if last_modified:
-                    try:
-                        parsed_last_modified = date_parser.parse(last_modified)
-                        if parsed_last_modified.tzinfo is None:
-                            parsed_last_modified = parsed_last_modified.replace(tzinfo=timezone.utc)
-                        
-                        if feed.last_modified:
-                            feed_last_modified = date_parser.parse(feed.last_modified)
-                            if feed_last_modified.tzinfo is None:
-                                feed_last_modified = feed_last_modified.replace(tzinfo=timezone.utc)
-                            
-                            if parsed_last_modified <= feed_last_modified:
-                                return 0
-                    except Exception as e:
-                        logger.warning(f"Could not parse or compare last-modified header: {e}")
-
             async with httpx.AsyncClient(follow_redirects=True, timeout=30.0) as client:
                 response = await client.get(feed.url, headers=headers)
                 response.raise_for_status()
+
+                # Check if it's time for a forced update
+                time_since_last_update = datetime.now(timezone.utc) - feed.last_checked
+                if not force_update and time_since_last_update <= timedelta(hours=24):
+                    # Check if the feed has been modified
+                    etag = response.headers.get('etag')
+                    last_modified = response.headers.get('last-modified')
+                    
+                    if etag and etag == feed.etag:
+                        return 0
+                    
+                    if last_modified:
+                        try:
+                            parsed_last_modified = date_parser.parse(last_modified)
+                            if parsed_last_modified.tzinfo is None:
+                                parsed_last_modified = parsed_last_modified.replace(tzinfo=timezone.utc)
+                            
+                            if feed.last_modified:
+                                feed_last_modified = date_parser.parse(feed.last_modified)
+                                if feed_last_modified.tzinfo is None:
+                                    feed_last_modified = feed_last_modified.replace(tzinfo=timezone.utc)
+                                
+                                if parsed_last_modified <= feed_last_modified:
+                                    return 0
+                        except Exception as e:
+                            logger.warning(f"Could not parse or compare last-modified header: {e}")
 
                 # Check if the URL has been redirected
                 if str(response.url) != feed.url:
