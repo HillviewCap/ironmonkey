@@ -11,7 +11,7 @@
     <p class="text-gray-600 mb-4">
         Date Published: 
         {% if item.pub_date %}
-            {{ item.pub_date.strftime('%Y-%m-%d') if item.pub_date is not string else item.pub_date }}
+            {{ item.pub_date.strftime('%Y-%m-%d %H:%M:%S UTC') if item.pub_date is not string else item.pub_date }}
         {% else %}
             N/A
         {% endif %}
