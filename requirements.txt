@@ -25,6 +25,7 @@ diff-match-patch==20230430
 diskcache==5.6.3
 distro==1.9.0
 dnspython==2.6.1
+elevenlabs==1.9.0
 email_validator==2.2.0
 feedparser==6.0.11
 filelock==3.15.4
@@ -82,6 +83,7 @@ orjson==3.10.6
 packaging==24.1
 pathspec==0.12.1
 pillow==10.4.0
+pipx==1.7.1
 platformdirs==4.3.6
 pluggy==1.5.0
 prompt_toolkit==3.0.47
@@ -130,6 +132,7 @@ userpath==1.9.2
 waitress==3.0.0
 wcwidth==0.2.13
 webencodings==0.5.1
+websockets==13.1
 Werkzeug==3.0.3
 WTForms==3.1.2
 yarl==1.9.4
