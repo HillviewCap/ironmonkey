@@ -93,12 +93,20 @@ async def fetch_and_parse_feed(feed_id: str, force_update: bool = False) -> int:
 
                 # Check if it's time for a forced update
                 time_since_last_update = datetime.now(timezone.utc) - feed.last_checked
+                logger.info(f"Time since last update for feed {feed.url}: {time_since_last_update}")
+                
                 if not force_update and time_since_last_update <= timedelta(hours=24):
+                    logger.info(f"Checking for modifications on feed {feed.url}")
+                    
                     # Check if the feed has been modified
                     etag = response.headers.get('etag')
                     last_modified = response.headers.get('last-modified')
                     
+                    logger.info(f"Current etag: {etag}, Feed etag: {feed.etag}")
+                    logger.info(f"Current last-modified: {last_modified}, Feed last-modified: {feed.last_modified}")
+                    
                     if etag and etag == feed.etag:
+                        logger.info(f"Feed {feed.url} not modified (etag match)")
                         return 0
                     
                     if last_modified:
@@ -112,10 +120,17 @@ async def fetch_and_parse_feed(feed_id: str, force_update: bool = False) -> int:
                                 if feed_last_modified.tzinfo is None:
                                     feed_last_modified = feed_last_modified.replace(tzinfo=timezone.utc)
                                 
+                                logger.info(f"Parsed last-modified: {parsed_last_modified}, Feed last-modified: {feed_last_modified}")
+                                
                                 if parsed_last_modified <= feed_last_modified:
+                                    logger.info(f"Feed {feed.url} not modified (last-modified date comparison)")
                                     return 0
+                            else:
+                                logger.info(f"Feed {feed.url} has no stored last-modified date")
                         except Exception as e:
                             logger.warning(f"Could not parse or compare last-modified header: {e}")
+                else:
+                    logger.info(f"Forced update or more than 24 hours since last check for feed {feed.url}")
 
                 # Check if the URL has been redirected
                 if str(response.url) != feed.url:
