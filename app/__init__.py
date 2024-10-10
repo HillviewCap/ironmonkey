@@ -33,6 +33,7 @@ from app.utils.ollama_client import OllamaAPI
 from app.services.scheduler_service import SchedulerService
 from app.services.apt_update_service import update_databases
 from app.services.news_rollup_service import NewsRollupService
+from app.cli.auto_tag_command import init_app as init_auto_tag_command
 
 load_dotenv()
 
