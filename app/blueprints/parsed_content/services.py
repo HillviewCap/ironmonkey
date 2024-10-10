@@ -4,6 +4,7 @@ from app.extensions import db
 from typing import List, Dict, Any, Optional
 from datetime import datetime, timedelta
 from sqlalchemy import func, desc
+from sqlalchemy.orm import joinedload
 
 class ParsedContentService:
     @staticmethod
@@ -31,7 +32,7 @@ class ParsedContentService:
         :param category: Optional category to filter the content
         :return: A dictionary containing parsed content data and content stats
         """
-        query = ParsedContent.query.order_by(desc(ParsedContent.pub_date))
+        query = ParsedContent.query.options(joinedload(ParsedContent.feed)).order_by(desc(ParsedContent.pub_date))
         
         if category:
             query = query.filter(ParsedContent.category.has(name=category))
