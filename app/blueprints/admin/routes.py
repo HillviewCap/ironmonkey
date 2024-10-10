@@ -1,11 +1,12 @@
 from flask import Blueprint, render_template, request, flash, redirect, url_for
 from flask_login import login_required
-from flask_wtf.csrf import csrf_protected
+from flask_wtf.csrf import CSRFProtect
 from app.models.relational import User
 from app.models import db
 from sqlalchemy import desc
 from app.utils.auto_tagger import tag_all_content
 
+csrf = CSRFProtect()
 admin_bp = Blueprint('admin', __name__)
 
 @admin_bp.route("/")
@@ -34,7 +35,6 @@ def admin():
 
 @admin_bp.route("/maintenance/auto-tag", methods=['POST'])
 @login_required
-@csrf_protected
 def run_auto_tag():
     """
     Run the auto-tagging process.
