@@ -9,6 +9,7 @@ from flask import flash, current_app
 from .category import Category
 from typing import List, Dict, Any, Optional, Union
 from pydantic import BaseModel
+from .content_tag import ContentTag
 
 parsed_content_categories = Table(
     'parsed_content_categories',
@@ -33,6 +34,7 @@ class ParsedContent(db.Model):
     creator = Column(String(255), nullable=True)
     categories = db.relationship('Category', secondary=parsed_content_categories, backref=db.backref('parsed_contents', lazy='dynamic'))
     art_hash = Column(String(64), nullable=True)
+    tags = db.relationship('ContentTag', back_populates='parsed_content', cascade='all, delete-orphan')
 
     __table_args__ = (db.UniqueConstraint('url', 'feed_id', name='uix_url_feed'),)
 
@@ -120,3 +122,7 @@ class ParsedContent(db.Model):
             'creator': self.creator,
             'art_hash': self.art_hash
         }
+
+    def perform_auto_tagging(self):
+        from app.utils.auto_tagger import tag_content
+        tag_content(self.id)
