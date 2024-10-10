@@ -11,7 +11,7 @@ class ParsedContentService:
         content = ParsedContent.get_by_id(content_id)
         if content:
             return {
-                'rss_feed_title': content.rss_feed.title,
+                'rss_feed_title': content.title,
                 'title': content.title,
                 'creator': content.creator,
                 'pub_date': content.pub_date,
