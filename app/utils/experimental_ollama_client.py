@@ -36,36 +36,45 @@ class ExperimentalOllamaAPI:
                 self.prompts = yaml.safe_load(file)
         return self.prompts
 
+    async def _generate_json_with_retry(self, prompt_type: str, article: str, max_retries: int = 3) -> dict:
+        prompts = self.load_prompts()
+        prompt_data = prompts.get(prompt_type, {})
+        system_prompt = prompt_data.get("system_prompt", "")
+        full_prompt = f"Human: {system_prompt}\n\nArticle: {article}\n\nRespond with a valid JSON object."
+
+        for attempt in range(max_retries):
+            try:
+                output = await asyncio.get_event_loop().run_in_executor(
+                    None, partial(self.llm.invoke, full_prompt)
+                )
+
+                if current_app.debug:
+                    logger.debug(f"Generated response (attempt {attempt + 1}): {output}")
+                
+                json_match = re.search(r'(\{.*\})', output, re.DOTALL)
+                if json_match:
+                    json_str = json_match.group(1)
+                    try:
+                        json_output = json.loads(json_str)
+                        return json_output
+                    except json.JSONDecodeError as e:
+                        logger.warning(f"Failed to parse extracted JSON (attempt {attempt + 1}): {e}")
+                else:
+                    logger.warning(f"No JSON object found in the response (attempt {attempt + 1})")
+
+                if attempt < max_retries - 1:
+                    await asyncio.sleep(1)  # Wait for 1 second before retrying
+            except Exception as exc:
+                logger.error(f"Error occurred while generating response (attempt {attempt + 1}): {exc}")
+                if attempt < max_retries - 1:
+                    await asyncio.sleep(1)  # Wait for 1 second before retrying
+
+        return {"error": "Failed to generate valid JSON after multiple attempts"}
+
     async def generate_json(self, prompt_type: str, article: str) -> dict:
         """Generate a JSON response based on the prompt type and article."""
         try:
-            prompts = self.load_prompts()
-            prompt_data = prompts.get(prompt_type, {})
-            system_prompt = prompt_data.get("system_prompt", "")
-            full_prompt = f"Human: {system_prompt}\n\nArticle: {article}\n\nRespond with a valid JSON object."
-
-            output = await asyncio.get_event_loop().run_in_executor(
-                None, partial(self.llm.invoke, full_prompt)
-            )
-
-            if current_app.debug:
-                logger.debug(f"Generated response: {output}")
-            
-            # Use regex to extract JSON object
-            json_match = re.search(r'(\{.*\})', output, re.DOTALL)
-            if json_match:
-                json_str = json_match.group(1)
-                # Attempt to parse the extracted JSON
-                try:
-                    json_output = json.loads(json_str)
-                    return json_output
-                except json.JSONDecodeError as e:
-                    logger.error(f"Failed to parse extracted JSON: {e}")
-                    return {"error": "Failed to parse extracted JSON"}
-            else:
-                logger.error("No JSON object found in the response")
-                return {"error": "No JSON object found in the response"}
-
+            return await self._generate_json_with_retry(prompt_type, article)
         except Exception as exc:
             logger.error(f"Error occurred while generating response: {exc}")
             raise RuntimeError(f"Error occurred while generating response: {exc}")
