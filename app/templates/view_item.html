@@ -37,7 +37,12 @@
     {% if item.description %}
     <div class="mb-6">
         <h2 class="text-xl font-semibold mb-2">Description</h2>
-        <p>{{ item.description }}</p>
+        {% if item.description|length > 500 %}
+            <p>{{ item.description[:500] }}... <a href="#" class="text-blue-500 hover:text-blue-700" onclick="toggleDescription(event)">Read more</a></p>
+            <p class="hidden">{{ item.description }}</p>
+        {% else %}
+            <p>{{ item.description }}</p>
+        {% endif %}
     </div>
     {% endif %}
     
@@ -117,4 +122,15 @@
     </a>
     {% endif %}
 </div>
+
+<script>
+function toggleDescription(event) {
+    event.preventDefault();
+    const shortDesc = event.target.parentNode;
+    const fullDesc = shortDesc.nextElementSibling;
+    shortDesc.classList.toggle('hidden');
+    fullDesc.classList.toggle('hidden');
+}
+</script>
+
 {% endblock %}
