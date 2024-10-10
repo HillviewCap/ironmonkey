@@ -94,7 +94,7 @@ class ParsedContentService:
         site_counts = {}
         author_counts = {}
         for item in content:
-            site = item.rss_feed_title
+            site = item.feed.title if item.feed else 'Unknown'
             site_counts[site] = site_counts.get(site, 0) + 1
             
             author = item.creator or 'Unknown'
