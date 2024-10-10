@@ -22,18 +22,16 @@ content_cache = TTLCache(maxsize=1000, ttl=3600)
 
 async def follow_redirects(url: str) -> str:
     """Follow redirects and return the final URL."""
-    """
-    Follow redirects and return the final URL.
-
-    Args:
-        url (str): The initial URL.
-
-    Returns:
-        str: The final URL after following all redirects.
-    """
-    async with httpx.AsyncClient(follow_redirects=True) as client:
-        response = await client.get(url)
-        return str(response.url)
+    try:
+        async with httpx.AsyncClient(follow_redirects=True, timeout=30.0) as client:
+            response = await client.get(url)
+            return str(response.url)
+    except httpx.ReadTimeout:
+        logger.warning(f"Read timeout occurred while following redirects for URL: {url}")
+        return url  # Return the original URL if we can't follow redirects
+    except httpx.HTTPError as e:
+        logger.warning(f"HTTP error occurred while following redirects for URL: {url}. Error: {str(e)}")
+        return url  # Return the original URL if we encounter an HTTP error
 
 
 # Rate limit: 200 requests per minute
@@ -47,16 +45,6 @@ async def follow_redirects(url: str) -> str:
 )
 async def parse_content(url: str) -> str:
     """Parse content using the Jina API and return the parsed text."""
-    """
-    Parse content using the Jina API.
-
-    Args:
-        url (str): The URL to parse.
-
-    Returns:
-        str: Parsed text content or None if an error occurs.
-    """
-    # Check if the content is already in the cache
     if url in content_cache:
         logger.info(f"Retrieved cached content for URL: {url}")
         return content_cache[url]
@@ -93,22 +81,18 @@ async def parse_content(url: str) -> str:
             return content
     except ReadTimeout as e:
         logger.error(f"Read timeout occurred while parsing URL {url}: {str(e)}", exc_info=True)
-        return None
     except httpx.HTTPStatusError as e:
         logger.error(f"HTTP error occurred while parsing URL {url}: {str(e)}", exc_info=True)
-        return None
     except httpx.RequestError as e:
         logger.error(f"Request error occurred while parsing URL {url}: {str(e)}", exc_info=True)
-        return None
     except ValueError as e:
         logger.error(f"JSON decoding error occurred while parsing URL {url}: {str(e)}", exc_info=True)
-        return None
     except KeyError as e:
         logger.error(f"Unexpected API response structure for URL {url}: {str(e)}", exc_info=True)
-        return None
     except Exception as e:
         logger.error(f"An unexpected error occurred while parsing URL {url}: {str(e)}", exc_info=True)
-        return None
+    
+    return None
 
 
 async def update_content_in_database(post_id: str, content: str) -> None:
