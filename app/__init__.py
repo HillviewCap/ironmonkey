@@ -178,6 +178,10 @@ def create_app(config_object=None):
         update_databases()
         logger.info("APT databases updated at application startup")
 
+    # Initialize auto-tag command
+    init_auto_tag_command(app)
+    logger.info("Auto-tag command initialized")
+
     @login_manager.user_loader
     def load_user(user_id):
         """
