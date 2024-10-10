@@ -1,4 +1,5 @@
 import spacy
+import uuid
 from app.models.relational.allgroups import AllGroupsValues
 from app.models.relational.alltools import AllToolsValuesNames
 from app.models.relational.parsed_content import ParsedContent
@@ -29,9 +30,10 @@ def tag_content(content_id):
         if lower_ent in entities:
             entity_id, entity_type = entities[lower_ent]
             new_tag = ContentTag(
+                id=uuid.uuid4(),  # Generate a new UUID for each tag
                 parsed_content_id=content.id,
                 entity_type=entity_type,
-                entity_id=entity_id,
+                entity_id=uuid.UUID(entity_id),  # Convert string to UUID
                 entity_name=ent.text,
                 start_char=ent.start_char,
                 end_char=ent.end_char
