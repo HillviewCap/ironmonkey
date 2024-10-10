@@ -4,6 +4,7 @@ from app.models.relational.alltools import AllToolsValuesNames
 from app.models.relational.parsed_content import ParsedContent
 from app.models.relational.content_tag import ContentTag
 from app.extensions import db
+from flask import current_app
 
 nlp = spacy.load("en_core_web_sm")
 
@@ -15,6 +16,7 @@ def get_entities():
 def tag_content(content_id):
     content = ParsedContent.query.get(content_id)
     if not content:
+        current_app.logger.warning(f"Content with id {content_id} not found")
         return
 
     entities = get_entities()
@@ -36,9 +38,17 @@ def tag_content(content_id):
             )
             new_tags.append(new_tag)
 
-    db.session.add_all(new_tags)
-    db.session.commit()
+    try:
+        db.session.add_all(new_tags)
+        db.session.commit()
+        current_app.logger.info(f"Tagged content {content_id} with {len(new_tags)} tags")
+    except Exception as e:
+        current_app.logger.error(f"Error tagging content {content_id}: {str(e)}")
+        db.session.rollback()
 
 def tag_all_content():
+    total_tagged = 0
     for content in ParsedContent.query.all():
         tag_content(content.id)
+        total_tagged += 1
+    current_app.logger.info(f"Completed tagging {total_tagged} content items")
