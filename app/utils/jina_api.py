@@ -8,6 +8,7 @@ import logging
 from app.utils.logging_config import setup_logger
 from cachetools import TTLCache
 from functools import lru_cache
+import urllib.parse
 
 load_dotenv()
 
@@ -34,6 +35,16 @@ async def follow_redirects(url: str) -> str:
         return url  # Return the original URL if we encounter an HTTP error
 
 
+async def check_url_accessibility(url: str) -> bool:
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.head(url, follow_redirects=True, timeout=10.0)
+            return response.status_code == 200
+    except Exception as e:
+        logger.warning(f"Failed to access URL {url}: {str(e)}")
+        return False
+
+
 # Rate limit: 200 requests per minute
 @sleep_and_retry
 @limits(calls=200, period=60)
@@ -49,21 +60,29 @@ async def parse_content(url: str) -> str:
         logger.info(f"Retrieved cached content for URL: {url}")
         return content_cache[url]
 
+    logger.info(f"Parsing content from URL: {url}")
+
+    # Check if the URL is accessible
+    if not await check_url_accessibility(url):
+        logger.warning(f"URL {url} is not accessible")
+        return None
+
     headers = {
         "Authorization": f"Bearer {JINA_API_KEY}",
         "X-Return-Format": "text",
         "Accept": "application/json",
     }
 
-    logger.info(f"Parsing content from URL: {url}")
-
     try:
         # Follow redirects to get the final URL
         final_url = await follow_redirects(url)
         logger.info(f"Final URL after redirects: {final_url}")
 
+        # Encode the URL
+        encoded_url = urllib.parse.quote(final_url, safe='')
+
         async with httpx.AsyncClient() as client:
-            response = await client.get(f"https://r.jina.ai/{final_url}", headers=headers, timeout=60.0)
+            response = await client.get(f"https://r.jina.ai/{encoded_url}", headers=headers, timeout=60.0)
             response.raise_for_status()
             data = response.json()
 
