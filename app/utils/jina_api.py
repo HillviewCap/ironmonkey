@@ -8,7 +8,6 @@ import logging
 from app.utils.logging_config import setup_logger
 from cachetools import TTLCache
 from functools import lru_cache
-import urllib.parse
 
 load_dotenv()
 
@@ -78,11 +77,8 @@ async def parse_content(url: str) -> str:
         final_url = await follow_redirects(url)
         logger.info(f"Final URL after redirects: {final_url}")
 
-        # Encode the URL
-        encoded_url = urllib.parse.quote(final_url, safe='')
-
         async with httpx.AsyncClient() as client:
-            response = await client.get(f"https://r.jina.ai/{encoded_url}", headers=headers, timeout=60.0)
+            response = await client.get(f"https://r.jina.ai/{final_url}", headers=headers, timeout=60.0)
             response.raise_for_status()
             data = response.json()
 
