@@ -85,3 +85,26 @@ class ParsedContentService:
             'top_sites': top_sites,
             'top_authors': top_authors
         }
+class ParsedContentService:
+    def calculate_stats(self, content):
+        # Implement your statistics calculation here
+        articles_today = len(content)
+        
+        # Example implementation for top sites and authors
+        site_counts = {}
+        author_counts = {}
+        for item in content:
+            site = item.rss_feed_title
+            site_counts[site] = site_counts.get(site, 0) + 1
+            
+            author = item.creator or 'Unknown'
+            author_counts[author] = author_counts.get(author, 0) + 1
+        
+        top_sites = sorted(site_counts.items(), key=lambda x: x[1], reverse=True)[:3]
+        top_authors = sorted(author_counts.items(), key=lambda x: x[1], reverse=True)[:3]
+        
+        return {
+            'articles_today': articles_today,
+            'top_sites': top_sites,
+            'top_authors': top_authors
+        }

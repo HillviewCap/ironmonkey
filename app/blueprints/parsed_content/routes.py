@@ -14,7 +14,8 @@ def parsed_content():
         ParsedContent.pub_date.between(start_of_day, end_of_day)
     ).order_by(ParsedContent.pub_date.desc()).all()
 
-    stats = ParsedContentService.calculate_stats(content)
+    parsed_content_service = ParsedContentService()
+    stats = parsed_content_service.calculate_stats(content)
 
     return render_template('parsed_content/index.html', content=content, stats=stats)
 
