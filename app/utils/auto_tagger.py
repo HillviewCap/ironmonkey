@@ -91,3 +91,12 @@ def _insert_tags(text, tags):
             text = text[:start] + link + text[end:]
             offset += len(link) - (end - start)
     return text
+
+def tag_untagged_content():
+    with current_app.app_context():
+        untagged_content = ParsedContent.query.outerjoin(ContentTag).filter(ContentTag.id == None).all()
+        total_tagged = 0
+        for content in untagged_content:
+            tag_content(content.id)
+            total_tagged += 1
+        current_app.logger.info(f"Completed tagging {total_tagged} previously untagged content items")
