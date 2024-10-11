@@ -150,6 +150,10 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     function fetchEntityDetails(entityType, entityId, entityName) {
+        const modalLoader = document.getElementById('modalLoader');
+        modalLoader.classList.remove('hidden');
+        showModal(entityName, '', null); // Show modal with empty content while loading
+
         fetch(`/api/entity/${entityType}/${entityId}`)
             .then(response => response.json())
             .then(data => {
@@ -159,11 +163,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 } else if (entityType === "TOOL") {
                     detailPageUrl = `/apt/tool/${entityId}`;
                 }
-                showModal(entityName, data.description, detailPageUrl);
+                showModal(data.name, data.description, detailPageUrl);
             })
             .catch(error => {
                 console.error('Error:', error);
                 showModal(entityName, "Error fetching entity details.", null);
+            })
+            .finally(() => {
+                modalLoader.classList.add('hidden');
             });
     }
 
