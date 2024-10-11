@@ -1,5 +1,6 @@
 import spacy
 import uuid
+from sqlalchemy import exists
 from app.models.relational.allgroups import AllGroupsValues
 from app.models.relational.alltools import AllToolsValuesNames
 from app.models.relational.parsed_content import ParsedContent
@@ -18,7 +19,7 @@ def tag_content(content_id):
     content = ParsedContent.query.get(content_id)
     if not content:
         current_app.logger.warning(f"Content with id {content_id} not found")
-        return
+        return 0
 
     entities = get_entities()
     text_to_tag = f"{content.description or ''} {content.summary or ''}"
@@ -30,10 +31,10 @@ def tag_content(content_id):
         if lower_ent in entities:
             entity_id, entity_type = entities[lower_ent]
             new_tag = ContentTag(
-                id=uuid.uuid4(),  # Generate a new UUID for each tag
+                id=uuid.uuid4(),
                 parsed_content_id=content.id,
                 entity_type=entity_type,
-                entity_id=uuid.UUID(entity_id),  # Convert string to UUID
+                entity_id=uuid.UUID(entity_id),
                 entity_name=ent.text,
                 start_char=ent.start_char,
                 end_char=ent.end_char
@@ -44,15 +45,16 @@ def tag_content(content_id):
         db.session.add_all(new_tags)
         db.session.commit()
         current_app.logger.info(f"Tagged content {content_id} with {len(new_tags)} tags")
+        return len(new_tags)
     except Exception as e:
         current_app.logger.error(f"Error tagging content {content_id}: {str(e)}")
         db.session.rollback()
+        return 0
 
 def tag_all_content():
     total_tagged = 0
     for content in ParsedContent.query.all():
-        tag_content(content.id)
-        total_tagged += 1
+        total_tagged += tag_content(content.id)
     current_app.logger.info(f"Completed tagging {total_tagged} content items")
 
 def get_tagged_content(content_id):
@@ -92,11 +94,33 @@ def _insert_tags(text, tags):
             offset += len(link) - (end - start)
     return text
 
-def tag_untagged_content():
+def tag_untagged_content(batch_size=1000):
     with current_app.app_context():
-        untagged_content = ParsedContent.query.outerjoin(ContentTag).filter(ContentTag.id == None).all()
+        total_checked = 0
         total_tagged = 0
-        for content in untagged_content:
-            tag_content(content.id)
-            total_tagged += 1
-        current_app.logger.info(f"Completed tagging {total_tagged} previously untagged content items")
+        
+        while True:
+            untagged_content = ParsedContent.query.filter(
+                ~exists().where(ContentTag.parsed_content_id == ParsedContent.id)
+            ).limit(batch_size).all()
+
+            if not untagged_content:
+                break  # No more untagged content
+
+            batch_checked = len(untagged_content)
+            batch_tagged = 0
+
+            for content in untagged_content:
+                tags_added = tag_content(content.id)
+                if tags_added > 0:
+                    batch_tagged += 1
+
+            total_checked += batch_checked
+            total_tagged += batch_tagged
+
+            current_app.logger.info(f"Batch: Checked {batch_checked} items, tagged {batch_tagged} previously untagged content items")
+
+            if batch_checked < batch_size:
+                break  # Processed all available untagged content
+
+        current_app.logger.info(f"Completed tagging: Checked {total_checked} items, tagged {total_tagged} previously untagged content items")
