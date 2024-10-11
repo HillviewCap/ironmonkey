@@ -1,4 +1,4 @@
-from flask import render_template, abort
+from flask import render_template, abort, jsonify, request
 from datetime import datetime, time
 from .services import ParsedContentService
 from . import bp
@@ -6,9 +6,9 @@ from app.models.relational.parsed_content import ParsedContent
 
 @bp.route('/')
 def parsed_content():
-    today = datetime.utcnow().date()
-    start_of_day = datetime.combine(today, time.min)
-    end_of_day = datetime.combine(today, time.max)
+    selected_date = datetime.utcnow().date()
+    start_of_day = datetime.combine(selected_date, time.min)
+    end_of_day = datetime.combine(selected_date, time.max)
 
     content = ParsedContent.query.filter(
         ParsedContent.pub_date.between(start_of_day, end_of_day)
@@ -17,7 +17,26 @@ def parsed_content():
     parsed_content_service = ParsedContentService()
     stats = parsed_content_service.calculate_stats(content)
 
-    return render_template('parsed_content/index.html', content=content, stats=stats)
+    return render_template('parsed_content/index.html', content=content, stats=stats, selected_date=selected_date.isoformat())
+
+@bp.route('/list')
+def list_content():
+    selected_date = request.args.get('date', datetime.utcnow().date().isoformat())
+    selected_date = datetime.strptime(selected_date, '%Y-%m-%d').date()
+    start_of_day = datetime.combine(selected_date, time.min)
+    end_of_day = datetime.combine(selected_date, time.max)
+
+    content = ParsedContent.query.filter(
+        ParsedContent.pub_date.between(start_of_day, end_of_day)
+    ).order_by(ParsedContent.pub_date.desc()).all()
+
+    parsed_content_service = ParsedContentService()
+    stats = parsed_content_service.calculate_stats(content)
+
+    return jsonify({
+        'content': [item.to_dict() for item in content],
+        'stats': stats
+    })
 
 @bp.route('/item/<uuid:item_id>')
 def view_item(item_id):

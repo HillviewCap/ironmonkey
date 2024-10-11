@@ -5,34 +5,60 @@ document.addEventListener('DOMContentLoaded', function() {
     let currentPage = 1;
     const itemsPerPage = 10;
 
+    const dateForm = document.getElementById('date-form');
+    const dateInput = document.getElementById('date');
+    const selectedDateSpan = document.getElementById('selected-date');
+    const contentGrid = document.querySelector('.grid');
+
+    dateForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        fetchContent(dateInput.value);
+    });
+
+    function fetchContent(date) {
+        fetch(`/parsed_content/list?date=${date}`)
+            .then(response => response.json())
+            .then(data => {
+                updateContent(data.content);
+                updateStats(data.stats);
+                selectedDateSpan.textContent = date;
+            })
+            .catch(error => console.error('Error:', error));
+    }
+
+    function updateContent(content) {
+        contentGrid.innerHTML = '';
+        content.forEach(item => {
+            const articleElement = document.createElement('a');
+            articleElement.href = `/parsed_content/item/${item.id}`;
+            articleElement.className = 'block bg-white rounded-lg shadow-md p-6 hover:bg-gray-100';
+            articleElement.innerHTML = `
+                <h2 class="text-xl font-semibold mb-2 text-blue-600 hover:underline">
+                    ${item.title}
+                </h2>
+                <p class="text-gray-600 mb-4">${item.description ? item.description.substring(0, 150) + '...' : ''}</p>
+                <div class="text-sm text-gray-500 flex justify-between items-center">
+                    <span>${new Date(item.pub_date).toLocaleString()}</span>
+                    <span class="text-blue-500">${item.rss_feed_title}</span>
+                </div>
+            `;
+            contentGrid.appendChild(articleElement);
+        });
+    }
+
+    function updateStats(stats) {
+        document.querySelector('.text-3xl.font-bold.text-blue-600').textContent = stats.articles_today;
+        const topSites = document.querySelectorAll('.grid.grid-cols-1.md\\:grid-cols-3 > div:nth-child(2) ul')[0];
+        const topAuthors = document.querySelectorAll('.grid.grid-cols-1.md\\:grid-cols-3 > div:nth-child(3) ul')[0];
+        topSites.innerHTML = stats.top_sites.map(site => `<li>${site[0]}: ${site[1]} articles</li>`).join('');
+        topAuthors.innerHTML = stats.top_authors.map(author => `<li>${author[0]}: ${author[1]} articles</li>`).join('');
+    }
+
     function logDebug(message) {
         console.log(message);
         if (debugOutput) {
             debugOutput.textContent += message + '\n';
         }
-    }
-
-    function fetchContent(page) {
-        logDebug(`Fetching content for page ${page}`);
-        fetch(`/list?page=${page}&limit=${itemsPerPage}`)
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                return response.json();
-            })
-            .then(data => {
-                if (data.error) {
-                    throw new Error(data.error);
-                }
-                renderTable(data.data);
-                renderPagination(data.total, page);
-            })
-            .catch(error => {
-                logDebug(`Error fetching content: ${error.message}`);
-                console.error('Error:', error);
-                alert('An error occurred while fetching content. Please try again later.');
-            });
     }
 
     function renderTable(data) {
@@ -77,7 +103,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    fetchContent(currentPage);
+    fetchContent(dateInput.value);
 
     document.addEventListener('click', function(event) {
         if (event.target.classList.contains('summarize-btn')) {
@@ -113,7 +139,7 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(data => {
             if (data.summary) {
                 alert('Content summarized successfully!');
-                fetchContent(currentPage);
+                fetchContent(dateInput.value);
             } else {
                 throw new Error(data.error || 'Failed to summarize content');
             }
@@ -143,7 +169,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 .then(response => response.json())
                 .then(data => {
                     alert(data.message);
-                    fetchContent(currentPage);
+                    fetchContent(dateInput.value);
                 })
                 .catch(error => {
                     console.error('Error:', error);
