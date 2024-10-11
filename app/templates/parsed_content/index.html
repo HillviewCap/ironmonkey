@@ -19,11 +19,11 @@
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
                 <h3 class="text-lg font-medium mb-2">Articles Today</h3>
-                <p class="text-3xl font-bold text-blue-600">{{ stats.articles_today }}</p>
+                <p id="articles-today" class="text-3xl font-bold text-blue-600">{{ stats.articles_today }}</p>
             </div>
             <div>
                 <h3 class="text-lg font-medium mb-2">Top 3 Sites</h3>
-                <ul>
+                <ul id="top-sites-list">
                     {% for site in stats.top_sites %}
                     <li>{{ site[0] }}: {{ site[1] }} articles</li>
                     {% endfor %}
@@ -31,7 +31,7 @@
             </div>
             <div>
                 <h3 class="text-lg font-medium mb-2">Top 3 Authors</h3>
-                <ul>
+                <ul id="top-authors-list">
                     {% for author in stats.top_authors %}
                     <li>{{ author[0] }}: {{ author[1] }} articles</li>
                     {% endfor %}
@@ -41,8 +41,8 @@
     </div>
 
     <!-- Content Grid -->
-    {% if content %}
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div id="content-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% if content %}
             {% for item in content %}
             <a href="{{ url_for('parsed_content.view_item', item_id=item.id) }}" class="block bg-white rounded-lg shadow-md p-6 hover:bg-gray-100">
                 <h2 class="text-xl font-semibold mb-2 text-blue-600 hover:underline">
@@ -55,9 +55,8 @@
                 </div>
             </a>
             {% endfor %}
-        </div>
-    {% else %}
-        <p class="text-xl text-gray-600">No articles published today.</p>
-    {% endif %}
+        {% endif %}
+    </div>
+    <p id="no-content-message" class="text-xl text-gray-600" {% if content %}style="display: none;"{% endif %}>No articles published on this date.</p>
 </div>
 {% endblock %}
