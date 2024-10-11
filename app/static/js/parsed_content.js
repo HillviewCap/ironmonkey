@@ -8,7 +8,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const dateForm = document.getElementById('date-form');
     const dateInput = document.getElementById('date');
     const selectedDateSpan = document.getElementById('selected-date');
-    const contentGrid = document.querySelector('.grid');
+    const contentGrid = document.getElementById('content-grid');
+    const noContentMessage = document.getElementById('no-content-message');
+    const articlesToday = document.getElementById('articles-today');
+    const topSitesList = document.getElementById('top-sites-list');
+    const topAuthorsList = document.getElementById('top-authors-list');
 
     dateForm.addEventListener('submit', function(e) {
         e.preventDefault();
@@ -28,30 +32,33 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function updateContent(content) {
         contentGrid.innerHTML = '';
-        content.forEach(item => {
-            const articleElement = document.createElement('a');
-            articleElement.href = `/parsed_content/item/${item.id}`;
-            articleElement.className = 'block bg-white rounded-lg shadow-md p-6 hover:bg-gray-100';
-            articleElement.innerHTML = `
-                <h2 class="text-xl font-semibold mb-2 text-blue-600 hover:underline">
-                    ${item.title}
-                </h2>
-                <p class="text-gray-600 mb-4">${item.description ? item.description.substring(0, 150) + '...' : ''}</p>
-                <div class="text-sm text-gray-500 flex justify-between items-center">
-                    <span>${new Date(item.pub_date).toLocaleString()}</span>
-                    <span class="text-blue-500">${item.rss_feed_title}</span>
-                </div>
-            `;
-            contentGrid.appendChild(articleElement);
-        });
+        if (content.length > 0) {
+            noContentMessage.style.display = 'none';
+            content.forEach(item => {
+                const articleElement = document.createElement('a');
+                articleElement.href = `/parsed_content/item/${item.id}`;
+                articleElement.className = 'block bg-white rounded-lg shadow-md p-6 hover:bg-gray-100';
+                articleElement.innerHTML = `
+                    <h2 class="text-xl font-semibold mb-2 text-blue-600 hover:underline">
+                        ${item.title}
+                    </h2>
+                    <p class="text-gray-600 mb-4">${item.description ? item.description.substring(0, 150) + '...' : ''}</p>
+                    <div class="text-sm text-gray-500 flex justify-between items-center">
+                        <span>${new Date(item.pub_date).toLocaleString()}</span>
+                        <span class="text-blue-500">${item.rss_feed_title}</span>
+                    </div>
+                `;
+                contentGrid.appendChild(articleElement);
+            });
+        } else {
+            noContentMessage.style.display = 'block';
+        }
     }
 
     function updateStats(stats) {
-        document.querySelector('.text-3xl.font-bold.text-blue-600').textContent = stats.articles_today;
-        const topSites = document.querySelectorAll('.grid.grid-cols-1.md\\:grid-cols-3 > div:nth-child(2) ul')[0];
-        const topAuthors = document.querySelectorAll('.grid.grid-cols-1.md\\:grid-cols-3 > div:nth-child(3) ul')[0];
-        topSites.innerHTML = stats.top_sites.map(site => `<li>${site[0]}: ${site[1]} articles</li>`).join('');
-        topAuthors.innerHTML = stats.top_authors.map(author => `<li>${author[0]}: ${author[1]} articles</li>`).join('');
+        articlesToday.textContent = stats.articles_today;
+        topSitesList.innerHTML = stats.top_sites.map(site => `<li>${site[0]}: ${site[1]} articles</li>`).join('');
+        topAuthorsList.innerHTML = stats.top_authors.map(author => `<li>${author[0]}: ${author[1]} articles</li>`).join('');
     }
 
     function logDebug(message) {
@@ -103,6 +110,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    // Fetch content for the initial date
     fetchContent(dateInput.value);
 
     document.addEventListener('click', function(event) {
