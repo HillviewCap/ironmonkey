@@ -25,6 +25,6 @@ def get_entity_details(entity_type, entity_id):
 
     return jsonify({
         'id': entity.id,
-        'name': entity.name,
+        'name': entity.actor if hasattr(entity, 'actor') else entity.tool,
         'description': entity.description
     })
