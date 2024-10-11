@@ -52,6 +52,17 @@ document.addEventListener('DOMContentLoaded', function() {
             `;
             tbody.appendChild(row);
         });
+
+        // Add event listener for tagged entities
+        document.querySelectorAll('.tagged-entity').forEach(entity => {
+            entity.addEventListener('click', (e) => {
+                e.preventDefault();
+                const entityType = e.target.dataset.entityType;
+                const entityId = e.target.dataset.entityId;
+                // Here you can add logic to show more information about the entity
+                console.log(`Clicked entity: ${entityType} with ID: ${entityId}`);
+            });
+        });
     }
 
     function renderPagination(total, currentPage) {

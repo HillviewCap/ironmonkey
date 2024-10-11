@@ -10,6 +10,7 @@ from .category import Category
 from typing import List, Dict, Any, Optional, Union
 from pydantic import BaseModel
 from .content_tag import ContentTag
+from sqlalchemy.orm import joinedload
 
 parsed_content_categories = Table(
     'parsed_content_categories',
@@ -126,3 +127,42 @@ class ParsedContent(db.Model):
     def perform_auto_tagging(self):
         from app.utils.auto_tagger import tag_content
         tag_content(self.id)
+
+    def get_tagged_content(self):
+        # Load tags eagerly to avoid N+1 query problem
+        self_with_tags = ParsedContent.query.options(joinedload(ParsedContent.tags)).get(self.id)
+        
+        description = self.description or ''
+        summary = self.summary or ''
+
+        # Sort tags by start_char to process them in order
+        sorted_tags = sorted(self_with_tags.tags, key=lambda t: t.start_char)
+
+        # Create tagged versions of description and summary
+        tagged_description = self._insert_tags(description, sorted_tags)
+        tagged_summary = self._insert_tags(summary, sorted_tags)
+
+        return {
+            'id': str(self.id),
+            'title': self.title,
+            'description': tagged_description,
+            'summary': tagged_summary,
+            'url': self.url,
+            'pub_date': self.pub_date.isoformat() if self.pub_date else None,
+            'feed_id': str(self.feed_id),
+            'rss_feed_title': self.feed.title if self.feed else None,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'creator': self.creator,
+            'art_hash': self.art_hash
+        }
+
+    def _insert_tags(self, text, tags):
+        offset = 0
+        for tag in tags:
+            if tag.start_char < len(text):
+                start = tag.start_char + offset
+                end = tag.end_char + offset
+                link = f'<a href="#" class="tagged-entity" data-entity-type="{tag.entity_type}" data-entity-id="{tag.entity_id}">{text[start:end]}</a>'
+                text = text[:start] + link + text[end:]
+                offset += len(link) - (end - start)
+        return text
