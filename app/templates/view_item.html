@@ -38,10 +38,10 @@
     <div class="mb-6">
         <h2 class="text-xl font-semibold mb-2">Description</h2>
         {% if item.description|length > 500 %}
-            <p>{{ item.description[:500] }}... <a href="#" class="text-blue-500 hover:text-blue-700" onclick="toggleDescription(event)">Read more</a></p>
-            <p class="hidden">{{ item.description }}</p>
+            <p>{{ item.description[:500]|safe }}... <a href="#" class="text-blue-500 hover:text-blue-700" onclick="toggleDescription(event)">Read more</a></p>
+            <p class="hidden">{{ item.description|safe }}</p>
         {% else %}
-            <p>{{ item.description }}</p>
+            <p>{{ item.description|safe }}</p>
         {% endif %}
     </div>
     {% endif %}
@@ -52,12 +52,12 @@
         {% set summary = item.summary | from_json %}
         {% if summary %}
             <h3 class="text-lg font-semibold mt-2">Main Topic</h3>
-            <p>{{ summary.main_topic }}</p>
+            <p>{{ summary.main_topic|safe }}</p>
             
             <h3 class="text-lg font-semibold mt-2">Key Points</h3>
             <ul class="list-disc pl-5">
                 {% for point in summary.key_points %}
-                    <li>{{ point }}</li>
+                    <li>{{ point|safe }}</li>
                 {% endfor %}
             </ul>
             
@@ -65,7 +65,7 @@
                 <h3 class="text-lg font-semibold mt-2">Threat Actors</h3>
                 <ul class="list-disc pl-5">
                     {% for actor in summary.threat_actors %}
-                        <li>{{ actor }}</li>
+                        <li>{{ actor|safe }}</li>
                     {% endfor %}
                 </ul>
             {% endif %}
@@ -74,7 +74,7 @@
                 <h3 class="text-lg font-semibold mt-2">TTPs</h3>
                 <ul class="list-disc pl-5">
                     {% for ttp in summary.ttps %}
-                        <li>{{ ttp }}</li>
+                        <li>{{ ttp|safe }}</li>
                     {% endfor %}
                 </ul>
             {% endif %}
@@ -83,7 +83,7 @@
                 <h3 class="text-lg font-semibold mt-2">IoCs</h3>
                 <ul class="list-disc pl-5">
                     {% for ioc in summary.iocs %}
-                        <li>{{ ioc }}</li>
+                        <li>{{ ioc|safe }}</li>
                     {% endfor %}
                 </ul>
             {% endif %}
@@ -92,7 +92,7 @@
                 <h3 class="text-lg font-semibold mt-2">Affected Systems</h3>
                 <ul class="list-disc pl-5">
                     {% for system in summary.affected_systems %}
-                        <li>{{ system }}</li>
+                        <li>{{ system|safe }}</li>
                     {% endfor %}
                 </ul>
             {% endif %}
@@ -101,17 +101,17 @@
                 <h3 class="text-lg font-semibold mt-2">Mitigations</h3>
                 <ul class="list-disc pl-5">
                     {% for mitigation in summary.mitigations %}
-                        <li>{{ mitigation }}</li>
+                        <li>{{ mitigation|safe }}</li>
                     {% endfor %}
                 </ul>
             {% endif %}
             
             {% if summary.conclusion %}
                 <h3 class="text-lg font-semibold mt-2">Conclusion</h3>
-                <p>{{ summary.conclusion }}</p>
+                <p>{{ summary.conclusion|safe }}</p>
             {% endif %}
         {% else %}
-            <p>{{ item.summary }}</p>
+            <p>{{ item.summary|safe }}</p>
         {% endif %}
     </div>
     {% endif %}
@@ -124,6 +124,16 @@
 </div>
 
 <script>
+document.addEventListener('click', function(event) {
+    if (event.target.classList.contains('tagged-entity')) {
+        event.preventDefault();
+        const entityType = event.target.dataset.entityType;
+        const entityId = event.target.dataset.entityId;
+        console.log(`Clicked entity: ${entityType} with ID: ${entityId}`);
+        // You can add more functionality here, such as showing a modal with entity details
+    }
+});
+
 function toggleDescription(event) {
     event.preventDefault();
     const shortDesc = event.target.parentNode;
