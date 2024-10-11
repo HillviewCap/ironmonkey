@@ -1,5 +1,9 @@
 {% extends "base.html" %}
 
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/parsed_content.js') }}"></script>
+{% endblock %}
+
 {% block content %}
 <div class="container mx-auto mt-8">
     <h1 class="text-3xl font-bold mb-4">{{ item.title }}</h1>
@@ -37,13 +41,9 @@
     {% if item.description %}
     <div class="mb-6">
         <h2 class="text-xl font-semibold mb-2">Description</h2>
-        {% set description = item.description|default('') %}
-        {% if description|length > 500 %}
-            <p>{{ description[:500]|safe }}... <a href="#" class="text-blue-500 hover:text-blue-700" onclick="toggleDescription(event)">Read more</a></p>
-            <p class="hidden">{{ description|safe }}</p>
-        {% else %}
-            <p>{{ description|safe }}</p>
-        {% endif %}
+        <div id="item-description">
+            {{ item.description|safe }}
+        </div>
     </div>
     {% endif %}
     
@@ -196,6 +196,29 @@ function toggleDescription(event) {
     shortDesc.classList.toggle('hidden');
     fullDesc.classList.toggle('hidden');
 }
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const description = document.getElementById('item-description');
+    if (description) {
+        description.innerHTML = description.innerHTML.replace(
+            /<span class="tagged-entity" data-entity-type="([^"]*)" data-entity-id="([^"]*)">([^<]*)<\/span>/g,
+            '<a href="#" class="tagged-entity text-blue-500 hover:underline" data-entity-type="$1" data-entity-id="$2">$3</a>'
+        );
+    }
+
+    document.addEventListener('click', function(event) {
+        if (event.target.classList.contains('tagged-entity')) {
+            event.preventDefault();
+            const entityType = event.target.dataset.entityType;
+            const entityId = event.target.dataset.entityId;
+            const entityName = event.target.textContent;
+
+            fetchEntityDetails(entityType, entityId, entityName);
+        }
+    });
+});
 </script>
 
 {% endblock %}
