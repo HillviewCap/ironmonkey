@@ -22,3 +22,13 @@ class ContentTag(db.Model):
         Index('idx_content_tags_parsed_content_id', parsed_content_id),
         Index('idx_content_tags_entity_type_id', entity_type, entity_id),
     )
+
+    def to_dict(self):
+        return {
+            'id': str(self.id),
+            'entity_type': self.entity_type,
+            'entity_id': str(self.entity_id),
+            'entity_name': self.entity_name,
+            'start_char': self.start_char,
+            'end_char': self.end_char
+        }
