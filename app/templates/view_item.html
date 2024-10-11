@@ -37,11 +37,12 @@
     {% if item.description %}
     <div class="mb-6">
         <h2 class="text-xl font-semibold mb-2">Description</h2>
-        {% if item.description|length > 500 %}
-            <p>{{ item.description[:500]|safe }}... <a href="#" class="text-blue-500 hover:text-blue-700" onclick="toggleDescription(event)">Read more</a></p>
-            <p class="hidden">{{ item.description|safe }}</p>
+        {% set description = item.description|default('') %}
+        {% if description|length > 500 %}
+            <p>{{ description[:500]|safe }}... <a href="#" class="text-blue-500 hover:text-blue-700" onclick="toggleDescription(event)">Read more</a></p>
+            <p class="hidden">{{ description|safe }}</p>
         {% else %}
-            <p>{{ item.description|safe }}</p>
+            <p>{{ description|safe }}</p>
         {% endif %}
     </div>
     {% endif %}
