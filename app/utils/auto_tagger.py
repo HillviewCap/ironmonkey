@@ -18,7 +18,6 @@ def get_entities():
 def tag_content(content_id):
     content = ParsedContent.query.get(content_id)
     if not content:
-        current_app.logger.warning(f"Content with id {content_id} not found")
         return 0
 
     entities = get_entities()
@@ -44,7 +43,6 @@ def tag_content(content_id):
     try:
         db.session.add_all(new_tags)
         db.session.commit()
-        current_app.logger.info(f"Tagged content {content_id} with {len(new_tags)} tags")
         return len(new_tags)
     except Exception as e:
         current_app.logger.error(f"Error tagging content {content_id}: {str(e)}")
@@ -118,9 +116,7 @@ def tag_untagged_content(batch_size=1000):
             total_checked += batch_checked
             total_tagged += batch_tagged
 
-            current_app.logger.info(f"Batch: Checked {batch_checked} items, tagged {batch_tagged} previously untagged content items")
-
             if batch_checked < batch_size:
                 break  # Processed all available untagged content
 
-        current_app.logger.info(f"Completed tagging: Checked {total_checked} items, tagged {total_tagged} previously untagged content items")
+        current_app.logger.info(f"Auto-tagging complete: Checked {total_checked} items, tagged {total_tagged} previously untagged content items")
