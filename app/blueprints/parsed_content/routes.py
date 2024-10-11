@@ -6,7 +6,13 @@ from app.models.relational.parsed_content import ParsedContent
 
 @bp.route('/')
 def parsed_content():
-    selected_date = datetime.utcnow().date()
+    # Get the 'date' parameter from the query string, defaulting to today's date if not provided
+    date_str = request.args.get('date', datetime.utcnow().date().isoformat())
+    try:
+        selected_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+    except ValueError:
+        # If date parsing fails, default to today's date
+        selected_date = datetime.utcnow().date()
     start_of_day = datetime.combine(selected_date, time.min)
     end_of_day = datetime.combine(selected_date, time.max)
 
