@@ -63,21 +63,16 @@ def view_item(item_id):
     # Initialize summary_data
     summary_data = None
     if item.get('summary'):
-        if is_valid_json(item['summary']):
-            try:
-                summary_data = json.loads(item['summary'])
-            except json.JSONDecodeError as e:
-                current_app.logger.error(
-                    f"Error parsing summary JSON for item {item_id}: {str(e)}"
-                )
-                current_app.logger.debug(f"Invalid JSON content: {item['summary']}")
-                summary_data = None
-        else:
-            current_app.logger.warning(
-                f"Summary for item {item_id} is not valid JSON."
-            )
-            current_app.logger.debug(f"Non-JSON summary content: {item['summary']}")
-            summary_data = None
+        try:
+            summary_data = json.loads(item['summary'])
+            # If summary_data is successfully parsed, we need to ensure the description is properly tagged
+            if 'description' in summary_data:
+                summary_data['description'] = item_instance.tag_entities(summary_data['description'])
+        except json.JSONDecodeError as e:
+            current_app.logger.error(f"Error parsing summary JSON for item {item_id}: {str(e)}")
+            current_app.logger.debug(f"Invalid JSON content: {item['summary']}")
+            # If JSON parsing fails, treat it as raw text
+            item['summary'] = item_instance.tag_entities(item['summary'])
     else:
         current_app.logger.info(
             f"No summary available for item {item_id}."

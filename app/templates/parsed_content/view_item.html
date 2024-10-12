@@ -57,7 +57,9 @@
             <p>{{ summary_data.name | safe }}</p>
 
             <h3 class="text-lg font-semibold mt-2">Description</h3>
-            <p>{{ summary_data.description | safe }}</p>
+            <div id="summary-description">
+                {{ summary_data.description | safe }}
+            </div>
 
             {% if summary_data.author %}
                 <h3 class="text-lg font-semibold mt-2">Author(s)</h3>
@@ -74,7 +76,9 @@
             <!-- Add more fields as needed, checking for their existence -->
         {% else %}
             <!-- Display raw summary -->
-            <p>{{ item.summary | safe }}</p>
+            <div id="summary-content">
+                {{ item.summary | safe }}
+            </div>
         {% endif %}
     </div>
     {% endif %}
@@ -90,21 +94,27 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const description = document.getElementById('item-description');
-    if (description) {
-        description.innerHTML = description.innerHTML.replace(
-            /<span class="tagged-entity" data-entity-type="([^"]*)" data-entity-id="([^"]*)">([^<]*)<\/span>/g,
-            function(match, entityType, entityId, entityName) {
-                let detailPageUrl = '';
-                if (entityType === 'actor') {
-                    detailPageUrl = `/apt/group/${entityId}`;
-                } else if (entityType === 'tool') {
-                    detailPageUrl = `/apt/tool/${entityId}`;
+    function processTaggedEntities(elementId) {
+        const element = document.getElementById(elementId);
+        if (element) {
+            element.innerHTML = element.innerHTML.replace(
+                /<span class="tagged-entity" data-entity-type="([^"]*)" data-entity-id="([^"]*)">([^<]*)<\/span>/g,
+                function(match, entityType, entityId, entityName) {
+                    let detailPageUrl = '';
+                    if (entityType === 'actor') {
+                        detailPageUrl = `/apt/group/${entityId}`;
+                    } else if (entityType === 'tool') {
+                        detailPageUrl = `/apt/tool/${entityId}`;
+                    }
+                    return `<a href="${detailPageUrl}" class="tagged-entity text-blue-500 hover:underline" data-entity-type="${entityType}" data-entity-id="${entityId}">${entityName}</a>`;
                 }
-                return `<a href="${detailPageUrl}" class="tagged-entity text-blue-500 hover:underline" data-entity-type="${entityType}" data-entity-id="${entityId}">${entityName}</a>`;
-            }
-        );
+            );
+        }
     }
+
+    processTaggedEntities('item-description');
+    processTaggedEntities('summary-description');
+    processTaggedEntities('summary-content');
 });
 </script>
 
