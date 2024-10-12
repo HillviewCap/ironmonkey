@@ -14,51 +14,63 @@ document.addEventListener('DOMContentLoaded', function() {
     const topSitesList = document.getElementById('top-sites-list');
     const topAuthorsList = document.getElementById('top-authors-list');
 
-    dateForm.addEventListener('submit', function(e) {
-        e.preventDefault();
-        fetchContent(dateInput.value);
-    });
+    if (dateForm) {
+        dateForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            fetchContent(dateInput.value);
+        });
+    }
 
-    function fetchContent(date) {
-        fetch(`/parsed_content/list?date=${date}`)
-            .then(response => response.json())
-            .then(data => {
-                updateContent(data.content);
-                updateStats(data.stats);
-                selectedDateSpan.textContent = date;
-            })
-            .catch(error => console.error('Error:', error));
+    if (dateForm) {
+        function fetchContent(date) {
+            fetch(`/parsed_content/list?date=${date}`)
+                .then(response => response.json())
+                .then(data => {
+                    updateContent(data.content);
+                    updateStats(data.stats);
+                    selectedDateSpan.textContent = date;
+                })
+                .catch(error => console.error('Error:', error));
+        }
     }
 
     function updateContent(content) {
-        contentGrid.innerHTML = '';
-        if (content.length > 0) {
-            noContentMessage.style.display = 'none';
-            content.forEach(item => {
-                const articleElement = document.createElement('a');
-                articleElement.href = `/parsed_content/item/${item.id}`;
-                articleElement.className = 'block bg-white rounded-lg shadow-md p-6 hover:bg-gray-100';
-                articleElement.innerHTML = `
-                    <h2 class="text-xl font-semibold mb-2 text-blue-600 hover:underline">
-                        ${item.title}
-                    </h2>
-                    <p class="text-gray-600 mb-4">${item.description ? item.description.substring(0, 150) + '...' : ''}</p>
-                    <div class="text-sm text-gray-500 flex justify-between items-center">
-                        <span>${new Date(item.pub_date).toLocaleString()}</span>
-                        <span class="text-blue-500">${item.rss_feed_title}</span>
-                    </div>
-                `;
-                contentGrid.appendChild(articleElement);
-            });
-        } else {
-            noContentMessage.style.display = 'block';
+        if (contentGrid) {
+            contentGrid.innerHTML = '';
+            if (content.length > 0) {
+                noContentMessage.style.display = 'none';
+                content.forEach(item => {
+                    const articleElement = document.createElement('a');
+                    articleElement.href = `/parsed_content/item/${item.id}`;
+                    articleElement.className = 'block bg-white rounded-lg shadow-md p-6 hover:bg-gray-100';
+                    articleElement.innerHTML = `
+                        <h2 class="text-xl font-semibold mb-2 text-blue-600 hover:underline">
+                            ${item.title}
+                        </h2>
+                        <p class="text-gray-600 mb-4">${item.description ? item.description.substring(0, 150) + '...' : ''}</p>
+                        <div class="text-sm text-gray-500 flex justify-between items-center">
+                            <span>${new Date(item.pub_date).toLocaleString()}</span>
+                            <span class="text-blue-500">${item.rss_feed_title}</span>
+                        </div>
+                    `;
+                    contentGrid.appendChild(articleElement);
+                });
+            } else {
+                noContentMessage.style.display = 'block';
+            }
         }
     }
 
     function updateStats(stats) {
-        articlesToday.textContent = stats.articles_today;
-        topSitesList.innerHTML = stats.top_sites.map(site => `<li>${site[0]}: ${site[1]} articles</li>`).join('');
-        topAuthorsList.innerHTML = stats.top_authors.map(author => `<li>${author[0]}: ${author[1]} articles</li>`).join('');
+        if (articlesToday) {
+            articlesToday.textContent = stats.articles_today;
+        }
+        if (topSitesList) {
+            topSitesList.innerHTML = stats.top_sites.map(site => `<li>${site[0]}: ${site[1]} articles</li>`).join('');
+        }
+        if (topAuthorsList) {
+            topAuthorsList.innerHTML = stats.top_authors.map(author => `<li>${author[0]}: ${author[1]} articles</li>`).join('');
+        }
     }
 
     function logDebug(message) {
@@ -164,6 +176,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     const clearSummariesBtn = document.getElementById('clear-summaries-btn');
+    const clearSummariesBtn = document.getElementById('clear-summaries-btn');
     if (clearSummariesBtn) {
         clearSummariesBtn.addEventListener('click', function() {
             if (confirm('Are you sure you want to clear all summaries? This action cannot be undone.')) {
@@ -177,7 +190,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 .then(response => response.json())
                 .then(data => {
                     alert(data.message);
-                    fetchContent(dateInput.value);
+                    if (dateInput) {
+                        fetchContent(dateInput.value);
+                    }
                 })
                 .catch(error => {
                     console.error('Error:', error);
