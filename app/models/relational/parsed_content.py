@@ -10,6 +10,8 @@ from .category import Category
 from typing import List, Dict, Any, Optional, Union
 from pydantic import BaseModel
 from sqlalchemy.orm import joinedload, relationship
+from sqlalchemy.types import TypeDecorator, TEXT
+import json
 
 parsed_content_categories = Table(
     'parsed_content_categories',
@@ -17,6 +19,23 @@ parsed_content_categories = Table(
     Column('parsed_content_id', SA_UUID(as_uuid=True), ForeignKey('parsed_content.id')),
     Column('category_id', SA_UUID(as_uuid=True), ForeignKey('category.id'))
 )
+
+class JSONEncodedDict(TypeDecorator):
+    impl = TEXT
+
+    def process_bind_param(self, value, dialect):
+        if value is not None:
+            value = json.dumps(value)
+        return value
+
+    def process_result_value(self, value, dialect):
+        if value is not None:
+            try:
+                value = json.loads(value)
+            except json.JSONDecodeError:
+                # If JSON decoding fails, return the raw string
+                pass
+        return value
 
 class ParsedContent(db.Model):
     """Model representing parsed content from RSS feeds."""
@@ -26,7 +45,7 @@ class ParsedContent(db.Model):
     url = Column(String(255), nullable=False)
     description = Column(Text, nullable=True)
     content = Column(Text, nullable=False)  # Jina summary from Ollama
-    summary = Column(Text, nullable=True)  # Generated summary
+    summary = Column(JSONEncodedDict, nullable=True)  # Generated summary
     feed_id = Column(SA_UUID(as_uuid=True), ForeignKey("rss_feed.id"), nullable=False)
     feed = db.relationship("RSSFeed", back_populates="parsed_items")
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
@@ -106,7 +125,11 @@ class ParsedContent(db.Model):
         db.session.commit()
         return hashed_count
 
-    def to_dict(self) -> Dict[str, Any]:
+    def set_summary(self, summary_data):
+        self.summary = summary_data
+
+    def get_summary(self):
+        return self.summary
         """Convert the ParsedContent instance to a dictionary."""
         return {
             'id': str(self.id),

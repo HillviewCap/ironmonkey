@@ -61,13 +61,11 @@ def view_item(item_id):
         abort(404)
     # Get content with entities tagged
     item = item_instance.get_tagged_content()
-    # Initialize summary_data
-    summary_data = None
-    if item.get('summary'):
+    summary_data = item_instance.get_summary()
+
+    if summary_data and isinstance(summary_data, str):
         try:
-            summary_data = json.loads(item['summary'])
-            # If summary_data is successfully parsed, we don't need to tag it again
-            # as it's already tagged in get_tagged_content()
+            summary_data = json.loads(summary_data)
         except json.JSONDecodeError as e:
             current_app.logger.error(f"Error parsing summary JSON for item {item_id}: {str(e)}")
             current_app.logger.debug(f"Invalid JSON content: {item['summary']}")
