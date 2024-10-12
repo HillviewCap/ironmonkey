@@ -162,7 +162,7 @@ class ParsedContent(db.Model):
             if tag.start_char < len(text):
                 start = tag.start_char + offset
                 end = tag.end_char + offset
-                link = f'<a href="#" class="tagged-entity" data-entity-type="{tag.entity_type}" data-entity-id="{tag.entity_id}">{text[start:end]}</a>'
+                link = f'<span class="tagged-entity" data-entity-type="{tag.entity_type}" data-entity-id="{tag.entity_id}">{text[start:end]}</span>'
                 text = text[:start] + link + text[end:]
                 offset += len(link) - (end - start)
         return text

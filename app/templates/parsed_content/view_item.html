@@ -131,110 +131,21 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const modal = document.getElementById('entityModal');
-    const modalTitle = document.getElementById('modal-title');
-    const modalContent = document.getElementById('modal-content');
-    const modalCloseButton = document.getElementById('modalCloseButton');
-    const modalLinkButton = document.getElementById('modalLinkButton');
-
-    document.addEventListener('click', function(event) {
-        if (event.target.classList.contains('tagged-entity')) {
-            event.preventDefault();
-            const entityType = event.target.dataset.entityType;
-            const entityId = event.target.dataset.entityId;
-            const entityName = event.target.textContent;
-
-            fetchEntityDetails(entityType, entityId, entityName);
-        }
-    });
-
-    modalCloseButton.addEventListener('click', function() {
-        modal.classList.add('hidden');
-    });
-
-    function fetchEntityDetails(entityType, entityId, entityName) {
-        const modalLoader = document.getElementById('modalLoader');
-        modalLoader.classList.remove('hidden');
-        showModal(entityName, '', null); // Show modal with empty content while loading
-
-        fetch(`/api/entity/${entityType}/${entityId}`)
-            .then(response => response.json())
-            .then(data => {
-                let detailPageUrl = null;
-                if (entityType === "APT_GROUP") {
-                    detailPageUrl = `/apt/group/${entityId}`;
-                } else if (entityType === "TOOL") {
-                    detailPageUrl = `/apt/tool/${entityId}`;
-                }
-                showModal(data.name, data.description, detailPageUrl);
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                showModal(entityName, "Error fetching entity details.", null);
-            })
-            .finally(() => {
-                modalLoader.classList.add('hidden');
-            });
-    }
-
-    function showModal(title, content, linkUrl = null) {
-        modalTitle.textContent = title;
-        modalContent.textContent = content;
-
-        if (linkUrl) {
-            modalLinkButton.href = linkUrl;
-            modalLinkButton.classList.remove('hidden');
-        } else {
-            modalLinkButton.classList.add('hidden');
-        }
-
-        modal.classList.remove('hidden');
-    }
-});
-
-function toggleDescription(event) {
-    event.preventDefault();
-    const shortDesc = event.target.parentNode;
-    const fullDesc = shortDesc.nextElementSibling;
-    shortDesc.classList.toggle('hidden');
-    fullDesc.classList.toggle('hidden');
-}
-</script>
-
-<script>
-document.addEventListener('DOMContentLoaded', function() {
     const description = document.getElementById('item-description');
     if (description) {
         description.innerHTML = description.innerHTML.replace(
             /<span class="tagged-entity" data-entity-type="([^"]*)" data-entity-id="([^"]*)">([^<]*)<\/span>/g,
             function(match, entityType, entityId, entityName) {
                 let detailPageUrl = '';
-                if (entityType === 'ACTOR') {
+                if (entityType === 'ACTOR' || entityType === 'APT_GROUP') {
                     detailPageUrl = `/apt/group/${entityId}`;
                 } else if (entityType === 'TOOL') {
                     detailPageUrl = `/apt/tool/${entityId}`;
                 }
-                return `<a href="${detailPageUrl}" class="tagged-entity text-blue-500 hover:underline" data-entity-type="${entityType}" data-entity-id="${entityId}">${entityName}</a>`;  // Create link for entity
+                return `<a href="${detailPageUrl}" class="tagged-entity text-blue-500 hover:underline" data-entity-type="${entityType}" data-entity-id="${entityId}">${entityName}</a>`;
             }
         );
     }
-    if (description) {
-        description.innerHTML = description.innerHTML.replace(
-            /<span class="tagged-entity" data-entity-type="([^"]*)" data-entity-id="([^"]*)">([^<]*)<\/span>/g,
-            '<a href="#" class="tagged-entity text-blue-500 hover:underline" data-entity-type="$1" data-entity-id="$2">$3</a>'
-        );
-    }
-
-    document.addEventListener('click', function(event) {
-        if (event.target.classList.contains('tagged-entity')) {
-            event.preventDefault();
-            const entityType = event.target.dataset.entityType;
-            const entityId = event.target.dataset.entityId;
-            const entityName = event.target.textContent;
-
-            fetchEntityDetails(entityType, entityId, entityName);
-        }
-    });
 });
 </script>
 
