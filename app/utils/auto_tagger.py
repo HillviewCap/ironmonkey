@@ -24,12 +24,25 @@ def tag_content(content_id):
     text_to_tag = f"{content.description or ''} {content.summary or ''}"
     doc = nlp(text_to_tag)
 
-    new_tags = []
-    for ent in doc.ents:
+    new_tags = []    
+    for ent in doc.ents:        
         lower_ent = ent.text.lower()
         if lower_ent in entities:
             entity_id, entity_type = entities[lower_ent]
-            new_tag = ContentTag(
+            # Check for existing tag
+            existing_tag = ContentTag.query.filter_by(
+                parsed_content_id=content.id,
+                entity_type=entity_type,
+                entity_id=uuid.UUID(entity_id),
+                start_char=ent.start_char,                
+                end_char=ent.end_char
+            ).first()
+            
+            if existing_tag:
+                continue  # Skip adding duplicate tag
+            
+            # No duplicate exists, create new tag
+            new_tag = ContentTag(            
                 id=uuid.uuid4(),
                 parsed_content_id=content.id,
                 entity_type=entity_type,
