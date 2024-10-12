@@ -61,7 +61,7 @@ def view_item(item_id):
     item = item_instance.get_tagged_content()
     # Initialize summary_data
     summary_data = None
-    if item.get('summary'):
+    if item.get('summary') and is_valid_json(item['summary']):
         try:
             summary_data = json.loads(item['summary'])
         except json.JSONDecodeError as e:
@@ -70,6 +70,11 @@ def view_item(item_id):
             )
             current_app.logger.debug(f"Invalid JSON content: {item['summary']}")
             summary_data = None
+    else:
+        current_app.logger.warning(
+            f"Summary for item {item_id} is not valid JSON."
+        )
+        summary_data = None
 
     return render_template(
         'parsed_content/view_item.html',
