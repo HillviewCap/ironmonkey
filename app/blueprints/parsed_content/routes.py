@@ -1,5 +1,5 @@
 import json
-from flask import render_template, abort, jsonify, request
+from flask import render_template, abort, jsonify, request, current_app
 from datetime import datetime, time
 from .services import ParsedContentService
 from . import bp
@@ -52,7 +52,7 @@ def view_item(item_id):
         abort(404)
     # Get content with entities tagged
     item = item_instance.get_tagged_content()
-    # Parse the summary JSON if it exists
+    # Initialize summary_data
     summary_data = None
     if item.get('summary'):
         try:
@@ -61,6 +61,12 @@ def view_item(item_id):
             current_app.logger.error(
                 f"Error parsing summary JSON for item {item_id}: {str(e)}"
             )
+            current_app.logger.debug(f"Invalid JSON content: {item['summary']}")
+            summary_data = None
+            current_app.logger.error(
+                f"Error parsing summary JSON for item {item_id}: {str(e)}"
+            )
+            current_app.logger.debug(f"Invalid JSON content: {item['summary']}")
             summary_data = None
 
     return render_template(
