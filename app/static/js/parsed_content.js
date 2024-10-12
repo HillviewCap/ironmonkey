@@ -232,7 +232,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     const clearSummariesBtn = document.getElementById('clear-summaries-btn');
-    const clearSummariesBtn = document.getElementById('clear-summaries-btn');
     if (clearSummariesBtn) {
         clearSummariesBtn.addEventListener('click', function() {
             if (confirm('Are you sure you want to clear all summaries? This action cannot be undone.')) {
