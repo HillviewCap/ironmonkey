@@ -9,7 +9,6 @@ from flask import flash, current_app
 from .category import Category
 from typing import List, Dict, Any, Optional, Union
 from pydantic import BaseModel
-from .content_tag import ContentTag
 from sqlalchemy.orm import joinedload
 
 parsed_content_categories = Table(
@@ -129,7 +128,7 @@ class ParsedContent(db.Model):
         tag_content(self.id)
 
     def get_tagged_content(self):
-        # Load tags eagerly to avoid N+1 query problem
+        from .content_tag import ContentTag  # Import here to avoid circular import
         self_with_tags = ParsedContent.query.options(joinedload(ParsedContent.tags)).get(self.id)
         
         description = self.description or ''

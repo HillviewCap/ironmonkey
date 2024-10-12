@@ -3,8 +3,6 @@ import uuid
 from sqlalchemy import exists
 from app.models.relational.allgroups import AllGroupsValues
 from app.models.relational.alltools import AllToolsValuesNames
-from app.models.relational.parsed_content import ParsedContent
-from app.models.relational.content_tag import ContentTag
 from app.extensions import db
 from flask import current_app
 
@@ -16,6 +14,12 @@ def get_entities():
     return {**actors, **tools}
 
 def tag_content(content_id):
+    from app.models.relational.parsed_content import ParsedContent
+    from app.models.relational.content_tag import ContentTag
+
+    from app.models.relational.parsed_content import ParsedContent
+    from app.models.relational.content_tag import ContentTag
+
     content = ParsedContent.query.get(content_id)
     if not content:
         return 0
@@ -63,6 +67,8 @@ def tag_content(content_id):
         return 0
 
 def tag_all_content():
+    from app.models.relational.parsed_content import ParsedContent
+
     total_tagged = 0
     for content in ParsedContent.query.all():
         total_tagged += tag_content(content.id)
@@ -106,6 +112,9 @@ def _insert_tags(text, tags):
     return text
 
 def tag_untagged_content(batch_size=1000):
+    from app.models.relational.parsed_content import ParsedContent
+    from app.models.relational.content_tag import ContentTag
+
     with current_app.app_context():
         total_checked = 0
         total_tagged = 0

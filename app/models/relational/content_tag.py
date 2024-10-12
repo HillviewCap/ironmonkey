@@ -1,6 +1,5 @@
 from __future__ import annotations
 from sqlalchemy import Column, ForeignKey, String, Index, Integer
-from app.utils.auto_tagger import tag_content
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship  # Add this import if not already present
 from app.extensions import db
