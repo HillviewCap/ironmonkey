@@ -35,7 +35,7 @@ class ParsedContent(db.Model):
     creator = Column(String(255), nullable=True)
     categories = db.relationship('Category', secondary=parsed_content_categories, backref=db.backref('parsed_contents', lazy='dynamic'))
     art_hash = Column(String(64), nullable=True)
-    tags = db.relationship('ContentTag', back_populates='parsed_content', cascade='all, delete-orphan')
+    tags = db.relationship('ContentTag', back_populates='parsed_content', cascade='all, delete-orphan')  # Ensure this line is present
 
     __table_args__ = (db.UniqueConstraint('url', 'feed_id', name='uix_url_feed'),)
 
