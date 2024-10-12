@@ -52,29 +52,28 @@
     <div class="mb-6">
         <h2 class="text-xl font-semibold mb-2">Summary</h2>
         {% if summary_data %}
-            {% if summary_data %}
-                <!-- Render the structured summary using summary_data -->
-                <h3 class="text-lg font-semibold mt-2">Name</h3>
-                <p>{{ summary_data.name | safe }}</p>
+            <!-- Render the structured summary using summary_data -->
+            <h3 class="text-lg font-semibold mt-2">Name</h3>
+            <p>{{ summary_data.name | safe }}</p>
 
-                <h3 class="text-lg font-semibold mt-2">Description</h3>
-                <p>{{ summary_data.description | safe }}</p>
+            <h3 class="text-lg font-semibold mt-2">Description</h3>
+            <p>{{ summary_data.description | safe }}</p>
 
-                {% if summary_data.author %}
-                    <h3 class="text-lg font-semibold mt-2">Author(s)</h3>
-                    <ul class="list-disc pl-5">
-                        {% for author in summary_data.author %}
-                            <li>
-                                {{ author.name | safe }}{% if author.email %}
-                                ({{ author.email | safe }}){% endif %}
-                            </li>
-                        {% endfor %}
-                    </ul>
-                {% endif %}
+            {% if summary_data.author %}
+                <h3 class="text-lg font-semibold mt-2">Author(s)</h3>
+                <ul class="list-disc pl-5">
+                    {% for author in summary_data.author %}
+                        <li>
+                            {{ author.name | safe }}{% if author.email %}
+                            ({{ author.email | safe }}){% endif %}
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
 
-                <!-- Add more fields as needed, checking for their existence -->
-            {% else %}
-                <!-- Display raw summary -->
+            <!-- Add more fields as needed, checking for their existence -->
+        {% else %}
+            <!-- Display raw summary -->
             <p>{{ item.summary | safe }}</p>
         {% endif %}
     </div>
