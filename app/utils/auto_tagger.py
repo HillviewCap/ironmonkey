@@ -14,12 +14,17 @@ def get_entities():
     return {**actors, **tools}
 
 def tag_content(content):
-    from app.models.relational.parsed_content import ParsedContent
-    from app.models.relational.content_tag import ContentTag
 
     if isinstance(content, str):
         # Process the content string
-        # ... (your existing tagging logic)
+        # Example tagging logic
+        doc = nlp(content)
+        tagged_content = []
+        for ent in doc.ents:
+            tagged_content.append({
+                'text': ent.text,
+                'label': ent.label_
+            })
         return tagged_content
     elif isinstance(content, (int, uuid.UUID)):
         # Retrieve the ParsedContent object and process its content
@@ -79,11 +84,13 @@ def tag_all_content():
     current_app.logger.info(f"Completed tagging {total_tagged} content items")
 
 def get_tagged_content(content_id):
+    from app.models.relational.parsed_content import ParsedContent
     content = ParsedContent.query.get(content_id)
     if not content:
         current_app.logger.warning(f"Content with id {content_id} not found")
         return None
 
+    from app.models.relational.content_tag import ContentTag
     tags = ContentTag.query.filter_by(parsed_content_id=content_id).all()
     sorted_tags = sorted(tags, key=lambda t: t.start_char)
 
