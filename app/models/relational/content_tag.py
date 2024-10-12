@@ -18,6 +18,8 @@ class ContentTag(db.Model):
 
     parsed_content = relationship("ParsedContent", back_populates="tags")  # Ensure this line is present
 
+    from app.utils.auto_tagger import tag_content
+
     def get_tagged_content(self):
         content = self.to_dict()
         if content.get('description'):

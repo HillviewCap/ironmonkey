@@ -20,6 +20,9 @@ def tag_content(content_id):
     from app.models.relational.parsed_content import ParsedContent
     from app.models.relational.content_tag import ContentTag
 
+    from app.models.relational.parsed_content import ParsedContent
+    from app.models.relational.content_tag import ContentTag
+
     content = ParsedContent.query.get(content_id)
     if not content:
         return 0
