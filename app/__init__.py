@@ -150,7 +150,6 @@ def create_app(config_object=None):
             logger.warning(f"Blueprint {blueprint.name} already registered, skipping.")
 
     # Initialize services
-    @app.before_first_request
     def initialize_services():
         with app.app_context():
             # Initialize Ollama API
@@ -167,6 +166,10 @@ def create_app(config_object=None):
             # Update APT databases
             update_databases()
             logger.info("APT databases updated at application startup")
+
+    # Call initialize_services after all blueprints are registered
+    with app.app_context():
+        initialize_services()
 
     # Initialize auto-tag command
     init_auto_tag_command(app)
