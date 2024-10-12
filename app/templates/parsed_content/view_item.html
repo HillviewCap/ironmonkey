@@ -42,7 +42,7 @@
     <div class="mb-6">
         <h2 class="text-xl font-semibold mb-2">Description</h2>
         <div id="item-description">
-            {{ item.description|safe }}
+            {{ description|safe }}
         </div>
     </div>
     {% endif %}
@@ -201,6 +201,20 @@ function toggleDescription(event) {
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const description = document.getElementById('item-description');
+    if (description) {
+        description.innerHTML = description.innerHTML.replace(
+            /<span class="tagged-entity" data-entity-type="([^"]*)" data-entity-id="([^"]*)">([^<]*)<\/span>/g,
+            function(match, entityType, entityId, entityName) {
+                let detailPageUrl = '';
+                if (entityType === 'ACTOR') {
+                    detailPageUrl = `/apt/group/${entityId}`;
+                } else if (entityType === 'TOOL') {
+                    detailPageUrl = `/apt/tool/${entityId}`;
+                }
+                return `<a href="${detailPageUrl}" class="tagged-entity text-blue-500 hover:underline" data-entity-type="${entityType}" data-entity-id="${entityId}">${entityName}</a>`;
+            }
+        );
+    }
     if (description) {
         description.innerHTML = description.innerHTML.replace(
             /<span class="tagged-entity" data-entity-type="([^"]*)" data-entity-id="([^"]*)">([^<]*)<\/span>/g,

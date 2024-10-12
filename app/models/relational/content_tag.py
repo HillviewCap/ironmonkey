@@ -3,6 +3,7 @@ from sqlalchemy import Column, ForeignKey, String, Index, Integer
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from app.extensions import db
+from app.models.relational.content_tag import ContentTag
 import uuid
 
 class ContentTag(db.Model):
