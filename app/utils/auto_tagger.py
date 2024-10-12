@@ -1,4 +1,6 @@
 import spacy
+from app.models.relational.parsed_content import ParsedContent
+from app.models.relational.content_tag import ContentTag
 import uuid
 from sqlalchemy import exists
 from app.models.relational.allgroups import AllGroupsValues
