@@ -46,7 +46,10 @@ def list_content():
 
 @bp.route('/item/<uuid:item_id>')
 def view_item(item_id):
-    item = ParsedContent.get_by_id(item_id)
-    if not item:
+    item_instance = ParsedContent.get_by_id(item_id)
+    if not item_instance:
+        abort(404)
+    # Use get_tagged_content() to get content with entities tagged
+    item = item_instance.get_tagged_content()
         abort(404)
     return render_template('parsed_content/view_item.html', item=item)
