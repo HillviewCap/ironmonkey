@@ -105,6 +105,7 @@ def create_app(config_object=None):
         from app.models.relational.category import Category
         from app.models.relational.user import User
         from app.models.relational.rss_feed import RSSFeed
+        from app.models.relational.content_tag import ContentTag
         
         # Reflect the current state of the database
         db.reflect()
@@ -149,36 +150,23 @@ def create_app(config_object=None):
             logger.warning(f"Blueprint {blueprint.name} already registered, skipping.")
 
     # Initialize services
-    with app.app_context():
-        # Initialize Ollama API
-        app.ollama_api = OllamaAPI()
+    @app.before_first_request
+    def initialize_services():
+        with app.app_context():
+            # Initialize Ollama API
+            app.ollama_api = OllamaAPI()
 
-        # Setup scheduler
-        app.scheduler = SchedulerService(app)
-        app.scheduler.setup_scheduler()
+            # Setup scheduler
+            app.scheduler = SchedulerService(app)
+            app.scheduler.setup_scheduler()
 
-        # Initialize Awesome Threat Intel Blogs
-        from app.services.awesome_threat_intel_service import AwesomeThreatIntelService
-        AwesomeThreatIntelService.initialize_awesome_feeds()
+            # Initialize Awesome Threat Intel Blogs
+            from app.services.awesome_threat_intel_service import AwesomeThreatIntelService
+            AwesomeThreatIntelService.initialize_awesome_feeds()
 
-        # Update APT databases
-        update_databases()
-        logger.info("APT databases updated at application startup")
-        # Initialize Ollama API
-        app.ollama_api = OllamaAPI()
-
-        # Setup scheduler
-        app.scheduler = SchedulerService(app)
-        app.scheduler.setup_scheduler()
-
-        # Initialize Awesome Threat Intel Blogs
-        from app.services.awesome_threat_intel_service import AwesomeThreatIntelService
-
-        AwesomeThreatIntelService.initialize_awesome_feeds()
-
-        # Update APT databases
-        update_databases()
-        logger.info("APT databases updated at application startup")
+            # Update APT databases
+            update_databases()
+            logger.info("APT databases updated at application startup")
 
     # Initialize auto-tag command
     init_auto_tag_command(app)

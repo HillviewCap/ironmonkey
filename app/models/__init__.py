@@ -8,6 +8,7 @@ from .relational.awesome_threat_intel_blog import AwesomeThreatIntelBlog
 from .relational.alltools import AllTools, AllToolsValues, AllToolsValuesNames
 from .relational.allgroups import AllGroups, AllGroupsValues, AllGroupsValuesNames
 from .relational.rollup import Rollup
+from .relational.content_tag import ContentTag
 
 __all__ = [
     "db",
