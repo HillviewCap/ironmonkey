@@ -1,5 +1,6 @@
 import json
 from flask import render_template, abort, jsonify, request, current_app
+from app.utils.auto_tagger import tag_content
 from datetime import datetime, time
 from .services import ParsedContentService
 from . import bp
@@ -67,12 +68,12 @@ def view_item(item_id):
             summary_data = json.loads(item['summary'])
             # If summary_data is successfully parsed, we need to ensure the description is properly tagged
             if 'description' in summary_data:
-                summary_data['description'] = item_instance.tag_entities(summary_data['description'])
+                summary_data['description'] = tag_content(summary_data['description'])
         except json.JSONDecodeError as e:
             current_app.logger.error(f"Error parsing summary JSON for item {item_id}: {str(e)}")
             current_app.logger.debug(f"Invalid JSON content: {item['summary']}")
             # If JSON parsing fails, treat it as raw text
-            item['summary'] = item_instance.tag_entities(item['summary'])
+            item['summary'] = tag_content(item['summary'])
     else:
         current_app.logger.info(
             f"No summary available for item {item_id}."

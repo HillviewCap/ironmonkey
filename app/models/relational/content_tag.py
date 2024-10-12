@@ -1,5 +1,6 @@
 from __future__ import annotations
 from sqlalchemy import Column, ForeignKey, String, Index, Integer
+from app.utils.auto_tagger import tag_content
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship  # Add this import if not already present
 from app.extensions import db
@@ -18,7 +19,13 @@ class ContentTag(db.Model):
 
     parsed_content = relationship("ParsedContent", back_populates="tags")  # Ensure this line is present
 
-    __table_args__ = (
+    def get_tagged_content(self):
+        content = self.to_dict()
+        if content.get('description'):
+            content['description'] = tag_content(content['description'])
+        if content.get('summary'):
+            content['summary'] = tag_content(content['summary'])
+        return content
         Index('idx_content_tags_parsed_content_id', parsed_content_id),
         Index('idx_content_tags_entity_type_id', entity_type, entity_id),
     )
