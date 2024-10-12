@@ -14,24 +14,80 @@ document.addEventListener('DOMContentLoaded', function() {
     const topSitesList = document.getElementById('top-sites-list');
     const topAuthorsList = document.getElementById('top-authors-list');
 
-    if (dateForm) {
+    // Function definitions moved outside of conditionals
+    function fetchContent(date) {
+        fetch(`/parsed_content/list?date=${date}`)
+            .then(response => response.json())
+            .then(data => {
+                updateContent(data.content);
+                updateStats(data.stats);
+                if (selectedDateSpan) {
+                    selectedDateSpan.textContent = date;
+                }
+            })
+            .catch(error => console.error('Error:', error));
+    }
+
+    function updateContent(content) {
+        if (!contentGrid) return;
+        contentGrid.innerHTML = '';
+        if (content.length > 0) {
+            if (noContentMessage) {
+                noContentMessage.style.display = 'none';
+            }
+            content.forEach(item => {
+                const articleElement = document.createElement('a');
+                articleElement.href = `/parsed_content/item/${item.id}`;
+                articleElement.className = 'block bg-white rounded-lg shadow-md p-6 hover:bg-gray-100';
+                articleElement.innerHTML = `
+                    <h2 class="text-xl font-semibold mb-2 text-blue-600 hover:underline">
+                        ${item.title}
+                    </h2>
+                    <p class="text-gray-600 mb-4">${item.description ? item.description.substring(0, 150) + '...' : ''}</p>
+                    <div class="text-sm text-gray-500 flex justify-between items-center">
+                        <span>${new Date(item.pub_date).toLocaleString()}</span>
+                        <span class="text-blue-500">${item.rss_feed_title}</span>
+                    </div>
+                `;
+                contentGrid.appendChild(articleElement);
+            });
+        } else {
+            if (noContentMessage) {
+                noContentMessage.style.display = 'block';
+            }
+        }
+    }
+
+    function updateStats(stats) {
+        if (articlesToday) {
+            articlesToday.textContent = stats.articles_today;
+        }
+        if (topSitesList) {
+            topSitesList.innerHTML = stats.top_sites.map(site => `<li>${site[0]}: ${site[1]} articles</li>`).join('');
+        }
+        if (topAuthorsList) {
+            topAuthorsList.innerHTML = stats.top_authors.map(author => `<li>${author[0]}: ${author[1]} articles</li>`).join('');
+        }
+    }
+
+    function logDebug(message) {
+        console.log(message);
+        if (debugOutput) {
+            debugOutput.textContent += message + '\n';
+        }
+    }
+
+    // Event listener for date form submission
+    if (dateForm && dateInput) {
         dateForm.addEventListener('submit', function(e) {
             e.preventDefault();
             fetchContent(dateInput.value);
         });
     }
 
-    if (dateForm) {
-        function fetchContent(date) {
-            fetch(`/parsed_content/list?date=${date}`)
-                .then(response => response.json())
-                .then(data => {
-                    updateContent(data.content);
-                    updateStats(data.stats);
-                    selectedDateSpan.textContent = date;
-                })
-                .catch(error => console.error('Error:', error));
-        }
+    // Fetch content for the initial date if dateInput exists
+    if (dateInput) {
+        fetchContent(dateInput.value);
     }
 
     function updateContent(content) {
