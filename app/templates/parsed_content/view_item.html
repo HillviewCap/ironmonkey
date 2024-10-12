@@ -93,7 +93,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 function(match, entityType, entityId, entityName) {
                     let detailPageUrl = '';
                     if (entityType === 'actor') {
-                        detailPageUrl = `/apt/group/${entityId}`;
+                        detailPageUrl = `/apt/apt-group/${entityId}`; // Corrected URL
                     } else if (entityType === 'tool') {
                         detailPageUrl = `/apt/tool/${entityId}`;
                     }
