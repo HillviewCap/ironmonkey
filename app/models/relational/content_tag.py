@@ -1,7 +1,7 @@
 from __future__ import annotations
 from sqlalchemy import Column, ForeignKey, String, Index, Integer
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.orm import relationship  # Add this import if not already present
+from sqlalchemy.orm import relationship
 from app.extensions import db
 import uuid
 
@@ -16,7 +16,7 @@ class ContentTag(db.Model):
     start_char = Column(Integer, nullable=False)
     end_char = Column(Integer, nullable=False)
 
-    parsed_content = relationship("ParsedContent", back_populates="tags")  # Ensure this line is present
+    parsed_content = relationship("ParsedContent", back_populates="tags")
 
     def get_tagged_content(self):
         from app.utils.auto_tagger import tag_content

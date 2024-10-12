@@ -9,7 +9,7 @@ from flask import flash, current_app
 from .category import Category
 from typing import List, Dict, Any, Optional, Union
 from pydantic import BaseModel
-from sqlalchemy.orm import joinedload
+from sqlalchemy.orm import joinedload, relationship
 
 parsed_content_categories = Table(
     'parsed_content_categories',
@@ -34,7 +34,7 @@ class ParsedContent(db.Model):
     creator = Column(String(255), nullable=True)
     categories = db.relationship('Category', secondary=parsed_content_categories, backref=db.backref('parsed_contents', lazy='dynamic'))
     art_hash = Column(String(64), nullable=True)
-    tags = db.relationship('ContentTag', back_populates='parsed_content', cascade='all, delete-orphan')  # Ensure this line is present
+    tags = relationship('ContentTag', back_populates='parsed_content', cascade='all, delete-orphan')
 
     __table_args__ = (db.UniqueConstraint('url', 'feed_id', name='uix_url_feed'),)
 
