@@ -77,9 +77,3 @@ def view_item(item_id):
         item=item,
         summary_data=summary_data
     )
-
-    return render_template(
-        'parsed_content/view_item.html',
-        item=item,
-        summary_data=summary_data
-    )

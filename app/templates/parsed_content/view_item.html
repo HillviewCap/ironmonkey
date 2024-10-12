@@ -97,15 +97,27 @@ document.addEventListener('DOMContentLoaded', function() {
                     } else if (entityType === 'tool') {
                         detailPageUrl = `/apt/apt-tool/${encodeURIComponent(entityName)}`;
                     }
-                    return `<a href="${detailPageUrl}" class="tagged-entity text-blue-500 hover:underline" data-entity-type="${entityType}" data-entity-id="${entityId}" data-entity-name="${entityName}">${displayText}</a>`;
+                    return `<a href="${detailPageUrl}" class="tagged-entity text-blue-500 hover:underline hover:bg-yellow-200 transition duration-300" data-entity-type="${entityType}" data-entity-id="${entityId}" data-entity-name="${entityName}">${displayText}</a>`;
                 }
             );
         }
     }
 
     processTaggedEntities('item-description');
-    processTaggedEntities('summary-description');
     processTaggedEntities('summary-content');
+
+    // Add event listener for mouseover and mouseout
+    document.body.addEventListener('mouseover', function(e) {
+        if (e.target.classList.contains('tagged-entity')) {
+            e.target.style.backgroundColor = 'yellow';
+        }
+    });
+
+    document.body.addEventListener('mouseout', function(e) {
+        if (e.target.classList.contains('tagged-entity')) {
+            e.target.style.backgroundColor = '';
+        }
+    });
 });
 </script>
 
