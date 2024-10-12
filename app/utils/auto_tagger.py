@@ -13,55 +13,62 @@ def get_entities():
     tools = {tool.name.lower(): (str(tool.uuid), 'tool') for tool in AllToolsValuesNames.query.all()}
     return {**actors, **tools}
 
-def tag_content(content_id):
+def tag_content(content):
     from app.models.relational.parsed_content import ParsedContent
     from app.models.relational.content_tag import ContentTag
 
-    content = ParsedContent.query.get(content_id)
-    if not content:
-        return 0
+    if isinstance(content, str):
+        # Process the content string
+        # ... (your existing tagging logic)
+        return tagged_content
+    elif isinstance(content, (int, uuid.UUID)):
+        # Retrieve the ParsedContent object and process its content
+        parsed_content = ParsedContent.get_by_id(content)
+        if parsed_content:
+            entities = get_entities()
+            text_to_tag = f"{parsed_content.description or ''} {parsed_content.summary or ''}"
+            doc = nlp(text_to_tag)
 
-    entities = get_entities()
-    text_to_tag = f"{content.description or ''} {content.summary or ''}"
-    doc = nlp(text_to_tag)
+            new_tags = []    
+            for ent in doc.ents:        
+                lower_ent = ent.text.lower()
+                if lower_ent in entities:
+                    entity_id, entity_type = entities[lower_ent]
+                    # Check for existing tag
+                    existing_tag = ContentTag.query.filter_by(
+                        parsed_content_id=parsed_content.id,
+                        entity_type=entity_type,
+                        entity_id=uuid.UUID(entity_id),
+                        start_char=ent.start_char,                
+                        end_char=ent.end_char
+                    ).first()
+                    
+                    if existing_tag:
+                        continue  # Skip adding duplicate tag
+                    
+                    # No duplicate exists, create new tag
+                    new_tag = ContentTag(            
+                        id=uuid.uuid4(),
+                        parsed_content_id=parsed_content.id,
+                        entity_type=entity_type,
+                        entity_id=uuid.UUID(entity_id),
+                        entity_name=ent.text,
+                        start_char=ent.start_char,
+                        end_char=ent.end_char
+                    )
+                    new_tags.append(new_tag)
 
-    new_tags = []    
-    for ent in doc.ents:        
-        lower_ent = ent.text.lower()
-        if lower_ent in entities:
-            entity_id, entity_type = entities[lower_ent]
-            # Check for existing tag
-            existing_tag = ContentTag.query.filter_by(
-                parsed_content_id=content.id,
-                entity_type=entity_type,
-                entity_id=uuid.UUID(entity_id),
-                start_char=ent.start_char,                
-                end_char=ent.end_char
-            ).first()
-            
-            if existing_tag:
-                continue  # Skip adding duplicate tag
-            
-            # No duplicate exists, create new tag
-            new_tag = ContentTag(            
-                id=uuid.uuid4(),
-                parsed_content_id=content.id,
-                entity_type=entity_type,
-                entity_id=uuid.UUID(entity_id),
-                entity_name=ent.text,
-                start_char=ent.start_char,
-                end_char=ent.end_char
-            )
-            new_tags.append(new_tag)
-
-    try:
-        db.session.add_all(new_tags)
-        db.session.commit()
-        return len(new_tags)
-    except Exception as e:
-        current_app.logger.error(f"Error tagging content {content_id}: {str(e)}")
-        db.session.rollback()
-        return 0
+            try:
+                db.session.add_all(new_tags)
+                db.session.commit()
+                return len(new_tags)
+            except Exception as e:
+                current_app.logger.error(f"Error tagging content {content}: {str(e)}")
+                db.session.rollback()
+                return 0
+    else:
+        current_app.logger.error(f"Invalid content type in tag_content: {type(content)}")
+        return content
 
 def tag_all_content():
     from app.models.relational.parsed_content import ParsedContent

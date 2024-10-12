@@ -72,11 +72,13 @@ def view_item(item_id):
             current_app.logger.error(f"Error parsing summary JSON for item {item_id}: {str(e)}")
             current_app.logger.debug(f"Invalid JSON content: {item['summary']}")
             # If JSON parsing fails, treat it as raw text
-            item['summary'] = tag_content(item['summary'])
-    else:
-        current_app.logger.info(
-            f"No summary available for item {item_id}."
-        )
+            summary_data = {"raw_text": item['summary']}
+
+    return render_template(
+        'parsed_content/view_item.html',
+        item=item,
+        summary_data=summary_data
+    )
 
     return render_template(
         'parsed_content/view_item.html',

@@ -85,7 +85,7 @@ class ParsedContent(db.Model):
             elif not isinstance(content_id, PyUUID):
                 raise ValueError("Invalid content_id type")
             
-            return cls.query.filter(cls.id == content_id).first()
+            return cls.query.get(content_id)
         except ValueError:
             current_app.logger.error(f"Invalid content_id: {content_id}")
             return None
