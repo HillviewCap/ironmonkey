@@ -45,7 +45,14 @@ def list_content():
         'stats': stats
     })
 
-@bp.route('/item/<uuid:item_id>')
+import json
+
+def is_valid_json(myjson):
+    try:
+        json_object = json.loads(myjson)
+    except ValueError:
+        return False
+    return True
 def view_item(item_id):
     item_instance = ParsedContent.get_by_id(item_id)
     if not item_instance:
@@ -58,11 +65,6 @@ def view_item(item_id):
         try:
             summary_data = json.loads(item['summary'])
         except json.JSONDecodeError as e:
-            current_app.logger.error(
-                f"Error parsing summary JSON for item {item_id}: {str(e)}"
-            )
-            current_app.logger.debug(f"Invalid JSON content: {item['summary']}")
-            summary_data = None
             current_app.logger.error(
                 f"Error parsing summary JSON for item {item_id}: {str(e)}"
             )
