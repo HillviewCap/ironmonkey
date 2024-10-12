@@ -26,6 +26,8 @@ class ContentTag(db.Model):
         if content.get('summary'):
             content['summary'] = tag_content(content['summary'])
         return content
+
+    __table_args__ = (
         Index('idx_content_tags_parsed_content_id', parsed_content_id),
         Index('idx_content_tags_entity_type_id', entity_type, entity_id),
     )
