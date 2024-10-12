@@ -32,7 +32,7 @@ def setup_logger(name, log_file, level=logging.INFO):
         mode='a',
         encoding='utf-8'
     )
-    c_handler.setLevel(logging.INFO)  # Console logs at INFO level
+    c_handler.setLevel(logging.DEBUG)  # Console logs at DEBUG level
     f_handler.setLevel(logging.DEBUG)  # File logs at DEBUG level
 
     # Set up rotation
@@ -44,9 +44,10 @@ def setup_logger(name, log_file, level=logging.INFO):
     c_handler.setFormatter(formatter)
     f_handler.setFormatter(formatter)
 
-    # Add handlers to the logger
-    logger.addHandler(c_handler)
-    logger.addHandler(f_handler)
+    # Add handlers to the logger if they haven't been added already
+    if not logger.handlers:
+        logger.addHandler(c_handler)
+        logger.addHandler(f_handler)
     logger.info("Logging setup complete.")
 
     return logger

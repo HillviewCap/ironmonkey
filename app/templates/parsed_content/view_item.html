@@ -74,11 +74,7 @@
 
                 <!-- Add more fields as needed, checking for their existence -->
             {% else %}
-                <!-- If parsing failed, display the raw summary -->
-                <p>{{ item.summary | safe }}</p>
-            {% endif %}
-        {% else %}
-            <!-- If parsing failed, display the raw summary -->
+                <!-- Display raw summary -->
             <p>{{ item.summary | safe }}</p>
         {% endif %}
     </div>

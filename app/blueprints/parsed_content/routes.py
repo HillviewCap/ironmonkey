@@ -53,6 +53,7 @@ def is_valid_json(myjson):
     except ValueError:
         return False
     return True
+@bp.route('/item/<uuid:item_id>')
 def view_item(item_id):
     item_instance = ParsedContent.get_by_id(item_id)
     if not item_instance:
@@ -61,20 +62,26 @@ def view_item(item_id):
     item = item_instance.get_tagged_content()
     # Initialize summary_data
     summary_data = None
-    if item.get('summary') and is_valid_json(item['summary']):
-        try:
-            summary_data = json.loads(item['summary'])
-        except json.JSONDecodeError as e:
-            current_app.logger.error(
-                f"Error parsing summary JSON for item {item_id}: {str(e)}"
+    if item.get('summary'):
+        if is_valid_json(item['summary']):
+            try:
+                summary_data = json.loads(item['summary'])
+            except json.JSONDecodeError as e:
+                current_app.logger.error(
+                    f"Error parsing summary JSON for item {item_id}: {str(e)}"
+                )
+                current_app.logger.debug(f"Invalid JSON content: {item['summary']}")
+                summary_data = None
+        else:
+            current_app.logger.warning(
+                f"Summary for item {item_id} is not valid JSON."
             )
-            current_app.logger.debug(f"Invalid JSON content: {item['summary']}")
+            current_app.logger.debug(f"Non-JSON summary content: {item['summary']}")
             summary_data = None
     else:
-        current_app.logger.warning(
-            f"Summary for item {item_id} is not valid JSON."
+        current_app.logger.info(
+            f"No summary available for item {item_id}."
         )
-        summary_data = None
 
     return render_template(
         'parsed_content/view_item.html',
