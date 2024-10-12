@@ -66,9 +66,8 @@ def view_item(item_id):
     if item.get('summary'):
         try:
             summary_data = json.loads(item['summary'])
-            # If summary_data is successfully parsed, we need to ensure the description is properly tagged
-            if 'description' in summary_data:
-                summary_data['description'] = tag_content(summary_data['description'])
+            # If summary_data is successfully parsed, we don't need to tag it again
+            # as it's already tagged in get_tagged_content()
         except json.JSONDecodeError as e:
             current_app.logger.error(f"Error parsing summary JSON for item {item_id}: {str(e)}")
             current_app.logger.debug(f"Invalid JSON content: {item['summary']}")
