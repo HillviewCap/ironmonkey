@@ -41,7 +41,7 @@
     {% if item.description %}
     <div class="mb-6">
         <h2 class="text-xl font-semibold mb-2">Description</h2>
-        <div id="item-description">
+        <div id="item-description">  <!-- Updated to use the processed description -->
             {{ description|safe }}
         </div>
     </div>
@@ -211,7 +211,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 } else if (entityType === 'TOOL') {
                     detailPageUrl = `/apt/tool/${entityId}`;
                 }
-                return `<a href="${detailPageUrl}" class="tagged-entity text-blue-500 hover:underline" data-entity-type="${entityType}" data-entity-id="${entityId}">${entityName}</a>`;
+                return `<a href="${detailPageUrl}" class="tagged-entity text-blue-500 hover:underline" data-entity-type="${entityType}" data-entity-id="${entityId}">${entityName}</a>`;  // Create link for entity
             }
         );
     }
