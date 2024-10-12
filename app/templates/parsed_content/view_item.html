@@ -48,73 +48,33 @@
         </div>
     </div>
     {% endif %}
-    {% endif %}
     
     {% if item.summary %}
     <div class="mb-6">
         <h2 class="text-xl font-semibold mb-2">Summary</h2>
-        {% set summary_data = item.summary | from_json %}
         {% if summary_data %}
-            <h3 class="text-lg font-semibold mt-2">Main Topic</h3>
-            <p>{{ summary_data.main_topic | safe }}</p>
-            
-            <h3 class="text-lg font-semibold mt-2">Key Points</h3>
-            <ul class="list-disc pl-5">
-                {% for point in summary_data.key_points %}
-                    <li>{{ point | safe }}</li>
-                {% endfor %}
-            </ul>
-            
-            {% if summary_data.threat_actors %}
-                <h3 class="text-lg font-semibold mt-2">Threat Actors</h3>
+            <!-- Render the structured summary using summary_data -->
+            <h3 class="text-lg font-semibold mt-2">Name</h3>
+            <p>{{ summary_data.name | safe }}</p>
+
+            <h3 class="text-lg font-semibold mt-2">Description</h3>
+            <p>{{ summary_data.description | safe }}</p>
+
+            {% if summary_data.author %}
+                <h3 class="text-lg font-semibold mt-2">Author(s)</h3>
                 <ul class="list-disc pl-5">
-                    {% for actor in summary_data.threat_actors %}
-                        <li>{{ actor | safe }}</li>
+                    {% for author in summary_data.author %}
+                        <li>
+                            {{ author.name | safe }}{% if author.email %}
+                            ({{ author.email | safe }}){% endif %}
+                        </li>
                     {% endfor %}
                 </ul>
             {% endif %}
-            
-            {% if summary_data.ttps %}
-                <h3 class="text-lg font-semibold mt-2">TTPs</h3>
-                <ul class="list-disc pl-5">
-                    {% for ttp in summary_data.ttps %}
-                        <li>{{ ttp | safe }}</li>
-                    {% endfor %}
-                </ul>
-            {% endif %}
-            
-            {% if summary_data.iocs %}
-                <h3 class="text-lg font-semibold mt-2">IoCs</h3>
-                <ul class="list-disc pl-5">
-                    {% for ioc in summary_data.iocs %}
-                        <li>{{ ioc | safe }}</li>
-                    {% endfor %}
-                </ul>
-            {% endif %}
-            
-            {% if summary_data.affected_systems %}
-                <h3 class="text-lg font-semibold mt-2">Affected Systems</h3>
-                <ul class="list-disc pl-5">
-                    {% for system in summary_data.affected_systems %}
-                        <li>{{ system | safe }}</li>
-                    {% endfor %}
-                </ul>
-            {% endif %}
-            
-            {% if summary_data.mitigations %}
-                <h3 class="text-lg font-semibold mt-2">Mitigations</h3>
-                <ul class="list-disc pl-5">
-                    {% for mitigation in summary_data.mitigations %}
-                        <li>{{ mitigation | safe }}</li>
-                    {% endfor %}
-                </ul>
-            {% endif %}
-            
-            {% if summary_data.conclusion %}
-                <h3 class="text-lg font-semibold mt-2">Conclusion</h3>
-                <p>{{ summary_data.conclusion | safe }}</p>
-            {% endif %}
+
+            <!-- Add more fields as needed, checking for their existence -->
         {% else %}
+            <!-- If parsing failed, display the raw summary -->
             <p>{{ item.summary | safe }}</p>
         {% endif %}
     </div>
