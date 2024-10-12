@@ -9,6 +9,7 @@ from app.services.news_rollup_service import NewsRollupService
 from flask import current_app
 from app.utils.db_connection_manager import DBConnectionManager
 from logging import getLogger
+from app.utils.auto_tagger import tag_untagged_content
 
 logger = getLogger(__name__)
 scheduler_logger = getLogger("scheduler")
@@ -35,6 +36,7 @@ class SchedulerService:
 
         rss_check_interval = int(os.getenv("RSS_CHECK_INTERVAL", 30))
         summary_check_interval = int(os.getenv("SUMMARY_CHECK_INTERVAL", 31))
+        auto_tag_interval = int(os.getenv("AUTO_TAG_INTERVAL", 60))  # Default to 60 minutes if not set
 
         self.scheduler.add_job(
             func=self.check_and_process_rss_feeds,
@@ -81,6 +83,14 @@ class SchedulerService:
             hour=16,
             minute=0
         )
+
+        # Add the new auto-tagging job
+        self.scheduler.add_job(
+            func=self.auto_tag_untagged_content,
+            trigger="interval",
+            minutes=auto_tag_interval,
+        )
+        logger.info(f"Scheduled auto-tagging job to run every {auto_tag_interval} minutes")
 
         if not self.is_running:
             self.scheduler.start()
@@ -195,3 +205,7 @@ class SchedulerService:
     def create_end_of_day_rollup(self):
         with self.app.app_context():
             asyncio.run(NewsRollupService().create_and_store_rollup("end_of_day"))
+
+    def auto_tag_untagged_content(self):
+        with self.app.app_context():
+            tag_untagged_content()
