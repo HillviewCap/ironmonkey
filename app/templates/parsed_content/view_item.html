@@ -89,15 +89,15 @@ document.addEventListener('DOMContentLoaded', function() {
         const element = document.getElementById(elementId);
         if (element) {
             element.innerHTML = element.innerHTML.replace(
-                /<span class="tagged-entity" data-entity-type="([^"]*)" data-entity-id="([^"]*)">([^<]*)<\/span>/g,
-                function(match, entityType, entityId, entityName) {
+                /<span class="tagged-entity" data-entity-type="([^"]*)" data-entity-id="([^"]*)" data-entity-name="([^"]*)">([^<]*)<\/span>/g,
+                function(match, entityType, entityId, entityName, displayText) {
                     let detailPageUrl = '';
                     if (entityType === 'actor') {
-                        detailPageUrl = `/apt/apt-group/${entityId}`; // Corrected URL
+                        detailPageUrl = `/apt/apt-group/${entityId}`;
                     } else if (entityType === 'tool') {
-                        detailPageUrl = `/apt/tool/${entityId}`;
+                        detailPageUrl = `/apt/apt-tool/${encodeURIComponent(entityName)}`;
                     }
-                    return `<a href="${detailPageUrl}" class="tagged-entity text-blue-500 hover:underline" data-entity-type="${entityType}" data-entity-id="${entityId}">${entityName}</a>`;
+                    return `<a href="${detailPageUrl}" class="tagged-entity text-blue-500 hover:underline" data-entity-type="${entityType}" data-entity-id="${entityId}" data-entity-name="${entityName}">${displayText}</a>`;
                 }
             );
         }
