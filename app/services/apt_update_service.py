@@ -8,6 +8,7 @@ from sqlalchemy import create_engine, inspect
 from uuid import UUID
 from sqlalchemy.orm import sessionmaker, Session
 from app.models.relational.alltools import AllTools, AllToolsValues, AllToolsValuesNames
+import re
 from app.models.relational.allgroups import (
     AllGroups,
     AllGroupsValues,
@@ -150,16 +151,23 @@ def update_allgroups(session: Session, data: List[Dict[str, Any]]) -> None:
                 logger.warning(
                     f"Invalid UUID for group: {group.get('name', 'Unknown')} - UUID: {group['uuid']}. Attempting to fix."
                 )
-                try:
-                    # Try to pad the UUID if it's too short
-                    padded_uuid = group["uuid"].ljust(32, "0")
-                    group_uuid = UUID(padded_uuid)
-                    logger.info(
-                        f"Successfully fixed UUID for group: {group.get('name', 'Unknown')} - New UUID: {group_uuid}"
-                    )
-                except ValueError:
+                # Use regex to extract the valid UUID pattern from the string
+                uuid_pattern = r'[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}'
+                match = re.search(uuid_pattern, group["uuid"])
+                if match:
+                    try:
+                        group_uuid = UUID(match.group(0))
+                        logger.info(
+                            f"Successfully fixed UUID for group: {group.get('name', 'Unknown')} - New UUID: {group_uuid}"
+                        )
+                    except ValueError:
+                        logger.error(
+                            f"Unable to parse extracted UUID for group: {group.get('name', 'Unknown')} - Extracted UUID: {match.group(0)}. Skipping this group."
+                        )
+                        continue
+                else:
                     logger.error(
-                        f"Unable to fix UUID for group: {group.get('name', 'Unknown')} - UUID: {group['uuid']}. Skipping this group."
+                        f"Unable to extract valid UUID for group: {group.get('name', 'Unknown')} - Original UUID: {group['uuid']}. Skipping this group."
                     )
                     continue
 
