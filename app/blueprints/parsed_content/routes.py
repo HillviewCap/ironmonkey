@@ -51,5 +51,4 @@ def view_item(item_id):
         abort(404)
     # Use get_tagged_content() to get content with entities tagged
     item = item_instance.get_tagged_content()
-        abort(404)
     return render_template('parsed_content/view_item.html', item=item)
