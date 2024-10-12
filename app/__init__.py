@@ -67,7 +67,9 @@ def create_app(config_object=None):
 
     app.jinja_env.filters['from_json'] = from_json
 
-    # Load the default config if no config_object is provided
+    # Add this to ensure the app's logger uses the custom logger's handlers and level
+    app.logger.handlers = logger.handlers
+    app.logger.setLevel(logger.level)
     if config_object is None:
         app.config.from_object("config.DevelopmentConfig")
     else:
