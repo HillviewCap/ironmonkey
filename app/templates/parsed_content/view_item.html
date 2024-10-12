@@ -137,9 +137,9 @@ document.addEventListener('DOMContentLoaded', function() {
             /<span class="tagged-entity" data-entity-type="([^"]*)" data-entity-id="([^"]*)">([^<]*)<\/span>/g,
             function(match, entityType, entityId, entityName) {
                 let detailPageUrl = '';
-                if (entityType === 'ACTOR' || entityType === 'APT_GROUP') {
+                if (entityType === 'actor') {
                     detailPageUrl = `/apt/group/${entityId}`;
-                } else if (entityType === 'TOOL') {
+                } else if (entityType === 'tool') {
                     detailPageUrl = `/apt/tool/${entityId}`;
                 }
                 return `<a href="${detailPageUrl}" class="tagged-entity text-blue-500 hover:underline" data-entity-type="${entityType}" data-entity-id="${entityId}">${entityName}</a>`;
