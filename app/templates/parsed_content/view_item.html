@@ -65,19 +65,21 @@
     <div class="mb-6">
         <h2 class="text-xl font-semibold mb-2">Summary</h2>
         {% if summary_data %}
-            <!-- Render the structured summary using summary_data -->
-            {% for key, value in summary_data.items() %}
-                <h3 class="text-lg font-semibold mt-2">{{ key | title }}</h3>
-                {% if value is string %}
-                    <p>{{ value | safe }}</p>
-                {% elif value is iterable %}
-                    <ul class="list-disc pl-5">
-                        {% for item in value %}
-                            <li>{{ item | safe }}</li>
-                        {% endfor %}
-                    </ul>
-                {% endif %}
-            {% endfor %}
+            <!-- Wrap the structured summary content in a div with an ID -->
+            <div id="structured-summary-content">
+                {% for key, value in summary_data.items() %}
+                    <h3 class="text-lg font-semibold mt-2">{{ key | title }}</h3>
+                    {% if value is string %}
+                        <p>{{ value | safe }}</p>
+                    {% elif value is iterable %}
+                        <ul class="list-disc pl-5">
+                            {% for item in value %}
+                                <li>{{ item | safe }}</li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+                {% endfor %}
+            </div>
         {% else %}
             <!-- Display raw summary -->
             <div id="summary-content">
@@ -105,6 +107,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Store the original innerHTML of the elements
     originalContent['item-description'] = document.getElementById('item-description') ? document.getElementById('item-description').innerHTML : '';
     originalContent['summary-content'] = document.getElementById('summary-content') ? document.getElementById('summary-content').innerHTML : '';
+    originalContent['structured-summary-content'] = document.getElementById('structured-summary-content') ? document.getElementById('structured-summary-content').innerHTML : '';
 
     function processTaggedEntities(elementId, searchTerm = '') {
         const element = document.getElementById(elementId);
@@ -161,10 +164,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
     processTaggedEntities('item-description');
     processTaggedEntities('summary-content');
+    processTaggedEntities('structured-summary-content');
 
     // Initially attach event listeners
     attachEntityEventListeners(document.getElementById('item-description'));
     attachEntityEventListeners(document.getElementById('summary-content'));
+    attachEntityEventListeners(document.getElementById('structured-summary-content'));
 
     const toggleButton = document.getElementById('toggle-highlighting');
     toggleButton.addEventListener('click', function() {
@@ -172,6 +177,7 @@ document.addEventListener('DOMContentLoaded', function() {
         toggleButton.textContent = highlightingEnabled ? 'Disable Highlighting' : 'Enable Highlighting';
         processTaggedEntities('item-description');
         processTaggedEntities('summary-content');
+        processTaggedEntities('structured-summary-content');
     });
 
     const searchInput = document.getElementById('search-input');
@@ -181,6 +187,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const searchTerm = searchInput.value.trim();
         processTaggedEntities('item-description', searchTerm);
         processTaggedEntities('summary-content', searchTerm);
+        processTaggedEntities('structured-summary-content', searchTerm);
     });
 });
 </script>
