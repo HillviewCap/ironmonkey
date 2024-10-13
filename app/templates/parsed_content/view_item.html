@@ -96,9 +96,6 @@
 
 {% include "components/entity_modal.html" %}
 
-<div id="item-description" style="display:none;">{{ item.description | safe }}</div>
-<div id="summary-content" style="display:none;">{{ item.summary | safe }}</div>
-
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     console.log("Script is running");
@@ -125,7 +122,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             );
             console.log(`Updated innerHTML: ${element.innerHTML}`);
-            element.style.display = 'block';
         } else {
             console.log(`Element not found: ${elementId}`);
         }
