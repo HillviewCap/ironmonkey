@@ -10,6 +10,7 @@ from flask import current_app
 from app.utils.db_connection_manager import DBConnectionManager
 from logging import getLogger
 from app.utils.auto_tagger import tag_untagged_content
+from app.utils.threat_group_cards_updater import update_threat_group_cards
 
 logger = getLogger(__name__)
 scheduler_logger = getLogger("scheduler")
@@ -91,6 +92,16 @@ class SchedulerService:
             minutes=auto_tag_interval,
         )
         logger.info(f"Scheduled auto-tagging job to run every {auto_tag_interval} minutes")
+
+        # Schedule the update_threat_group_cards function to run every 12 hours
+        self.scheduler.add_job(
+            func=self.update_threat_group_cards_job,
+            trigger='interval',
+            hours=12,  # Adjust the interval as required
+            id='update_threat_group_cards_job',
+            replace_existing=True
+        )
+        logger.info("Scheduled job added: update_threat_group_cards_job")
 
         if not self.is_running:
             self.scheduler.start()
@@ -209,3 +220,8 @@ class SchedulerService:
     def auto_tag_untagged_content(self):
         with self.app.app_context():
             tag_untagged_content()
+
+    def update_threat_group_cards_job(self):
+        with self.app.app_context():
+            update_threat_group_cards()
+            logger.info("Scheduled job executed: Threat Group Cards JSON files updated.")
