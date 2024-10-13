@@ -115,10 +115,11 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log(`Processing element: ${elementId}`);
             console.log(`Original innerHTML: ${element.innerHTML}`);
             element.innerHTML = element.innerHTML.replace(
-                /<span class="tagged-entity" data-entity-type="([^"]*)" data-entity-id="([^"]*)" data-entity-name="([^"]*)">([^<]*)<\/span>/g,
-                function(match, entityType, entityId, entityName, displayText) {
+                /<span class="tagged-entity" data-entity-type="([^"]*)" data-entity-id="([^"]*)">([^<]*)<\/span>/g,
+                function(match, entityType, entityId, displayText) {
                     console.log(`Replacing: ${match}`);
                     let detailPageUrl = '';
+                    const entityName = displayText;  // Use displayText as the entity name
                     if (entityType === 'actor') {
                         detailPageUrl = `/apt/apt-group/${entityId}`;
                     } else if (entityType === 'tool') {
@@ -130,7 +131,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             );
             console.log(`Updated innerHTML: ${element.innerHTML}`);
-
             // Re-attach event listeners to the new elements
             attachEntityEventListeners(element);
         } else {
@@ -139,12 +139,16 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function attachEntityEventListeners(parentElement) {
+        if (!parentElement) {
+            console.log("Parent element is null. Skipping event listener attachment.");
+            return;
+        }
         parentElement.querySelectorAll('.tagged-entity').forEach(function(entity) {
             entity.addEventListener('click', function(event) {
                 event.preventDefault();
                 const entityType = event.target.dataset.entityType;
                 const entityId = event.target.dataset.entityId;
-                const entityName = event.target.dataset.entityName;
+                const entityName = event.target.dataset.entityName || event.target.textContent.trim();
                 console.log(`Clicked entity: Type=${entityType}, ID=${entityId}, Name=${entityName}`);
                 if (entityType === 'actor') {
                     window.location.href = `/apt/apt-group/${entityId}`;
