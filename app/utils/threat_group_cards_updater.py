@@ -3,6 +3,7 @@ import requests
 import hashlib
 import json
 import logging
+import re
 
 logger = logging.getLogger(__name__)
 
@@ -11,10 +12,39 @@ def fetch_json_from_url(url):
     try:
         response = requests.get(url, timeout=10, headers={'User-Agent': 'YourAppName/1.0'})
         response.raise_for_status()
-        return response.json()
+        text_content = response.text
+
+        # Try parsing the JSON data
+        try:
+            return json.loads(text_content)
+        except json.JSONDecodeError as e:
+            logger.warning(f"JSON parsing error: {e}. Attempting to fix the JSON data.")
+
+            # Attempt to fix the JSON data
+            fixed_content = fix_json_errors(text_content)
+
+            # Try parsing again
+            try:
+                return json.loads(fixed_content)
+            except json.JSONDecodeError as e2:
+                logger.error(f"Failed to parse JSON after attempting to fix it: {e2}")
+                return None
     except requests.RequestException as e:
         logger.error(f"Error fetching data from {url}: {e}")
         return None
+
+def fix_json_errors(json_text):
+    """
+    Attempt to fix known JSON errors in the text.
+    Specifically, wrap unquoted URLs in quotes.
+    """
+    # Pattern to match unquoted URLs in value positions
+    url_pattern = re.compile(r'(?<=:\s)(https?://[^\s",}]+)')
+
+    # Replace unquoted URLs with quoted URLs
+    fixed_text = url_pattern.sub(r'"\1"', json_text)
+
+    return fixed_text
 
 def read_local_json_file(filepath):
     """Read JSON data from a local file."""
