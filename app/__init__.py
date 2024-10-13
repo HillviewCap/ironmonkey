@@ -1,6 +1,7 @@
 import os
 import json
 import warnings
+import logging
 from dotenv import load_dotenv
 from flask import Flask, jsonify
 from flask_migrate import Migrate
@@ -166,6 +167,11 @@ def create_app(config_object=None):
             # Update APT databases
             update_databases()
             logger.info("APT databases updated at application startup")
+
+            # Update the Threat Group Cards JSON files
+            from app.utils.threat_group_cards_updater import update_threat_group_cards
+            update_threat_group_cards()
+            logger.info("Threat Group Cards JSON files updated at application startup")
 
     # Call initialize_services after all blueprints are registered
     with app.app_context():

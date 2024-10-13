@@ -53,4 +53,4 @@ def setup_logger(name, log_file, level=logging.INFO):
     return logger
 
 # Create the main app logger
-logger = setup_logger('rss_manager', 'app.log')
+logger = setup_logger('app', 'app.log')
