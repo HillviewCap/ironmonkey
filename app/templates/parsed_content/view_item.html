@@ -83,14 +83,21 @@
 
 {% include "components/entity_modal.html" %}
 
+<div id="item-description" style="display:none;">{{ item.description | safe }}</div>
+<div id="summary-content" style="display:none;">{{ item.summary | safe }}</div>
+
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    console.log("Script is running");
     function processTaggedEntities(elementId) {
         const element = document.getElementById(elementId);
         if (element) {
+            console.log(`Processing element: ${elementId}`);
+            console.log(`Original innerHTML: ${element.innerHTML}`);
             element.innerHTML = element.innerHTML.replace(
                 /<span class="tagged-entity" data-entity-type="([^"]*)" data-entity-id="([^"]*)" data-entity-name="([^"]*)">([^<]*)<\/span>/g,
                 function(match, entityType, entityId, entityName, displayText) {
+                    console.log(`Replacing: ${match}`);
                     let detailPageUrl = '';
                     if (entityType === 'actor') {
                         detailPageUrl = `/apt/apt-group/${entityId}`;
@@ -100,6 +107,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     return `<a href="${detailPageUrl}" class="tagged-entity text-blue-500 hover:underline hover:bg-yellow-200 transition duration-300" data-entity-type="${entityType}" data-entity-id="${entityId}" data-entity-name="${entityName}">${displayText}</a>`;
                 }
             );
+            console.log(`Updated innerHTML: ${element.innerHTML}`);
+            element.style.display = 'block';
+        } else {
+            console.log(`Element not found: ${elementId}`);
         }
     }
 
