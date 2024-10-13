@@ -7,6 +7,19 @@
 
 {% block content %}
 <div class="container mx-auto mt-8">
+    <div class="flex justify-between mb-4">
+        <div class="flex items-center">
+            <input type="text" id="search-input" class="border border-gray-300 rounded-md px-3 py-2 mr-2" placeholder="Search entities">
+            <button id="search-button" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                Search
+            </button>
+        </div>
+        <div>
+            <button id="toggle-highlighting" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                Toggle Highlighting
+            </button>
+        </div>
+    </div>
     <h1 class="text-3xl font-bold mb-4">{{ item.title }}</h1>
     
     {% if item.creator %}
@@ -89,7 +102,9 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     console.log("Script is running");
-    function processTaggedEntities(elementId) {
+    let highlightingEnabled = true;
+
+    function processTaggedEntities(elementId, searchTerm = '') {
         const element = document.getElementById(elementId);
         if (element) {
             console.log(`Processing element: ${elementId}`);
@@ -104,7 +119,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     } else if (entityType === 'tool') {
                         detailPageUrl = `/apt/apt-tool/${encodeURIComponent(entityName)}`;
                     }
-                    return `<a href="${detailPageUrl}" class="tagged-entity text-blue-500 hover:underline hover:bg-yellow-200 transition duration-300" data-entity-type="${entityType}" data-entity-id="${entityId}" data-entity-name="${entityName}">${displayText}</a>`;
+                    const regex = new RegExp(searchTerm, 'gi');
+                    const highlightedText = searchTerm ? displayText.replace(regex, (match) => `<mark>${match}</mark>`) : displayText;
+                    return `<a href="${detailPageUrl}" class="tagged-entity text-blue-500 hover:underline ${highlightingEnabled ? 'bg-yellow-200' : ''}" data-entity-type="${entityType}" data-entity-id="${entityId}" data-entity-name="${entityName}">${highlightedText}</a>`;
                 }
             );
             console.log(`Updated innerHTML: ${element.innerHTML}`);
@@ -117,17 +134,39 @@ document.addEventListener('DOMContentLoaded', function() {
     processTaggedEntities('item-description');
     processTaggedEntities('summary-content');
 
-    // Add event listener for mouseover and mouseout
-    document.body.addEventListener('mouseover', function(e) {
-        if (e.target.classList.contains('tagged-entity')) {
-            e.target.style.backgroundColor = 'yellow';
-        }
+    const toggleButton = document.getElementById('toggle-highlighting');
+    toggleButton.addEventListener('click', function() {
+        highlightingEnabled = !highlightingEnabled;
+        toggleButton.textContent = highlightingEnabled ? 'Disable Highlighting' : 'Enable Highlighting';
+        processTaggedEntities('item-description');
+        processTaggedEntities('summary-content');
     });
 
-    document.body.addEventListener('mouseout', function(e) {
-        if (e.target.classList.contains('tagged-entity')) {
-            e.target.style.backgroundColor = '';
-        }
+    const searchInput = document.getElementById('search-input');
+    const searchButton = document.getElementById('search-button');
+
+    searchButton.addEventListener('click', function() {
+        const searchTerm = searchInput.value.trim();
+        processTaggedEntities('item-description', searchTerm);
+        processTaggedEntities('summary-content', searchTerm);
+    });
+
+    // Add event listener to handle entity clicks
+    document.querySelectorAll('.tagged-entity').forEach(function(entity) {
+        entity.addEventListener('click', function(event) {
+            event.preventDefault();
+            const entityType = event.target.dataset.entityType;
+            const entityId = event.target.dataset.entityId;
+            const entityName = event.target.dataset.entityName;
+            console.log(`Clicked entity: Type=${entityType}, ID=${entityId}, Name=${entityName}`);
+            // Implement logic to show more details about the clicked entity
+            // For example, you could navigate to a dedicated page for the entity
+            if (entityType === 'actor') {
+                window.location.href = `/apt/apt-group/${entityId}`;
+            } else if (entityType === 'tool') {
+                window.location.href = `/apt/apt-tool/${encodeURIComponent(entityName)}`;
+            }
+        });
     });
 });
 </script>
