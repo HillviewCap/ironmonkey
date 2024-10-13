@@ -1,11 +1,25 @@
 {% extends "base.html" %}
 
 {% block scripts %}
-<script src="{{ url_for('static', filename='js/parsed_content.js') }}"></script>
+<!-- Remove or comment out the inclusion of parsed_content.js -->
+<!-- <script src="{{ url_for('static', filename='js/parsed_content.js') }}"></script> -->
 {% endblock %}
 
 {% block content %}
 <div class="container mx-auto mt-8">
+    <div class="flex justify-between mb-4">
+        <div class="flex items-center">
+            <input type="text" id="search-input" class="border border-gray-300 rounded-md px-3 py-2 mr-2" placeholder="Search entities">
+            <button id="search-button" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                Search
+            </button>
+        </div>
+        <div>
+            <button id="toggle-highlighting" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                Toggle Highlighting
+            </button>
+        </div>
+    </div>
     <h1 class="text-3xl font-bold mb-4">{{ item.title }}</h1>
     
     {% if item.creator %}
@@ -42,7 +56,7 @@
     <div class="mb-6">
         <h2 class="text-xl font-semibold mb-2">Description</h2>
         <div id="item-description">
-            {{ item.description|safe }}
+            {{ item.description | safe }}
         </div>
     </div>
     {% endif %}
@@ -50,69 +64,27 @@
     {% if item.summary %}
     <div class="mb-6">
         <h2 class="text-xl font-semibold mb-2">Summary</h2>
-        {% set summary = item.summary | from_json %}
-        {% if summary %}
-            <h3 class="text-lg font-semibold mt-2">Main Topic</h3>
-            <p>{{ summary.main_topic|safe }}</p>
-            
-            <h3 class="text-lg font-semibold mt-2">Key Points</h3>
-            <ul class="list-disc pl-5">
-                {% for point in summary.key_points %}
-                    <li>{{ point|safe }}</li>
+        {% if summary_data %}
+            <!-- Wrap the structured summary content in a div with an ID -->
+            <div id="structured-summary-content">
+                {% for key, value in summary_data.items() %}
+                    <h3 class="text-lg font-semibold mt-2">{{ key | title }}</h3>
+                    {% if value is string %}
+                        <p>{{ value | safe }}</p>
+                    {% elif value is iterable %}
+                        <ul class="list-disc pl-5">
+                            {% for item in value %}
+                                <li>{{ item | safe }}</li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
                 {% endfor %}
-            </ul>
-            
-            {% if summary.threat_actors %}
-                <h3 class="text-lg font-semibold mt-2">Threat Actors</h3>
-                <ul class="list-disc pl-5">
-                    {% for actor in summary.threat_actors %}
-                        <li>{{ actor|safe }}</li>
-                    {% endfor %}
-                </ul>
-            {% endif %}
-            
-            {% if summary.ttps %}
-                <h3 class="text-lg font-semibold mt-2">TTPs</h3>
-                <ul class="list-disc pl-5">
-                    {% for ttp in summary.ttps %}
-                        <li>{{ ttp|safe }}</li>
-                    {% endfor %}
-                </ul>
-            {% endif %}
-            
-            {% if summary.iocs %}
-                <h3 class="text-lg font-semibold mt-2">IoCs</h3>
-                <ul class="list-disc pl-5">
-                    {% for ioc in summary.iocs %}
-                        <li>{{ ioc|safe }}</li>
-                    {% endfor %}
-                </ul>
-            {% endif %}
-            
-            {% if summary.affected_systems %}
-                <h3 class="text-lg font-semibold mt-2">Affected Systems</h3>
-                <ul class="list-disc pl-5">
-                    {% for system in summary.affected_systems %}
-                        <li>{{ system|safe }}</li>
-                    {% endfor %}
-                </ul>
-            {% endif %}
-            
-            {% if summary.mitigations %}
-                <h3 class="text-lg font-semibold mt-2">Mitigations</h3>
-                <ul class="list-disc pl-5">
-                    {% for mitigation in summary.mitigations %}
-                        <li>{{ mitigation|safe }}</li>
-                    {% endfor %}
-                </ul>
-            {% endif %}
-            
-            {% if summary.conclusion %}
-                <h3 class="text-lg font-semibold mt-2">Conclusion</h3>
-                <p>{{ summary.conclusion|safe }}</p>
-            {% endif %}
+            </div>
         {% else %}
-            <p>{{ item.summary|safe }}</p>
+            <!-- Display raw summary -->
+            <div id="summary-content">
+                {{ item.summary | safe }}
+            </div>
         {% endif %}
     </div>
     {% endif %}
@@ -128,95 +100,94 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const modal = document.getElementById('entityModal');
-    const modalTitle = document.getElementById('modal-title');
-    const modalContent = document.getElementById('modal-content');
-    const modalCloseButton = document.getElementById('modalCloseButton');
-    const modalLinkButton = document.getElementById('modalLinkButton');
+    console.log("Script is running");
+    let highlightingEnabled = true;
+    let originalContent = {};  // Create an object to store original content
 
-    document.addEventListener('click', function(event) {
-        if (event.target.classList.contains('tagged-entity')) {
-            event.preventDefault();
-            const entityType = event.target.dataset.entityType;
-            const entityId = event.target.dataset.entityId;
-            const entityName = event.target.textContent;
+    // Store the original innerHTML of the elements
+    originalContent['item-description'] = document.getElementById('item-description') ? document.getElementById('item-description').innerHTML : '';
+    originalContent['summary-content'] = document.getElementById('summary-content') ? document.getElementById('summary-content').innerHTML : '';
+    originalContent['structured-summary-content'] = document.getElementById('structured-summary-content') ? document.getElementById('structured-summary-content').innerHTML : '';
 
-            fetchEntityDetails(entityType, entityId, entityName);
-        }
-    });
+    function processTaggedEntities(elementId, searchTerm = '') {
+        const element = document.getElementById(elementId);
+        if (element) {
+            // Reset the innerHTML to the original content
+            element.innerHTML = originalContent[elementId];
 
-    modalCloseButton.addEventListener('click', function() {
-        modal.classList.add('hidden');
-    });
-
-    function fetchEntityDetails(entityType, entityId, entityName) {
-        const modalLoader = document.getElementById('modalLoader');
-        modalLoader.classList.remove('hidden');
-        showModal(entityName, '', null); // Show modal with empty content while loading
-
-        fetch(`/api/entity/${entityType}/${entityId}`)
-            .then(response => response.json())
-            .then(data => {
-                let detailPageUrl = null;
-                if (entityType === "APT_GROUP") {
-                    detailPageUrl = `/apt/group/${entityId}`;
-                } else if (entityType === "TOOL") {
-                    detailPageUrl = `/apt/tool/${entityId}`;
+            console.log(`Processing element: ${elementId}`);
+            console.log(`Original innerHTML: ${element.innerHTML}`);
+            element.innerHTML = element.innerHTML.replace(
+                /<span class="tagged-entity" data-entity-type="([^"]*)" data-entity-id="([^"]*)">([^<]*)<\/span>/g,
+                function(match, entityType, entityId, displayText) {
+                    console.log(`Replacing: ${match}`);
+                    let detailPageUrl = '';
+                    const entityName = displayText;  // Use displayText as the entity name
+                    if (entityType === 'actor') {
+                        detailPageUrl = `/apt/apt-group/${entityId}`;
+                    } else if (entityType === 'tool') {
+                        detailPageUrl = `/apt/apt-tool/${encodeURIComponent(entityName)}`;
+                    }
+                    const regex = new RegExp(searchTerm, 'gi');
+                    const highlightedText = searchTerm ? displayText.replace(regex, (match) => `<mark>${match}</mark>`) : displayText;
+                    return `<a href="${detailPageUrl}" class="tagged-entity text-blue-500 hover:underline ${highlightingEnabled ? 'bg-yellow-200' : ''}" data-entity-type="${entityType}" data-entity-id="${entityId}" data-entity-name="${entityName}">${highlightedText}</a>`;
                 }
-                showModal(data.name, data.description, detailPageUrl);
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                showModal(entityName, "Error fetching entity details.", null);
-            })
-            .finally(() => {
-                modalLoader.classList.add('hidden');
-            });
-    }
-
-    function showModal(title, content, linkUrl = null) {
-        modalTitle.textContent = title;
-        modalContent.textContent = content;
-
-        if (linkUrl) {
-            modalLinkButton.href = linkUrl;
-            modalLinkButton.classList.remove('hidden');
+            );
+            console.log(`Updated innerHTML: ${element.innerHTML}`);
+            // Re-attach event listeners to the new elements
+            attachEntityEventListeners(element);
         } else {
-            modalLinkButton.classList.add('hidden');
+            console.log(`Element not found: ${elementId}`);
         }
-
-        modal.classList.remove('hidden');
-    }
-});
-
-function toggleDescription(event) {
-    event.preventDefault();
-    const shortDesc = event.target.parentNode;
-    const fullDesc = shortDesc.nextElementSibling;
-    shortDesc.classList.toggle('hidden');
-    fullDesc.classList.toggle('hidden');
-}
-</script>
-
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const description = document.getElementById('item-description');
-    if (description) {
-        description.innerHTML = description.innerHTML.replace(
-            /<span class="tagged-entity" data-entity-type="([^"]*)" data-entity-id="([^"]*)">([^<]*)<\/span>/g,
-            '<a href="#" class="tagged-entity text-blue-500 hover:underline" data-entity-type="$1" data-entity-id="$2">$3</a>'
-        );
     }
 
-    document.addEventListener('click', function(event) {
-        if (event.target.classList.contains('tagged-entity')) {
-            event.preventDefault();
-            const entityType = event.target.dataset.entityType;
-            const entityId = event.target.dataset.entityId;
-            const entityName = event.target.textContent;
-
-            fetchEntityDetails(entityType, entityId, entityName);
+    function attachEntityEventListeners(parentElement) {
+        if (!parentElement) {
+            console.log("Parent element is null. Skipping event listener attachment.");
+            return;
         }
+        parentElement.querySelectorAll('.tagged-entity').forEach(function(entity) {
+            entity.addEventListener('click', function(event) {
+                event.preventDefault();
+                const entityType = event.target.dataset.entityType;
+                const entityId = event.target.dataset.entityId;
+                const entityName = event.target.dataset.entityName || event.target.textContent.trim();
+                console.log(`Clicked entity: Type=${entityType}, ID=${entityId}, Name=${entityName}`);
+                if (entityType === 'actor') {
+                    window.location.href = `/apt/apt-group/${entityId}`;
+                } else if (entityType === 'tool') {
+                    window.location.href = `/apt/apt-tool/${encodeURIComponent(entityName)}`;
+                }
+            });
+        });
+    }
+
+    processTaggedEntities('item-description');
+    processTaggedEntities('summary-content');
+    processTaggedEntities('structured-summary-content');
+
+    // Initially attach event listeners
+    attachEntityEventListeners(document.getElementById('item-description'));
+    attachEntityEventListeners(document.getElementById('summary-content'));
+    attachEntityEventListeners(document.getElementById('structured-summary-content'));
+
+    const toggleButton = document.getElementById('toggle-highlighting');
+    toggleButton.addEventListener('click', function() {
+        highlightingEnabled = !highlightingEnabled;
+        toggleButton.textContent = highlightingEnabled ? 'Disable Highlighting' : 'Enable Highlighting';
+        processTaggedEntities('item-description');
+        processTaggedEntities('summary-content');
+        processTaggedEntities('structured-summary-content');
+    });
+
+    const searchInput = document.getElementById('search-input');
+    const searchButton = document.getElementById('search-button');
+
+    searchButton.addEventListener('click', function() {
+        const searchTerm = searchInput.value.trim();
+        processTaggedEntities('item-description', searchTerm);
+        processTaggedEntities('summary-content', searchTerm);
+        processTaggedEntities('structured-summary-content', searchTerm);
     });
 });
 </script>

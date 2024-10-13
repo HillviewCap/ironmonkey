@@ -18,6 +18,15 @@ class ContentTag(db.Model):
 
     parsed_content = relationship("ParsedContent", back_populates="tags")
 
+    def get_tagged_content(self):
+        from app.utils.auto_tagger import tag_content
+        content = self.to_dict()
+        if content.get('description'):
+            content['description'] = tag_content(content['description'])
+        if content.get('summary'):
+            content['summary'] = tag_content(content['summary'])
+        return content
+
     __table_args__ = (
         Index('idx_content_tags_parsed_content_id', parsed_content_id),
         Index('idx_content_tags_entity_type_id', entity_type, entity_id),

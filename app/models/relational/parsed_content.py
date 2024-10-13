@@ -9,8 +9,9 @@ from flask import flash, current_app
 from .category import Category
 from typing import List, Dict, Any, Optional, Union
 from pydantic import BaseModel
-from .content_tag import ContentTag
-from sqlalchemy.orm import joinedload
+from sqlalchemy.orm import joinedload, relationship
+from sqlalchemy.types import TypeDecorator, TEXT
+import json
 
 parsed_content_categories = Table(
     'parsed_content_categories',
@@ -18,6 +19,23 @@ parsed_content_categories = Table(
     Column('parsed_content_id', SA_UUID(as_uuid=True), ForeignKey('parsed_content.id')),
     Column('category_id', SA_UUID(as_uuid=True), ForeignKey('category.id'))
 )
+
+class JSONEncodedDict(TypeDecorator):
+    impl = TEXT
+
+    def process_bind_param(self, value, dialect):
+        if value is not None:
+            value = json.dumps(value)
+        return value
+
+    def process_result_value(self, value, dialect):
+        if value is not None:
+            try:
+                value = json.loads(value)
+            except json.JSONDecodeError:
+                # If JSON decoding fails, return the raw string
+                pass
+        return value
 
 class ParsedContent(db.Model):
     """Model representing parsed content from RSS feeds."""
@@ -27,7 +45,7 @@ class ParsedContent(db.Model):
     url = Column(String(255), nullable=False)
     description = Column(Text, nullable=True)
     content = Column(Text, nullable=False)  # Jina summary from Ollama
-    summary = Column(Text, nullable=True)  # Generated summary
+    summary = Column(JSONEncodedDict, nullable=True)  # Generated summary
     feed_id = Column(SA_UUID(as_uuid=True), ForeignKey("rss_feed.id"), nullable=False)
     feed = db.relationship("RSSFeed", back_populates="parsed_items")
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
@@ -35,7 +53,7 @@ class ParsedContent(db.Model):
     creator = Column(String(255), nullable=True)
     categories = db.relationship('Category', secondary=parsed_content_categories, backref=db.backref('parsed_contents', lazy='dynamic'))
     art_hash = Column(String(64), nullable=True)
-    tags = db.relationship('ContentTag', back_populates='parsed_content', cascade='all, delete-orphan')
+    tags = relationship('ContentTag', back_populates='parsed_content', cascade='all, delete-orphan')
 
     __table_args__ = (db.UniqueConstraint('url', 'feed_id', name='uix_url_feed'),)
 
@@ -86,7 +104,7 @@ class ParsedContent(db.Model):
             elif not isinstance(content_id, PyUUID):
                 raise ValueError("Invalid content_id type")
             
-            return cls.query.filter(cls.id == content_id).first()
+            return cls.query.get(content_id)
         except ValueError:
             current_app.logger.error(f"Invalid content_id: {content_id}")
             return None
@@ -107,7 +125,11 @@ class ParsedContent(db.Model):
         db.session.commit()
         return hashed_count
 
-    def to_dict(self) -> Dict[str, Any]:
+    def set_summary(self, summary_data):
+        self.summary = summary_data
+
+    def get_summary(self):
+        return self.summary
         """Convert the ParsedContent instance to a dictionary."""
         return {
             'id': str(self.id),
@@ -129,7 +151,7 @@ class ParsedContent(db.Model):
         tag_content(self.id)
 
     def get_tagged_content(self):
-        # Load tags eagerly to avoid N+1 query problem
+        from .content_tag import ContentTag  # Import here to avoid circular import
         self_with_tags = ParsedContent.query.options(joinedload(ParsedContent.tags)).get(self.id)
         
         description = self.description or ''
@@ -162,7 +184,7 @@ class ParsedContent(db.Model):
             if tag.start_char < len(text):
                 start = tag.start_char + offset
                 end = tag.end_char + offset
-                link = f'<a href="#" class="tagged-entity" data-entity-type="{tag.entity_type}" data-entity-id="{tag.entity_id}">{text[start:end]}</a>'
+                link = f'<span class="tagged-entity" data-entity-type="{tag.entity_type}" data-entity-id="{tag.entity_id}">{text[start:end]}</span>'
                 text = text[:start] + link + text[end:]
                 offset += len(link) - (end - start)
         return text

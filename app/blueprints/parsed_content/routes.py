@@ -1,4 +1,6 @@
-from flask import render_template, abort, jsonify, request
+import json
+from flask import render_template, abort, jsonify, request, current_app
+from app.utils.auto_tagger import tag_content
 from datetime import datetime, time
 from .services import ParsedContentService
 from . import bp
@@ -44,9 +46,34 @@ def list_content():
         'stats': stats
     })
 
+import json
+
+def is_valid_json(myjson):
+    try:
+        json_object = json.loads(myjson)
+    except ValueError:
+        return False
+    return True
 @bp.route('/item/<uuid:item_id>')
 def view_item(item_id):
-    item = ParsedContent.get_by_id(item_id)
-    if not item:
+    item_instance = ParsedContent.get_by_id(item_id)
+    if not item_instance:
         abort(404)
-    return render_template('parsed_content/view_item.html', item=item)
+    # Get content with entities tagged
+    item = item_instance.get_tagged_content()
+    summary_data = item_instance.get_summary()
+
+    if summary_data and isinstance(summary_data, str):
+        try:
+            summary_data = json.loads(summary_data)
+        except json.JSONDecodeError as e:
+            current_app.logger.error(f"Error parsing summary JSON for item {item_id}: {str(e)}")
+            current_app.logger.debug(f"Invalid JSON content: {item['summary']}")
+            # If JSON parsing fails, treat it as raw text
+            summary_data = {"raw_text": item['summary']}
+
+    return render_template(
+        'parsed_content/view_item.html',
+        item=item,
+        summary_data=summary_data
+    )
