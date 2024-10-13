@@ -100,10 +100,18 @@
 document.addEventListener('DOMContentLoaded', function() {
     console.log("Script is running");
     let highlightingEnabled = true;
+    let originalContent = {};  // Create an object to store original content
+
+    // Store the original innerHTML of the elements
+    originalContent['item-description'] = document.getElementById('item-description') ? document.getElementById('item-description').innerHTML : '';
+    originalContent['summary-content'] = document.getElementById('summary-content') ? document.getElementById('summary-content').innerHTML : '';
 
     function processTaggedEntities(elementId, searchTerm = '') {
         const element = document.getElementById(elementId);
         if (element) {
+            // Reset the innerHTML to the original content
+            element.innerHTML = originalContent[elementId];
+
             console.log(`Processing element: ${elementId}`);
             console.log(`Original innerHTML: ${element.innerHTML}`);
             element.innerHTML = element.innerHTML.replace(
@@ -122,13 +130,37 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             );
             console.log(`Updated innerHTML: ${element.innerHTML}`);
+
+            // Re-attach event listeners to the new elements
+            attachEntityEventListeners(element);
         } else {
             console.log(`Element not found: ${elementId}`);
         }
     }
 
+    function attachEntityEventListeners(parentElement) {
+        parentElement.querySelectorAll('.tagged-entity').forEach(function(entity) {
+            entity.addEventListener('click', function(event) {
+                event.preventDefault();
+                const entityType = event.target.dataset.entityType;
+                const entityId = event.target.dataset.entityId;
+                const entityName = event.target.dataset.entityName;
+                console.log(`Clicked entity: Type=${entityType}, ID=${entityId}, Name=${entityName}`);
+                if (entityType === 'actor') {
+                    window.location.href = `/apt/apt-group/${entityId}`;
+                } else if (entityType === 'tool') {
+                    window.location.href = `/apt/apt-tool/${encodeURIComponent(entityName)}`;
+                }
+            });
+        });
+    }
+
     processTaggedEntities('item-description');
     processTaggedEntities('summary-content');
+
+    // Initially attach event listeners
+    attachEntityEventListeners(document.getElementById('item-description'));
+    attachEntityEventListeners(document.getElementById('summary-content'));
 
     const toggleButton = document.getElementById('toggle-highlighting');
     toggleButton.addEventListener('click', function() {
@@ -145,24 +177,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const searchTerm = searchInput.value.trim();
         processTaggedEntities('item-description', searchTerm);
         processTaggedEntities('summary-content', searchTerm);
-    });
-
-    // Add event listener to handle entity clicks
-    document.querySelectorAll('.tagged-entity').forEach(function(entity) {
-        entity.addEventListener('click', function(event) {
-            event.preventDefault();
-            const entityType = event.target.dataset.entityType;
-            const entityId = event.target.dataset.entityId;
-            const entityName = event.target.dataset.entityName;
-            console.log(`Clicked entity: Type=${entityType}, ID=${entityId}, Name=${entityName}`);
-            // Implement logic to show more details about the clicked entity
-            // For example, you could navigate to a dedicated page for the entity
-            if (entityType === 'actor') {
-                window.location.href = `/apt/apt-group/${entityId}`;
-            } else if (entityType === 'tool') {
-                window.location.href = `/apt/apt-tool/${encodeURIComponent(entityName)}`;
-            }
-        });
     });
 });
 </script>
