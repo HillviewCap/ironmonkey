@@ -1,8 +1,7 @@
 import os
 import yaml
 import asyncio
-import json
-import re
+import dirtyjson as json
 from dotenv import load_dotenv
 from langchain_community.llms import Ollama
 from app.utils.logging_config import setup_logger
@@ -50,17 +49,13 @@ class ExperimentalOllamaAPI:
 
                 if current_app.debug:
                     logger.debug(f"Generated response (attempt {attempt + 1}): {output}")
-                
-                json_match = re.search(r'(\{.*\})', output, re.DOTALL)
-                if json_match:
-                    json_str = json_match.group(1)
-                    try:
-                        json_output = json.loads(json_str)
-                        return json_output
-                    except json.JSONDecodeError as e:
-                        logger.warning(f"Failed to parse extracted JSON (attempt {attempt + 1}): {e}")
-                else:
-                    logger.warning(f"No JSON object found in the response (attempt {attempt + 1})")
+
+                # Use dirtyjson to parse the entire output
+                try:
+                    json_output = json.loads(output)
+                    return json_output
+                except json.Error as e:
+                    logger.warning(f"Failed to parse JSON (attempt {attempt + 1}): {e}")
 
                 if attempt < max_retries - 1:
                     await asyncio.sleep(1)  # Wait for 1 second before retrying
@@ -85,12 +80,16 @@ class ExperimentalOllamaAPI:
             response = await asyncio.get_event_loop().run_in_executor(
                 None, partial(self.llm.invoke, test_prompt)
             )
-            json_response = json.loads(response)
-            if json_response.get('status') == 'ok':
-                if current_app.debug:
-                    logger.info(f"Successfully connected to Ollama API at {self.base_url} with model: {self.model}")
-                return True
-            return False
+            try:
+                json_response = json.loads(response)
+                if json_response.get('status') == 'ok':
+                    if current_app.debug:
+                        logger.info(f"Successfully connected to Ollama API at {self.base_url} with model: {self.model}")
+                    return True
+                return False
+            except json.Error as e:
+                logger.error(f"Failed to parse JSON response during connection check: {e}")
+                return False
         except Exception as e:
             logger.error(f"Failed to connect to Ollama API at {self.base_url}: {str(e)}")
             return False
