@@ -10,7 +10,7 @@ from flask_login import LoginManager
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 
-from .extensions import init_extensions
+from .extensions import init_extensions, db
 from app.utils.logging_config import setup_logger
 from app.utils.db_connection_manager import init_db_connection_manager
 from app.utils.db_utils import setup_db_pool
