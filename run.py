@@ -57,7 +57,6 @@ def main():
             return
 
         # Otherwise, use the manual configuration with Waitress
-        from waitress import serve
 
         serve(
             app,
