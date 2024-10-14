@@ -10,7 +10,7 @@ from flask_login import LoginManager
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 
-from .extensions import db
+from .extensions import init_extensions
 from app.utils.logging_config import setup_logger
 from app.utils.db_connection_manager import init_db_connection_manager
 from app.utils.db_utils import setup_db_pool
@@ -89,10 +89,9 @@ def create_app(config_object=None):
     logger.info(f"Flask port: {app.config['PORT']}")
 
     # Initialize extensions
-    db.init_app(app)
+    init_extensions(app)
     csrf.init_app(app)
     login_manager.init_app(app)
-    limiter.init_app(app)
 
     # Register json_loads filter
     @app.template_filter("json_loads")

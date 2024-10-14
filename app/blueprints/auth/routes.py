@@ -8,6 +8,7 @@ from flask import render_template, redirect, url_for, flash, request
 from flask_login import login_user, logout_user, current_user, login_required
 from urllib.parse import urlparse
 from flask import Blueprint
+from app.extensions import limiter
 
 bp = Blueprint('auth', __name__)
 from app.models.relational import User
@@ -15,6 +16,7 @@ from app.forms.auth_forms import LoginForm, RegisterForm
 from app import db
 
 @bp.route('/login', methods=['GET', 'POST'])
+@limiter.limit("5 per minute")
 def login():
     """
     Handle user login.
@@ -57,6 +59,7 @@ def logout():
     return redirect(url_for('auth.login'))
 
 @bp.route('/register', methods=['GET', 'POST'])
+@limiter.limit("3 per hour")
 def register():
     """
     Handle user registration.
