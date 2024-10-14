@@ -40,6 +40,8 @@
                                 {% if group.observed_sectors %}
                                     {% set sectors = group.observed_sectors.split(', ') %}
                                     {{ sectors[:5]|join(', ') }}{% if sectors|length > 5 %}, ...{% endif %}
+                                {% elif group.observed_sectors is none %}
+                                    N/A
                                 {% else %}
                                     N/A
                                 {% endif %}
@@ -48,6 +50,8 @@
                                 {% if group.observed_countries %}
                                     {% set countries = group.observed_countries.split(', ') %}
                                     {{ countries[:5]|join(', ') }}{% if countries|length > 5 %}, ...{% endif %}
+                                {% elif group.observed_countries is none %}
+                                    N/A
                                 {% else %}
                                     N/A
                                 {% endif %}
@@ -58,6 +62,8 @@
                                 {% if group.tools %}
                                     {% set tools = group.tools.split(', ') %}
                                     {{ tools[:5]|join(', ') }}{% if tools|length > 5 %}, ...{% endif %}
+                                {% elif group.tools is none %}
+                                    N/A
                                 {% else %}
                                     N/A
                                 {% endif %}
@@ -68,11 +74,15 @@
                         <div class="mt-4">
                             <strong>Alternative Names:</strong>
                             <ul class="list-disc list-inside">
-                                {% for name in group.names[:5] %}
-                                    <li>{{ name.name }} ({{ name.name_giver }})</li>
-                                {% endfor %}
-                                {% if group.names|length > 5 %}
-                                    <li>...</li>
+                                {% if group.names %}
+                                    {% for name in group.names[:5] %}
+                                        <li>{{ name.name }} ({{ name.name_giver }})</li>
+                                    {% endfor %}
+                                    {% if group.names|length > 5 %}
+                                        <li>...</li>
+                                    {% endif %}
+                                {% else %}
+                                    <li>No alternative names available</li>
                                 {% endif %}
                             </ul>
                         </div>
