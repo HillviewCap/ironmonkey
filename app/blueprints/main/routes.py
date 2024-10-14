@@ -7,6 +7,7 @@ from . import bp
 from datetime import datetime, time
 from sqlalchemy import desc
 from app.services.news_rollup_service import NewsRollupService
+from app.extensions import db
 
 @bp.route('/about')
 def about():
