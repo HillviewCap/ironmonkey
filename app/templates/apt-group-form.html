@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+
+{% block title %}
+{% if group %}
+Edit APT Group - {{ group.actor }}
+{% else %}
+Create New APT Group
+{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <h1 class="text-4xl font-bold mb-8 text-center text-gray-800">
+        {% if group %}
+        Edit APT Group - {{ group.actor }}
+        {% else %}
+        Create New APT Group
+        {% endif %}
+    </h1>
+
+    <form method="POST" action="">
+        {{ form.hidden_tag() }}
+        <div class="mb-4">
+            {{ form.actor.label(class="block text-gray-700 text-sm font-bold mb-2") }}
+            {{ form.actor(class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline") }}
+            {% for error in form.actor.errors %}
+            <span class="text-red-500 text-xs italic">{{ error }}</span>
+            {% endfor %}
+        </div>
+        <div class="mb-4">
+            {{ form.country.label(class="block text-gray-700 text-sm font-bold mb-2") }}
+            {{ form.country(class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline") }}
+        </div>
+        <div class="mb-4">
+            {{ form.motivation.label(class="block text-gray-700 text-sm font-bold mb-2") }}
+            {{ form.motivation(class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline") }}
+        </div>
+        <div class="mb-4">
+            {{ form.description.label(class="block text-gray-700 text-sm font-bold mb-2") }}
+            {{ form.description(class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline") }}
+        </div>
+        <div class="mb-4">
+            {{ form.first_seen.label(class="block text-gray-700 text-sm font-bold mb-2") }}
+            {{ form.first_seen(class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline") }}
+        </div>
+        <div class="mb-4">
+            {{ form.observed_sectors.label(class="block text-gray-700 text-sm font-bold mb-2") }}
+            {{ form.observed_sectors(class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline", multiple="multiple") }}
+        </div>
+        <div class="mb-4">
+            {{ form.observed_countries.label(class="block text-gray-700 text-sm font-bold mb-2") }}
+            {{ form.observed_countries(class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline", multiple="multiple") }}
+        </div>
+        <div class="mb-4">
+            {{ form.tools.label(class="block text-gray-700 text-sm font-bold mb-2") }}
+            {{ form.tools(class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline", multiple="multiple") }}
+        </div>
+        <div class="flex items-center justify-between">
+            <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" type="submit">
+                {% if group %}
+                Update APT Group
+                {% else %}
+                Create APT Group
+                {% endif %}
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}

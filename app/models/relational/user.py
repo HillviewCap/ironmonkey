@@ -18,6 +18,7 @@ class User(UserMixin, db.Model):
     password = Column(String(255), nullable=False)
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
     updated_at = Column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+    role = Column(String(50), nullable=False, default='user')
 
     def get_id(self) -> str:
         """Return the user ID as a string."""
