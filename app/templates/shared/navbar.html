@@ -1,53 +1,94 @@
-<nav class="bg-blue-600 p-4 shadow-md">
+<nav class="bg-white shadow-md">
     <div class="container mx-auto flex justify-between items-center">
         <a href="/" class="flex items-center">
-            <img src="{{ url_for('static', filename='images/IronMonkey_logo_small.jpg') }}" alt="IronMonkey Logo" class="h-10 mr-2 rounded-full">
-            <span class="text-white text-2xl font-bold">IronMonkey Threat Research</span>
+            <img src="{{ url_for('static', filename='images/IronMonkey_logo_small.jpg') }}" alt="IronMonkey Logo" class="h-10 w-10 mr-2 rounded-full">
+            <span class="text-gray-800 text-2xl font-bold">IronMonkey Threat Research</span>
         </a>
         <div class="hidden md:flex space-x-4">
-            <a href="{{ url_for('main.index') }}" class="text-white hover:text-blue-200 transition duration-300">Home</a>
-            <a href="{{ url_for('rss_manager.get_rss_feeds') }}" class="text-white hover:text-blue-200 transition duration-300">RSS Feeds</a>
+            <a href="{{ url_for('main.index') }}" class="text-gray-700 hover:bg-gray-200 hover:text-blue-500 px-3 py-2 rounded transition duration-300">
+                <i class="fas fa-home mr-1"></i> Home
+            </a>
+            <a href="{{ url_for('rss_manager.get_rss_feeds') }}" class="text-gray-700 hover:bg-gray-200 hover:text-blue-500 px-3 py-2 rounded transition duration-300">
+                <i class="fas fa-rss mr-1"></i> RSS Feeds
+            </a>
             {% if current_user.is_authenticated %}
-                <a href="{{ url_for('parsed_content.parsed_content') }}" class="text-white hover:text-blue-200 transition duration-300">Parsed Content</a>
-                <a href="{{ url_for('search.search') }}" class="text-white hover:text-blue-200 transition duration-300">Search</a>
+                <a href="{{ url_for('parsed_content.parsed_content') }}" class="text-gray-700 hover:bg-gray-200 hover:text-blue-500 px-3 py-2 rounded transition duration-300">
+                    <i class="fas fa-file-alt mr-1"></i> Parsed Content
+                </a>
+                <a href="{{ url_for('search.search') }}" class="text-gray-700 hover:bg-gray-200 hover:text-blue-500 px-3 py-2 rounded transition duration-300">
+                    <i class="fas fa-search mr-1"></i> Search
+                </a>
             {% endif %}
-            <a href="{{ url_for('main.apt_groups') }}" class="text-white hover:text-blue-200 transition duration-300">APT Groups</a>
+            <a href="{{ url_for('main.apt_groups') }}" class="text-gray-700 hover:bg-gray-200 hover:text-blue-500 px-3 py-2 rounded transition duration-300">
+                <i class="fas fa-users mr-1"></i> APT Groups
+            </a>
             {% if current_user.is_authenticated %}
-                <a href="{{ url_for('admin.admin') }}" class="text-white hover:text-blue-200 transition duration-300">Admin</a>
-                <a href="{{ url_for('auth.logout') }}" class="text-white hover:text-blue-200 transition duration-300">Logout</a>
+                <a href="{{ url_for('admin.admin') }}" class="text-gray-700 hover:bg-gray-200 hover:text-blue-500 px-3 py-2 rounded transition duration-300">
+                    <i class="fas fa-user-shield mr-1"></i> Admin
+                </a>
+                <a href="{{ url_for('auth.logout') }}" class="text-gray-700 hover:bg-gray-200 hover:text-blue-500 px-3 py-2 rounded transition duration-300">
+                    <i class="fas fa-sign-out-alt mr-1"></i> Logout
+                </a>
             {% else %}
-                <a href="{{ url_for('auth.login') }}" class="text-white hover:text-blue-200 transition duration-300">Login</a>
+                <a href="{{ url_for('auth.login') }}" class="text-gray-700 hover:bg-gray-200 hover:text-blue-500 px-3 py-2 rounded transition duration-300">
+                    <i class="fas fa-sign-in-alt mr-1"></i> Login
+                </a>
             {% endif %}
-            <a href="{{ url_for('main.about') }}" class="text-white hover:text-blue-200 transition duration-300">About</a>
+            <a href="{{ url_for('main.about') }}" class="text-gray-700 hover:bg-gray-200 hover:text-blue-500 px-3 py-2 rounded transition duration-300">
+                <i class="fas fa-info-circle mr-1"></i> About
+            </a>
         </div>
-        <button class="md:hidden text-white focus:outline-none" id="menu-toggle">
+        <button class="md:hidden text-gray-700 focus:outline-none" id="menu-toggle">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path>
             </svg>
         </button>
     </div>
 </nav>
-<div class="md:hidden hidden bg-white" id="mobile-menu">
+<div class="md:hidden hidden bg-gray-100" id="mobile-menu">
     <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-        <a href="{{ url_for('main.index') }}" class="text-blue-600 block px-3 py-2 rounded-md text-base font-medium hover:bg-blue-100">Home</a>
-        <a href="{{ url_for('rss_manager.get_rss_feeds') }}" class="text-blue-600 block px-3 py-2 rounded-md text-base font-medium hover:bg-blue-100">RSS Feeds</a>
+        <a href="{{ url_for('main.index') }}" class="text-gray-700 block px-3 py-2 rounded-md text-base font-medium hover:bg-gray-200">
+            <i class="fas fa-home mr-1"></i> Home
+        </a>
+        <a href="{{ url_for('rss_manager.get_rss_feeds') }}" class="text-gray-700 block px-3 py-2 rounded-md text-base font-medium hover:bg-gray-200">
+            <i class="fas fa-rss mr-1"></i> RSS Feeds
+        </a>
         {% if current_user.is_authenticated %}
-            <a href="{{ url_for('parsed_content.parsed_content') }}" class="text-blue-600 block px-3 py-2 rounded-md text-base font-medium hover:bg-blue-100">Parsed Content</a>
-            <a href="{{ url_for('search.search') }}" class="text-blue-600 block px-3 py-2 rounded-md text-base font-medium hover:bg-blue-100">Search</a>
+            <a href="{{ url_for('parsed_content.parsed_content') }}" class="text-gray-700 block px-3 py-2 rounded-md text-base font-medium hover:bg-gray-200">
+                <i class="fas fa-file-alt mr-1"></i> Parsed Content
+            </a>
+            <a href="{{ url_for('search.search') }}" class="text-gray-700 block px-3 py-2 rounded-md text-base font-medium hover:bg-gray-200">
+                <i class="fas fa-search mr-1"></i> Search
+            </a>
         {% endif %}
-        <a href="{{ url_for('main.apt_groups') }}" class="text-blue-600 block px-3 py-2 rounded-md text-base font-medium hover:bg-blue-100">APT Groups</a>
+        <a href="{{ url_for('main.apt_groups') }}" class="text-gray-700 block px-3 py-2 rounded-md text-base font-medium hover:bg-gray-200">
+            <i class="fas fa-users mr-1"></i> APT Groups
+        </a>
         {% if current_user.is_authenticated %}
-            <a href="{{ url_for('admin.admin') }}" class="text-blue-600 block px-3 py-2 rounded-md text-base font-medium hover:bg-blue-100">Admin</a>
-            <a href="{{ url_for('auth.logout') }}" class="text-blue-600 block px-3 py-2 rounded-md text-base font-medium hover:bg-blue-100">Logout</a>
+            <a href="{{ url_for('admin.admin') }}" class="text-gray-700 block px-3 py-2 rounded-md text-base font-medium hover:bg-gray-200">
+                <i class="fas fa-user-shield mr-1"></i> Admin
+            </a>
+            <a href="{{ url_for('auth.logout') }}" class="text-gray-700 block px-3 py-2 rounded-md text-base font-medium hover:bg-gray-200">
+                <i class="fas fa-sign-out-alt mr-1"></i> Logout
+            </a>
         {% else %}
-            <a href="{{ url_for('auth.login') }}" class="text-blue-600 block px-3 py-2 rounded-md text-base font-medium hover:bg-blue-100">Login</a>
+            <a href="{{ url_for('auth.login') }}" class="text-gray-700 block px-3 py-2 rounded-md text-base font-medium hover:bg-gray-200">
+                <i class="fas fa-sign-in-alt mr-1"></i> Login
+            </a>
         {% endif %}
-        <a href="{{ url_for('main.about') }}" class="text-blue-600 block px-3 py-2 rounded-md text-base font-medium hover:bg-blue-100">About</a>
+        <a href="{{ url_for('main.about') }}" class="text-gray-700 block px-3 py-2 rounded-md text-base font-medium hover:bg-gray-200">
+            <i class="fas fa-info-circle mr-1"></i> About
+        </a>
     </div>
 </div>
 <script>
-    document.getElementById('menu-toggle').addEventListener('click', function() {
-        var mobileMenu = document.getElementById('mobile-menu');
+    const menuToggle = document.getElementById('menu-toggle');
+    const mobileMenu = document.getElementById('mobile-menu');
+
+    menuToggle.addEventListener('click', function() {
         mobileMenu.classList.toggle('hidden');
+        mobileMenu.classList.toggle('transition');
+        mobileMenu.classList.toggle('duration-300');
+        mobileMenu.classList.toggle('ease-in-out');
     });
 </script>
