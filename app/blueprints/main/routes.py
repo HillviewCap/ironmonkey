@@ -38,7 +38,7 @@ def index():
     current_app.logger.info("Entering index route")
     try:
         recent_items = (
-            ParsedContent.query
+            db.session.query(ParsedContent, RSSFeed.title.label('feed_title'))
             .join(RSSFeed)
             .filter(
                 ParsedContent.title.isnot(None),
@@ -46,7 +46,6 @@ def index():
             )
             .order_by(ParsedContent.pub_date.desc())
             .limit(6)
-            .add_columns(RSSFeed.title.label('feed_title'))
             .all()
         )
         current_time = datetime.now().time()

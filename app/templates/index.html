@@ -41,13 +41,13 @@
 
     <h2 class="text-2xl font-semibold mb-4">Recent Threat Intelligence</h2>
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {% for item in recent_items %}
+        {% for parsed_content, feed_title in recent_items %}
         <div class="bg-white shadow-md rounded-lg p-6">
-            <h3 class="text-lg font-semibold mb-2">{{ item.ParsedContent.title }}</h3>
-            <p class="text-sm text-blue-500 font-medium mb-2">{{ item.feed_title }}</p>
-            <p class="text-gray-600 mb-4">{{ item.ParsedContent.summary[:100] + '...' if item.ParsedContent.summary else 'No summary available' }}</p>
-            <p class="text-sm text-gray-500 mb-2">{{ item.ParsedContent.pub_date|format_date }}</p>
-            <a href="{{ url_for('main.view_item', item_id=item.ParsedContent.id) }}" class="text-blue-600 hover:underline">Read more</a>
+            <h3 class="text-lg font-semibold mb-2">{{ parsed_content.title }}</h3>
+            <p class="text-sm text-blue-500 font-medium mb-2">{{ feed_title }}</p>
+            <p class="text-gray-600 mb-4">{{ parsed_content.summary[:100] + '...' if parsed_content.summary else 'No summary available' }}</p>
+            <p class="text-sm text-gray-500 mb-2">{{ parsed_content.pub_date|format_date }}</p>
+            <a href="{{ url_for('main.view_item', item_id=parsed_content.id) }}" class="text-blue-600 hover:underline">Read more</a>
         </div>
         {% endfor %}
     </div>
