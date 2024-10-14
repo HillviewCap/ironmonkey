@@ -128,9 +128,6 @@ def create_app(config_object=None):
         setup_db_pool()
         logger.info("Database tables created/updated and connection manager initialized")
 
-    # Setup database pool after app context is available
-    setup_db_pool()
-
     # Register blueprints
     blueprints = [
         (main_bp, None),
