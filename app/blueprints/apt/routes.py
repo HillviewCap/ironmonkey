@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, request, abort, redirect, url_for,
 from flask_login import login_required, current_user
 from app.models.relational.allgroups import AllGroupsValues, AllGroupsValuesNames
 from app.models.relational.alltools import AllTools, AllToolsValues, AllToolsValuesNames
-from app.forms import APTGroupForm
+from app.forms.apt_forms import APTGroupForm
 from app.extensions import db
 from sqlalchemy import or_
 import re
