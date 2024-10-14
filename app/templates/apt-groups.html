@@ -38,20 +38,16 @@
                             <p class="text-sm text-gray-600"><strong>First Seen:</strong> {{ group.first_seen }}</p>
                             <p class="text-sm text-gray-600"><strong>Observed Sectors:</strong> 
                                 {% if group.observed_sectors %}
-                                    {% set sectors = group.observed_sectors.split(', ') %}
+                                    {% set sectors = group.observed_sectors.split(', ') if group.observed_sectors else [] %}
                                     {{ sectors[:5]|join(', ') }}{% if sectors|length > 5 %}, ...{% endif %}
-                                {% elif group.observed_sectors is none %}
-                                    N/A
                                 {% else %}
                                     N/A
                                 {% endif %}
                             </p>
                             <p class="text-sm text-gray-600"><strong>Observed Countries:</strong> 
                                 {% if group.observed_countries %}
-                                    {% set countries = group.observed_countries.split(', ') %}
+                                    {% set countries = group.observed_countries.split(', ') if group.observed_countries else [] %}
                                     {{ countries[:5]|join(', ') }}{% if countries|length > 5 %}, ...{% endif %}
-                                {% elif group.observed_countries is none %}
-                                    N/A
                                 {% else %}
                                     N/A
                                 {% endif %}
@@ -60,10 +56,8 @@
                         <div class="border-t pt-4 text-xs text-gray-500">
                             <p><strong>Tools:</strong> 
                                 {% if group.tools %}
-                                    {% set tools = group.tools.split(', ') %}
+                                    {% set tools = group.tools.split(', ') if group.tools else [] %}
                                     {{ tools[:5]|join(', ') }}{% if tools|length > 5 %}, ...{% endif %}
-                                {% elif group.tools is none %}
-                                    N/A
                                 {% else %}
                                     N/A
                                 {% endif %}
