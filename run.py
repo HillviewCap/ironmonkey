@@ -70,3 +70,9 @@ def main():
 
 if __name__ == "__main__":
     main()
+"""
+This module serves as the entry point for running the Flask application.
+
+It handles the initialization of the application, database setup, and provides
+a shell context for interactive sessions.
+"""
