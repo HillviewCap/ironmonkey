@@ -94,3 +94,6 @@ venv.bak/
 
 # Pyre type checker
 .pyre/
+
+# Static Audio
+/app/static/audio
