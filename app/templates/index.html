@@ -47,7 +47,7 @@
             <p class="text-sm text-blue-500 font-medium mb-2">{{ feed_title }}</p>
             <p class="text-gray-600 mb-4">
                 {% if parsed_content.summary %}
-                    {{ parsed_content.summary[:100] + '...' }}
+                    {{ parsed_content.summary | truncate(100, True, '...') }}
                 {% else %}
                     No summary available
                 {% endif %}
