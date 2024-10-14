@@ -207,15 +207,27 @@ class SchedulerService:
 
     def create_morning_rollup(self):
         with self.app.app_context():
-            asyncio.run(NewsRollupService().create_and_store_rollup("morning"))
+            try:
+                asyncio.run(NewsRollupService().create_and_store_rollup("morning"))
+                logger.info("Morning rollup created successfully")
+            except Exception as e:
+                logger.error(f"Error creating morning rollup: {str(e)}")
 
     def create_midday_rollup(self):
         with self.app.app_context():
-            asyncio.run(NewsRollupService().create_and_store_rollup("midday"))
+            try:
+                asyncio.run(NewsRollupService().create_and_store_rollup("midday"))
+                logger.info("Midday rollup created successfully")
+            except Exception as e:
+                logger.error(f"Error creating midday rollup: {str(e)}")
 
     def create_end_of_day_rollup(self):
         with self.app.app_context():
-            asyncio.run(NewsRollupService().create_and_store_rollup("end_of_day"))
+            try:
+                asyncio.run(NewsRollupService().create_and_store_rollup("end_of_day"))
+                logger.info("End of day rollup created successfully")
+            except Exception as e:
+                logger.error(f"Error creating end of day rollup: {str(e)}")
 
     def auto_tag_untagged_content(self):
         with self.app.app_context():

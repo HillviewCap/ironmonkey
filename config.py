@@ -10,19 +10,23 @@ class Config:
     RSS_CHECK_INTERVAL = int(os.getenv('RSS_CHECK_INTERVAL', 30))
     SUMMARY_CHECK_INTERVAL = int(os.getenv('SUMMARY_CHECK_INTERVAL', 60))
     SUMMARY_API_CHOICE = os.getenv('SUMMARY_API_CHOICE', 'groq')
-    FLASK_PORT = int(os.getenv('FLASK_PORT', '5000'))
+    HOST = os.getenv('HOST', '0.0.0.0')
+    PORT = int(os.getenv('PORT', '5000'))
     ELEVEN_API_KEY = os.getenv('ELEVEN_API_KEY')
 
 class DevelopmentConfig(Config):
     DEBUG = True
-    FLASK_ENV = 'development'
+    ENV = 'development'
     LOG_LEVEL = 'DEBUG'
 
 class ProductionConfig(Config):
     DEBUG = False
-    FLASK_ENV = 'production'
+    ENV = 'production'
     LOG_LEVEL = 'INFO'
     USE_RELOADER = False
+    WAITRESS_HOST = os.getenv('WAITRESS_HOST', '0.0.0.0')
+    WAITRESS_PORT = int(os.getenv('WAITRESS_PORT', '8080'))
+    WAITRESS_THREADS = int(os.getenv('WAITRESS_THREADS', '4'))
 
 class TestingConfig(Config):
     TESTING = True

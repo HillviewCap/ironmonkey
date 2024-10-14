@@ -26,21 +26,25 @@ class NewsRollupService:
         self.tts = ElevenLabsTTS()
 
     async def generate_rollup(self, rollup_type: str) -> Dict:
-        content = self._get_content_for_rollup(rollup_type)
-        formatted_content = self._format_content(content)
-        prompt_type = f"{rollup_type}_rollup_json"
-        result = await self.api.generate_json(prompt_type, formatted_content)
-        if isinstance(result, dict):
-            return result
-        elif isinstance(result, str):
-            try:
-                return json.loads(result)
-            except json.JSONDecodeError:
-                logger.error(f"Failed to parse result as JSON: {result}")
+        try:
+            content = self._get_content_for_rollup(rollup_type)
+            formatted_content = self._format_content(content)
+            prompt_type = f"{rollup_type}_rollup_json"
+            result = await self.api.generate_json(prompt_type, formatted_content)
+            if isinstance(result, dict):
+                return result
+            elif isinstance(result, str):
+                try:
+                    return json.loads(result)
+                except json.JSONDecodeError:
+                    logger.error(f"Failed to parse result as JSON: {result}")
+                    return {"error": "Failed to generate valid JSON"}
+            else:
+                logger.error(f"Unexpected result type: {type(result)}")
                 return {"error": "Failed to generate valid JSON"}
-        else:
-            logger.error(f"Unexpected result type: {type(result)}")
-            return {"error": "Failed to generate valid JSON"}
+        except Exception as e:
+            logger.error(f"Error generating {rollup_type} rollup: {str(e)}")
+            return {"error": f"Failed to generate {rollup_type} rollup"}
 
     def generate_audio_rollup(self, rollup_content: Dict, rollup_type: str) -> str:
         try:

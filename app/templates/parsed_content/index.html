@@ -48,7 +48,9 @@
                 <h2 class="text-xl font-semibold mb-2 text-blue-600 hover:underline">
                     {{ item.title }}
                 </h2>
-                <p class="text-gray-600 mb-4">{{ item.description[:150] }}...</p>
+                <p class="text-gray-600 mb-4">
+                    {{ item.description | truncate(150, True, '...') }}
+                </p>
                 <div class="text-sm text-gray-500 flex justify-between items-center">
                     <span>{{ item.pub_date.strftime('%Y-%m-%d %H:%M:%S') }}</span>
                     <span class="text-blue-500">{{ item['rss_feed_title'] }}</span>

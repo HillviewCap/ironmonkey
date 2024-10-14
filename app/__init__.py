@@ -7,10 +7,13 @@ from flask import Flask, jsonify
 from flask_migrate import Migrate
 from flask_wtf.csrf import CSRFProtect
 from flask_login import LoginManager
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 
-from .extensions import db
+from .extensions import init_extensions, db
 from app.utils.logging_config import setup_logger
 from app.utils.db_connection_manager import init_db_connection_manager
+from app.utils.db_utils import setup_db_pool
 
 def from_json(value):
     try:
@@ -47,7 +50,7 @@ login_manager = LoginManager()
 login_manager.login_view = "auth.login"
 login_manager.login_message = "Please log in to access this page."
 login_manager.login_message_category = "info"
-
+limiter = Limiter(key_func=get_remote_address)
 
 def create_app(config_object=None):
     """
@@ -83,10 +86,10 @@ def create_app(config_object=None):
     logger.info(f"Debug mode set to: {app.config['DEBUG']}")
     logger.info(f"Instance path: {app.instance_path}")
     logger.info(f"Database URI: {app.config['SQLALCHEMY_DATABASE_URI']}")
-    logger.info(f"Flask port: {app.config['FLASK_PORT']}")
+    logger.info(f"Flask port: {app.config['PORT']}")
 
     # Initialize extensions
-    db.init_app(app)
+    init_extensions(app)
     csrf.init_app(app)
     login_manager.init_app(app)
 
@@ -122,6 +125,7 @@ def create_app(config_object=None):
                 conn.execute(db.text("ALTER TABLE rss_feed ADD COLUMN last_checked DATETIME"))
         
         init_db_connection_manager(app)
+        setup_db_pool()
         logger.info("Database tables created/updated and connection manager initialized")
 
     # Register blueprints
@@ -217,9 +221,14 @@ def create_app(config_object=None):
             if user_count == 0:
                 return redirect(url_for('auth.register'))
 
+    @app.errorhandler(Exception)
+    def handle_exception(e):
+        app.logger.error(f"Unhandled exception: {str(e)}")
+        return jsonify(error=str(e)), 500
 
     @app.route('/generate_rollups', methods=['GET'])
     @login_required
+    @limiter.limit("5 per minute")
     async def generate_rollups():
         service = NewsRollupService()
         try:
@@ -231,6 +240,7 @@ def create_app(config_object=None):
 
     @app.route('/generate_rollup/<rollup_type>', methods=['GET'])
     @login_required
+    @limiter.limit("10 per minute")
     async def generate_single_rollup(rollup_type):
         service = NewsRollupService()
         try:
