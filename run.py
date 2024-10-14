@@ -16,6 +16,10 @@ def make_shell_context():
     return {"db": db, "User": User}
 
 def main():
+    with app.app_context():
+        from app.utils.db_utils import setup_db_pool
+        setup_db_pool()
+    
     if app.config['ENV'] == 'production':
         from waitress import serve
         serve(app, 
