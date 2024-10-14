@@ -6,6 +6,14 @@
 <div class="container mx-auto px-4 py-8">
         <h1 class="text-4xl font-bold mb-8 text-center text-gray-800">APT Groups Intelligence Dashboard</h1>
         
+        {% if current_user.is_authenticated %}
+        <div class="mb-8 text-center">
+            <a href="{{ url_for('apt.create_apt_group') }}" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
+                Create New APT Group
+            </a>
+        </div>
+        {% endif %}
+
         <!-- Search Bar -->
         <div class="mb-8">
             <form action="{{ url_for('apt.apt_groups') }}" method="get" class="flex items-center">
