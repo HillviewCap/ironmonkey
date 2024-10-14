@@ -16,7 +16,7 @@
     <!-- Statistics Section -->
     <div class="bg-white rounded-lg shadow-md p-6 mb-8">
         <h2 class="text-2xl font-semibold mb-4">Statistics for <span id="selected-date">{{ selected_date }}</span></h2>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <div>
                 <h3 class="text-lg font-medium mb-2">Articles Today</h3>
                 <p id="articles-today" class="text-3xl font-bold text-blue-600">{{ stats.articles_today }}</p>
@@ -35,6 +35,18 @@
                     {% for author in stats.top_authors %}
                     <li>{{ author[0] }}: {{ author[1] }} articles</li>
                     {% endfor %}
+                </ul>
+            </div>
+            <div>
+                <h3 class="text-lg font-medium mb-2">APT Occurrence Statistics</h3>
+                <ul id="actor-occurrences-list">
+                    {% if stats.actor_occurrences %}
+                        {% for actor, count in stats.actor_occurrences %}
+                            <li>{{ actor }}: {{ count }} occurrences</li>
+                        {% endfor %}
+                    {% else %}
+                        <li>No APT occurrences for this date.</li>
+                    {% endif %}
                 </ul>
             </div>
         </div>

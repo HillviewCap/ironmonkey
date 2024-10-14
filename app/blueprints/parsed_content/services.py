@@ -118,10 +118,8 @@ class ParsedContentService:
         }
 class ParsedContentService:
     def calculate_stats(self, content):
-        # Implement your statistics calculation here
         articles_today = len(content)
         
-        # Example implementation for top sites and authors
         site_counts = {}
         author_counts = {}
         for item in content:
@@ -133,9 +131,24 @@ class ParsedContentService:
         
         top_sites = sorted(site_counts.items(), key=lambda x: x[1], reverse=True)[:3]
         top_authors = sorted(author_counts.items(), key=lambda x: x[1], reverse=True)[:3]
+
+        # Calculate actor occurrences
+        content_ids = [item.id for item in content]
+        actor_occurrences = db.session.query(
+            ContentTag.entity_name,
+            func.count(ContentTag.id)
+        ).filter(
+            ContentTag.parsed_content_id.in_(content_ids),
+            ContentTag.entity_type == 'actor'
+        ).group_by(ContentTag.entity_name)\
+         .order_by(func.count(ContentTag.id).desc())\
+         .all()
+
+        actor_occurrences = [(actor[0], actor[1]) for actor in actor_occurrences]
         
         return {
             'articles_today': articles_today,
             'top_sites': top_sites,
-            'top_authors': top_authors
+            'top_authors': top_authors,
+            'actor_occurrences': actor_occurrences
         }
