@@ -1,6 +1,7 @@
 from flask import render_template, send_from_directory, redirect, url_for, abort, current_app, jsonify
 from flask_login import current_user, login_required
 import os
+import traceback
 from app.models.relational.parsed_content import ParsedContent
 from app.models.relational.rss_feed import RSSFeed
 from . import bp
@@ -65,6 +66,7 @@ def index():
                                existing_rollups=existing_rollups)
     except Exception as e:
         current_app.logger.error(f"Error in index route: {str(e)}")
+        current_app.logger.debug(traceback.format_exc())
         abort(500)  # Return a 500 Internal Server Error
 
 @bp.route('/generate_rollup/<rollup_type>')

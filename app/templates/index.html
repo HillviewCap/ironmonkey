@@ -45,7 +45,13 @@
         <div class="bg-white shadow-md rounded-lg p-6">
             <h3 class="text-lg font-semibold mb-2">{{ parsed_content.title }}</h3>
             <p class="text-sm text-blue-500 font-medium mb-2">{{ feed_title }}</p>
-            <p class="text-gray-600 mb-4">{{ parsed_content.summary[:100] + '...' if parsed_content.summary else 'No summary available' }}</p>
+            <p class="text-gray-600 mb-4">
+                {% if parsed_content.summary %}
+                    {{ parsed_content.summary[:100] + '...' }}
+                {% else %}
+                    No summary available
+                {% endif %}
+            </p>
             <p class="text-sm text-gray-500 mb-2">{{ parsed_content.pub_date|format_date }}</p>
             <a href="{{ url_for('main.view_item', item_id=parsed_content.id) }}" class="text-blue-600 hover:underline">Read more</a>
         </div>
