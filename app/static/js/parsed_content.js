@@ -13,10 +13,12 @@ document.addEventListener('DOMContentLoaded', function() {
     const articlesToday = document.getElementById('articles-today');
     const topSitesList = document.getElementById('top-sites-list');
     const topAuthorsList = document.getElementById('top-authors-list');
+    const actorOccurrencesList = document.getElementById('actor-occurrences-list');
 
     // Function definitions moved outside of conditionals
     function fetchContent(date) {
-        fetch(`/parsed_content/list?date=${date}`)
+        const encodedDate = encodeURIComponent(date);
+        fetch(`/parsed_content/list?date=${encodedDate}`)
             .then(response => response.json())
             .then(data => {
                 updateContent(data.content);
@@ -67,6 +69,15 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         if (topAuthorsList) {
             topAuthorsList.innerHTML = stats.top_authors.map(author => `<li>${author[0]}: ${author[1]} articles</li>`).join('');
+        }
+        if (actorOccurrencesList) {
+            if (stats.actor_occurrences.length > 0) {
+                actorOccurrencesList.innerHTML = stats.actor_occurrences
+                    .map(actor => `<li>${actor.entity_name}: ${actor.occurrence_count} occurrences</li>`)
+                    .join('');
+            } else {
+                actorOccurrencesList.innerHTML = '<li>No APT occurrences for this date.</li>';
+            }
         }
     }
 
