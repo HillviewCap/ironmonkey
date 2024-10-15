@@ -124,6 +124,12 @@ def create_app(config_object=None):
             with db.engine.connect() as conn:
                 conn.execute(db.text("ALTER TABLE rss_feed ADD COLUMN last_checked DATETIME"))
         
+        # Check if the role column exists in the User table
+        if 'role' not in [c['name'] for c in inspector.get_columns('user')]:
+            # Add the role column if it doesn't exist
+            with db.engine.connect() as conn:
+                conn.execute(db.text("ALTER TABLE user ADD COLUMN role VARCHAR(50) NOT NULL DEFAULT 'user'"))
+        
         init_db_connection_manager(app)
         setup_db_pool()
         logger.info("Database tables created/updated and connection manager initialized")
