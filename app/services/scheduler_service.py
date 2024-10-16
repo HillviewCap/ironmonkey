@@ -11,6 +11,9 @@ from app.utils.db_connection_manager import DBConnectionManager
 from logging import getLogger
 from app.utils.auto_tagger import tag_untagged_content
 from app.utils.threat_group_cards_updater import update_threat_group_cards
+from pymongo import MongoClient
+from app.models.relational.parsed_content import ParsedContent
+import json
 
 logger = getLogger(__name__)
 scheduler_logger = getLogger("scheduler")
@@ -103,7 +106,19 @@ class SchedulerService:
         )
         logger.info("Scheduled job added: update_threat_group_cards_job")
 
-        if not self.is_running:
+        # Define the synchronization interval in minutes (default to 60 if not set)
+        sync_interval = int(os.getenv("PARSED_CONTENT_SYNC_INTERVAL", 60))
+
+        # Schedule the sync_parsed_content_to_mongodb job
+        self.scheduler.add_job(
+            func=self.sync_parsed_content_to_mongodb,
+            trigger="interval",
+            minutes=sync_interval,
+            id='sync_parsed_content_to_mongodb',
+            replace_existing=True
+        )
+
+        logger.info(f"Scheduled job 'sync_parsed_content_to_mongodb' to run every {sync_interval} minutes.")
             self.scheduler.start()
             self.is_running = True
             logger.info(
@@ -112,7 +127,62 @@ class SchedulerService:
         else:
             logger.info("Scheduler was already running. Jobs updated.")
 
-    def check_and_process_rss_feeds(self):
+    def sync_parsed_content_to_mongodb(self):
+        """Synchronize parsed_content table to MongoDB."""
+        with self.app.app_context():
+            try:
+                # Retrieve MongoDB credentials from environment variables
+                mongo_username = os.getenv('MONGO_USERNAME', 'ironmonkey')
+                mongo_password = os.getenv('MONGO_PASSWORD', 'the')
+                mongo_host = os.getenv('MONGO_HOST', 'localhost')
+                mongo_port = os.getenv('MONGO_PORT', '27017')
+                mongo_db_name = os.getenv('MONGO_DB_NAME', 'threats_db')
+
+                # Construct the MongoDB URI
+                mongo_uri = f"mongodb://{mongo_username}:{mongo_password}@{mongo_host}:{mongo_port}/"
+
+                # Establish connection to MongoDB
+                mongo_client = MongoClient(mongo_uri)
+                mongo_db = mongo_client[mongo_db_name]
+                mongo_collection = mongo_db['parsed_content']
+
+                # Access the parsed_content data
+                with DBConnectionManager.get_session() as session:
+                    parsed_contents = session.query(ParsedContent).all()
+
+                    # Prepare data for insertion
+                    documents = []
+                    for content in parsed_contents:
+                        document = {
+                            '_id': str(content.id),
+                            'title': content.title,
+                            'url': content.url,
+                            'description': content.description,
+                            'content': content.content,
+                            'summary': content.summary,
+                            'feed_id': str(content.feed_id),
+                            'created_at': content.created_at.isoformat() if content.created_at else None,
+                            'pub_date': content.pub_date.isoformat() if content.pub_date else None,
+                            'creator': content.creator,
+                            'art_hash': content.art_hash,
+                        }
+                        documents.append(document)
+
+                    # Optional: Clear the collection before inserting
+                    mongo_collection.delete_many({})
+
+                    # Insert documents into MongoDB
+                    if documents:
+                        mongo_collection.insert_many(documents)
+                        logger.info(f"Synced {len(documents)} parsed_content records to MongoDB.")
+                    else:
+                        logger.info("No parsed_content records to sync.")
+
+            except Exception as e:
+                logger.error(f"Error syncing parsed_content to MongoDB: {str(e)}")
+            finally:
+                # Close the MongoDB connection
+                mongo_client.close()
         with self.app.app_context():
             with DBConnectionManager.get_session() as session:
                 total_feeds = session.query(RSSFeed).count()
