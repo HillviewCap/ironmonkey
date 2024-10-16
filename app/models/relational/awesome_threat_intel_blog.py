@@ -1,22 +1,15 @@
 from __future__ import annotations
 
 from datetime import datetime
-from uuid import uuid4, UUID
-import csv
-import os
-from flask import current_app
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy import String, DateTime
+import uuid
 from app import db
-from app.models.relational.rss_feed import RSSFeed
-
-from pydantic import BaseModel
 
 class AwesomeThreatIntelBlog(db.Model):
     """
     Represents an Awesome Threat Intel Blog entry.
     """
-    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid4, nullable=False)
+    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, nullable=False)
     blog = db.Column(String(255), nullable=False)
     blog_category = db.Column(String(100), nullable=False)
     type = db.Column(String(50), nullable=False)
