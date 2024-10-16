@@ -149,14 +149,20 @@ class AwesomeThreatIntelService:
         
         for (id_value,) in problematic_ids:
             try:
-                # If id_value is an integer or a string representation of an integer, convert it to a UUID
-                if isinstance(id_value, int) or (isinstance(id_value, str) and id_value.isdigit()):
-                    new_uuid = UUID(int=int(id_value))
+                if isinstance(id_value, (int, float)):
+                    # For integer or float values, create a new UUID
+                    new_uuid = uuid.uuid4()
+                elif isinstance(id_value, str):
+                    if id_value.replace('.', '', 1).isdigit():  # Check if it's a string representation of a number
+                        new_uuid = uuid.uuid4()
+                    else:
+                        # Try to convert the string value to a UUID
+                        new_uuid = UUID(id_value)
                 else:
-                    # Try to convert the value to a UUID
-                    new_uuid = UUID(id_value)
-            except (ValueError, TypeError):
-                # If conversion fails, generate a new UUID
+                    # For any other type, generate a new UUID
+                    new_uuid = uuid.uuid4()
+            except (ValueError, TypeError, AttributeError):
+                # If conversion fails for any reason, generate a new UUID
                 new_uuid = uuid.uuid4()
             
             # Update the ID in the database
