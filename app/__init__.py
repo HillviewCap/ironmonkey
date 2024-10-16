@@ -6,8 +6,6 @@ from dotenv import load_dotenv
 from flask import Flask, jsonify
 from flask_migrate import Migrate
 
-# Inside create_app function
-migrate = Migrate(app, db)
 from flask_wtf.csrf import CSRFProtect
 from flask_login import LoginManager
 from flask_limiter import Limiter
@@ -95,6 +93,9 @@ def create_app(config_object=None):
     init_extensions(app)
     csrf.init_app(app)
     login_manager.init_app(app)
+
+    # Initialize Flask-Migrate
+    migrate.init_app(app, db)
 
     # Register json_loads filter
     @app.template_filter("json_loads")
