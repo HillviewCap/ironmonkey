@@ -119,11 +119,11 @@ class SchedulerService:
         )
 
         logger.info(f"Scheduled job 'sync_parsed_content_to_mongodb' to run every {sync_interval} minutes.")
-            self.scheduler.start()
-            self.is_running = True
-            logger.info(
-                f"Scheduler started successfully with RSS check interval: {rss_check_interval} minutes"
-            )
+        self.scheduler.start()
+        self.is_running = True
+        logger.info(
+            f"Scheduler started successfully with RSS check interval: {rss_check_interval} minutes"
+        )
         else:
             logger.info("Scheduler was already running. Jobs updated.")
 
