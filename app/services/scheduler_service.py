@@ -148,6 +148,9 @@ class SchedulerService:
                 # Define a collection for sync metadata
                 sync_meta_collection = mongo_db['sync_metadata']
 
+                # Initialize last_sync_time to None
+                last_sync_time = None
+
                 # Load last sync time from MongoDB
                 sync_meta = sync_meta_collection.find_one({'_id': 'last_sync_time'})
                 if sync_meta and 'timestamp' in sync_meta:
@@ -156,7 +159,7 @@ class SchedulerService:
                 # Access the parsed_content data
                 with DBConnectionManager.get_session() as session:
                     query = session.query(ParsedContent)
-                    if last_sync_time:
+                    if last_sync_time is not None:
                         query = query.filter(ParsedContent.updated_at > last_sync_time)
 
                     parsed_contents = query.all()
