@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flask Frontend</title>
+</head>
+<body>
+    <h1>Flask Frontend</h1>
+    <button onclick="getData()">Get Data from SQLite</button>
+    <button onclick="sendToBackend()">Send Data to Backend</button>
+    <div id="result"></div>
+
+    <script>
+        function getData() {
+            fetch('/get_data')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('result').innerHTML = JSON.stringify(data, null, 2);
+                });
+        }
+
+        function sendToBackend() {
+            fetch('/send_to_backend', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({message: 'Hello from frontend'}),
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('result').innerHTML = JSON.stringify(data, null, 2);
+            });
+        }
+    </script>
+</body>
+</html>
