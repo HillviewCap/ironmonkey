@@ -41,15 +41,13 @@ services:
   mongodb:
     image: mongo:6.0
     environment:
-      - MONGO_INITDB_ROOT_USERNAME_FILE=/run/secrets/mongodb_auth
-      - MONGO_INITDB_ROOT_PASSWORD_FILE=/run/secrets/mongodb_auth
+      - MONGO_INITDB_ROOT_USERNAME=ironmonkey
+      - MONGO_INITDB_ROOT_PASSWORD=ironmonkey
     volumes:
       - ./mongodb_data:/data/db
     ports:
       - "27017:27017"
     restart: always
-    secrets:
-      - mongodb_auth
 
   sync_service:
     build:
@@ -64,8 +62,6 @@ services:
       - MONGO_INITDB_ROOT_PASSWORD=ironmonkey
       - MONGO_DATABASE=threats_db
     restart: always
-    secrets:
-      - mongodb_auth
 
   ollama:
     image: ollama/ollama:latest
