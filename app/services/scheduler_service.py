@@ -124,8 +124,6 @@ class SchedulerService:
         logger.info(
             f"Scheduler started successfully with RSS check interval: {rss_check_interval} minutes"
         )
-        else:
-            logger.info("Scheduler was already running. Jobs updated.")
 
     def sync_parsed_content_to_mongodb(self):
         """Synchronize parsed_content table to MongoDB."""
