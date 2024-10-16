@@ -9,6 +9,7 @@ from flask_login import login_user, logout_user, current_user, login_required
 from urllib.parse import urlparse
 from flask import Blueprint
 from app.extensions import limiter
+from flask_limiter.util import get_remote_address
 
 bp = Blueprint('auth', __name__)
 from app.models.relational import User
@@ -59,7 +60,7 @@ def logout():
     return redirect(url_for('auth.login'))
 
 @bp.route('/register', methods=['GET', 'POST'])
-@limiter.limit("3 per hour")
+@limiter.limit("3 per hour", key_func=get_remote_address)
 def register():
     """
     Handle user registration.
@@ -82,5 +83,10 @@ def register():
         flash('Congratulations, you are now a registered user!', 'success')
         return redirect(url_for('auth.login'))
     return render_template('auth/register.html', title='Register', form=form)
+
+@bp.errorhandler(429)
+def ratelimit_handler(e):
+    flash("Too many registration attempts. Please try again later.", "error")
+    return redirect(url_for('auth.register'))
 
 # Add other auth routes here
