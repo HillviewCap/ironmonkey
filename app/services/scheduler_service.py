@@ -199,6 +199,8 @@ class SchedulerService:
             finally:
                 # Close the MongoDB connection
                 mongo_client.close()
+
+    def check_and_process_rss_feeds(self):
         with self.app.app_context():
             with DBConnectionManager.get_session() as session:
                 total_feeds = session.query(RSSFeed).count()
@@ -249,8 +251,6 @@ class SchedulerService:
                 scheduler_logger.info(
                     f"Finished processing {processed_feeds}/{total_feeds} RSS feeds, added {new_articles_count} new articles"
                 )
-
-    def start_check_empty_summaries(self):
         asyncio.run(self._start_check_empty_summaries_async())
 
     async def _start_check_empty_summaries_async(self):
