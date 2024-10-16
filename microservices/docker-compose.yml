@@ -71,7 +71,7 @@ services:
     container_name: ollama
     ports:
       - "11435:11435" # Expose Ollama's API
-    command: ["serve", "pull", "llama3.2"] # Start the Ollama server to serve models
+    command: ["serve"] # Start the Ollama server to serve models
     volumes:
       - ./ollama_models:/root/.ollama/models # Persist models
     restart: always
