@@ -82,7 +82,7 @@ services:
       context: ./flask_frontend
       dockerfile: Dockerfile
     ports:
-      - "5000:5000"
+      - "5001:5000"
     volumes:
       - ./flask_frontend:/app
     depends_on:
