@@ -61,8 +61,12 @@ services:
     depends_on:
       - mongodb
     environment:
-      - MONGO_URI=mongodb://${MONGO_USER}:${MONGO_PASSWORD}@mongodb:27017/${MONGO_DATABASE}
+      - MONGO_INITDB_ROOT_USERNAME_FILE=/run/secrets/mongodb_auth
+      - MONGO_INITDB_ROOT_PASSWORD_FILE=/run/secrets/mongodb_auth
+      - MONGO_DATABASE=${MONGO_DATABASE}
     restart: always
+    secrets:
+      - mongodb_auth
 
   ollama:
     image: ollama/ollama:latest
