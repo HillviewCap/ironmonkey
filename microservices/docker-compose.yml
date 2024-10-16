@@ -61,7 +61,7 @@ services:
     depends_on:
       - mongodb
     environment:
-      - MONGO_URI=mongodb://your_mongo_user:your_mongo_password@mongodb:27017/your_database
+      - MONGO_URI=mongodb://${MONGO_USER}:${MONGO_PASSWORD}@mongodb:27017/${MONGO_DATABASE}
     restart: always
 
   ollama:
