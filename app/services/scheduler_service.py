@@ -1,5 +1,6 @@
 import asyncio
 import os
+from datetime import datetime
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.executors.pool import ThreadPoolExecutor
 from app.models.relational import ParsedContent, RSSFeed
@@ -144,12 +145,23 @@ class SchedulerService:
                 mongo_db = mongo_client[mongo_db_name]
                 mongo_collection = mongo_db['parsed_content']
 
+                # Define a collection for sync metadata
+                sync_meta_collection = mongo_db['sync_metadata']
+
+                # Load last sync time from MongoDB
+                sync_meta = sync_meta_collection.find_one({'_id': 'last_sync_time'})
+                if sync_meta and 'timestamp' in sync_meta:
+                    last_sync_time = sync_meta['timestamp']
+
                 # Access the parsed_content data
                 with DBConnectionManager.get_session() as session:
-                    parsed_contents = session.query(ParsedContent).all()
+                    query = session.query(ParsedContent)
+                    if last_sync_time:
+                        query = query.filter(ParsedContent.updated_at > last_sync_time)
 
-                    # Prepare data for insertion
-                    documents = []
+                    parsed_contents = query.all()
+
+                    # Prepare and upsert data
                     for content in parsed_contents:
                         document = {
                             '_id': str(content.id),
@@ -159,22 +171,28 @@ class SchedulerService:
                             'content': content.content,
                             'summary': content.summary,
                             'feed_id': str(content.feed_id),
-                            'created_at': content.created_at.isoformat() if content.created_at else None,
-                            'pub_date': content.pub_date.isoformat() if content.pub_date else None,
+                            'created_at': content.created_at,
+                            'pub_date': content.pub_date,
+                            'updated_at': content.updated_at,
                             'creator': content.creator,
                             'art_hash': content.art_hash,
                         }
-                        documents.append(document)
 
-                    # Optional: Clear the collection before inserting
-                    mongo_collection.delete_many({})
+                        # Upsert the document into MongoDB
+                        mongo_collection.update_one(
+                            {'_id': document['_id']},
+                            {'$set': document},
+                            upsert=True
+                        )
 
-                    # Insert documents into MongoDB
-                    if documents:
-                        mongo_collection.insert_many(documents)
-                        logger.info(f"Synced {len(documents)} parsed_content records to MongoDB.")
-                    else:
-                        logger.info("No parsed_content records to sync.")
+                    # Update last sync time in MongoDB
+                    sync_meta_collection.update_one(
+                        {'_id': 'last_sync_time'},
+                        {'$set': {'timestamp': datetime.utcnow()}},
+                        upsert=True
+                    )
+
+                    logger.info(f"Incrementally synced {len(parsed_contents)} parsed_content records to MongoDB.")
 
             except Exception as e:
                 logger.error(f"Error syncing parsed_content to MongoDB: {str(e)}")
