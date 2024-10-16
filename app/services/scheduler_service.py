@@ -253,6 +253,9 @@ class SchedulerService:
                 )
         asyncio.run(self._start_check_empty_summaries_async())
 
+    def start_check_empty_summaries(self):
+        asyncio.run(self._start_check_empty_summaries_async())
+
     async def _start_check_empty_summaries_async(self):
         with self.app.app_context():
             processed_count = 0
