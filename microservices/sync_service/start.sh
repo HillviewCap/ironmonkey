@@ -8,4 +8,4 @@ MONGO_PASSWORD=$(cat /run/secrets/mongodb_auth | grep MONGO_INITDB_ROOT_PASSWORD
 export MONGO_URI="mongodb://${MONGO_USER}:${MONGO_PASSWORD}@mongodb:27017/${MONGO_DATABASE}"
 
 # Start your application
-python your_app.py
+python app.py
