@@ -12,6 +12,7 @@ from app.models.relational.awesome_threat_intel_blog import AwesomeThreatIntelBl
 from app import db
 import csv
 from datetime import datetime
+from uuid import UUID
 
 class AwesomeThreatIntelService:
     """
@@ -128,5 +129,23 @@ class AwesomeThreatIntelService:
         This method checks if there are any entries in the AwesomeThreatIntelBlog table.
         If the table is empty, it calls the update_from_csv method to load the feeds.
         """
-        if AwesomeThreatIntelBlog.query.first() is None:
-            AwesomeThreatIntelService.update_from_csv()
+        try:
+            if AwesomeThreatIntelBlog.query.first() is None:
+                AwesomeThreatIntelService.update_from_csv()
+                db.session.commit()
+                print("Awesome Threat Intel Blogs initialized successfully.")
+            else:
+                print("Awesome Threat Intel Blogs already initialized.")
+        except Exception as e:
+            print(f"Error initializing awesome feeds: {e}")
+            # You might want to log the error or raise a custom exception here
+
+    @staticmethod
+    def cleanup_awesome_threat_intel_blog_ids():
+        blogs = AwesomeThreatIntelBlog.query.all()
+        for blog in blogs:
+            if isinstance(blog.id, int):
+                new_uuid = UUID(int=blog.id)
+                blog.id = new_uuid
+        db.session.commit()
+        print("Cleanup of Awesome Threat Intel Blog IDs completed.")
