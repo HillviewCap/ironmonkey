@@ -3,7 +3,7 @@ from datetime import datetime
 from uuid import uuid4, UUID as PyUUID  # Import standard UUID with alias
 import hashlib
 from sqlalchemy.dialects.postgresql import UUID as SA_UUID  # Alias SQLAlchemy's UUID
-from sqlalchemy import Column, String, DateTime, Text, ForeignKey, Table
+from sqlalchemy import Column, String, DateTime, Text, ForeignKey, Table, func
 from app.extensions import db
 from flask import flash, current_app
 from .category import Category
@@ -50,6 +50,7 @@ class ParsedContent(db.Model):
     feed = db.relationship("RSSFeed", back_populates="parsed_items")
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
     pub_date = Column(DateTime, nullable=False)  # Changed from String to DateTime
+    updated_at = Column(DateTime, nullable=False, default=func.now(), onupdate=func.now())
     creator = Column(String(255), nullable=True)
     categories = db.relationship('Category', secondary=parsed_content_categories, backref=db.backref('parsed_contents', lazy='dynamic'))
     art_hash = Column(String(64), nullable=True)
