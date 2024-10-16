@@ -5,6 +5,9 @@ import logging
 from dotenv import load_dotenv
 from flask import Flask, jsonify
 from flask_migrate import Migrate
+
+# Inside create_app function
+migrate = Migrate(app, db)
 from flask_wtf.csrf import CSRFProtect
 from flask_login import LoginManager
 from flask_limiter import Limiter
