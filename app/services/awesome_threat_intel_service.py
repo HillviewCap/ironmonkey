@@ -132,7 +132,6 @@ class AwesomeThreatIntelService:
         try:
             if AwesomeThreatIntelBlog.query.first() is None:
                 AwesomeThreatIntelService.update_from_csv()
-                db.session.commit()
                 print("Awesome Threat Intel Blogs initialized successfully.")
             else:
                 print("Awesome Threat Intel Blogs already initialized.")

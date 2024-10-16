@@ -172,6 +172,7 @@ def create_app(config_object=None):
 
             # Initialize Awesome Threat Intel Blogs
             from app.services.awesome_threat_intel_service import AwesomeThreatIntelService
+            AwesomeThreatIntelService.cleanup_awesome_threat_intel_blog_ids()
             AwesomeThreatIntelService.initialize_awesome_feeds()
 
             # Update APT databases
