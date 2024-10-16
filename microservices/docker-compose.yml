@@ -62,7 +62,7 @@ services:
     environment:
       - MONGO_INITDB_ROOT_USERNAME_FILE=/run/secrets/mongodb_auth
       - MONGO_INITDB_ROOT_PASSWORD_FILE=/run/secrets/mongodb_auth
-      - MONGO_DATABASE=${MONGO_DATABASE}
+      - MONGO_DATABASE=threats_db
     restart: always
     secrets:
       - mongodb_auth
