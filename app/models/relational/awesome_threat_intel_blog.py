@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from uuid import uuid4
+from uuid import uuid4, UUID
 import csv
 import os
 from flask import current_app
@@ -187,3 +187,9 @@ class AwesomeThreatIntelBlog(db.Model):
                 added_count += 1
         db.session.commit()
         return added_count
+
+    @classmethod
+    def get_by_id(cls, id_value):
+        if isinstance(id_value, int):
+            return cls.query.filter(cls.id == UUID(int=id_value)).first()
+        return cls.query.get(id_value)
