@@ -144,7 +144,18 @@ class AwesomeThreatIntelService:
         blogs = AwesomeThreatIntelBlog.query.all()
         for blog in blogs:
             if isinstance(blog.id, int):
-                new_uuid = UUID(int=blog.id)
+                try:
+                    new_uuid = UUID(int=blog.id)
+                except ValueError:
+                    # If the int is too large for UUID, generate a new UUID
+                    new_uuid = uuid.uuid4()
                 blog.id = new_uuid
+            elif isinstance(blog.id, str):
+                try:
+                    # Try to parse the string as UUID
+                    UUID(blog.id)
+                except ValueError:
+                    # If it's not a valid UUID string, generate a new UUID
+                    blog.id = uuid.uuid4()
         db.session.commit()
         print("Cleanup of Awesome Threat Intel Blog IDs completed.")
