@@ -3,10 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Flask Frontend</title>
+    <title>Threat Database Frontend</title>
+    <style>
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        th, td {
+            border: 1px solid black;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+    </style>
 </head>
 <body>
-    <h1>Flask Frontend</h1>
+    <h1>Threat Database Frontend</h1>
     <button onclick="getData()">Get Data from SQLite</button>
     <button onclick="sendToBackend()">Send Data to Backend</button>
     <div id="result"></div>
@@ -16,7 +30,25 @@
             fetch('/get_data')
                 .then(response => response.json())
                 .then(data => {
-                    document.getElementById('result').innerHTML = JSON.stringify(data, null, 2);
+                    let html = '';
+                    for (let table in data) {
+                        html += `<h2>${table}</h2>`;
+                        html += '<table>';
+                        html += '<tr>';
+                        for (let key in data[table][0]) {
+                            html += `<th>${key}</th>`;
+                        }
+                        html += '</tr>';
+                        data[table].forEach(row => {
+                            html += '<tr>';
+                            for (let key in row) {
+                                html += `<td>${row[key]}</td>`;
+                            }
+                            html += '</tr>';
+                        });
+                        html += '</table>';
+                    }
+                    document.getElementById('result').innerHTML = html;
                 });
         }
 
