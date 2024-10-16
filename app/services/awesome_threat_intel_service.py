@@ -141,21 +141,22 @@ class AwesomeThreatIntelService:
 
     @staticmethod
     def cleanup_awesome_threat_intel_blog_ids():
-        blogs = AwesomeThreatIntelBlog.query.all()
-        for blog in blogs:
-            if isinstance(blog.id, int):
-                try:
-                    new_uuid = UUID(int=blog.id)
-                except ValueError:
-                    # If the int is too large for UUID, generate a new UUID
-                    new_uuid = uuid.uuid4()
-                blog.id = new_uuid
-            elif isinstance(blog.id, str):
-                try:
-                    # Try to parse the string as UUID
-                    UUID(blog.id)
-                except ValueError:
-                    # If it's not a valid UUID string, generate a new UUID
-                    blog.id = uuid.uuid4()
+        # First, let's identify any problematic IDs
+        problematic_ids = db.session.execute(text("SELECT id FROM awesome_threat_intel_blog WHERE id ~ '^[0-9]+$'")).fetchall()
+        
+        for (id_value,) in problematic_ids:
+            try:
+                # Try to convert the integer to a UUID
+                new_uuid = UUID(int=int(id_value))
+            except ValueError:
+                # If the int is too large for UUID, generate a new UUID
+                new_uuid = uuid.uuid4()
+            
+            # Update the ID in the database
+            db.session.execute(
+                text("UPDATE awesome_threat_intel_blog SET id = :new_uuid WHERE id = :old_id"),
+                {"new_uuid": str(new_uuid), "old_id": id_value}
+            )
+        
         db.session.commit()
-        print("Cleanup of Awesome Threat Intel Blog IDs completed.")
+        print(f"Cleanup of {len(problematic_ids)} Awesome Threat Intel Blog IDs completed.")
