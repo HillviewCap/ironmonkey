@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy import String
 import uuid
 from app import db
 
@@ -16,7 +17,7 @@ class AwesomeThreatIntelBlog(db.Model):
     blog_link = db.Column(String(255), nullable=False, index=True)
     feed_link = db.Column(String(255), nullable=True)
     feed_type = db.Column(String(50), nullable=True)
-    last_checked = db.Column(DateTime, nullable=True)
+    last_checked = db.Column(db.DateTime, nullable=True)
 
     rss_feeds = db.relationship('RSSFeed', back_populates='awesome_blog')
 
