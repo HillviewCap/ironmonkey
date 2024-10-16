@@ -144,18 +144,18 @@ class AwesomeThreatIntelService:
     def cleanup_awesome_threat_intel_blog_ids():
         # First, let's identify any problematic IDs
         problematic_ids = db.session.execute(
-            text("SELECT id FROM awesome_threat_intel_blog WHERE typeof(id) = 'integer' OR (typeof(id) = 'text' AND id NOT LIKE '%-%')")
+            text("SELECT id FROM awesome_threat_intel_blog WHERE typeof(id) != 'blob' OR length(id) != 16")
         ).fetchall()
         
         for (id_value,) in problematic_ids:
             try:
-                # If id_value is an integer, convert it to string first
-                if isinstance(id_value, int):
-                    id_value = str(id_value)
-                
-                # Try to convert the value to a UUID
-                new_uuid = UUID(id_value) if '-' in id_value else UUID(int=int(id_value))
-            except ValueError:
+                # If id_value is an integer or a string representation of an integer, convert it to a UUID
+                if isinstance(id_value, int) or (isinstance(id_value, str) and id_value.isdigit()):
+                    new_uuid = UUID(int=int(id_value))
+                else:
+                    # Try to convert the value to a UUID
+                    new_uuid = UUID(id_value)
+            except (ValueError, TypeError):
                 # If conversion fails, generate a new UUID
                 new_uuid = uuid.uuid4()
             
