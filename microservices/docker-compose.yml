@@ -60,8 +60,8 @@ services:
     depends_on:
       - mongodb
     environment:
-      - MONGO_INITDB_ROOT_USERNAME_FILE=/run/secrets/mongodb_auth
-      - MONGO_INITDB_ROOT_PASSWORD_FILE=/run/secrets/mongodb_auth
+      - MONGO_INITDB_ROOT_USERNAME=ironmonkey
+      - MONGO_INITDB_ROOT_PASSWORD=ironmonkey
       - MONGO_DATABASE=threats_db
     restart: always
     secrets:
