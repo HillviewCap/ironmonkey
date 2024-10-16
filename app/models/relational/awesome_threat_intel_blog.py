@@ -4,7 +4,11 @@ from datetime import datetime
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy import String
 import uuid
+import os
+import csv
+from flask import current_app
 from app import db
+from app.models.relational.rss_feed import RSSFeed
 
 class AwesomeThreatIntelBlog(db.Model):
     """
@@ -91,7 +95,7 @@ class AwesomeThreatIntelBlog(db.Model):
         Returns:
             A message indicating the import status.
         """
-        full_path = os.path.join(current_app.root_path, 'static', 'Awesome Threat Intel Blogs - MASTER.csv')
+        full_path = os.path.join(current_app.root_path, 'static', csv_file_path)
 
         with open(full_path, 'r', encoding='utf-8') as csvfile:
             reader = csv.DictReader(csvfile)
