@@ -4,7 +4,7 @@ services:
       - --host
       - 0.0.0.0
       - --port
-      - '6578'
+      - "6578"
       - --scheme
       - http
     image: cr.weaviate.io/semitechnologies/weaviate:1.26.5
@@ -16,11 +16,11 @@ services:
     restart: on-failure
     environment:
       QUERY_DEFAULTS_LIMIT: 25
-      AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED: 'true'
-      PERSISTENCE_DATA_PATH: '/var/lib/weaviate'
-      DEFAULT_VECTORIZER_MODULE: 'none'
-      ENABLE_MODULES: ''
-      CLUSTER_HOSTNAME: 'node1'
+      AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED: "true"
+      PERSISTENCE_DATA_PATH: "/var/lib/weaviate"
+      DEFAULT_VECTORIZER_MODULE: "none"
+      ENABLE_MODULES: ""
+      CLUSTER_HOSTNAME: "node1"
 
   neo4j:
     image: neo4j:latest
@@ -51,7 +51,6 @@ services:
     secrets:
       - mongodb_auth
 
-
   sync_service:
     build:
       context: ./sync_service
@@ -72,16 +71,16 @@ services:
     image: ollama/ollama:latest
     container_name: ollama
     ports:
-      - "11434:11434"  # Expose Ollama's API
-    command: ["pull", "llama3.2", "serve"]  # Start the Ollama server to serve models
+      - "11435:11435" # Expose Ollama's API
+    command: ["pull", "llama3.2", "serve"] # Start the Ollama server to serve models
     volumes:
-      - ./ollama_models:/root/.ollama/models  # Persist models
+      - ./ollama_models:/root/.ollama/models # Persist models
     restart: always
 
 volumes:
   weaviate_data:
   mongodb_data:
-  ollama_models:  # Persist Ollama models locally
+  ollama_models: # Persist Ollama models locally
 
 secrets:
   neo4j_auth_file:
