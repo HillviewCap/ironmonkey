@@ -81,7 +81,7 @@ venv/
 ENV/
 env.bak/
 venv.bak/
-microservices/mongodb_data/
+mongodb_data/
 
 # Spyder project settings
 .spyderproject
