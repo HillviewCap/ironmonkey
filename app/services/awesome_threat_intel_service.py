@@ -13,6 +13,7 @@ from app import db
 import csv
 from datetime import datetime
 from uuid import UUID
+from sqlalchemy import text
 
 class AwesomeThreatIntelService:
     """
