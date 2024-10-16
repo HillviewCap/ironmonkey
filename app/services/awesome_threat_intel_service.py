@@ -143,14 +143,20 @@ class AwesomeThreatIntelService:
     @staticmethod
     def cleanup_awesome_threat_intel_blog_ids():
         # First, let's identify any problematic IDs
-        problematic_ids = db.session.execute(text("SELECT id FROM awesome_threat_intel_blog WHERE id ~ '^[0-9]+$'")).fetchall()
+        problematic_ids = db.session.execute(
+            text("SELECT id FROM awesome_threat_intel_blog WHERE typeof(id) = 'integer' OR (typeof(id) = 'text' AND id NOT LIKE '%-%')")
+        ).fetchall()
         
         for (id_value,) in problematic_ids:
             try:
-                # Try to convert the integer to a UUID
-                new_uuid = UUID(int=int(id_value))
+                # If id_value is an integer, convert it to string first
+                if isinstance(id_value, int):
+                    id_value = str(id_value)
+                
+                # Try to convert the value to a UUID
+                new_uuid = UUID(id_value) if '-' in id_value else UUID(int=int(id_value))
             except ValueError:
-                # If the int is too large for UUID, generate a new UUID
+                # If conversion fails, generate a new UUID
                 new_uuid = uuid.uuid4()
             
             # Update the ID in the database
