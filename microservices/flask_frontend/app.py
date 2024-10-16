@@ -37,7 +37,7 @@ def get_data():
 @app.route('/send_to_backend', methods=['POST'])
 def send_to_backend():
     data = request.json
-    response = requests.post('http://sync_service:5000/receive_data', json=data)
+    response = requests.post('http://sync_service:8000/receive_data', json=data)
     return jsonify(response.json())
 
 if __name__ == '__main__':
