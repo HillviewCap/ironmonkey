@@ -14,6 +14,10 @@ def sync_parsed_content_to_mongodb(app):
             mongo_uri = app.config['MONGODB_URI']
             mongo_db_name = app.config['MONGO_DB_NAME']
 
+            # Establish connection to MongoDB
+            mongo_client = MongoClient(mongo_uri)
+            mongo_db = mongo_client[mongo_db_name]
+
             mongo_collection = mongo_db['parsed_content']
 
             # Define a collection for sync metadata
