@@ -1,6 +1,7 @@
 import asyncio
 import os
 from datetime import datetime
+from datetime import datetime
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.executors.pool import ThreadPoolExecutor
 from app.models.relational import ParsedContent, RSSFeed
@@ -200,6 +201,7 @@ class SchedulerService:
                 scheduler_logger.info(
                     f"Finished processing {processed_feeds}/{total_feeds} RSS feeds, added {new_articles_count} new articles"
                 )
+        asyncio.run(self._start_check_empty_summaries_async())
         asyncio.run(self._start_check_empty_summaries_async())
 
     def start_check_empty_summaries(self):
