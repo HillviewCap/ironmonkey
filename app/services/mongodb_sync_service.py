@@ -6,30 +6,23 @@ from logging import getLogger
 from app.models.relational.allgroups import AllGroups, AllGroupsValues, AllGroupsValuesNames
 from sqlalchemy.orm import joinedload
 from app.models.relational.alltools import AllTools
+from flask import current_app
 
 logger = getLogger(__name__)
 
 class MongoDBSyncService:
     @staticmethod
+    def get_mongo_client():
+        mongodb_uri = current_app.config['MONGODB_URI']
+        return MongoClient(mongodb_uri)
+
+    @staticmethod
     def sync_parsed_content_to_mongodb():
         """Synchronize parsed_content table to MongoDB."""
         try:
-            # Retrieve MongoDB credentials from environment variables
-            mongo_username = os.getenv('MONGO_USERNAME', 'ironmonkey')
-            mongo_password = os.getenv('MONGO_PASSWORD', 'ironmonkey')
-            mongo_host = os.getenv('MONGO_HOST', 'localhost')
-            mongo_port = os.getenv('MONGO_PORT', '27017')
-            mongo_db_name = os.getenv('MONGO_DB_NAME', 'threats_db')
-
-            # Construct the MongoDB URI
-            mongo_uri = f"mongodb://{mongo_username}:{mongo_password}@{mongo_host}:{mongo_port}/"
-
-            # Establish connection to MongoDB
-            mongo_client = MongoClient(mongo_uri)
-            mongo_db = mongo_client[mongo_db_name]
+            mongo_client = MongoDBSyncService.get_mongo_client()
+            mongo_db = mongo_client[current_app.config['MONGO_DB_NAME']]
             mongo_collection = mongo_db['parsed_content']
-
-            # Define a collection for sync metadata
             sync_meta_collection = mongo_db['sync_metadata']
 
             # Initialize last_sync_time to None
@@ -85,20 +78,14 @@ class MongoDBSyncService:
 
         except Exception as e:
             logger.error(f"Error syncing parsed_content to MongoDB: {str(e)}")
+        finally:
+            mongo_client.close()
     @staticmethod
     def sync_alltools_to_mongodb():
         """Synchronize alltools table to MongoDB."""
         try:
-            # MongoDB connection setup
-            mongo_username = os.getenv('MONGO_USERNAME', 'ironmonkey')
-            mongo_password = os.getenv('MONGO_PASSWORD', 'ironmonkey')
-            mongo_host = os.getenv('MONGO_HOST', 'localhost')
-            mongo_port = os.getenv('MONGO_PORT', '27017')
-            mongo_db_name = os.getenv('MONGO_DB_NAME', 'threats_db')
-
-            mongo_uri = f"mongodb://{mongo_username}:{mongo_password}@{mongo_host}:{mongo_port}/"
-            mongo_client = MongoClient(mongo_uri)
-            mongo_db = mongo_client[mongo_db_name]
+            mongo_client = MongoDBSyncService.get_mongo_client()
+            mongo_db = mongo_client[current_app.config['MONGO_DB_NAME']]
             mongo_collection = mongo_db['alltools']
             sync_meta_collection = mongo_db['sync_metadata']
 
@@ -161,23 +148,14 @@ class MongoDBSyncService:
         except Exception as e:
             logger.error(f"Error syncing alltools to MongoDB: {str(e)}")
         finally:
-            # Close the MongoDB connection
             mongo_client.close()
 
     @staticmethod
     def sync_allgroups_to_mongodb():
         """Synchronize allgroups, allgroups_values, and allgroups_values_names to MongoDB."""
         try:
-            # MongoDB connection setup
-            mongo_username = os.getenv('MONGO_USERNAME', 'ironmonkey')
-            mongo_password = os.getenv('MONGO_PASSWORD', 'ironmonkey')
-            mongo_host = os.getenv('MONGO_HOST', 'localhost')
-            mongo_port = os.getenv('MONGO_PORT', '27017')
-            mongo_db_name = os.getenv('MONGO_DB_NAME', 'threats_db')
-
-            mongo_uri = f"mongodb://{mongo_username}:{mongo_password}@{mongo_host}:{mongo_port}/"
-            mongo_client = MongoClient(mongo_uri)
-            mongo_db = mongo_client[mongo_db_name]
+            mongo_client = MongoDBSyncService.get_mongo_client()
+            mongo_db = mongo_client[current_app.config['MONGO_DB_NAME']]
             mongo_collection = mongo_db['allgroups']
             sync_meta_collection = mongo_db['sync_metadata']
 
@@ -257,5 +235,5 @@ class MongoDBSyncService:
 
         except Exception as e:
             logger.error(f"Error syncing allgroups to MongoDB: {str(e)}")
-            # Close the MongoDB connection
+        finally:
             mongo_client.close()
