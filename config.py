@@ -13,6 +13,7 @@ class Config:
     HOST = os.getenv('HOST', '0.0.0.0')
     PORT = int(os.getenv('PORT', '5000'))
     ELEVEN_API_KEY = os.getenv('ELEVEN_API_KEY')
+    MONGODB_URI = os.getenv('MONGODB_URI')
 
 class DevelopmentConfig(Config):
     DEBUG = True
