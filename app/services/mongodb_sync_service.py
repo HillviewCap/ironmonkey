@@ -82,7 +82,7 @@ class MongoDBSyncService:
             mongo_client.close()
     @staticmethod
     def sync_alltools_to_mongodb():
-        """Synchronize alltools table to MongoDB."""
+        """Synchronize alltools table to MongoDB, creating a separate document for each tool."""
         try:
             mongo_client = MongoDBSyncService.get_mongo_client()
             mongo_db = mongo_client[current_app.config['MONGO_DB_NAME']]
@@ -127,7 +127,7 @@ class MongoDBSyncService:
                         ]
                     }
 
-                    # Upsert the document into MongoDB
+                    # Insert or update the document for this tool
                     mongo_collection.update_one(
                         {'_id': document['_id']},
                         {'$set': document},
