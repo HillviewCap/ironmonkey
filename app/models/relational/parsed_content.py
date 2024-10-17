@@ -50,7 +50,6 @@ class ParsedContent(db.Model):
     feed = db.relationship("RSSFeed", back_populates="parsed_items")
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
     pub_date = Column(DateTime, nullable=False)  # Changed from String to DateTime
-    updated_at = Column(DateTime, nullable=False, default=func.now(), onupdate=func.now())
     creator = Column(String(255), nullable=True)
     categories = db.relationship('Category', secondary=parsed_content_categories, backref=db.backref('parsed_contents', lazy='dynamic'))
     art_hash = Column(String(64), nullable=True)
