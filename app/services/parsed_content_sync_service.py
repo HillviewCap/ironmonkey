@@ -10,19 +10,10 @@ def sync_parsed_content_to_mongodb(app):
     """Synchronize parsed_content table to MongoDB."""
     with app.app_context():
         try:
-            # Retrieve MongoDB credentials from environment variables
-            mongo_username = os.getenv('MONGO_USERNAME', 'ironmonkey')
-            mongo_password = os.getenv('MONGO_PASSWORD', 'the')
-            mongo_host = os.getenv('MONGO_HOST', 'localhost')
-            mongo_port = os.getenv('MONGO_PORT', '27017')
-            mongo_db_name = os.getenv('MONGO_DB_NAME', 'threats_db')
+            # Get MongoDB URI and database name from app config
+            mongo_uri = app.config['MONGODB_URI']
+            mongo_db_name = app.config['MONGO_DB_NAME']
 
-            # Construct the MongoDB URI
-            mongo_uri = f"mongodb://{mongo_username}:{mongo_password}@{mongo_host}:{mongo_port}/"
-
-            # Establish connection to MongoDB
-            mongo_client = MongoClient(mongo_uri)
-            mongo_db = mongo_client[mongo_db_name]
             mongo_collection = mongo_db['parsed_content']
 
             # Define a collection for sync metadata
