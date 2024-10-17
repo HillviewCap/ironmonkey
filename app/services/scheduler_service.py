@@ -13,9 +13,7 @@ from app.utils.db_connection_manager import DBConnectionManager
 from logging import getLogger
 from app.utils.auto_tagger import tag_untagged_content
 from app.utils.threat_group_cards_updater import update_threat_group_cards
-from pymongo import MongoClient
 from app.models.relational.parsed_content import ParsedContent
-import json
 
 logger = getLogger(__name__)
 scheduler_logger = getLogger("scheduler")
