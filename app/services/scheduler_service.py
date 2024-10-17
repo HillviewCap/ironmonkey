@@ -160,7 +160,7 @@ class SchedulerService:
                 with DBConnectionManager.get_session() as session:
                     query = session.query(ParsedContent)
                     if last_sync_time is not None:
-                        query = query.filter(ParsedContent.updated_at > last_sync_time)
+                        query = query.filter(ParsedContent.created_at > last_sync_time)
 
                     parsed_contents = query.all()
 
@@ -189,11 +189,16 @@ class SchedulerService:
                         )
 
                     # Update last sync time in MongoDB
-                    sync_meta_collection.update_one(
-                        {'_id': 'last_sync_time'},
-                        {'$set': {'timestamp': datetime.utcnow()}},
-                        upsert=True
-                    )
+                    if parsed_contents:
+                        last_synced_time = parsed_contents[-1].created_at
+                        sync_meta_collection.update_one(
+                            {'_id': 'last_sync_time'},
+                            {'$set': {'timestamp': last_synced_time}},
+                            upsert=True
+                        )
+                        logger.info(f"Incrementally synced {len(parsed_contents)} parsed_content records to MongoDB.")
+                    else:
+                        logger.info("No new records to sync.")
 
                     logger.info(f"Incrementally synced {len(parsed_contents)} parsed_content records to MongoDB.")
 
