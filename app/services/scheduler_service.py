@@ -250,3 +250,4 @@ class SchedulerService:
         with self.app.app_context():
             update_threat_group_cards()
             logger.info("Scheduled job executed: Threat Group Cards JSON files updated.")
+from app.services.mongodb_sync_service import MongoDBSyncService
