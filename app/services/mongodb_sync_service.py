@@ -19,6 +19,7 @@ class MongoDBSyncService:
     @staticmethod
     def sync_parsed_content_to_mongodb():
         """Synchronize parsed_content table to MongoDB."""
+        mongo_client = None
         try:
             mongo_client = MongoDBSyncService.get_mongo_client()
             mongo_db = mongo_client[current_app.config['MONGO_DB_NAME']]
@@ -79,10 +80,12 @@ class MongoDBSyncService:
         except Exception as e:
             logger.error(f"Error syncing parsed_content to MongoDB: {str(e)}")
         finally:
-            mongo_client.close()
+            if mongo_client:
+                mongo_client.close()
     @staticmethod
     def sync_alltools_to_mongodb():
         """Synchronize alltools table to MongoDB, creating a separate document for each tool."""
+        mongo_client = None
         try:
             mongo_client = MongoDBSyncService.get_mongo_client()
             mongo_db = mongo_client[current_app.config['MONGO_DB_NAME']]
@@ -148,11 +151,13 @@ class MongoDBSyncService:
         except Exception as e:
             logger.error(f"Error syncing alltools to MongoDB: {str(e)}")
         finally:
-            mongo_client.close()
+            if mongo_client:
+                mongo_client.close()
 
     @staticmethod
     def sync_allgroups_to_mongodb():
         """Synchronize allgroups, allgroups_values, and allgroups_values_names to MongoDB."""
+        mongo_client = None
         try:
             mongo_client = MongoDBSyncService.get_mongo_client()
             mongo_db = mongo_client[current_app.config['MONGO_DB_NAME']]
@@ -236,4 +241,5 @@ class MongoDBSyncService:
         except Exception as e:
             logger.error(f"Error syncing allgroups to MongoDB: {str(e)}")
         finally:
-            mongo_client.close()
+            if mongo_client:
+                mongo_client.close()
