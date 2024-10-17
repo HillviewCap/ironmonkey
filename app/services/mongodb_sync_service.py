@@ -84,6 +84,81 @@ class MongoDBSyncService:
 
         except Exception as e:
             logger.error(f"Error syncing parsed_content to MongoDB: {str(e)}")
+    @staticmethod
+    def sync_alltools_to_mongodb():
+        """Synchronize alltools table to MongoDB."""
+        try:
+            # MongoDB connection setup
+            mongo_username = os.getenv('MONGO_USERNAME', 'ironmonkey')
+            mongo_password = os.getenv('MONGO_PASSWORD', 'ironmonkey')
+            mongo_host = os.getenv('MONGO_HOST', 'localhost')
+            mongo_port = os.getenv('MONGO_PORT', '27017')
+            mongo_db_name = os.getenv('MONGO_DB_NAME', 'threats_db')
+
+            mongo_uri = f"mongodb://{mongo_username}:{mongo_password}@{mongo_host}:{mongo_port}/"
+            mongo_client = MongoClient(mongo_uri)
+            mongo_db = mongo_client[mongo_db_name]
+            mongo_collection = mongo_db['alltools']
+            sync_meta_collection = mongo_db['sync_metadata']
+
+            # Load last sync time from MongoDB
+            last_sync_time = sync_meta_collection.find_one({'_id': 'last_alltools_sync_time'})
+            last_sync_time = last_sync_time['timestamp'] if last_sync_time else None
+
+            with DBConnectionManager.get_session() as session:
+                query = session.query(AllTools).options(
+                    joinedload(AllTools.values)
+                )
+                if last_sync_time:
+                    query = query.filter(AllTools.last_db_change > last_sync_time)
+
+                alltools = query.all()
+
+                for tool in alltools:
+                    document = {
+                        '_id': str(tool.uuid),
+                        'authors': tool.authors,
+                        'category': tool.category,
+                        'name': tool.name,
+                        'type': tool.type,
+                        'source': tool.source,
+                        'description': tool.description,
+                        'tlp': tool.tlp,
+                        'license': tool.license,
+                        'last_db_change': tool.last_db_change,
+                        'values': [
+                            {
+                                'uuid': str(value.uuid),
+                                'tool': value.tool,
+                                'description': value.description,
+                                'category': value.category,
+                                'type': value.type,
+                                'information': value.information,
+                                'last_card_change': value.last_card_change
+                            } for value in tool.values
+                        ]
+                    }
+
+                    # Upsert the document into MongoDB
+                    mongo_collection.update_one(
+                        {'_id': document['_id']},
+                        {'$set': document},
+                        upsert=True
+                    )
+
+                if alltools:
+                    last_synced_time = max(tool.last_db_change for tool in alltools)
+                    sync_meta_collection.update_one(
+                        {'_id': 'last_alltools_sync_time'},
+                        {'$set': {'timestamp': last_synced_time}},
+                        upsert=True
+                    )
+                    logger.info(f"Incrementally synced {len(alltools)} alltools records to MongoDB.")
+                else:
+                    logger.info("No new alltools records to sync.")
+
+        except Exception as e:
+            logger.error(f"Error syncing alltools to MongoDB: {str(e)}")
         finally:
             # Close the MongoDB connection
             mongo_client.close()

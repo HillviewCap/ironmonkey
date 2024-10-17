@@ -130,7 +130,18 @@ class SchedulerService:
         )
 
         logger.info(f"Scheduled job 'sync_allgroups_to_mongodb' to run every {allgroups_sync_interval} minutes.")
-        self.scheduler.start()
+        # Add the alltools sync job
+        alltools_sync_interval = int(os.getenv("ALLTOOLS_SYNC_INTERVAL", 180))  # Default to 3 hours
+        self.scheduler.add_job(
+            func=MongoDBSyncService.sync_alltools_to_mongodb,
+            trigger="interval",
+            minutes=alltools_sync_interval,
+            id='sync_alltools_to_mongodb',
+            replace_existing=True
+        )
+
+        logger.info(f"Scheduled job 'sync_alltools_to_mongodb' to run every {alltools_sync_interval} minutes.")
+        
         self.is_running = True
         logger.info(
             f"Scheduler started successfully with RSS check interval: {rss_check_interval} minutes"
