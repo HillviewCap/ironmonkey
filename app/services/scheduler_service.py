@@ -118,6 +118,18 @@ class SchedulerService:
         )
 
         logger.info(f"Scheduled job 'sync_parsed_content_to_mongodb' to run every {sync_interval} minutes.")
+
+        # Add the allgroups sync job
+        allgroups_sync_interval = int(os.getenv("ALLGROUPS_SYNC_INTERVAL", 120))  # Default to 2 hours
+        self.scheduler.add_job(
+            func=MongoDBSyncService.sync_allgroups_to_mongodb,
+            trigger="interval",
+            minutes=allgroups_sync_interval,
+            id='sync_allgroups_to_mongodb',
+            replace_existing=True
+        )
+
+        logger.info(f"Scheduled job 'sync_allgroups_to_mongodb' to run every {allgroups_sync_interval} minutes.")
         self.scheduler.start()
         self.is_running = True
         logger.info(
