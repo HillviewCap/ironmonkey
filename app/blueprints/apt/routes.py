@@ -7,6 +7,7 @@ from app.extensions import db
 from sqlalchemy import or_
 import re
 from datetime import datetime
+import dateutil.parser
 
 bp = Blueprint('apt', __name__)
 
@@ -130,7 +131,14 @@ def edit_apt_group(group_uuid):
         form.observed_countries.data = (group.observed_countries or '').split(', ')
         form.tools.data = (group.tools or '').split(', ')
         if group.first_seen:
-            form.first_seen.data = datetime.strptime(group.first_seen, '%Y-%m-%d')
+            try:
+                # Try to parse the date with multiple formats
+                parsed_date = dateutil.parser.parse(group.first_seen)
+                form.first_seen.data = parsed_date.date()
+            except ValueError:
+                # If parsing fails, set to None and flash a warning
+                form.first_seen.data = None
+                flash(f"Warning: Could not parse the date '{group.first_seen}'. Please update it manually.", 'warning')
     
     if form.validate_on_submit():
         group.actor = form.actor.data
