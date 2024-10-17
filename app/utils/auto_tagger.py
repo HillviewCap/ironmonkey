@@ -32,6 +32,27 @@ def tag_text_field(text):
         })
     return tags
 
+def tag_content(text):
+    """
+    Tags the given text using the current matcher.
+    
+    :param text: The text to be tagged
+    :return: A list of tags found in the text
+    """
+    doc = nlp(text)
+    tags = []
+    matches = matcher(doc)
+    for match_id, start, end in matches:
+        span = doc[start:end]
+        label = nlp.vocab.strings[match_id]
+        tags.append({
+            'text': span.text,
+            'label': label,
+            'start_char': span.start_char,
+            'end_char': span.end_char
+        })
+    return tags
+
 def process_and_update_documents():
     try:
         mongo_client = get_mongo_client()
