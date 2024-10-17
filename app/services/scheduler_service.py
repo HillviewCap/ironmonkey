@@ -132,7 +132,7 @@ class SchedulerService:
             try:
                 # Retrieve MongoDB credentials from environment variables
                 mongo_username = os.getenv('MONGO_USERNAME', 'ironmonkey')
-                mongo_password = os.getenv('MONGO_PASSWORD', 'the')
+                mongo_password = os.getenv('MONGO_PASSWORD', 'ironmonkey')
                 mongo_host = os.getenv('MONGO_HOST', 'localhost')
                 mongo_port = os.getenv('MONGO_PORT', '27017')
                 mongo_db_name = os.getenv('MONGO_DB_NAME', 'threats_db')
