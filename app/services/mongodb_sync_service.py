@@ -5,6 +5,7 @@ from app.utils.db_connection_manager import DBConnectionManager
 from logging import getLogger
 from app.models.relational.allgroups import AllGroups, AllGroupsValues, AllGroupsValuesNames
 from sqlalchemy.orm import joinedload
+from app.models.relational.alltools import AllTools
 
 logger = getLogger(__name__)
 
