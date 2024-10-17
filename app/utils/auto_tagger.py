@@ -70,6 +70,12 @@ def process_and_update_documents():
     finally:
         mongo_client.close()
 
+def tag_all_content():
+    """
+    Wrapper function for process_and_update_documents to maintain backwards compatibility.
+    """
+    process_and_update_documents()
+
 if __name__ == "__main__":
     # This block will only run if the script is executed directly
     from flask import Flask
@@ -79,4 +85,4 @@ if __name__ == "__main__":
     app.config.from_object(get_config())
 
     with app.app_context():
-        process_and_update_documents()
+        tag_all_content()
