@@ -13,7 +13,16 @@ class Config:
     HOST = os.getenv('HOST', '0.0.0.0')
     PORT = int(os.getenv('PORT', '5000'))
     ELEVEN_API_KEY = os.getenv('ELEVEN_API_KEY')
-    MONGODB_URI = os.getenv('MONGODB_URI')
+    MONGO_USERNAME = os.getenv('MONGO_USERNAME', '')
+    MONGO_PASSWORD = os.getenv('MONGO_PASSWORD', '')
+    MONGO_HOST = os.getenv('MONGO_HOST', 'localhost')
+    MONGO_PORT = os.getenv('MONGO_PORT', '27017')
+    MONGO_DB_NAME = os.getenv('MONGO_DB_NAME', 'your_default_db_name')
+
+    if MONGO_USERNAME and MONGO_PASSWORD:
+        MONGODB_URI = f"mongodb://{MONGO_USERNAME}:{MONGO_PASSWORD}@{MONGO_HOST}:{MONGO_PORT}/{MONGO_DB_NAME}"
+    else:
+        MONGODB_URI = f"mongodb://{MONGO_HOST}:{MONGO_PORT}/{MONGO_DB_NAME}"
 
 class DevelopmentConfig(Config):
     DEBUG = True
