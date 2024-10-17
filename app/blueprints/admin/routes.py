@@ -5,9 +5,11 @@ from app.models.relational import User
 from app.models import db
 from sqlalchemy import desc
 from app.utils.auto_tagger import tag_all_content
+import logging
 
 csrf = CSRFProtect()
 admin_bp = Blueprint('admin', __name__)
+logger = logging.getLogger(__name__)
 
 @admin_bp.route("/")
 @login_required
@@ -40,8 +42,11 @@ def run_auto_tag():
     Run the auto-tagging process.
     """
     try:
+        logger.info("Starting auto-tagging process")
         tag_all_content()
+        logger.info("Auto-tagging process completed successfully")
         flash("Auto-tagging process completed successfully.", "success")
     except Exception as e:
+        logger.error(f"Error during auto-tagging: {str(e)}")
         flash(f"Error during auto-tagging: {str(e)}", "error")
     return redirect(url_for('admin.admin'))
