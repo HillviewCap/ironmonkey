@@ -141,7 +141,9 @@ class SchedulerService:
         )
 
         logger.info(f"Scheduled job 'sync_alltools_to_mongodb' to run every {alltools_sync_interval} minutes.")
-        
+
+        # Start the scheduler
+        self.scheduler.start()
         self.is_running = True
         logger.info(
             f"Scheduler started successfully with RSS check interval: {rss_check_interval} minutes"
