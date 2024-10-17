@@ -3,42 +3,19 @@ from pymongo import MongoClient
 import spacy
 from spacy.matcher import PhraseMatcher
 import logging
-
-# MongoDB setup using environment variables
-mongo_username = os.getenv('MONGO_USERNAME', 'ironmonkey')
-mongo_password = os.getenv('MONGO_PASSWORD', 'the')
-mongo_host = os.getenv('MONGO_HOST', 'localhost')
-mongo_port = os.getenv('MONGO_PORT', '27017')
-mongo_db_name = os.getenv('MONGO_DB_NAME', 'threats_db')
-
-# Construct the MongoDB URI
-mongo_uri = f"mongodb://{mongo_username}:{mongo_password}@{mongo_host}:{mongo_port}/"
-
-# Establish connection to MongoDB
-mongo_client = MongoClient(mongo_uri)
-db = mongo_client[mongo_db_name]
-parsed_content_collection = db['parsed_content']
-mongo_client = MongoClient(mongo_uri)
-allgroups_collection = db['allgroups']
-alltools_collection = db['alltools']
+from flask import current_app
 
 # Spacy setup
 nlp = spacy.load("en_core_web_sm")
 matcher = PhraseMatcher(nlp.vocab, attr="LOWER")
 
-# Load group and tool names
-group_names = [item['name'] for item in allgroups_collection.find({}, {'name': 1})]
-tool_names = [item['name'] for item in alltools_collection.find({}, {'name': 1})]
-
-# Add patterns to matcher
-group_patterns = [nlp.make_doc(name) for name in group_names]
-tool_patterns = [nlp.make_doc(name) for name in tool_names]
-matcher.add("GROUP_NAME", group_patterns)
-matcher.add("TOOL_NAME", tool_patterns)
-
 # Logging setup
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+def get_mongo_client():
+    mongodb_uri = current_app.config['MONGODB_URI']
+    return MongoClient(mongodb_uri)
 
 def tag_text_field(text):
     doc = nlp(text)
@@ -56,25 +33,50 @@ def tag_text_field(text):
     return tags
 
 def process_and_update_documents():
-    fields_to_tag = ['content', 'description', 'summary', 'title']
+    try:
+        mongo_client = get_mongo_client()
+        db = mongo_client[current_app.config['MONGO_DB_NAME']]
+        parsed_content_collection = db['parsed_content']
+        allgroups_collection = db['allgroups']
+        alltools_collection = db['alltools']
 
-    for document in parsed_content_collection.find():
-        updates = {}
-        for field in fields_to_tag:
-            text = document.get(field)
-            if text:
-                tags = tag_text_field(text)
-                updates[f"{field}_tags"] = tags
-        if updates:
-            parsed_content_collection.update_one(
-                {'_id': document['_id']},
-                {'$set': updates}
-            )
-    logger.info("Completed tagging documents in parsed_content collection")
+        # Load group and tool names
+        group_names = [item['name'] for item in allgroups_collection.find({}, {'name': 1})]
+        tool_names = [item['name'] for item in alltools_collection.find({}, {'name': 1})]
 
-try:
-    if not all([mongo_username, mongo_password, mongo_host, mongo_port, mongo_db_name]):
-        raise ValueError("One or more MongoDB connection parameters are missing in the environment variables.")
-    process_and_update_documents()
-except Exception as e:
-    logger.error(f"An error occurred: {e}")
+        # Add patterns to matcher
+        group_patterns = [nlp.make_doc(name) for name in group_names]
+        tool_patterns = [nlp.make_doc(name) for name in tool_names]
+        matcher.add("GROUP_NAME", group_patterns)
+        matcher.add("TOOL_NAME", tool_patterns)
+
+        fields_to_tag = ['content', 'description', 'summary', 'title']
+
+        for document in parsed_content_collection.find():
+            updates = {}
+            for field in fields_to_tag:
+                text = document.get(field)
+                if text:
+                    tags = tag_text_field(text)
+                    updates[f"{field}_tags"] = tags
+            if updates:
+                parsed_content_collection.update_one(
+                    {'_id': document['_id']},
+                    {'$set': updates}
+                )
+        logger.info("Completed tagging documents in parsed_content collection")
+    except Exception as e:
+        logger.error(f"An error occurred: {e}")
+    finally:
+        mongo_client.close()
+
+if __name__ == "__main__":
+    # This block will only run if the script is executed directly
+    from flask import Flask
+    from config import get_config
+
+    app = Flask(__name__)
+    app.config.from_object(get_config())
+
+    with app.app_context():
+        process_and_update_documents()
