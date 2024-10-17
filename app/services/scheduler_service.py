@@ -176,7 +176,6 @@ class SchedulerService:
                             'feed_id': str(content.feed_id),
                             'created_at': content.created_at,
                             'pub_date': content.pub_date,
-                            'updated_at': content.updated_at,
                             'creator': content.creator,
                             'art_hash': content.art_hash,
                         }
