@@ -97,6 +97,54 @@ def tag_all_content():
     """
     process_and_update_documents()
 
+def tag_untagged_content():
+    """
+    Tags untagged content in the parsed_content collection.
+    """
+    try:
+        mongo_client = get_mongo_client()
+        db = mongo_client[current_app.config['MONGO_DB_NAME']]
+        parsed_content_collection = db['parsed_content']
+
+        # Load group and tool names
+        allgroups_collection = db['allgroups']
+        alltools_collection = db['alltools']
+        group_names = [item['name'] for item in allgroups_collection.find({}, {'name': 1})]
+        tool_names = [item['name'] for item in alltools_collection.find({}, {'name': 1})]
+
+        # Add patterns to matcher
+        group_patterns = [nlp.make_doc(name) for name in group_names]
+        tool_patterns = [nlp.make_doc(name) for name in tool_names]
+        matcher.add("GROUP_NAME", group_patterns)
+        matcher.add("TOOL_NAME", tool_patterns)
+
+        fields_to_tag = ['content', 'description', 'summary', 'title']
+
+        # Find documents without tags
+        untagged_docs = parsed_content_collection.find({
+            "$or": [{f"{field}_tags": {"$exists": False}} for field in fields_to_tag]
+        })
+
+        for document in untagged_docs:
+            updates = {}
+            for field in fields_to_tag:
+                if f"{field}_tags" not in document:
+                    text = document.get(field)
+                    if text:
+                        tags = tag_text_field(text)
+                        updates[f"{field}_tags"] = tags
+            if updates:
+                parsed_content_collection.update_one(
+                    {'_id': document['_id']},
+                    {'$set': updates}
+                )
+        
+        logger.info("Completed tagging untagged documents in parsed_content collection")
+    except Exception as e:
+        logger.error(f"An error occurred while tagging untagged content: {e}")
+    finally:
+        mongo_client.close()
+
 if __name__ == "__main__":
     # This block will only run if the script is executed directly
     from flask import Flask
