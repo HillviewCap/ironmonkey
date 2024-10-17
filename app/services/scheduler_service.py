@@ -7,7 +7,7 @@ from app.models.relational import ParsedContent, RSSFeed
 from app.services.feed_parser_service import fetch_and_parse_feed_sync
 from app.services.summary_service import SummaryService
 from app.services.news_rollup_service import NewsRollupService
-from app.services.parsed_content_sync_service import sync_parsed_content_to_mongodb
+from app.services.mongodb_sync_service import MongoDBSyncService
 from flask import current_app
 from app.utils.db_connection_manager import DBConnectionManager
 from logging import getLogger
@@ -109,16 +109,31 @@ class SchedulerService:
         # Define the synchronization interval in minutes (default to 60 if not set)
         sync_interval = int(os.getenv("PARSED_CONTENT_SYNC_INTERVAL", 60))
 
-        # Schedule the sync_parsed_content_to_mongodb job
         self.scheduler.add_job(
-            func=lambda: sync_parsed_content_to_mongodb(self.app),
+            func=MongoDBSyncService.sync_parsed_content_to_mongodb,
             trigger="interval",
             minutes=sync_interval,
             id='sync_parsed_content_to_mongodb',
             replace_existing=True
         )
+        
+        self.scheduler.add_job(
+            func=MongoDBSyncService.sync_alltools_to_mongodb,
+            trigger="interval",
+            minutes=sync_interval,
+            id='sync_alltools_to_mongodb',
+            replace_existing=True
+        )
+        
+        self.scheduler.add_job(
+            func=MongoDBSyncService.sync_allgroups_to_mongodb,
+            trigger="interval",
+            minutes=sync_interval,
+            id='sync_allgroups_to_mongodb',
+            replace_existing=True
+        )
 
-        logger.info(f"Scheduled job 'sync_parsed_content_to_mongodb' to run every {sync_interval} minutes.")
+        logger.info(f"Scheduled MongoDB sync jobs to run every {sync_interval} minutes.")
         self.scheduler.start()
         self.is_running = True
         logger.info(
