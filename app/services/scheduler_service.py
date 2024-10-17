@@ -7,6 +7,7 @@ from app.models.relational import ParsedContent, RSSFeed
 from app.services.feed_parser_service import fetch_and_parse_feed_sync
 from app.services.summary_service import SummaryService
 from app.services.news_rollup_service import NewsRollupService
+from app.services.parsed_content_sync_service import sync_parsed_content_to_mongodb
 from flask import current_app
 from app.utils.db_connection_manager import DBConnectionManager
 from logging import getLogger
@@ -112,7 +113,7 @@ class SchedulerService:
 
         # Schedule the sync_parsed_content_to_mongodb job
         self.scheduler.add_job(
-            func=self.sync_parsed_content_to_mongodb,
+            func=lambda: sync_parsed_content_to_mongodb(self.app),
             trigger="interval",
             minutes=sync_interval,
             id='sync_parsed_content_to_mongodb',
@@ -126,86 +127,6 @@ class SchedulerService:
             f"Scheduler started successfully with RSS check interval: {rss_check_interval} minutes"
         )
 
-    def sync_parsed_content_to_mongodb(self):
-        """Synchronize parsed_content table to MongoDB."""
-        with self.app.app_context():
-            try:
-                # Retrieve MongoDB credentials from environment variables
-                mongo_username = os.getenv('MONGO_USERNAME', 'ironmonkey')
-                mongo_password = os.getenv('MONGO_PASSWORD', 'the')
-                mongo_host = os.getenv('MONGO_HOST', 'localhost')
-                mongo_port = os.getenv('MONGO_PORT', '27017')
-                mongo_db_name = os.getenv('MONGO_DB_NAME', 'threats_db')
-
-                # Construct the MongoDB URI
-                mongo_uri = f"mongodb://{mongo_username}:{mongo_password}@{mongo_host}:{mongo_port}/"
-
-                # Establish connection to MongoDB
-                mongo_client = MongoClient(mongo_uri)
-                mongo_db = mongo_client[mongo_db_name]
-                mongo_collection = mongo_db['parsed_content']
-
-                # Define a collection for sync metadata
-                sync_meta_collection = mongo_db['sync_metadata']
-
-                # Initialize last_sync_time to None
-                last_sync_time = None
-
-                # Load last sync time from MongoDB
-                sync_meta = sync_meta_collection.find_one({'_id': 'last_sync_time'})
-                if sync_meta and 'timestamp' in sync_meta:
-                    last_sync_time = sync_meta['timestamp']
-
-                # Access the parsed_content data
-                with DBConnectionManager.get_session() as session:
-                    query = session.query(ParsedContent)
-                    if last_sync_time is not None:
-                        query = query.filter(ParsedContent.created_at > last_sync_time)
-
-                    parsed_contents = query.all()
-
-                    # Prepare and upsert data
-                    for content in parsed_contents:
-                        document = {
-                            '_id': str(content.id),
-                            'title': content.title,
-                            'url': content.url,
-                            'description': content.description,
-                            'content': content.content,
-                            'summary': content.summary,
-                            'feed_id': str(content.feed_id),
-                            'created_at': content.created_at,
-                            'pub_date': content.pub_date,
-                            'creator': content.creator,
-                            'art_hash': content.art_hash,
-                        }
-
-                        # Upsert the document into MongoDB
-                        mongo_collection.update_one(
-                            {'_id': document['_id']},
-                            {'$set': document},
-                            upsert=True
-                        )
-
-                    # Update last sync time in MongoDB
-                    if parsed_contents:
-                        last_synced_time = parsed_contents[-1].created_at
-                        sync_meta_collection.update_one(
-                            {'_id': 'last_sync_time'},
-                            {'$set': {'timestamp': last_synced_time}},
-                            upsert=True
-                        )
-                        logger.info(f"Incrementally synced {len(parsed_contents)} parsed_content records to MongoDB.")
-                    else:
-                        logger.info("No new records to sync.")
-
-                    logger.info(f"Incrementally synced {len(parsed_contents)} parsed_content records to MongoDB.")
-
-            except Exception as e:
-                logger.error(f"Error syncing parsed_content to MongoDB: {str(e)}")
-            finally:
-                # Close the MongoDB connection
-                mongo_client.close()
 
     def check_and_process_rss_feeds(self):
         with self.app.app_context():
