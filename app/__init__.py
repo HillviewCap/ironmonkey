@@ -32,6 +32,7 @@ from app.blueprints.search.routes import search_bp
 from app.blueprints.api.routes import api_bp
 from app.blueprints.parsed_content import bp as parsed_content_bp
 from app.blueprints.apt.routes import bp as apt_bp
+from app.blueprints.dashboard import dashboard_bp
 
 from flask_login import login_required
 from app.utils.ollama_client import OllamaAPI
@@ -148,6 +149,7 @@ def create_app(config_object=None):
         (api_bp, "/api"),
         (parsed_content_bp, "/parsed_content"),
         (apt_bp, "/apt"),
+        (dashboard_bp, "/dashboard"),
     ]
 
     registered_blueprints = set()
@@ -263,35 +265,5 @@ def create_app(config_object=None):
         except Exception as e:
             logger.error(f"Error generating rollup: {str(e)}")
             return jsonify({"error": "Failed to generate rollup"}), 500
-
-    # Import the dashboard blueprint
-    from app.blueprints.dashboard import dashboard_bp
-
-    # Register blueprints
-    blueprints = [
-        (main_bp, None),
-        (auth_bp, "/auth"),
-        (rss_manager_bp, "/rss"),
-        (admin_bp, "/admin"),
-        (search_bp, "/search"),
-        (api_bp, "/api"),
-        (parsed_content_bp, "/parsed_content"),
-        (apt_bp, "/apt"),
-        (dashboard_bp, "/dashboard"),  # Update this line with the correct prefix
-    ]
-
-    registered_blueprints = set()
-    for blueprint, url_prefix in blueprints:
-        if blueprint.name not in registered_blueprints:
-            if blueprint.name in ['apt', 'parsed_content']:
-                for endpoint, view_func in blueprint.view_functions.items():
-                    blueprint.view_functions[endpoint] = login_required(view_func)
-            app.register_blueprint(blueprint, url_prefix=url_prefix)
-            logger.info(
-                f"Registered blueprint: {blueprint.name} with url_prefix: {url_prefix}"
-            )
-            registered_blueprints.add(blueprint.name)
-        else:
-            logger.warning(f"Blueprint {blueprint.name} already registered, skipping.")
 
     return app
