@@ -6,7 +6,7 @@ import logging
 from flask import current_app
 
 # Spacy setup
-nlp = spacy.load("en_core_web_sm")
+nlp = spacy.load("en_core_web_lg")
 matcher = PhraseMatcher(nlp.vocab, attr="LOWER")
 
 # Logging setup
@@ -17,9 +17,32 @@ def get_mongo_client():
     mongodb_uri = current_app.config['MONGODB_URI']
     return MongoClient(mongodb_uri)
 
+def tag_additional_entities(doc):
+    additional_tags = []
+    
+    for ent in doc.ents:
+        if ent.label_ in ["PERSON", "ORG", "PRODUCT", "GPE"]:
+            label = {
+                "PERSON": "NAME",
+                "ORG": "COMPANY",
+                "PRODUCT": "PRODUCT",
+                "GPE": "COUNTRY"
+            }.get(ent.label_, ent.label_)
+            
+            additional_tags.append({
+                'text': ent.text,
+                'label': label,
+                'start_char': ent.start_char,
+                'end_char': ent.end_char
+            })
+    
+    return additional_tags
+
 def tag_text_field(text):
     doc = nlp(text)
     tags = []
+    
+    # Existing matcher for GROUP_NAME and TOOL_NAME
     matches = matcher(doc)
     for match_id, start, end in matches:
         span = doc[start:end]
@@ -30,28 +53,13 @@ def tag_text_field(text):
             'start_char': span.start_char,
             'end_char': span.end_char
         })
+    
+    # Add additional entity tags
+    tags.extend(tag_additional_entities(doc))
+    
     return tags
 
-def tag_content(text):
-    """
-    Tags the given text using the current matcher.
-    
-    :param text: The text to be tagged
-    :return: A list of tags found in the text
-    """
-    doc = nlp(text)
-    tags = []
-    matches = matcher(doc)
-    for match_id, start, end in matches:
-        span = doc[start:end]
-        label = nlp.vocab.strings[match_id]
-        tags.append({
-            'text': span.text,
-            'label': label,
-            'start_char': span.start_char,
-            'end_char': span.end_char
-        })
-    return tags
+# Remove the tag_content function as it's redundant with tag_text_field
 
 def process_and_update_documents():
     try:
@@ -79,10 +87,7 @@ def process_and_update_documents():
                 text = document.get(field)
                 if text:
                     tags = tag_text_field(text)
-                    if tags:  # Only update if tags were found
-                        updates[f"{field}_tags"] = tags
-                    else:
-                        updates[f"{field}_tags"] = []  # Set empty array if no tags found
+                    updates[f"{field}_tags"] = tags  # Always update, even if empty
             if updates:
                 parsed_content_collection.update_one(
                     {'_id': document['_id']},
@@ -133,11 +138,8 @@ def tag_untagged_content():
             for field in fields_to_tag:
                 if f"{field}_tags" not in document:
                     text = document.get(field)
-                    if text:
-                        tags = tag_text_field(text)
-                        updates[f"{field}_tags"] = tags if tags else []
-                    else:
-                        updates[f"{field}_tags"] = []
+                    tags = tag_text_field(text) if text else []
+                    updates[f"{field}_tags"] = tags
             if updates:
                 parsed_content_collection.update_one(
                     {'_id': document['_id']},
