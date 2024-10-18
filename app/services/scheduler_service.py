@@ -27,7 +27,7 @@ class SchedulerService:
             cls._instance = super(SchedulerService, cls).__new__(cls)
             cls._instance.app = app
             executors = {
-                'default': ThreadPoolExecutor(max_workers=5)  # Adjust max_workers as needed
+                'default': ThreadPoolExecutor(max_workers=10)  # Adjust max_workers as needed
             }
             cls._instance.scheduler = BackgroundScheduler(executors=executors)
             cls._instance.is_running = False
