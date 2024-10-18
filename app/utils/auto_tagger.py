@@ -41,19 +41,18 @@ def tag_text_field(text):
     
     # Matcher for GROUP_NAME and TOOL_NAME
     matches = matcher(doc)
-    group_matches = []
-    tool_matches = []
+    custom_matches = []
     
     for match_id, start, end in matches:
         span = doc[start:end]
         label = nlp.vocab.strings[match_id]
-        if label == "GROUP_NAME":
-            group_matches.append((start, end, label))
-        elif label == "TOOL_NAME":
-            tool_matches.append((start, end, label))
+        custom_matches.append((start, end, label))
     
-    # Prioritize GROUP_NAME matches
-    for start, end, label in group_matches + tool_matches:
+    # Sort custom matches by start position
+    custom_matches.sort(key=lambda x: x[0])
+    
+    # Add custom matches (GROUP_NAME and TOOL_NAME)
+    for start, end, label in custom_matches:
         span = doc[start:end]
         tags.append({
             'text': span.text,
@@ -62,8 +61,23 @@ def tag_text_field(text):
             'end_char': span.end_char
         })
     
-    # Add additional entity tags
-    tags.extend(tag_additional_entities(doc))
+    # Add additional entity tags, but don't overwrite custom matches
+    existing_spans = set((tag['start_char'], tag['end_char']) for tag in tags)
+    for ent in doc.ents:
+        if ent.label_ in ["PERSON", "ORG", "PRODUCT", "GPE"] and (ent.start_char, ent.end_char) not in existing_spans:
+            label = {
+                "PERSON": "NAME",
+                "ORG": "COMPANY",
+                "PRODUCT": "PRODUCT",
+                "GPE": "COUNTRY"
+            }.get(ent.label_, ent.label_)
+            
+            tags.append({
+                'text': ent.text,
+                'label': label,
+                'start_char': ent.start_char,
+                'end_char': ent.end_char
+            })
     
     logger.debug(f"Tagged text: '{text[:50]}...', Found tags: {tags}")
     return tags
@@ -81,8 +95,10 @@ def process_and_update_documents():
         # Load group and tool names
         group_names = [item['name'] for item in allgroups_collection.find({}, {'name': 1})]
         logger.info(f"Loaded {len(group_names)} group names")
-        logger.debug(f"Group names: {group_names[:10]}...")  # Log first 10 group names
+        logger.debug(f"Sample group names: {group_names[:10]}...")  # Log first 10 group names
         tool_names = [item['name'] for item in alltools_collection.find({}, {'name': 1})]
+        logger.info(f"Loaded {len(tool_names)} tool names")
+        logger.debug(f"Sample tool names: {tool_names[:10]}...")  # Log first 10 tool names
 
         # Add patterns to matcher
         group_patterns = [nlp.make_doc(name) for name in group_names]
@@ -92,25 +108,33 @@ def process_and_update_documents():
 
         fields_to_tag = ['content', 'description', 'summary', 'title']
 
+        processed_count = 0
+        tagged_count = 0
         for document in parsed_content_collection.find():
             updates = {}
             for field in fields_to_tag:
                 text = document.get(field)
                 if text:
                     tags = tag_text_field(text)
-                    updates[f"{field}_tags"] = tags  # Always update, even if empty
+                    updates[f"{field}_tags"] = tags
+                    if any(tag['label'] in ['GROUP_NAME', 'TOOL_NAME'] for tag in tags):
+                        tagged_count += 1
             if updates:
                 parsed_content_collection.update_one(
                     {'_id': document['_id']},
                     {'$set': updates}
                 )
-        logger.info("Completed tagging documents in parsed_content collection")
+            processed_count += 1
+            if processed_count % 100 == 0:
+                logger.info(f"Processed {processed_count} documents, tagged {tagged_count} with GROUP_NAME or TOOL_NAME")
+        
+        logger.info(f"Completed tagging. Processed {processed_count} documents, tagged {tagged_count} with GROUP_NAME or TOOL_NAME")
     except Exception as e:
         logger.error(f"An error occurred: {e}")
     finally:
         mongo_client.close()
 
-def tag_all_content(force_all=False):
+def tag_all_content(force_all=True):
     """
     Tags all content in the parsed_content collection.
     If force_all is True, it re-tags all documents, otherwise it only tags untagged documents.
@@ -158,7 +182,7 @@ def tag_all_content(force_all=False):
                 if text:
                     tags = tag_text_field(text)
                     updates[f"{field}_tags"] = tags
-                    if any(tag['label'] == 'GROUP_NAME' for tag in tags):
+                    if any(tag['label'] in ['GROUP_NAME', 'TOOL_NAME'] for tag in tags):
                         tagged_count += 1
             if updates:
                 parsed_content_collection.update_one(
@@ -167,9 +191,9 @@ def tag_all_content(force_all=False):
                 )
             processed_count += 1
             if processed_count % 100 == 0:
-                logger.info(f"Processed {processed_count} documents, tagged {tagged_count} with GROUP_NAME")
+                logger.info(f"Processed {processed_count} documents, tagged {tagged_count} with GROUP_NAME or TOOL_NAME")
         
-        logger.info(f"Completed tagging. Processed {processed_count} documents, tagged {tagged_count} with GROUP_NAME")
+        logger.info(f"Completed tagging. Processed {processed_count} documents, tagged {tagged_count} with GROUP_NAME or TOOL_NAME")
     except Exception as e:
         logger.error(f"An error occurred while tagging content: {e}")
     finally:
