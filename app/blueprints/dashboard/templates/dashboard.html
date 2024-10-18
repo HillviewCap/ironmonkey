@@ -1,0 +1,97 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-6">
+    <h1 class="text-3xl font-bold mb-4">Threat Landscape Dashboard</h1>
+
+    <!-- Dropdown to select entity type -->
+    <div class="mb-4">
+        <label for="entity-type" class="block text-gray-700">Select Entity Type:</label>
+        <select id="entity-type" class="mt-1 block w-full border-gray-300 rounded-md">
+            <option value="">All Entities</option>
+            <option value="GROUP_NAME">Group Name</option>
+            <option value="TOOL_NAME">Tool Name</option>
+            <option value="COUNTRY">Country</option>
+            <option value="COMPANY">Company</option>
+            <option value="PRODUCT">Product</option>
+            <option value="NAME">Name</option>
+        </select>
+    </div>
+
+    <canvas id="entityFrequencyChart"></canvas>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    function fetchAndRenderChart(label = '') {
+        let url = '/dashboard/api/entity-frequency';
+        if (label) {
+            url += '?label=' + encodeURIComponent(label);
+        }
+
+        fetch(url)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.length === 0) {
+                    alert('No data available for the selected entity type.');
+                    if (window.entityChart) {
+                        window.entityChart.destroy();
+                    }
+                    return;
+                }
+
+                const labels = data.map(item => item.text);
+                const counts = data.map(item => item.count);
+
+                const ctx = document.getElementById('entityFrequencyChart').getContext('2d');
+
+                // Destroy existing chart if it exists
+                if (window.entityChart) {
+                    window.entityChart.destroy();
+                }
+
+                window.entityChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Entity Frequency',
+                            data: counts,
+                            backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                            borderColor: 'rgba(54, 162, 235, 1)',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+            })
+            .catch(error => {
+                console.error('There was a problem with the fetch operation:', error);
+                alert('An error occurred while fetching data.');
+            });
+    }
+
+    // Fetch and render chart on page load
+    fetchAndRenderChart();
+
+    // Add event listener to dropdown
+    document.getElementById('entity-type').addEventListener('change', function() {
+        const selectedLabel = this.value;
+        fetchAndRenderChart(selectedLabel);
+    });
+</script>
+{% endblock %}

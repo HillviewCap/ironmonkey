@@ -265,3 +265,5 @@ def create_app(config_object=None):
             return jsonify({"error": "Failed to generate rollup"}), 500
 
     return app
+from app.blueprints.dashboard import dashboard_bp
+app.register_blueprint(dashboard_bp)
