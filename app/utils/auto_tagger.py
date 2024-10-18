@@ -149,16 +149,16 @@ def tag_all_content(force_all=True):
         # Load group and tool names
         allgroups_collection = db['allgroups']
         alltools_collection = db['alltools']
-        group_names = [item['name'] for item in allgroups_collection.find({}, {'name': 1})]
-        tool_names = [item['name'] for item in alltools_collection.find({}, {'name': 1})]
+        group_names = list(allgroups_collection.find({}, {'name': 1}))
+        tool_names = list(alltools_collection.find({}, {'name': 1}))
         
         logger.info(f"Loaded {len(group_names)} group names and {len(tool_names)} tool names")
         logger.debug(f"Sample group names: {group_names[:5]}")
         logger.debug(f"Sample tool names: {tool_names[:5]}")
 
         # Add patterns to matcher
-        group_patterns = [nlp.make_doc(name) for name in group_names]
-        tool_patterns = [nlp.make_doc(name) for name in tool_names]
+        group_patterns = [nlp.make_doc(item['name']) for item in group_names]
+        tool_patterns = [nlp.make_doc(item['name']) for item in tool_names]
         matcher.add("GROUP_NAME", group_patterns)
         matcher.add("TOOL_NAME", tool_patterns)
 
@@ -198,6 +198,7 @@ def tag_all_content(force_all=True):
         logger.info(f"Completed tag_all_content. Processed {processed_count} documents, tagged {tagged_count} with GROUP_NAME or TOOL_NAME")
     except Exception as e:
         logger.exception(f"An error occurred in tag_all_content: {e}")
+        raise  # Re-raise the exception to be caught by the calling function
     finally:
         mongo_client.close()
 
