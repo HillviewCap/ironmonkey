@@ -4,7 +4,6 @@ from app.utils.auto_tagger import tag_all_content
 from app.utils.logging_config import setup_logger
 import logging
 import traceback
-import sys
 
 logger = setup_logger('auto_tag_command', 'auto_tag_command.log', level=logging.DEBUG)
 
@@ -29,7 +28,8 @@ def auto_tag_command(force):
         logger.error(f"An error occurred during auto-tagging: {str(e)}")
         logger.error(f"Traceback: {traceback.format_exc()}")
         click.echo(f"An error occurred during auto-tagging. Check the logs for details.")
-        sys.exit(1)  # Exit with an error code
+        # Instead of sys.exit(1), we'll just log the error and continue
+        click.echo("The auto-tagging process encountered errors but did not terminate.")
 
 def init_app(app):
     app.cli.add_command(auto_tag_command)
