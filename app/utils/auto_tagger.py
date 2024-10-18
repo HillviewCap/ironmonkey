@@ -4,6 +4,7 @@ import spacy
 from spacy.matcher import PhraseMatcher
 import logging
 from flask import current_app
+from app.utils.mongodb_connection import get_mongo_client
 
 # Spacy setup
 nlp = spacy.load("en_core_web_lg")
@@ -12,10 +13,6 @@ matcher = PhraseMatcher(nlp.vocab, attr="LOWER")
 # Logging setup
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
-def get_mongo_client():
-    mongodb_uri = current_app.config['MONGODB_URI']
-    return MongoClient(mongodb_uri)
 
 def tag_additional_entities(doc):
     additional_tags = []

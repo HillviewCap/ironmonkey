@@ -8,8 +8,9 @@ def dashboard():
     # Render the dashboard template
     return render_template('dashboard.html')
 
-@dashboard_bp.route('/dashboard/api/entity-frequency')
+@dashboard_bp.route('/api/entity-frequency')
 def entity_frequency():
+    mongo_client = None
     try:
         # Get the 'label' query parameter if provided
         label = request.args.get('label')
@@ -38,7 +39,10 @@ def entity_frequency():
 
         results = db['parsed_content'].aggregate(pipeline)
         data = [{'text': doc['_id'], 'label': doc['label'], 'count': doc['count']} for doc in results]
-        mongo_client.close()
         return jsonify(data)
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        current_app.logger.error(f"Error in entity_frequency: {str(e)}")
+        return jsonify({'error': 'An error occurred while fetching data'}), 500
+    finally:
+        if mongo_client:
+            mongo_client.close()

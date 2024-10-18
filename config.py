@@ -8,7 +8,7 @@ class Config:
     SQLALCHEMY_DATABASE_URI = f"sqlite:///{os.path.join(INSTANCE_PATH, 'threats.db')}"
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     MONGODB_URI = os.getenv('MONGODB_URI', 'your_default_mongodb_uri')
-    MONGO_DB_NAME = os.getenv('MONGO_DB_NAME', 'your_database_name')
+    MONGO_DB_NAME = os.getenv('MONGO_DB_NAME', 'your_default_db_name')
     RSS_CHECK_INTERVAL = int(os.getenv('RSS_CHECK_INTERVAL', 30))
     SUMMARY_CHECK_INTERVAL = int(os.getenv('SUMMARY_CHECK_INTERVAL', 60))
     SUMMARY_API_CHOICE = os.getenv('SUMMARY_API_CHOICE', 'groq')
@@ -19,7 +19,6 @@ class Config:
     MONGO_PASSWORD = os.getenv('MONGO_PASSWORD', '')
     MONGO_HOST = os.getenv('MONGO_HOST', 'localhost')
     MONGO_PORT = os.getenv('MONGO_PORT', '27017')
-    MONGO_DB_NAME = os.getenv('MONGO_DB_NAME', 'your_default_db_name')
     AUTO_TAG_INTERVAL = int(os.getenv('AUTO_TAG_INTERVAL', 60))
     PARSED_CONTENT_SYNC_INTERVAL = int(os.getenv('PARSED_CONTENT_SYNC_INTERVAL', 60))
 
