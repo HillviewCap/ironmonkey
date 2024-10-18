@@ -11,7 +11,7 @@ nlp = spacy.load("en_core_web_lg")
 matcher = PhraseMatcher(nlp.vocab, attr="LOWER")
 
 # Logging setup
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 def tag_additional_entities(doc):
@@ -39,11 +39,22 @@ def tag_text_field(text):
     doc = nlp(text)
     tags = []
     
-    # Existing matcher for GROUP_NAME and TOOL_NAME
+    # Matcher for GROUP_NAME and TOOL_NAME
     matches = matcher(doc)
+    group_matches = []
+    tool_matches = []
+    
     for match_id, start, end in matches:
         span = doc[start:end]
         label = nlp.vocab.strings[match_id]
+        if label == "GROUP_NAME":
+            group_matches.append((start, end, label))
+        elif label == "TOOL_NAME":
+            tool_matches.append((start, end, label))
+    
+    # Prioritize GROUP_NAME matches
+    for start, end, label in group_matches + tool_matches:
+        span = doc[start:end]
         tags.append({
             'text': span.text,
             'label': label,
@@ -54,6 +65,7 @@ def tag_text_field(text):
     # Add additional entity tags
     tags.extend(tag_additional_entities(doc))
     
+    logger.debug(f"Tagged text: '{text[:50]}...', Found tags: {tags}")
     return tags
 
 # Remove the tag_content function as it's redundant with tag_text_field
@@ -68,6 +80,8 @@ def process_and_update_documents():
 
         # Load group and tool names
         group_names = [item['name'] for item in allgroups_collection.find({}, {'name': 1})]
+        logger.info(f"Loaded {len(group_names)} group names")
+        logger.debug(f"Group names: {group_names[:10]}...")  # Log first 10 group names
         tool_names = [item['name'] for item in alltools_collection.find({}, {'name': 1})]
 
         # Add patterns to matcher
@@ -111,6 +125,10 @@ def tag_all_content(force_all=False):
         alltools_collection = db['alltools']
         group_names = [item['name'] for item in allgroups_collection.find({}, {'name': 1})]
         tool_names = [item['name'] for item in alltools_collection.find({}, {'name': 1})]
+        
+        logger.info(f"Loaded {len(group_names)} group names and {len(tool_names)} tool names")
+        logger.debug(f"Sample group names: {group_names[:5]}")
+        logger.debug(f"Sample tool names: {tool_names[:5]}")
 
         # Add patterns to matcher
         group_patterns = [nlp.make_doc(name) for name in group_names]
@@ -131,6 +149,8 @@ def tag_all_content(force_all=False):
             })
             logger.info("Processing only untagged documents")
 
+        processed_count = 0
+        tagged_count = 0
         for document in documents_to_process:
             updates = {}
             for field in fields_to_tag:
@@ -138,13 +158,18 @@ def tag_all_content(force_all=False):
                 if text:
                     tags = tag_text_field(text)
                     updates[f"{field}_tags"] = tags
+                    if any(tag['label'] == 'GROUP_NAME' for tag in tags):
+                        tagged_count += 1
             if updates:
                 parsed_content_collection.update_one(
                     {'_id': document['_id']},
                     {'$set': updates}
                 )
+            processed_count += 1
+            if processed_count % 100 == 0:
+                logger.info(f"Processed {processed_count} documents, tagged {tagged_count} with GROUP_NAME")
         
-        logger.info("Completed tagging documents in parsed_content collection")
+        logger.info(f"Completed tagging. Processed {processed_count} documents, tagged {tagged_count} with GROUP_NAME")
     except Exception as e:
         logger.error(f"An error occurred while tagging content: {e}")
     finally:
