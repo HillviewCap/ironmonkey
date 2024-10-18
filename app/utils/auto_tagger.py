@@ -5,14 +5,14 @@ from spacy.matcher import PhraseMatcher
 import logging
 from flask import current_app
 from app.utils.mongodb_connection import get_mongo_client
+from app.utils.logging_config import setup_logger
 
 # Spacy setup
 nlp = spacy.load("en_core_web_lg")
 matcher = PhraseMatcher(nlp.vocab, attr="LOWER")
 
-# Logging setup
-logging.basicConfig(level=logging.DEBUG)
-logger = logging.getLogger(__name__)
+# Set up a dedicated logger for auto_tagger
+logger = setup_logger('auto_tagger', 'auto_tagger.log', level=logging.DEBUG)
 
 def tag_additional_entities(doc):
     additional_tags = []
@@ -86,6 +86,7 @@ def tag_text_field(text):
 
 def process_and_update_documents():
     try:
+        logger.info("Starting process_and_update_documents")
         mongo_client = get_mongo_client()
         db = mongo_client[current_app.config['MONGO_DB_NAME']]
         parsed_content_collection = db['parsed_content']
@@ -95,10 +96,10 @@ def process_and_update_documents():
         # Load group and tool names
         group_names = [item['name'] for item in allgroups_collection.find({}, {'name': 1})]
         logger.info(f"Loaded {len(group_names)} group names")
-        logger.debug(f"Sample group names: {group_names[:10]}...")  # Log first 10 group names
+        logger.debug(f"Sample group names: {group_names[:10]}")
         tool_names = [item['name'] for item in alltools_collection.find({}, {'name': 1})]
         logger.info(f"Loaded {len(tool_names)} tool names")
-        logger.debug(f"Sample tool names: {tool_names[:10]}...")  # Log first 10 tool names
+        logger.debug(f"Sample tool names: {tool_names[:10]}")
 
         # Add patterns to matcher
         group_patterns = [nlp.make_doc(name) for name in group_names]
@@ -128,9 +129,9 @@ def process_and_update_documents():
             if processed_count % 100 == 0:
                 logger.info(f"Processed {processed_count} documents, tagged {tagged_count} with GROUP_NAME or TOOL_NAME")
         
-        logger.info(f"Completed tagging. Processed {processed_count} documents, tagged {tagged_count} with GROUP_NAME or TOOL_NAME")
+        logger.info(f"Completed process_and_update_documents. Processed {processed_count} documents, tagged {tagged_count} with GROUP_NAME or TOOL_NAME")
     except Exception as e:
-        logger.error(f"An error occurred: {e}")
+        logger.exception(f"An error occurred in process_and_update_documents: {e}")
     finally:
         mongo_client.close()
 
@@ -140,6 +141,7 @@ def tag_all_content(force_all=True):
     If force_all is True, it re-tags all documents, otherwise it only tags untagged documents.
     """
     try:
+        logger.info(f"Starting tag_all_content with force_all={force_all}")
         mongo_client = get_mongo_client()
         db = mongo_client[current_app.config['MONGO_DB_NAME']]
         parsed_content_collection = db['parsed_content']
@@ -193,9 +195,9 @@ def tag_all_content(force_all=True):
             if processed_count % 100 == 0:
                 logger.info(f"Processed {processed_count} documents, tagged {tagged_count} with GROUP_NAME or TOOL_NAME")
         
-        logger.info(f"Completed tagging. Processed {processed_count} documents, tagged {tagged_count} with GROUP_NAME or TOOL_NAME")
+        logger.info(f"Completed tag_all_content. Processed {processed_count} documents, tagged {tagged_count} with GROUP_NAME or TOOL_NAME")
     except Exception as e:
-        logger.error(f"An error occurred while tagging content: {e}")
+        logger.exception(f"An error occurred in tag_all_content: {e}")
     finally:
         mongo_client.close()
 
@@ -255,4 +257,6 @@ if __name__ == "__main__":
     app.config.from_object(get_config())
 
     with app.app_context():
+        logger.info("Starting auto_tagger main execution")
         tag_all_content()
+        logger.info("Finished auto_tagger main execution")
