@@ -96,6 +96,7 @@ class MongoDBSyncService:
             # Load last sync time from MongoDB
             last_sync_time = sync_meta_collection.find_one({'_id': 'last_alltools_sync_time'})
             last_sync_time = last_sync_time['timestamp'] if last_sync_time else None
+            logger.info(f"Last alltools sync time: {last_sync_time}")
 
             with DBConnectionManager.get_session() as session:
                 query = session.query(AllTools).options(
@@ -105,6 +106,7 @@ class MongoDBSyncService:
                     query = query.filter(AllTools.last_db_change > last_sync_time)
 
                 alltools = query.all()
+                logger.info(f"Found {len(alltools)} alltools to sync")
 
                 for tool in alltools:
                     document = {
@@ -132,11 +134,12 @@ class MongoDBSyncService:
                     }
 
                     # Insert or update the document for this tool
-                    mongo_collection.update_one(
+                    result = mongo_collection.update_one(
                         {'_id': document['_id']},
                         {'$set': document},
                         upsert=True
                     )
+                    logger.debug(f"Updated tool {tool.name}: matched={result.matched_count}, modified={result.modified_count}, upserted={result.upserted_id}")
 
                 if alltools:
                     last_synced_time = max(tool.last_db_change for tool in alltools)
@@ -145,12 +148,12 @@ class MongoDBSyncService:
                         {'$set': {'timestamp': last_synced_time}},
                         upsert=True
                     )
-                    logger.info(f"Incrementally synced {len(alltools)} alltools records to MongoDB.")
+                    logger.info(f"Incrementally synced {len(alltools)} alltools records to MongoDB. Last sync time updated to {last_synced_time}")
                 else:
                     logger.info("No new alltools records to sync.")
 
         except Exception as e:
-            logger.error(f"Error syncing alltools to MongoDB: {str(e)}")
+            logger.error(f"Error syncing alltools to MongoDB: {str(e)}", exc_info=True)
         finally:
             if mongo_client:
                 mongo_client.close()
