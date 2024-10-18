@@ -36,51 +36,56 @@ def tag_additional_entities(doc):
     return additional_tags
 
 def tag_text_field(text):
-    doc = nlp(text)
-    tags = []
-    
-    # Matcher for GROUP_NAME and TOOL_NAME
-    matches = matcher(doc)
-    custom_matches = []
-    
-    for match_id, start, end in matches:
-        span = doc[start:end]
-        label = nlp.vocab.strings[match_id]
-        custom_matches.append((start, end, label))
-    
-    # Sort custom matches by start position
-    custom_matches.sort(key=lambda x: x[0])
-    
-    # Add custom matches (GROUP_NAME and TOOL_NAME)
-    for start, end, label in custom_matches:
-        span = doc[start:end]
-        tags.append({
-            'text': span.text,
-            'label': label,
-            'start_char': span.start_char,
-            'end_char': span.end_char
-        })
-    
-    # Add additional entity tags, but don't overwrite custom matches
-    existing_spans = set((tag['start_char'], tag['end_char']) for tag in tags)
-    for ent in doc.ents:
-        if ent.label_ in ["PERSON", "ORG", "PRODUCT", "GPE"] and (ent.start_char, ent.end_char) not in existing_spans:
-            label = {
-                "PERSON": "NAME",
-                "ORG": "COMPANY",
-                "PRODUCT": "PRODUCT",
-                "GPE": "COUNTRY"
-            }.get(ent.label_, ent.label_)
-            
+    try:
+        doc = nlp(text)
+        tags = []
+        
+        # Matcher for GROUP_NAME and TOOL_NAME
+        matches = matcher(doc)
+        custom_matches = []
+        
+        for match_id, start, end in matches:
+            span = doc[start:end]
+            label = nlp.vocab.strings[match_id]
+            custom_matches.append((start, end, label))
+        
+        # Sort custom matches by start position
+        custom_matches.sort(key=lambda x: x[0])
+        
+        # Add custom matches (GROUP_NAME and TOOL_NAME)
+        for start, end, label in custom_matches:
+            span = doc[start:end]
             tags.append({
-                'text': ent.text,
+                'text': span.text,
                 'label': label,
-                'start_char': ent.start_char,
-                'end_char': ent.end_char
+                'start_char': span.start_char,
+                'end_char': span.end_char
             })
-    
-    logger.debug(f"Tagged text: '{text[:50]}...', Found tags: {tags}")
-    return tags
+        
+        # Add additional entity tags, but don't overwrite custom matches
+        existing_spans = set((tag['start_char'], tag['end_char']) for tag in tags)
+        for ent in doc.ents:
+            if ent.label_ in ["PERSON", "ORG", "PRODUCT", "GPE"] and (ent.start_char, ent.end_char) not in existing_spans:
+                label = {
+                    "PERSON": "NAME",
+                    "ORG": "COMPANY",
+                    "PRODUCT": "PRODUCT",
+                    "GPE": "COUNTRY"
+                }.get(ent.label_, ent.label_)
+                
+                tags.append({
+                    'text': ent.text,
+                    'label': label,
+                    'start_char': ent.start_char,
+                    'end_char': ent.end_char
+                })
+        
+        logger.debug(f"Tagged text: '{text[:50]}...', Found tags: {tags}")
+        return tags
+    except Exception as e:
+        logger.error(f"Error in tag_text_field: {str(e)}")
+        logger.error(f"Traceback: {traceback.format_exc()}")
+        return []  # Return an empty list if there's an error
 
 # Remove the tag_content function as it's redundant with tag_text_field
 
@@ -135,11 +140,14 @@ def process_and_update_documents():
     finally:
         mongo_client.close()
 
+import traceback
+
 def tag_all_content(force_all=True):
     """
     Tags all content in the parsed_content collection.
     If force_all is True, it re-tags all documents, otherwise it only tags untagged documents.
     """
+    mongo_client = None
     try:
         logger.info(f"Starting tag_all_content with force_all={force_all}")
         mongo_client = get_mongo_client()
@@ -149,16 +157,23 @@ def tag_all_content(force_all=True):
         # Load group and tool names
         allgroups_collection = db['allgroups']
         alltools_collection = db['alltools']
-        group_names = list(allgroups_collection.find({}, {'name': 1}))
-        tool_names = list(alltools_collection.find({}, {'name': 1}))
+
+        # Correctly extract group names from the 'values.names' array
+        group_names = []
+        for group in allgroups_collection.find({}, {'values.names': 1}):
+            if 'values' in group and 'names' in group['values']:
+                group_names.extend([name['name'] for name in group['values']['names'] if 'name' in name])
+
+        # Extract tool names
+        tool_names = [item['name'] for item in alltools_collection.find({}, {'name': 1}) if 'name' in item]
         
         logger.info(f"Loaded {len(group_names)} group names and {len(tool_names)} tool names")
         logger.debug(f"Sample group names: {group_names[:5]}")
         logger.debug(f"Sample tool names: {tool_names[:5]}")
 
         # Add patterns to matcher
-        group_patterns = [nlp.make_doc(item['name']) for item in group_names]
-        tool_patterns = [nlp.make_doc(item['name']) for item in tool_names]
+        group_patterns = [nlp.make_doc(name) for name in group_names if name]
+        tool_patterns = [nlp.make_doc(name) for name in tool_names if name]
         matcher.add("GROUP_NAME", group_patterns)
         matcher.add("TOOL_NAME", tool_patterns)
 
@@ -178,29 +193,36 @@ def tag_all_content(force_all=True):
         processed_count = 0
         tagged_count = 0
         for document in documents_to_process:
-            updates = {}
-            for field in fields_to_tag:
-                text = document.get(field)
-                if text:
-                    tags = tag_text_field(text)
-                    updates[f"{field}_tags"] = tags
-                    if any(tag['label'] in ['GROUP_NAME', 'TOOL_NAME'] for tag in tags):
-                        tagged_count += 1
-            if updates:
-                parsed_content_collection.update_one(
-                    {'_id': document['_id']},
-                    {'$set': updates}
-                )
-            processed_count += 1
-            if processed_count % 100 == 0:
-                logger.info(f"Processed {processed_count} documents, tagged {tagged_count} with GROUP_NAME or TOOL_NAME")
+            try:
+                updates = {}
+                for field in fields_to_tag:
+                    text = document.get(field)
+                    if text:
+                        tags = tag_text_field(text)
+                        updates[f"{field}_tags"] = tags
+                        if any(tag['label'] in ['GROUP_NAME', 'TOOL_NAME'] for tag in tags):
+                            tagged_count += 1
+                if updates:
+                    parsed_content_collection.update_one(
+                        {'_id': document['_id']},
+                        {'$set': updates}
+                    )
+                processed_count += 1
+                if processed_count % 100 == 0:
+                    logger.info(f"Processed {processed_count} documents, tagged {tagged_count} with GROUP_NAME or TOOL_NAME")
+            except Exception as doc_error:
+                logger.error(f"Error processing document {document.get('_id', 'unknown')}: {str(doc_error)}")
+                logger.error(f"Document error traceback: {traceback.format_exc()}")
+                # Continue with the next document
         
         logger.info(f"Completed tag_all_content. Processed {processed_count} documents, tagged {tagged_count} with GROUP_NAME or TOOL_NAME")
     except Exception as e:
-        logger.exception(f"An error occurred in tag_all_content: {e}")
-        raise  # Re-raise the exception to be caught by the calling function
+        logger.error(f"An error occurred in tag_all_content: {str(e)}")
+        logger.error(f"Traceback: {traceback.format_exc()}")
+        raise
     finally:
-        mongo_client.close()
+        if mongo_client:
+            mongo_client.close()
 
 def tag_untagged_content():
     """
