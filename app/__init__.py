@@ -277,7 +277,7 @@ def create_app(config_object=None):
         (api_bp, "/api"),
         (parsed_content_bp, "/parsed_content"),
         (apt_bp, "/apt"),
-        (dashboard_bp, None),  # Add this line, with None as the prefix
+        (dashboard_bp, "/dashboard"),  # Update this line with the correct prefix
     ]
 
     registered_blueprints = set()

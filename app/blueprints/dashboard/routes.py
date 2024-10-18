@@ -3,7 +3,7 @@ from . import dashboard_bp
 from app.utils.mongodb_connection import get_mongo_client
 from flask import current_app
 
-@dashboard_bp.route('/dashboard')
+@dashboard_bp.route('/')
 def dashboard():
     # Render the dashboard template
     return render_template('dashboard.html')
