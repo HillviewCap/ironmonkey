@@ -99,11 +99,59 @@ def process_and_update_documents():
     finally:
         mongo_client.close()
 
-def tag_all_content():
+def tag_all_content(force_all=False):
     """
-    Wrapper function for process_and_update_documents to maintain backwards compatibility.
+    Tags all content in the parsed_content collection.
+    If force_all is True, it re-tags all documents, otherwise it only tags untagged documents.
     """
-    process_and_update_documents()
+    try:
+        mongo_client = get_mongo_client()
+        db = mongo_client[current_app.config['MONGO_DB_NAME']]
+        parsed_content_collection = db['parsed_content']
+
+        # Load group and tool names
+        allgroups_collection = db['allgroups']
+        alltools_collection = db['alltools']
+        group_names = [item['name'] for item in allgroups_collection.find({}, {'name': 1})]
+        tool_names = [item['name'] for item in alltools_collection.find({}, {'name': 1})]
+
+        # Add patterns to matcher
+        group_patterns = [nlp.make_doc(name) for name in group_names]
+        tool_patterns = [nlp.make_doc(name) for name in tool_names]
+        matcher.add("GROUP_NAME", group_patterns)
+        matcher.add("TOOL_NAME", tool_patterns)
+
+        fields_to_tag = ['content', 'description', 'summary', 'title']
+
+        # Determine which documents to process
+        if force_all:
+            documents_to_process = parsed_content_collection.find()
+            logger.info("Processing all documents for tagging")
+        else:
+            # Find documents without tags
+            documents_to_process = parsed_content_collection.find({
+                "$or": [{f"{field}_tags": {"$exists": False}} for field in fields_to_tag]
+            })
+            logger.info("Processing only untagged documents")
+
+        for document in documents_to_process:
+            updates = {}
+            for field in fields_to_tag:
+                text = document.get(field)
+                if text:
+                    tags = tag_text_field(text)
+                    updates[f"{field}_tags"] = tags
+            if updates:
+                parsed_content_collection.update_one(
+                    {'_id': document['_id']},
+                    {'$set': updates}
+                )
+        
+        logger.info("Completed tagging documents in parsed_content collection")
+    except Exception as e:
+        logger.error(f"An error occurred while tagging content: {e}")
+    finally:
+        mongo_client.close()
 
 def tag_untagged_content():
     """
