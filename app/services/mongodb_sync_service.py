@@ -108,38 +108,33 @@ class MongoDBSyncService:
                 alltools = query.all()
                 logger.info(f"Found {len(alltools)} alltools to sync")
 
+                synced_tools_count = 0
                 for tool in alltools:
-                    document = {
-                        '_id': str(tool.uuid),
-                        'authors': tool.authors,
-                        'category': tool.category,
-                        'name': tool.name,
-                        'type': tool.type,
-                        'source': tool.source,
-                        'description': tool.description,
-                        'tlp': tool.tlp,
-                        'license': tool.license,
-                        'last_db_change': tool.last_db_change,
-                        'values': [
-                            {
-                                'uuid': str(value.uuid),
-                                'tool': value.tool,
-                                'description': value.description,
-                                'category': value.category,
-                                'type': value.type,
-                                'information': value.information,
-                                'last_card_change': value.last_card_change
-                            } for value in tool.values
-                        ]
-                    }
+                    for value in tool.values:
+                        document = {
+                            '_id': str(value.uuid),
+                            'tool_uuid': str(tool.uuid),
+                            'name': value.tool,
+                            'description': value.description,
+                            'category': value.category,
+                            'type': value.type,
+                            'information': value.information,
+                            'last_card_change': value.last_card_change,
+                            'authors': tool.authors,
+                            'source': tool.source,
+                            'tlp': tool.tlp,
+                            'license': tool.license,
+                            'last_db_change': tool.last_db_change
+                        }
 
-                    # Insert or update the document for this tool
-                    result = mongo_collection.update_one(
-                        {'_id': document['_id']},
-                        {'$set': document},
-                        upsert=True
-                    )
-                    logger.debug(f"Updated tool {tool.name}: matched={result.matched_count}, modified={result.modified_count}, upserted={result.upserted_id}")
+                        # Insert or update the document for this tool
+                        result = mongo_collection.update_one(
+                            {'_id': document['_id']},
+                            {'$set': document},
+                            upsert=True
+                        )
+                        logger.debug(f"Updated tool {value.tool}: matched={result.matched_count}, modified={result.modified_count}, upserted={result.upserted_id}")
+                        synced_tools_count += 1
 
                 if alltools:
                     last_synced_time = max(tool.last_db_change for tool in alltools)
@@ -148,7 +143,7 @@ class MongoDBSyncService:
                         {'$set': {'timestamp': last_synced_time}},
                         upsert=True
                     )
-                    logger.info(f"Incrementally synced {len(alltools)} alltools records to MongoDB. Last sync time updated to {last_synced_time}")
+                    logger.info(f"Incrementally synced {synced_tools_count} individual tools from {len(alltools)} alltools records to MongoDB. Last sync time updated to {last_synced_time}")
                 else:
                     logger.info("No new alltools records to sync.")
 
