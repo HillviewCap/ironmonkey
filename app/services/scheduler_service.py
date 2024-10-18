@@ -33,6 +33,12 @@ class SchedulerService:
             cls._instance.is_running = False
         return cls._instance
 
+    def job_with_app_context(self, func):
+        def wrapper(*args, **kwargs):
+            with self.app.app_context():
+                return func(*args, **kwargs)
+        return wrapper
+
     def setup_scheduler(self):
         if self.is_running:
             logger.warning("Scheduler is already running. Skipping setup.")
@@ -98,7 +104,7 @@ class SchedulerService:
 
         # Schedule the update_threat_group_cards function to run every 12 hours
         self.scheduler.add_job(
-            func=self.update_threat_group_cards_job,
+            func=self.job_with_app_context(self.update_threat_group_cards_job),
             trigger='interval',
             hours=12,  # Adjust the interval as required
             id='update_threat_group_cards_job',
@@ -110,7 +116,7 @@ class SchedulerService:
         sync_interval = int(os.getenv("PARSED_CONTENT_SYNC_INTERVAL", 60))
 
         self.scheduler.add_job(
-            func=MongoDBSyncService.sync_parsed_content_to_mongodb,
+            func=self.job_with_app_context(MongoDBSyncService.sync_parsed_content_to_mongodb),
             trigger="interval",
             minutes=sync_interval,
             id='sync_parsed_content_to_mongodb',
@@ -118,7 +124,7 @@ class SchedulerService:
         )
         
         self.scheduler.add_job(
-            func=MongoDBSyncService.sync_alltools_to_mongodb,
+            func=self.job_with_app_context(MongoDBSyncService.sync_alltools_to_mongodb),
             trigger="interval",
             minutes=sync_interval,
             id='sync_alltools_to_mongodb',
@@ -126,7 +132,7 @@ class SchedulerService:
         )
         
         self.scheduler.add_job(
-            func=MongoDBSyncService.sync_allgroups_to_mongodb,
+            func=self.job_with_app_context(MongoDBSyncService.sync_allgroups_to_mongodb),
             trigger="interval",
             minutes=sync_interval,
             id='sync_allgroups_to_mongodb',

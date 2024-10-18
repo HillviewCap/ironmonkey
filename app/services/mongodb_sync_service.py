@@ -22,11 +22,10 @@ class MongoDBSyncService:
         """Synchronize parsed_content table to MongoDB."""
         mongo_client = None
         try:
-            with current_app.app_context():
-                mongo_client = MongoDBSyncService.get_mongo_client()
-                mongo_db = mongo_client[current_app.config['MONGO_DB_NAME']]
-                mongo_collection = mongo_db['parsed_content']
-                sync_meta_collection = mongo_db['sync_metadata']
+            mongo_client = MongoDBSyncService.get_mongo_client()
+            mongo_db = mongo_client[current_app.config['MONGO_DB_NAME']]
+            mongo_collection = mongo_db['parsed_content']
+            sync_meta_collection = mongo_db['sync_metadata']
 
                 # Initialize last_sync_time to None
                 last_sync_time = None
@@ -89,11 +88,10 @@ class MongoDBSyncService:
         """Synchronize alltools table to MongoDB, creating a separate document for each tool."""
         mongo_client = None
         try:
-            with current_app.app_context():
-                mongo_client = MongoDBSyncService.get_mongo_client()
-                mongo_db = mongo_client[current_app.config['MONGO_DB_NAME']]
-                mongo_collection = mongo_db['alltools']
-                sync_meta_collection = mongo_db['sync_metadata']
+            mongo_client = MongoDBSyncService.get_mongo_client()
+            mongo_db = mongo_client[current_app.config['MONGO_DB_NAME']]
+            mongo_collection = mongo_db['alltools']
+            sync_meta_collection = mongo_db['sync_metadata']
 
                 # Load last sync time from MongoDB
                 last_sync_time = sync_meta_collection.find_one({'_id': 'last_alltools_sync_time'})
@@ -162,11 +160,10 @@ class MongoDBSyncService:
         """Synchronize allgroups, allgroups_values, and allgroups_values_names to MongoDB."""
         mongo_client = None
         try:
-            with current_app.app_context():
-                mongo_client = MongoDBSyncService.get_mongo_client()
-                mongo_db = mongo_client[current_app.config['MONGO_DB_NAME']]
-                mongo_collection = mongo_db['allgroups']
-                sync_meta_collection = mongo_db['sync_metadata']
+            mongo_client = MongoDBSyncService.get_mongo_client()
+            mongo_db = mongo_client[current_app.config['MONGO_DB_NAME']]
+            mongo_collection = mongo_db['allgroups']
+            sync_meta_collection = mongo_db['sync_metadata']
 
                 # Load last sync time from MongoDB
                 last_sync_time = sync_meta_collection.find_one({'_id': 'last_allgroups_sync_time'})
