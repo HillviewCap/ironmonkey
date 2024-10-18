@@ -18,6 +18,8 @@ class Config:
     MONGO_HOST = os.getenv('MONGO_HOST', 'localhost')
     MONGO_PORT = os.getenv('MONGO_PORT', '27017')
     MONGO_DB_NAME = os.getenv('MONGO_DB_NAME', 'your_default_db_name')
+    AUTO_TAG_INTERVAL = int(os.getenv('AUTO_TAG_INTERVAL', 60))
+    PARSED_CONTENT_SYNC_INTERVAL = int(os.getenv('PARSED_CONTENT_SYNC_INTERVAL', 60))
 
     if MONGO_USERNAME and MONGO_PASSWORD:
         MONGODB_URI = f"mongodb://{MONGO_USERNAME}:{MONGO_PASSWORD}@{MONGO_HOST}:{MONGO_PORT}/{MONGO_DB_NAME}"

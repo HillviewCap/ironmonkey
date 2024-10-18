@@ -26,6 +26,7 @@ class SchedulerService:
         if cls._instance is None:
             cls._instance = super(SchedulerService, cls).__new__(cls)
             cls._instance.app = app
+            cls._instance.config = app.config  # Add this line
             executors = {
                 'default': ThreadPoolExecutor(max_workers=10)  # Adjust max_workers as needed
             }
@@ -44,9 +45,12 @@ class SchedulerService:
             logger.warning("Scheduler is already running. Skipping setup.")
             return
 
-        rss_check_interval = int(os.getenv("RSS_CHECK_INTERVAL", 30))
-        summary_check_interval = int(os.getenv("SUMMARY_CHECK_INTERVAL", 31))
-        auto_tag_interval = int(os.getenv("AUTO_TAG_INTERVAL", 60))  # Default to 60 minutes if not set
+        config = self.app.config
+        rss_check_interval = config['RSS_CHECK_INTERVAL']
+        summary_check_interval = config['SUMMARY_CHECK_INTERVAL']
+        summary_api_choice = config['SUMMARY_API_CHOICE'].lower()
+        auto_tag_interval = config['AUTO_TAG_INTERVAL']
+        sync_interval = config['PARSED_CONTENT_SYNC_INTERVAL']
 
         self.scheduler.add_job(
             func=self.check_and_process_rss_feeds,
@@ -54,7 +58,6 @@ class SchedulerService:
             minutes=rss_check_interval,
         )
 
-        summary_api_choice = os.getenv("SUMMARY_API_CHOICE", "ollama").lower()
         if summary_api_choice == "ollama":
             self.scheduler.add_job(
                 func=self.start_check_empty_summaries,
@@ -65,7 +68,6 @@ class SchedulerService:
                 f"Scheduler configured with Ollama API for summaries, check interval: {summary_check_interval} minutes"
             )
         elif summary_api_choice == "groq":
-            # Add Groq-specific job here if needed
             logger.info(
                 "Scheduler configured with Groq API for summaries, no automatic summary generation scheduled"
             )
@@ -111,9 +113,6 @@ class SchedulerService:
             replace_existing=True
         )
         logger.info("Scheduled job added: update_threat_group_cards_job")
-
-        # Define the synchronization interval in minutes (default to 60 if not set)
-        sync_interval = int(os.getenv("PARSED_CONTENT_SYNC_INTERVAL", 60))
 
         self.scheduler.add_job(
             func=self.job_with_app_context(MongoDBSyncService.sync_parsed_content_to_mongodb),
