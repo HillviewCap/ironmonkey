@@ -79,7 +79,10 @@ def process_and_update_documents():
                 text = document.get(field)
                 if text:
                     tags = tag_text_field(text)
-                    updates[f"{field}_tags"] = tags
+                    if tags:  # Only update if tags were found
+                        updates[f"{field}_tags"] = tags
+                    else:
+                        updates[f"{field}_tags"] = []  # Set empty array if no tags found
             if updates:
                 parsed_content_collection.update_one(
                     {'_id': document['_id']},
@@ -132,7 +135,9 @@ def tag_untagged_content():
                     text = document.get(field)
                     if text:
                         tags = tag_text_field(text)
-                        updates[f"{field}_tags"] = tags
+                        updates[f"{field}_tags"] = tags if tags else []
+                    else:
+                        updates[f"{field}_tags"] = []
             if updates:
                 parsed_content_collection.update_one(
                     {'_id': document['_id']},
