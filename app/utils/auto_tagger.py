@@ -76,12 +76,22 @@ def process_and_update_documents():
         allgroups_collection = db['allgroups']
         alltools_collection = db['alltools']
 
-        # Load group and tool names
+        # Load group names from the 'values.names' array in each document
         group_names = []
         for group in allgroups_collection.find({}, {'values.names.name': 1}):
-            names_list = group.get('values', {}).get('names', [])
-            group_names.extend([name.get('name') for name in names_list if 'name' in name])
-        
+            values_array = group.get('values', [])
+            if not isinstance(values_array, list):
+                continue  # Skip if 'values' is not a list
+            for value in values_array:
+                names_list = value.get('names', [])
+                if not isinstance(names_list, list):
+                    continue  # Skip if 'names' is not a list
+                for name_entry in names_list:
+                    name = name_entry.get('name')
+                    if name:
+                        group_names.append(name)
+
+        # Extract tool names
         tool_names = [item['name'] for item in alltools_collection.find({}, {'name': 1}) if 'name' in item]
 
         # Remove duplicates and empty strings
@@ -151,16 +161,28 @@ def tag_all_content(force_all=True):
         allgroups_collection = db['allgroups']
         alltools_collection = db['alltools']
 
-        # Correctly extract group names from the 'values.names' array
+        # Load group names from the 'values.names' array in each document
         group_names = []
-        for group in allgroups_collection.find({}, {'values.names': 1}):
-            if 'values' in group and 'names' in group['values']:
-                group_names.extend([name['name'] for name in group['values']['names'] if 'name' in name])
+        for group in allgroups_collection.find({}, {'values.names.name': 1}):
+            values_array = group.get('values', [])
+            if not isinstance(values_array, list):
+                continue  # Skip if 'values' is not a list
+            for value in values_array:
+                names_list = value.get('names', [])
+                if not isinstance(names_list, list):
+                    continue  # Skip if 'names' is not a list
+                for name_entry in names_list:
+                    name = name_entry.get('name')
+                    if name:
+                        group_names.append(name)
+
+        # Remove duplicates and empty strings
+        group_names = list(set(filter(None, group_names)))
 
         # Extract tool names
         tool_names = [item['name'] for item in alltools_collection.find({}, {'name': 1}) if 'name' in item]
-        
-        logger.info(f"Loaded {len(group_names)} group names and {len(tool_names)} tool names")
+
+        logger.info(f"Loaded {len(group_names)} unique group names and {len(tool_names)} unique tool names")
         logger.debug(f"Sample group names: {group_names[:5]}")
         logger.debug(f"Sample tool names: {tool_names[:5]}")
 
