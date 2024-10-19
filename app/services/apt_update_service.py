@@ -279,15 +279,22 @@ def update_databases() -> None:
         session = Session()
 
         try:
-            # Check if tables exist
+            # Check if tables exist and create them if they don't
             inspector = inspect(engine)
-            if not inspector.has_table("alltools") or not inspector.has_table(
-                "allgroups"
-            ):
-                logger.error("Required tables do not exist. Creating tables now.")
-                AllTools.__table__.create(engine)
-                AllGroups.__table__.create(engine)
-                logger.info("Tables created successfully.")
+            tables_to_create = [
+                AllTools.__table__,
+                AllToolsValues.__table__,
+                AllToolsValuesNames.__table__,
+                AllGroups.__table__,
+                AllGroupsValues.__table__,
+                AllGroupsValuesNames.__table__
+            ]
+            
+            for table in tables_to_create:
+                if not inspector.has_table(table.name):
+                    logger.error(f"Table {table.name} does not exist. Creating it now.")
+                    table.create(engine)
+                    logger.info(f"Table {table.name} created successfully.")
 
             # Update AllTools
             tools_data = load_json_file(
