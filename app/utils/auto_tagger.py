@@ -164,11 +164,18 @@ def tag_all_content(force_all=True):
         logger.debug(f"Sample group names: {group_names[:5]}")
         logger.debug(f"Sample tool names: {tool_names[:5]}")
 
-        # Add patterns to matcher
-        group_patterns = [nlp.make_doc(name) for name in group_names if name]
-        tool_patterns = [nlp.make_doc(name) for name in tool_names if name]
-        matcher.add("GROUP_NAME", group_patterns)
-        matcher.add("TOOL_NAME", tool_patterns)
+        # Create patterns for EntityRuler
+        patterns = []
+        if group_names:
+            patterns.extend([{"label": "GROUP_NAME", "pattern": name} for name in group_names if name])
+        if tool_names:
+            patterns.extend([{"label": "TOOL_NAME", "pattern": name} for name in tool_names if name])
+
+        # Add patterns to EntityRuler
+        try:
+            ruler.add_patterns(patterns)
+        except Exception as e:
+            logger.error(f"Error adding patterns to EntityRuler: {str(e)}")
 
         fields_to_tag = ['content', 'description', 'summary', 'title']
 
@@ -233,11 +240,18 @@ def tag_untagged_content():
         group_names = [item['name'] for item in allgroups_collection.find({}, {'name': 1})]
         tool_names = [item['name'] for item in alltools_collection.find({}, {'name': 1})]
 
-        # Add patterns to matcher
-        group_patterns = [nlp.make_doc(name) for name in group_names]
-        tool_patterns = [nlp.make_doc(name) for name in tool_names]
-        matcher.add("GROUP_NAME", group_patterns)
-        matcher.add("TOOL_NAME", tool_patterns)
+        # Create patterns for EntityRuler
+        patterns = []
+        if group_names:
+            patterns.extend([{"label": "GROUP_NAME", "pattern": name} for name in group_names])
+        if tool_names:
+            patterns.extend([{"label": "TOOL_NAME", "pattern": name} for name in tool_names])
+
+        # Add patterns to EntityRuler
+        try:
+            ruler.add_patterns(patterns)
+        except Exception as e:
+            logger.error(f"Error adding patterns to EntityRuler: {str(e)}")
 
         fields_to_tag = ['content', 'description', 'summary', 'title']
 
