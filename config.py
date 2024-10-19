@@ -5,7 +5,7 @@ class Config:
     SECRET_KEY = os.getenv('SECRET_KEY')
     BASE_DIR = Path(__file__).resolve().parent
     INSTANCE_PATH = os.getenv('INSTANCE_PATH', os.path.join(BASE_DIR, 'instance'))
-    SQLALCHEMY_DATABASE_URI = f"sqlite:///{os.path.join(INSTANCE_PATH, 'threats.db')}"
+    SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URL', f"sqlite:///{os.path.join(INSTANCE_PATH, 'threats.db')}")
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     MONGODB_URI = os.getenv('MONGODB_URI', 'your_default_mongodb_uri')
     MONGO_DB_NAME = os.getenv('MONGO_DB_NAME', 'your_default_db_name')
