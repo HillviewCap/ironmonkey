@@ -126,6 +126,7 @@ def process_and_update_documents():
                 if text:
                     tags = tag_text_field(text)
                     updates[f"{field}_tags"] = tags
+
                     if any(tag['label'] in ['GROUP_NAME', 'TOOL_NAME'] for tag in tags):
                         tagged_count += 1
             if updates:
@@ -133,6 +134,7 @@ def process_and_update_documents():
                     {'_id': document['_id']},
                     {'$set': updates}
                 )
+
             processed_count += 1
             if processed_count % 100 == 0:
                 logger.info(f"Processed {processed_count} documents, tagged {tagged_count} with GROUP_NAME or TOOL_NAME")
@@ -153,6 +155,7 @@ def tag_all_content(force_all=True):
     mongo_client = None
     try:
         logger.info(f"Starting tag_all_content with force_all={force_all}")
+
         mongo_client = get_mongo_client()
         db = mongo_client[current_app.config['MONGO_DB_NAME']]
         parsed_content_collection = db['parsed_content']
@@ -218,10 +221,32 @@ def tag_all_content(force_all=True):
             try:
                 updates = {}
                 for field in fields_to_tag:
+                  
+        group_names = [item['name'] for item in allgroups_collection.find({}, {'name': 1})]
+        tool_names = [item['name'] for item in alltools_collection.find({}, {'name': 1})]
+
+        # Add patterns to matcher
+        group_patterns = [nlp.make_doc(name) for name in group_names]
+        tool_patterns = [nlp.make_doc(name) for name in tool_names]
+        matcher.add("GROUP_NAME", group_patterns)
+        matcher.add("TOOL_NAME", tool_patterns)
+
+        fields_to_tag = ['content', 'description', 'summary', 'title']
+
+        # Find documents without tags
+        untagged_docs = parsed_content_collection.find({
+            "$or": [{f"{field}_tags": {"$exists": False}} for field in fields_to_tag]
+        })
+
+        for document in untagged_docs:
+            updates = {}
+            for field in fields_to_tag:
+                if f"{field}_tags" not in document:
                     text = document.get(field)
                     if text:
                         tags = tag_text_field(text)
                         updates[f"{field}_tags"] = tags
+
                         if any(tag['label'] in ['GROUP_NAME', 'TOOL_NAME'] for tag in tags):
                             tagged_count += 1
                 if updates:
@@ -310,6 +335,8 @@ if __name__ == "__main__":
     app.config.from_object(get_config())
 
     with app.app_context():
+
         logger.info("Starting auto_tagger main execution")
         tag_all_content()
         logger.info("Finished auto_tagger main execution")
+        tag_all_content()
