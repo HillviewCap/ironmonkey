@@ -223,6 +223,7 @@ def tag_all_content(force_all=True):
     finally:
         if mongo_client:
             mongo_client.close()
+        logger.info("tag_all_content function completed execution")
 
 def tag_untagged_content():
     """

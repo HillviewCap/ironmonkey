@@ -12,6 +12,7 @@ logger = setup_logger('auto_tag_command', 'auto_tag_command.log', level=logging.
 @with_appcontext
 def auto_tag_command(force):
     """Automatically tag all parsed content."""
+    logger.info("Starting auto_tag_command")
     try:
         if force:
             logger.info('Force re-tagging all documents...')
@@ -22,14 +23,16 @@ def auto_tag_command(force):
         
         tag_all_content(force_all=force)
         
-        logger.info('Auto-tagging completed.')
-        click.echo('Auto-tagging completed.')
+        logger.info('Auto-tagging completed successfully.')
+        click.echo('Auto-tagging completed successfully.')
     except Exception as e:
         logger.error(f"An error occurred during auto-tagging: {str(e)}")
         logger.error(f"Traceback: {traceback.format_exc()}")
         click.echo(f"An error occurred during auto-tagging. Check the logs for details.")
-        # Instead of sys.exit(1), we'll just log the error and continue
         click.echo("The auto-tagging process encountered errors but did not terminate.")
+    finally:
+        logger.info("auto_tag_command function completed execution")
+        click.echo("Auto-tagging process finished.")
 
 def init_app(app):
     app.cli.add_command(auto_tag_command)
