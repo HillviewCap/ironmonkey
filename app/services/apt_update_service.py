@@ -301,18 +301,9 @@ def update_databases() -> None:
                 "app/static/json/Threat Group Card - All tools.json"
             )
             if tools_data is not None:
-                if isinstance(tools_data, dict) and "values" in tools_data:
-                    update_alltools(session, [tools_data])
-                    logger.info(
-                        "AllTools database updated successfully (single tool data)."
-                    )
-                elif isinstance(tools_data, list):
-                    update_alltools(session, tools_data)
-                    logger.info("AllTools database updated successfully.")
-                else:
-                    logger.error(
-                        f"Unexpected data type for tools_data: {type(tools_data)}. Expected a list or a dict with 'values'."
-                    )
+                logger.info(f"Loaded AllTools data: {len(tools_data)} items")
+                update_alltools(session, tools_data)
+                logger.info("AllTools database updated successfully.")
             else:
                 logger.warning("Failed to load AllTools data. Skipping update.")
 
@@ -321,26 +312,17 @@ def update_databases() -> None:
                 "app/static/json/Threat Group Card - All groups.json"
             )
             if groups_data is not None:
-                if isinstance(groups_data, dict) and "values" in groups_data:
-                    logger.info(
-                        f"Processing group data with {len(groups_data['values'])} values."
-                    )
-                    update_allgroups(session, groups_data["values"])
-                elif isinstance(groups_data, list):
-                    logger.info(f"Processing list of {len(groups_data)} groups.")
-                    update_allgroups(session, groups_data)
-                else:
-                    logger.error(
-                        f"Unexpected data type for groups_data: {type(groups_data)}. Expected a list or a dict with 'values'."
-                    )
-
-                # Check if any groups were actually added
-                group_count = session.query(AllGroups).count()
-                logger.info(
-                    f"Total number of groups in the database after update: {group_count}"
-                )
+                logger.info(f"Loaded AllGroups data: {len(groups_data)} items")
+                update_allgroups(session, groups_data)
+                logger.info("AllGroups database updated successfully.")
             else:
                 logger.warning("Failed to load AllGroups data. Skipping update.")
+
+            # Check if any data was actually added
+            tool_count = session.query(AllTools).count()
+            group_count = session.query(AllGroups).count()
+            logger.info(f"Total number of tools in the database after update: {tool_count}")
+            logger.info(f"Total number of groups in the database after update: {group_count}")
 
             session.commit()
         except Exception as e:
