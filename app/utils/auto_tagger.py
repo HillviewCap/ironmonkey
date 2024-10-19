@@ -221,27 +221,6 @@ def tag_all_content(force_all=True):
             try:
                 updates = {}
                 for field in fields_to_tag:
-                  
-        group_names = [item['name'] for item in allgroups_collection.find({}, {'name': 1})]
-        tool_names = [item['name'] for item in alltools_collection.find({}, {'name': 1})]
-
-        # Add patterns to matcher
-        group_patterns = [nlp.make_doc(name) for name in group_names]
-        tool_patterns = [nlp.make_doc(name) for name in tool_names]
-        matcher.add("GROUP_NAME", group_patterns)
-        matcher.add("TOOL_NAME", tool_patterns)
-
-        fields_to_tag = ['content', 'description', 'summary', 'title']
-
-        # Find documents without tags
-        untagged_docs = parsed_content_collection.find({
-            "$or": [{f"{field}_tags": {"$exists": False}} for field in fields_to_tag]
-        })
-
-        for document in untagged_docs:
-            updates = {}
-            for field in fields_to_tag:
-                if f"{field}_tags" not in document:
                     text = document.get(field)
                     if text:
                         tags = tag_text_field(text)
@@ -254,6 +233,7 @@ def tag_all_content(force_all=True):
                         {'_id': document['_id']},
                         {'$set': updates}
                     )
+
                 processed_count += 1
                 if processed_count % 100 == 0:
                     logger.info(f"Processed {processed_count} documents, tagged {tagged_count} with GROUP_NAME or TOOL_NAME")
