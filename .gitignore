@@ -83,6 +83,7 @@ env.bak/
 venv.bak/
 mongodb_data/
 ollama_models/
+
 # Spyder project settings
 .spyderproject
 .spyproject
