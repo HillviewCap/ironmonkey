@@ -34,6 +34,7 @@ distro==1.9.0
 dnspython==2.6.1
 elevenlabs==1.9.0
 email_validator==2.2.0
+en_core_web_lg @ https://github.com/explosion/spacy-models/releases/download/en_core_web_lg-3.8.0/en_core_web_lg-3.8.0-py3-none-any.whl#sha256=293e9547a655b25499198ab15a525b05b9407a75f10255e405e8c3854329ab63
 en_core_web_sm @ https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl#sha256=1932429db727d4bff3deed6b34cfc05df17794f4a52eeb26cf8928f7c1a0fb85
 feedparser==6.0.11
 filelock==3.15.4
@@ -110,6 +111,7 @@ pydantic-settings==2.5.2
 pydantic_core==2.20.1
 pyflakes==3.2.0
 Pygments==2.18.0
+pymongo==4.10.1
 pypandoc==1.13
 pytest==8.2.2
 pytest-asyncio==0.23.7
@@ -164,4 +166,3 @@ wrapt==1.16.0
 WTForms==3.1.2
 yarl==1.9.4
 zipp==3.19.2
-pymongo
