@@ -131,19 +131,19 @@ def update_alltools(session: Session, data: Union[List[Dict[str, Any]], Dict[str
             session.commit()
 
 
-def update_allgroups(session: Session, data: List[Dict[str, Any]]) -> None:
+def update_allgroups(session: Session, data: Union[List[Dict[str, Any]], Dict[str, Any]]) -> None:
     """
     Update the AllGroups database with the given data.
 
     Args:
         session (Session): The SQLAlchemy session.
-        data (List[Dict[str, Any]]]: The data to update the database with.
+        data (Union[List[Dict[str, Any]], Dict[str, Any]]): The data to update the database with.
     """
-    if not isinstance(data, list):
-        logger.error(
-            f"Expected a list of groups, but got {type(data)}. Converting to list."
-        )
+    if isinstance(data, dict):
         data = [data]
+    elif not isinstance(data, list):
+        logger.error(f"Invalid data type for update_allgroups: {type(data)}")
+        return
 
     for group in data:
         try:
@@ -154,51 +154,37 @@ def update_allgroups(session: Session, data: List[Dict[str, Any]]) -> None:
                 continue
 
             try:
-                group_uuid = UUID(group["uuid"])  # Convert string UUID to UUID object
+                group_uuid = UUID(str(group["uuid"]))  # Convert to string first, then to UUID
             except ValueError:
-                logger.warning(
-                    f"Invalid UUID for group: {group.get('name', 'Unknown')} - UUID: {group['uuid']}. Attempting to fix."
+                logger.error(
+                    f"Invalid UUID for group: {group.get('name', 'Unknown')} - UUID: {group['uuid']}. Skipping this group."
                 )
-                # Use regex to extract the valid UUID pattern from the string
-                uuid_pattern = r'[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}'
-                match = re.search(uuid_pattern, group["uuid"])
-                if match:
-                    try:
-                        group_uuid = UUID(match.group(0))
-                        logger.info(
-                            f"Successfully fixed UUID for group: {group.get('name', 'Unknown')} - New UUID: {group_uuid}"
-                        )
-                    except ValueError:
-                        logger.error(
-                            f"Unable to parse extracted UUID for group: {group.get('name', 'Unknown')} - Extracted UUID: {match.group(0)}. Skipping this group."
-                        )
-                        continue
-                else:
-                    logger.error(
-                        f"Unable to extract valid UUID for group: {group.get('name', 'Unknown')} - Original UUID: {group['uuid']}. Skipping this group."
-                    )
-                    continue
+                continue
 
-            db_group = (
-                session.query(AllGroups).filter(AllGroups.uuid == group_uuid).first()
-            )
-            if not db_group:
-                db_group = AllGroups(uuid=group_uuid)
-                session.add(db_group)
+            with session.no_autoflush:
+                db_group = (
+                    session.query(AllGroups).filter(AllGroups.uuid == group_uuid).first()
+                )
+                if not db_group:
+                    db_group = AllGroups(uuid=group_uuid)
+                    session.add(db_group)
 
-            # Update AllGroups fields
-            for field in [
-                "authors",
-                "category",
-                "name",
-                "type",
-                "source",
-                "description",
-                "tlp",
-                "license",
-            ]:
-                setattr(db_group, field, group.get(field, ""))
-            db_group.last_db_change = group.get("last-db-change", "")
+                # Update AllGroups fields
+                for field in [
+                    "authors",
+                    "category",
+                    "name",
+                    "type",
+                    "source",
+                    "description",
+                    "tlp",
+                    "license",
+                ]:
+                    value = group.get(field, "")
+                    if isinstance(value, list):
+                        value = ", ".join(value)
+                    setattr(db_group, field, value)
+                db_group.last_db_change = group.get("last-db-change", "")
 
             # Process AllGroupsValues
             db_value = (
@@ -329,9 +315,18 @@ def update_databases() -> None:
                 "app/static/json/Threat Group Card - All groups.json"
             )
             if groups_data is not None:
-                logger.info(f"Loaded AllGroups data: {len(groups_data)} items")
-                update_allgroups(session, groups_data)
-                logger.info("AllGroups database updated successfully.")
+                if isinstance(groups_data, list):
+                    logger.info(f"Loaded AllGroups data: {len(groups_data)} items")
+                elif isinstance(groups_data, dict):
+                    logger.info("Loaded AllGroups data: 1 item")
+                    groups_data = [groups_data]  # Convert single dict to list
+                else:
+                    logger.error(f"Invalid AllGroups data type: {type(groups_data)}")
+                    groups_data = None
+
+                if groups_data:
+                    update_allgroups(session, groups_data)
+                    logger.info("AllGroups database updated successfully.")
             else:
                 logger.warning("Failed to load AllGroups data. Skipping update.")
 
