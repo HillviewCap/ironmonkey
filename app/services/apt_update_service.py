@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 import logging
-from typing import Dict, List, Any, Optional
+from typing import Dict, List, Any, Optional, Union
 import httpx
 from sqlalchemy import create_engine, inspect
 from uuid import UUID
