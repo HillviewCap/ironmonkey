@@ -39,21 +39,29 @@ def load_json_file(file_path: str) -> Optional[List[Dict[str, Any]]]:
     return None
 
 
-def update_alltools(session: Session, data: List[Dict[str, Any]]) -> None:
+def update_alltools(session: Session, data: Union[List[Dict[str, Any]], Dict[str, Any]]) -> None:
     """
     Update the AllTools database with the given data.
 
     Args:
         session (Session): The SQLAlchemy session.
-        data (List[Dict[str, Any]]): The data to update the database with.
+        data (Union[List[Dict[str, Any]], Dict[str, Any]]): The data to update the database with.
     """
+    if isinstance(data, dict):
+        data = [data]
+    elif not isinstance(data, list):
+        logger.error(f"Invalid data type for update_alltools: {type(data)}")
+        return
+
     for tool in data:
+        if not isinstance(tool, dict):
+            logger.error(f"Invalid tool data type: {type(tool)}. Skipping.")
+            continue
+
         try:
             with session.no_autoflush:
-                tool_uuid = UUID(tool["uuid"])  # Convert string UUID to UUID object
-                db_tool = (
-                    session.query(AllTools).filter(AllTools.uuid == tool_uuid).first()
-                )
+                tool_uuid = UUID(str(tool.get("uuid", "")))  # Convert to string first, then to UUID
+                db_tool = session.query(AllTools).filter(AllTools.uuid == tool_uuid).first()
                 if not db_tool:
                     db_tool = AllTools(uuid=tool_uuid)
                     session.add(db_tool)
@@ -61,7 +69,7 @@ def update_alltools(session: Session, data: List[Dict[str, Any]]) -> None:
                 db_tool.authors = (
                     ", ".join(tool.get("authors", []))
                     if isinstance(tool.get("authors"), list)
-                    else tool.get("authors")
+                    else tool.get("authors", "")
                 )
             db_tool.category = tool.get("category")
             db_tool.name = tool.get("name")
@@ -301,9 +309,18 @@ def update_databases() -> None:
                 "app/static/json/Threat Group Card - All tools.json"
             )
             if tools_data is not None:
-                logger.info(f"Loaded AllTools data: {len(tools_data)} items")
-                update_alltools(session, tools_data)
-                logger.info("AllTools database updated successfully.")
+                if isinstance(tools_data, list):
+                    logger.info(f"Loaded AllTools data: {len(tools_data)} items")
+                elif isinstance(tools_data, dict):
+                    logger.info("Loaded AllTools data: 1 item")
+                    tools_data = [tools_data]  # Convert single dict to list
+                else:
+                    logger.error(f"Invalid AllTools data type: {type(tools_data)}")
+                    tools_data = None
+
+                if tools_data:
+                    update_alltools(session, tools_data)
+                    logger.info("AllTools database updated successfully.")
             else:
                 logger.warning("Failed to load AllTools data. Skipping update.")
 
