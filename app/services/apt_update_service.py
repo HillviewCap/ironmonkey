@@ -180,22 +180,26 @@ def update_alltools(session: Session, data: Union[List[Dict[str, Any]], Dict[str
             session.commit()
 
 
+import json
+import uuid
+from uuid import UUID
+
 def update_allgroups(session: Session, data: Union[List[Dict[str, Any]], Dict[str, Any]]) -> None:
     if isinstance(data, dict):
         data = [data]
 
     for group in data:
         try:
-            logger.debug(f"Processing group: {group.get('name', 'Unknown')}")
+            logger.debug(f"Processing group: {group.get('actor', 'Unknown')}")
             
             if "uuid" not in group:
-                logger.error(f"Group is missing UUID: {group.get('name', 'Unknown')}. Skipping this group.")
+                logger.error(f"Group is missing UUID: {group.get('actor', 'Unknown')}. Skipping this group.")
                 continue
 
             try:
                 group_uuid = UUID(group["uuid"])
             except ValueError as e:
-                logger.error(f"Invalid UUID for group {group.get('name', 'Unknown')}: {group['uuid']}. Error: {str(e)}")
+                logger.error(f"Invalid UUID for group {group.get('actor', 'Unknown')}: {group['uuid']}. Error: {str(e)}")
                 continue
 
             db_group = session.query(AllGroups).filter(AllGroups.uuid == group_uuid).first()
@@ -204,74 +208,74 @@ def update_allgroups(session: Session, data: Union[List[Dict[str, Any]], Dict[st
                 session.add(db_group)
 
             # Update AllGroups fields
-            for field in ["category", "name", "type", "source", "description", "tlp", "license"]:
-                setattr(db_group, field, group.get(field, ""))
-            
-            authors = group.get("authors", [])
-            db_group.authors = ", ".join(authors) if isinstance(authors, list) else str(authors)
-            
-            db_group.last_db_change = group.get("last-db-change", "")
+            db_group.category = group.get("category", "")
+            db_group.name = group.get("name", "")
+            db_group.type = group.get("type", "")
+            db_group.source = group.get("source", "")
+            db_group.description = group.get("description", "")
+            db_group.tlp = group.get("tlp", "")
+            db_group.license = group.get("license", "")
+            db_group.last_db_change = group.get("last-card-change", "")
 
             # Process AllGroupsValues
-            for value in group.get("values", []):
-                logger.debug(f"Processing value for group {group.get('name', 'Unknown')}: {value.get('actor', 'Unknown')}")
-                try:
-                    value_uuid = UUID(value["uuid"])
-                except ValueError as e:
-                    logger.error(f"Invalid UUID for value in group {group.get('name', 'Unknown')}: {value.get('uuid')}. Error: {str(e)}")
+            db_value = session.query(AllGroupsValues).filter(AllGroupsValues.uuid == group_uuid).first()
+            if not db_value:
+                db_value = AllGroupsValues(uuid=group_uuid, allgroups_uuid=group_uuid)
+                db_group.values.append(db_value)
+
+            # Update AllGroupsValues fields
+            db_value.actor = group.get("actor", "")
+            db_value.country = ", ".join(group["country"]) if isinstance(group.get("country"), list) else group.get("country", "")
+            db_value.description = group.get("description", "")
+            db_value.information = ", ".join(group["information"]) if isinstance(group.get("information"), list) else group.get("information", "")
+            db_value.last_card_change = group.get("last-card-change", "")
+            db_value.motivation = ", ".join(group["motivation"]) if isinstance(group.get("motivation"), list) else group.get("motivation", "")
+            db_value.first_seen = group.get("first-seen", "")
+            db_value.observed_sectors = ", ".join(group.get("observed-sectors", []))
+            db_value.observed_countries = ", ".join(group.get("observed-countries", []))
+            db_value.tools = ", ".join(group.get("tools", []))
+            db_value.sponsor = group.get("sponsor", "")
+            
+            # Handle operations
+            operations = group.get("operations", [])
+            db_value.operations = json.dumps(operations) if operations else ""
+
+            # Handle counter-operations
+            counter_operations = group.get("counter-operations", [])
+            db_value.counter_operations = json.dumps(counter_operations) if counter_operations else ""
+
+            # Handle MITRE ATT&CK
+            db_value.mitre_attack = ", ".join(group.get("mitre-attack", []))
+
+            # Handle names
+            existing_names = {name.name: name for name in db_value.names}
+            for name_data in group.get("names", []):
+                name = name_data.get("name")
+                name_giver = name_data.get("name-giver")
+
+                if not name:
+                    logger.warning(f"Empty name found for group {group.get('actor', 'Unknown')}")
                     continue
 
-                db_value = session.query(AllGroupsValues).filter(AllGroupsValues.uuid == value_uuid).first()
-                if not db_value:
-                    db_value = AllGroupsValues(uuid=value_uuid, allgroups_uuid=group_uuid)
-                    db_group.values.append(db_value)
+                if name in existing_names:
+                    db_name = existing_names[name]
+                    db_name.name_giver = name_giver
+                else:
+                    db_name = AllGroupsValuesNames(
+                        name=name,
+                        name_giver=name_giver,
+                        uuid=uuid.uuid4(),
+                        allgroups_values_uuid=db_value.uuid
+                    )
+                    db_value.names.append(db_name)
+                
+                logger.debug(f"Processed name: {name}, name_giver: {name_giver}")
 
-                # Update AllGroupsValues fields
-                for field in ["actor", "country", "description", "information"]:
-                    value_data = value.get(field, "")
-                    if isinstance(value_data, list):
-                        value_data = ", ".join(value_data)
-                    setattr(db_value, field, value_data)
-
-                db_value.last_card_change = value.get("last-card-change", "")
-
-                # Handle names
-                existing_names = {name.name: name for name in db_value.names}
-                for name_data in value.get("names", []):
-                    if not isinstance(name_data, dict):
-                        logger.warning(f"Unexpected name data format: {name_data}")
-                        continue
-
-                    name = name_data.get("name")
-                    name_giver = name_data.get("name-giver")
-
-                    if not name:
-                        logger.warning(f"Empty name found for group {group.get('name', 'Unknown')}")
-                        continue
-
-                    if name in existing_names:
-                        db_name = existing_names[name]
-                        db_name.name_giver = name_giver
-                    else:
-                        db_name = AllGroupsValuesNames(
-                            name=name,
-                            name_giver=name_giver,
-                            uuid=uuid.uuid4(),
-                            allgroups_values_uuid=db_value.uuid
-                        )
-                        db_value.names.append(db_name)
-                    
-                    logger.debug(f"Processed name: {name}, name_giver: {name_giver}")
-
-                session.add(db_value)
-
-            logger.debug(f"Number of names for group {group.get('name', 'Unknown')}: {sum(len(value.names) for value in db_group.values)}")
-
-            session.add(db_group)
+            session.add(db_value)
             session.flush()  # This will assign IDs to new objects without committing
 
         except Exception as e:
-            logger.error(f"Error processing group {group.get('name', 'Unknown')}: {str(e)}")
+            logger.error(f"Error processing group {group.get('actor', 'Unknown')}: {str(e)}")
             logger.exception("Exception details:")
             session.rollback()
         else:
