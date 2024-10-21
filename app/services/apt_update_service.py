@@ -2,11 +2,12 @@ from __future__ import annotations
 
 import json
 import logging
-from typing import Dict, List, Any, Optional, Union
+import os
+from typing import Dict, List, Any, Optional
 import httpx
 from sqlalchemy import create_engine, inspect
 from uuid import UUID
-from sqlalchemy.orm import sessionmaker, Session
+from sqlalchemy.orm import sessionmaker, Session, scoped_session
 from app.models.relational.alltools import AllTools, AllToolsValues, AllToolsValuesNames
 import re
 from app.models.relational.allgroups import (
@@ -16,11 +17,46 @@ from app.models.relational.allgroups import (
 )
 import uuid
 from flask import current_app
+from app import db
 
 logger = logging.getLogger(__name__)
 
+def ensure_db_directory_exists():
+    """Ensure the directory for the database file exists."""
+    db_path = current_app.config['SQLALCHEMY_DATABASE_URI'].replace('sqlite:///', '')
+    db_dir = os.path.dirname(db_path)
+    if not os.path.exists(db_dir):
+        os.makedirs(db_dir)
+        logger.info(f"Created directory for database: {db_dir}")
 
-def load_json_file(file_path: str) -> Optional[List[Dict[str, Any]]]:
+def create_db_tables():
+    """Create database tables if they don't exist."""
+    try:
+        engine = create_engine(current_app.config['SQLALCHEMY_DATABASE_URI'])
+        db.session = scoped_session(sessionmaker(bind=engine))
+        
+        inspector = inspect(engine)
+        tables_to_create = [
+            AllTools.__table__,
+            AllToolsValues.__table__,
+            AllToolsValuesNames.__table__,
+            AllGroups.__table__,
+            AllGroupsValues.__table__,
+            AllGroupsValuesNames.__table__
+        ]
+        
+        for table in tables_to_create:
+            if not inspector.has_table(table.name):
+                logger.info(f"Creating table: {table.name}")
+                table.create(engine)
+        
+        logger.info("All necessary tables have been created.")
+    except Exception as e:
+        logger.error(f"Error creating database tables: {str(e)}")
+        raise
+
+
+def load_json_file(file_path: str) -> List[Dict[str, Any]]:
     """
     Load JSON data from a local file.
 
@@ -28,15 +64,21 @@ def load_json_file(file_path: str) -> Optional[List[Dict[str, Any]]]:
         file_path (str): The path to the JSON file.
 
     Returns:
-        Optional[List[Dict[str, Any]]]: The JSON data as a list of dictionaries, or None if an error occurs.
+        List[Dict[str, Any]]: The JSON data as a list of dictionaries.
     """
     try:
         with open(file_path, "r", encoding="utf-8") as f:
-            return json.load(f)
+            data = json.load(f)
+            if isinstance(data, dict):
+                return [data]
+            elif isinstance(data, list):
+                return data
+            else:
+                logger.error(f"Unexpected data type in {file_path}: {type(data)}")
+                return []
     except Exception as e:
         logger.error(f"Error reading local file {file_path}: {e}")
-
-    return None
+        return []
 
 
 def update_alltools(session: Session, data: Union[List[Dict[str, Any]], Dict[str, Any]]) -> None:
@@ -60,17 +102,17 @@ def update_alltools(session: Session, data: Union[List[Dict[str, Any]], Dict[str
 
         try:
             with session.no_autoflush:
-                tool_uuid = UUID(str(tool.get("uuid", "")))  # Convert to string first, then to UUID
-                db_tool = session.query(AllTools).filter(AllTools.uuid == tool_uuid).first()
+                tool_uuid = UUID(str(tool.get("uuid", "")))
+                db_tool = (
+                    session.query(AllTools).filter(AllTools.uuid == tool_uuid).first()
+                )
                 if not db_tool:
                     db_tool = AllTools(uuid=tool_uuid)
                     session.add(db_tool)
 
-                db_tool.authors = (
-                    ", ".join(tool.get("authors", []))
-                    if isinstance(tool.get("authors"), list)
-                    else tool.get("authors", "")
-                )
+                authors = tool.get("authors", [])
+                db_tool.authors = ", ".join(authors) if isinstance(authors, list) else str(authors)
+
             db_tool.category = tool.get("category")
             db_tool.name = tool.get("name")
             db_tool.type = tool.get("type")
@@ -137,87 +179,49 @@ def update_allgroups(session: Session, data: Union[List[Dict[str, Any]], Dict[st
 
     Args:
         session (Session): The SQLAlchemy session.
-        data (Union[List[Dict[str, Any]], Dict[str, Any]]): The data to update the database with.
+        data (List[Dict[str, Any]]): The data to update the database with.
     """
-    if isinstance(data, dict):
-        data = [data]
-    elif not isinstance(data, list):
-        logger.error(f"Invalid data type for update_allgroups: {type(data)}")
-        return
-
     for group in data:
         try:
             if "uuid" not in group:
-                logger.error(
-                    f"Group is missing UUID: {group.get('name', 'Unknown')}. Skipping this group."
-                )
+                logger.error(f"Group is missing UUID: {group.get('name', 'Unknown')}. Skipping this group.")
                 continue
 
-            try:
-                group_uuid = UUID(str(group["uuid"]))  # Convert to string first, then to UUID
-            except ValueError:
-                logger.error(
-                    f"Invalid UUID for group: {group.get('name', 'Unknown')} - UUID: {group['uuid']}. Skipping this group."
-                )
-                continue
+            group_uuid = UUID(group["uuid"])
 
-            with session.no_autoflush:
-                db_group = (
-                    session.query(AllGroups).filter(AllGroups.uuid == group_uuid).first()
-                )
-                if not db_group:
-                    db_group = AllGroups(uuid=group_uuid)
-                    session.add(db_group)
+            db_group = session.query(AllGroups).filter(AllGroups.uuid == group_uuid).first()
+            if not db_group:
+                db_group = AllGroups(uuid=group_uuid)
+                session.add(db_group)
 
-                # Update AllGroups fields
-                for field in [
-                    "authors",
-                    "category",
-                    "name",
-                    "type",
-                    "source",
-                    "description",
-                    "tlp",
-                    "license",
-                ]:
-                    value = group.get(field, "")
-                    if isinstance(value, list):
-                        value = ", ".join(value)
-                    setattr(db_group, field, value)
-                db_group.last_db_change = group.get("last-db-change", "")
+            # Update AllGroups fields
+            for field in ["category", "name", "type", "source", "description", "tlp", "license"]:
+                setattr(db_group, field, group.get(field, ""))
+            
+            authors = group.get("authors", [])
+            db_group.authors = ", ".join(authors) if isinstance(authors, list) else str(authors)
+            
+            db_group.last_db_change = group.get("last-db-change", "")
 
             # Process AllGroupsValues
-            db_value = (
-                session.query(AllGroupsValues)
-                .filter(AllGroupsValues.uuid == group_uuid)
-                .first()
-            )
+            db_value = session.query(AllGroupsValues).filter(AllGroupsValues.allgroups_uuid == group_uuid).first()
             if not db_value:
-                db_value = AllGroupsValues(uuid=group_uuid)
+                db_value = AllGroupsValues(uuid=uuid.uuid4(), allgroups_uuid=group_uuid)
                 db_group.values.append(db_value)
 
             # Update AllGroupsValues fields
-            for field in [
-                "actor",
-                "country",
-                "description",
-                "information",
-                "motivation",
-                "sponsor",
-            ]:
+            for field in ["actor", "country", "description", "information", "motivation", "sponsor"]:
                 value = group.get(field, "")
                 if isinstance(value, list):
                     value = ", ".join(value)
                 setattr(db_value, field, value)
 
-            # Handle fields that need special treatment
             db_value.first_seen = group.get("first-seen", "")
             db_value.observed_sectors = ", ".join(group.get("observed-sectors", []))
             db_value.observed_countries = ", ".join(group.get("observed-countries", []))
             db_value.tools = ", ".join(group.get("tools", []))
             db_value.last_card_change = group.get("last-card-change", "")
 
-            # Handle special fields
             for field in ["operations", "counter_operations"]:
                 json_field = field.replace("_", "-")
                 if json_field in group and isinstance(group[json_field], list):
@@ -234,33 +238,33 @@ def update_allgroups(session: Session, data: Union[List[Dict[str, Any]], Dict[st
 
             # Handle names
             for name_data in group.get("names", []):
-                db_name = (
-                    session.query(AllGroupsValuesNames)
-                    .filter(
-                        AllGroupsValuesNames.name == name_data["name"],
-                        AllGroupsValuesNames.allgroups_values_uuid == db_value.uuid,
-                    )
-                    .first()
-                )
+                db_name = session.query(AllGroupsValuesNames).filter(
+                    AllGroupsValuesNames.name == name_data["name"],
+                    AllGroupsValuesNames.allgroups_values_uuid == db_value.uuid
+                ).first()
                 if not db_name:
                     db_name = AllGroupsValuesNames(
                         name=name_data["name"],
                         name_giver=name_data.get("name-giver"),
-                        uuid=uuid.uuid4(),  # Generate a new UUID object
-                        allgroups_values_uuid=db_value.uuid,  # Use the UUID object directly
+                        uuid=uuid.uuid4(),
+                        allgroups_values_uuid=db_value.uuid
                     )
                     db_value.names.append(db_name)
                 else:
                     db_name.name_giver = name_data.get("name-giver")
 
-            session.commit()
+            session.add(db_group)
+            session.add(db_value)
+            session.flush()  # This will assign IDs to new objects without committing
+
         except Exception as e:
-            logger.error(
-                f"Error processing group {group.get('name', 'Unknown')}: {str(e)}"
-            )
+            logger.error(f"Error processing group {group.get('name', 'Unknown')}: {str(e)}")
             session.rollback()
         else:
-            session.commit()
+            session.commit()  # Commit after each group is processed successfully
+
+    # Final commit to ensure all changes are saved
+    session.commit()
 
 
 def update_databases() -> None:
@@ -268,28 +272,14 @@ def update_databases() -> None:
     Update the AllTools and AllGroups databases with the latest data from the local JSON files.
     """
     with current_app.app_context():
+        ensure_db_directory_exists()
+        create_db_tables()
+
         engine = create_engine(current_app.config["SQLALCHEMY_DATABASE_URI"])
         Session = sessionmaker(bind=engine)
         session = Session()
 
         try:
-            # Check if tables exist and create them if they don't
-            inspector = inspect(engine)
-            tables_to_create = [
-                AllTools.__table__,
-                AllToolsValues.__table__,
-                AllToolsValuesNames.__table__,
-                AllGroups.__table__,
-                AllGroupsValues.__table__,
-                AllGroupsValuesNames.__table__
-            ]
-            
-            for table in tables_to_create:
-                if not inspector.has_table(table.name):
-                    logger.error(f"Table {table.name} does not exist. Creating it now.")
-                    table.create(engine)
-                    logger.info(f"Table {table.name} created successfully.")
-
             # Update AllTools
             tools_data = load_json_file(
                 "app/static/json/Threat Group Card - All tools.json"
@@ -315,18 +305,17 @@ def update_databases() -> None:
                 "app/static/json/Threat Group Card - All groups.json"
             )
             if groups_data is not None:
-                if isinstance(groups_data, list):
-                    logger.info(f"Loaded AllGroups data: {len(groups_data)} items")
-                elif isinstance(groups_data, dict):
-                    logger.info("Loaded AllGroups data: 1 item")
-                    groups_data = [groups_data]  # Convert single dict to list
-                else:
-                    logger.error(f"Invalid AllGroups data type: {type(groups_data)}")
-                    groups_data = None
+                logger.info(f"Loaded AllGroups data: {len(groups_data)} items")
+                update_allgroups(session, groups_data)
+                logger.info("AllGroups database updated successfully.")
 
-                if groups_data:
-                    update_allgroups(session, groups_data)
-                    logger.info("AllGroups database updated successfully.")
+                # Verify data insertion
+                groups_count = session.query(AllGroups).count()
+                values_count = session.query(AllGroupsValues).count()
+                names_count = session.query(AllGroupsValuesNames).count()
+                logger.info(f"AllGroups count: {groups_count}")
+                logger.info(f"AllGroupsValues count: {values_count}")
+                logger.info(f"AllGroupsValuesNames count: {names_count}")
             else:
                 logger.warning("Failed to load AllGroups data. Skipping update.")
 

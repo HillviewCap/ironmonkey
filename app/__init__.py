@@ -2,6 +2,9 @@ import os
 import json
 import warnings
 import logging
+from pathlib import Path
+from sqlalchemy import create_engine
+from sqlalchemy.orm import scoped_session, sessionmaker
 from dotenv import load_dotenv
 from flask import Flask, jsonify
 from flask_migrate import Migrate
@@ -15,6 +18,7 @@ from .extensions import init_extensions, db
 from app.utils.logging_config import setup_logger
 from app.utils.db_connection_manager import init_db_connection_manager
 from app.utils.db_utils import setup_db_pool
+from config import get_config
 
 def from_json(value):
     try:
@@ -54,12 +58,12 @@ login_manager.login_message = "Please log in to access this page."
 login_manager.login_message_category = "info"
 limiter = Limiter(key_func=get_remote_address)
 
-def create_app(config_object=None):
+def create_app(config_name=None):
     """
     Create and configure an instance of the Flask application.
 
     Args:
-        config_object: The configuration object to use. If None, uses the default configuration.
+        config_name: The name of the configuration to use. If None, uses the default configuration.
 
     Returns:
         Flask: The configured Flask application instance.
@@ -76,15 +80,15 @@ def create_app(config_object=None):
     # Add this to ensure the app's logger uses the custom logger's handlers and level
     app.logger.handlers = logger.handlers
     app.logger.setLevel(logger.level)
-    if config_object is None:
-        app.config.from_object("config.DevelopmentConfig")
-    else:
-        app.config.from_object(config_object)
+    app.config.from_object(get_config(config_name))
 
     # Ensure the instance folder exists
     os.makedirs(app.instance_path, exist_ok=True)
 
-    # Log configuration details
+    # Ensure database directory exists
+    db_path = Path(app.config['SQLALCHEMY_DATABASE_URI'].replace('sqlite:///', ''))
+    db_dir = db_path.parent
+    db_dir.mkdir(parents=True, exist_ok=True)
     logger.info(f"Debug mode set to: {app.config['DEBUG']}")
     logger.info(f"Instance path: {app.instance_path}")
     logger.info(f"Database URI: {app.config['SQLALCHEMY_DATABASE_URI']}")
@@ -116,10 +120,7 @@ def create_app(config_object=None):
         from app.models.relational.rss_feed import RSSFeed
         from app.models.relational.content_tag import ContentTag
         
-        # Reflect the current state of the database
-        db.reflect()
-        
-        # Create or update tables
+        # Create all tables
         db.create_all()
         
         # Check if the last_checked column exists in the RSSFeed table

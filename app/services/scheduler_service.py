@@ -26,7 +26,7 @@ class SchedulerService:
         if cls._instance is None:
             cls._instance = super(SchedulerService, cls).__new__(cls)
             cls._instance.app = app
-            cls._instance.config = app.config  # Add this line
+            cls._instance.config = app.config
             executors = {
                 'default': ThreadPoolExecutor(max_workers=10)  # Adjust max_workers as needed
             }
@@ -148,7 +148,10 @@ class SchedulerService:
 
     def check_and_process_rss_feeds(self):
         with self.app.app_context():
-            with DBConnectionManager.get_session() as session:
+            from app.models.relational.rss_feed import RSSFeed
+            from app.services.feed_parser_service import fetch_and_parse_feed_sync
+            
+            with self.app.db.session() as session:
                 total_feeds = session.query(RSSFeed).count()
                 new_articles_count = 0
                 processed_feeds = 0
