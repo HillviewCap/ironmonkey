@@ -14,6 +14,8 @@ from app.models.relational.allgroups import (
     AllGroups,
     AllGroupsValues,
     AllGroupsValuesNames,
+    AllGroupsOperations,
+    AllGroupsCounterOperations,
 )
 import uuid
 from flask import current_app
