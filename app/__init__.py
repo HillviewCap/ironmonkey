@@ -20,11 +20,7 @@ from app.utils.db_connection_manager import init_db_connection_manager
 from app.utils.db_utils import setup_db_pool
 from config import get_config
 
-def from_json(value):
-    try:
-        return json.loads(value)
-    except:
-        return None
+from app.utils.filters import from_json, json_loads_filter
 
 # Suppress Pydantic deprecation warning
 warnings.filterwarnings("ignore", category=DeprecationWarning, module="pydantic")
@@ -39,10 +35,14 @@ from app.blueprints.apt.routes import bp as apt_bp
 from app.blueprints.dashboard import dashboard_bp
 
 from flask_login import login_required
-from app.utils.ollama_client import OllamaAPI
-from app.services.scheduler_service import SchedulerService
+from app.models.relational.parsed_content import ParsedContent
+from app.models.relational.category import Category
+from app.models.relational.user import User
+from app.models.relational.rss_feed import RSSFeed
+from app.models.relational.content_tag import ContentTag
+from app.services.initializer import initialize_services
 from app.services.apt_update_service import update_databases
-from app.services.news_rollup_service import NewsRollupService
+from app import error_handlers
 from app.cli.auto_tag_command import init_app as init_auto_tag_command
 
 load_dotenv()
@@ -56,7 +56,6 @@ login_manager = LoginManager()
 login_manager.login_view = "auth.login"
 login_manager.login_message = "Please log in to access this page."
 login_manager.login_message_category = "info"
-limiter = Limiter(key_func=get_remote_address)
 
 def create_app(config_name=None):
     """
@@ -77,9 +76,8 @@ def create_app(config_name=None):
 
     app.jinja_env.filters['from_json'] = from_json
 
-    # Add this to ensure the app's logger uses the custom logger's handlers and level
-    app.logger.handlers = logger.handlers
-    app.logger.setLevel(logger.level)
+    # Use the configured logger in the app
+    app.logger = logger
     app.config.from_object(get_config(config_name))
 
     # Ensure the instance folder exists
@@ -94,7 +92,8 @@ def create_app(config_name=None):
     logger.info(f"Database URI: {app.config['SQLALCHEMY_DATABASE_URI']}")
     logger.info(f"Flask port: {app.config['PORT']}")
 
-    # Initialize extensions
+    # Initialize Limiter after the app is created
+    limiter = Limiter(app, key_func=get_remote_address)
     init_extensions(app)
     csrf.init_app(app)
     login_manager.init_app(app)
@@ -122,19 +121,6 @@ def create_app(config_name=None):
         
         # Create all tables
         db.create_all()
-        
-        # Check if the last_checked column exists in the RSSFeed table
-        inspector = db.inspect(db.engine)
-        if 'last_checked' not in [c['name'] for c in inspector.get_columns('rss_feed')]:
-            # Add the last_checked column if it doesn't exist
-            with db.engine.connect() as conn:
-                conn.execute(db.text("ALTER TABLE rss_feed ADD COLUMN last_checked DATETIME"))
-        
-        # Check if the role column exists in the User table
-        if 'role' not in [c['name'] for c in inspector.get_columns('user')]:
-            # Add the role column if it doesn't exist
-            with db.engine.connect() as conn:
-                conn.execute(db.text("ALTER TABLE user ADD COLUMN role VARCHAR(50) NOT NULL DEFAULT 'user'"))
         
         init_db_connection_manager(app)
         setup_db_pool()
@@ -167,35 +153,10 @@ def create_app(config_name=None):
         else:
             logger.warning(f"Blueprint {blueprint.name} already registered, skipping.")
 
-    # Initialize services
-    def initialize_services():
-        with app.app_context():
-            # Initialize Ollama API
-            app.ollama_api = OllamaAPI()
-
-            # Setup scheduler
-            app.scheduler = SchedulerService(app)
-            app.scheduler.setup_scheduler()
-
-            # Initialize Awesome Threat Intel Blogs
-            from app.services.awesome_threat_intel_service import AwesomeThreatIntelService
-            AwesomeThreatIntelService.cleanup_awesome_threat_intel_blog_ids()
-            AwesomeThreatIntelService.initialize_awesome_feeds()
-
-            # Update APT databases
-            update_databases()
-            logger.info("APT databases updated at application startup")
-
-            # Update the Threat Group Cards JSON files
-            from app.utils.threat_group_cards_updater import update_threat_group_cards
-            update_threat_group_cards()
-            logger.info("Threat Group Cards JSON files updated at application startup")
 
     # Call initialize_services after all blueprints are registered
     with app.app_context():
         initialize_services()
-
-    # Initialize auto-tag command
     init_auto_tag_command(app)
     logger.info("Auto-tag command initialized")
 
@@ -235,36 +196,6 @@ def create_app(config_name=None):
             if user_count == 0:
                 return redirect(url_for('auth.register'))
 
-    @app.errorhandler(Exception)
-    def handle_exception(e):
-        app.logger.error(f"Unhandled exception: {str(e)}")
-        return jsonify(error=str(e)), 500
 
-    @app.route('/generate_rollups', methods=['GET'])
-    @login_required
-    @limiter.limit("5 per minute")
-    async def generate_rollups():
-        service = NewsRollupService()
-        try:
-            rollups = await service.generate_all_rollups()
-            return jsonify(rollups), 200
-        except Exception as e:
-            logger.error(f"Error generating rollups: {str(e)}")
-            return jsonify({"error": "Failed to generate rollups"}), 500
-
-    @app.route('/generate_rollup/<rollup_type>', methods=['GET'])
-    @login_required
-    @limiter.limit("10 per minute")
-    async def generate_single_rollup(rollup_type):
-        service = NewsRollupService()
-        try:
-            rollup = await service.generate_rollup(rollup_type)
-            return jsonify({rollup_type: rollup}), 200
-        except ValueError as e:
-            logger.error(f"Invalid rollup type: {str(e)}")
-            return jsonify({"error": "Invalid rollup type"}), 400
-        except Exception as e:
-            logger.error(f"Error generating rollup: {str(e)}")
-            return jsonify({"error": "Failed to generate rollup"}), 500
 
     return app

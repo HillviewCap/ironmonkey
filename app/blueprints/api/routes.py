@@ -93,3 +93,40 @@ def example():
     return jsonify({"message": "This is an example API route"})
 
 # Add other API routes here
+from flask import Blueprint, jsonify
+from flask_login import login_required
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
+from app.services.news_rollup_service import NewsRollupService
+import logging
+
+api_bp = Blueprint('api', __name__)
+limiter = Limiter(key_func=get_remote_address)
+logger = logging.getLogger('app')
+
+@api_bp.route('/generate_rollups', methods=['GET'])
+@login_required
+@limiter.limit("5 per minute")
+async def generate_rollups():
+    service = NewsRollupService()
+    try:
+        rollups = await service.generate_all_rollups()
+        return jsonify(rollups), 200
+    except Exception as e:
+        logger.error(f"Error generating rollups: {str(e)}")
+        return jsonify({"error": "Failed to generate rollups"}), 500
+
+@api_bp.route('/generate_rollup/<rollup_type>', methods=['GET'])
+@login_required
+@limiter.limit("10 per minute")
+async def generate_single_rollup(rollup_type):
+    service = NewsRollupService()
+    try:
+        rollup = await service.generate_rollup(rollup_type)
+        return jsonify({rollup_type: rollup}), 200
+    except ValueError as e:
+        logger.error(f"Invalid rollup type: {str(e)}")
+        return jsonify({"error": "Invalid rollup type"}), 400
+    except Exception as e:
+        logger.error(f"Error generating rollup: {str(e)}")
+        return jsonify({"error": "Failed to generate rollup"}), 500
