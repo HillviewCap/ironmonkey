@@ -78,10 +78,14 @@ def create_app(config_name=None):
     # Ensure the instance folder exists
     os.makedirs(app.instance_path, exist_ok=True)
 
-    # Ensure database directory exists
-    db_path = Path(app.config['SQLALCHEMY_DATABASE_URI'].replace('sqlite:///', ''))
-    db_dir = db_path.parent
-    db_dir.mkdir(parents=True, exist_ok=True)
+    # Ensure database directory exists if using SQLite
+    if app.config['SQLALCHEMY_DATABASE_URI'].startswith('sqlite:///'):
+        db_path = Path(app.config['SQLALCHEMY_DATABASE_URI'].replace('sqlite:///', ''))
+        db_dir = db_path.parent
+        db_dir.mkdir(parents=True, exist_ok=True)
+        logger.info(f"Database directory ensured at: {db_dir}")
+    else:
+        logger.info("Non-SQLite database detected, skipping database directory creation.")
     logger.info(f"Debug mode set to: {app.config['DEBUG']}")
     logger.info(f"Instance path: {app.instance_path}")
     logger.info(f"Database URI: {app.config['SQLALCHEMY_DATABASE_URI']}")
