@@ -238,11 +238,27 @@ def update_allgroups(session: Session, data: Union[List[Dict[str, Any]], Dict[st
             
             # Handle operations
             operations = group.get("operations", [])
-            db_value.operations = json.dumps(operations) if operations else ""
+            # Handle operations
+            for operation_data in group.get("operations", []):
+                operation_uuid = uuid.uuid4()
+                db_operation = AllGroupsOperations(
+                    uuid=operation_uuid,
+                    date=operation_data.get("date", ""),
+                    activity=operation_data.get("activity", ""),
+                    allgroups_values_uuid=db_value.uuid
+                )
+                db_value.operations.append(db_operation)
 
             # Handle counter-operations
-            counter_operations = group.get("counter-operations", [])
-            db_value.counter_operations = json.dumps(counter_operations) if counter_operations else ""
+            for counter_op_data in group.get("counter-operations", []):
+                counter_op_uuid = uuid.uuid4()
+                db_counter_op = AllGroupsCounterOperations(
+                    uuid=counter_op_uuid,
+                    date=counter_op_data.get("date", ""),
+                    activity=counter_op_data.get("activity", ""),
+                    allgroups_values_uuid=db_value.uuid
+                )
+                db_value.counter_operations.append(db_counter_op)
 
             # Handle MITRE ATT&CK
             db_value.mitre_attack = ", ".join(group.get("mitre-attack", []))
