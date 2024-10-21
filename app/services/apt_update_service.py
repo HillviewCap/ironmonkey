@@ -186,11 +186,17 @@ def update_allgroups(session: Session, data: Union[List[Dict[str, Any]], Dict[st
 
     for group in data:
         try:
+            logger.debug(f"Processing group: {group.get('name', 'Unknown')}")
+            
             if "uuid" not in group:
                 logger.error(f"Group is missing UUID: {group.get('name', 'Unknown')}. Skipping this group.")
                 continue
 
-            group_uuid = UUID(group["uuid"])
+            try:
+                group_uuid = UUID(group["uuid"])
+            except ValueError as e:
+                logger.error(f"Invalid UUID for group {group.get('name', 'Unknown')}: {group['uuid']}. Error: {str(e)}")
+                continue
 
             db_group = session.query(AllGroups).filter(AllGroups.uuid == group_uuid).first()
             if not db_group:
@@ -208,37 +214,26 @@ def update_allgroups(session: Session, data: Union[List[Dict[str, Any]], Dict[st
 
             # Process AllGroupsValues
             for value in group.get("values", []):
-                db_value = session.query(AllGroupsValues).filter(AllGroupsValues.uuid == UUID(value["uuid"])).first()
+                logger.debug(f"Processing value for group {group.get('name', 'Unknown')}: {value.get('actor', 'Unknown')}")
+                try:
+                    value_uuid = UUID(value["uuid"])
+                except ValueError as e:
+                    logger.error(f"Invalid UUID for value in group {group.get('name', 'Unknown')}: {value.get('uuid')}. Error: {str(e)}")
+                    continue
+
+                db_value = session.query(AllGroupsValues).filter(AllGroupsValues.uuid == value_uuid).first()
                 if not db_value:
-                    db_value = AllGroupsValues(uuid=UUID(value["uuid"]), allgroups_uuid=group_uuid)
+                    db_value = AllGroupsValues(uuid=value_uuid, allgroups_uuid=group_uuid)
                     db_group.values.append(db_value)
 
                 # Update AllGroupsValues fields
-                for field in ["actor", "country", "description", "information", "motivation", "sponsor"]:
+                for field in ["actor", "country", "description", "information"]:
                     value_data = value.get(field, "")
                     if isinstance(value_data, list):
                         value_data = ", ".join(value_data)
                     setattr(db_value, field, value_data)
 
-                db_value.first_seen = value.get("first-seen", "")
-                db_value.observed_sectors = ", ".join(value.get("observed-sectors", []))
-                db_value.observed_countries = ", ".join(value.get("observed-countries", []))
-                db_value.tools = ", ".join(value.get("tools", []))
                 db_value.last_card_change = value.get("last-card-change", "")
-
-                for field in ["operations", "counter_operations"]:
-                    json_field = field.replace("_", "-")
-                    if json_field in value and isinstance(value[json_field], list):
-                        setattr(db_value, field, json.dumps(value[json_field]))
-                    else:
-                        setattr(db_value, field, None)
-
-                for field in ["mitre_attack", "playbook"]:
-                    json_field = field.replace("_", "-")
-                    if json_field in value and isinstance(value[json_field], list):
-                        setattr(db_value, field, ", ".join(value[json_field]))
-                    else:
-                        setattr(db_value, field, None)
 
                 # Handle names
                 existing_names = {name.name: name for name in db_value.names}
@@ -277,6 +272,7 @@ def update_allgroups(session: Session, data: Union[List[Dict[str, Any]], Dict[st
 
         except Exception as e:
             logger.error(f"Error processing group {group.get('name', 'Unknown')}: {str(e)}")
+            logger.exception("Exception details:")
             session.rollback()
         else:
             session.commit()  # Commit after each group is processed successfully
@@ -323,8 +319,20 @@ def update_databases() -> None:
             )
             if groups_data is not None:
                 logger.info(f"Loaded AllGroups data: {len(groups_data)} items")
-                for group in groups_data:
-                    logger.debug(f"Group: {group.get('name', 'Unknown')}, Names: {len(group.get('names', []))}")
+                
+                # Print a sample of the loaded data
+                if groups_data:
+                    sample_group = groups_data[0]
+                    logger.debug(f"Sample group data: {json.dumps(sample_group, indent=2)}")
+                    
+                    if 'values' in sample_group and sample_group['values']:
+                        sample_value = sample_group['values'][0]
+                        logger.debug(f"Sample value data: {json.dumps(sample_value, indent=2)}")
+                        
+                        if 'names' in sample_value and sample_value['names']:
+                            sample_name = sample_value['names'][0]
+                            logger.debug(f"Sample name data: {json.dumps(sample_name, indent=2)}")
+                
                 update_allgroups(session, groups_data)
                 logger.info("AllGroups database updated successfully.")
 
