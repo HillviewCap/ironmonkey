@@ -75,6 +75,11 @@ def create_app(config_name=None):
     app.logger = logger
     app.config.from_object(get_config(config_name))
 
+    # Set the SQLALCHEMY_DATABASE_URI using app.instance_path
+    app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv(
+        'DATABASE_URL', f"sqlite:///{app.instance_path}/threats.db"
+    )
+
     # Ensure the instance folder exists
     os.makedirs(app.instance_path, exist_ok=True)
 
