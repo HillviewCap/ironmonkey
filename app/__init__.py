@@ -82,7 +82,9 @@ def create_app(config_name=None):
     if app.config['SQLALCHEMY_DATABASE_URI'].startswith('sqlite:///'):
         db_path = Path(app.config['SQLALCHEMY_DATABASE_URI'].replace('sqlite:///', ''))
         db_dir = db_path.parent
+        logger.info(f"Attempting to ensure database directory at: {db_dir}")
         db_dir.mkdir(parents=True, exist_ok=True)
+        logger.info(f"Database directory ensured at: {db_dir}")
         logger.info(f"Database directory ensured at: {db_dir}")
     else:
         logger.info("Non-SQLite database detected, skipping database directory creation.")
