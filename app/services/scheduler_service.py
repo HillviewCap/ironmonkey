@@ -20,24 +20,18 @@ scheduler_logger = getLogger("scheduler")
 
 
 class SchedulerService:
-    _instance = None
-
-    def __new__(cls, app=None):
-        if cls._instance is None:
-            cls._instance = super(SchedulerService, cls).__new__(cls)
-            if app is not None:
-                cls._instance.app = app
-            cls._instance.config = app.config
-            executors = {
-                'default': ThreadPoolExecutor(max_workers=10)  # Adjust max_workers as needed
-            }
-            cls._instance.scheduler = BackgroundScheduler(executors=executors)
-            cls._instance.is_running = False
-        return cls._instance
+    def __init__(self, app):
+        self.app = app
+        self.config = app.config
+        executors = {
+            'default': ThreadPoolExecutor(max_workers=10)  # Adjust max_workers as needed
+        }
+        self.scheduler = BackgroundScheduler(executors=executors)
+        self.is_running = False
 
     def job_with_app_context(self, func):
         def wrapper(*args, **kwargs):
-            with current_app.app_context():
+            with self.app.app_context():
                 return func(*args, **kwargs)
         return wrapper
 
@@ -54,7 +48,7 @@ class SchedulerService:
         sync_interval = config['PARSED_CONTENT_SYNC_INTERVAL']
 
         self.scheduler.add_job(
-            func=self.check_and_process_rss_feeds,
+            func=self.job_with_app_context(self.check_and_process_rss_feeds),
             trigger="interval",
             minutes=rss_check_interval,
         )
@@ -99,7 +93,7 @@ class SchedulerService:
 
         # Add the new auto-tagging job
         self.scheduler.add_job(
-            func=self.auto_tag_untagged_content,
+            func=self.job_with_app_context(self.auto_tag_untagged_content),
             trigger="interval",
             minutes=auto_tag_interval,
         )
@@ -148,7 +142,7 @@ class SchedulerService:
 
 
     def check_and_process_rss_feeds(self):
-        with current_app.app_context():
+        with self.app.app_context():
             from app.models.relational.rss_feed import RSSFeed
             from app.services.feed_parser_service import fetch_and_parse_feed_sync
             
@@ -207,7 +201,7 @@ class SchedulerService:
         asyncio.run(self._start_check_empty_summaries_async())
 
     async def _start_check_empty_summaries_async(self):
-        with current_app.app_context():
+        with self.app.app_context():
             processed_count = 0
             summary_service = SummaryService()
 
@@ -245,7 +239,7 @@ class SchedulerService:
             )
 
     def create_morning_rollup(self):
-        with current_app.app_context():
+        with self.app.app_context():
             try:
                 asyncio.run(NewsRollupService().create_and_store_rollup("morning"))
                 logger.info("Morning rollup created successfully")
@@ -253,7 +247,7 @@ class SchedulerService:
                 logger.error(f"Error creating morning rollup: {str(e)}")
 
     def create_midday_rollup(self):
-        with current_app.app_context():
+        with self.app.app_context():
             try:
                 asyncio.run(NewsRollupService().create_and_store_rollup("midday"))
                 logger.info("Midday rollup created successfully")
