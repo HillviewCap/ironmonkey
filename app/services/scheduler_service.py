@@ -14,6 +14,7 @@ from logging import getLogger
 from app.utils.auto_tagger import tag_untagged_content
 from app.utils.threat_group_cards_updater import update_threat_group_cards
 from app.models.relational.parsed_content import ParsedContent
+from app.extensions import db
 
 logger = getLogger(__name__)
 scheduler_logger = getLogger("scheduler")
@@ -146,55 +147,54 @@ class SchedulerService:
             from app.models.relational.rss_feed import RSSFeed
             from app.services.feed_parser_service import fetch_and_parse_feed_sync
             
-            with self.app.db.session() as session:
-                total_feeds = session.query(RSSFeed).count()
-                new_articles_count = 0
-                processed_feeds = 0
+            total_feeds = db.session.query(RSSFeed).count()
+            new_articles_count = 0
+            processed_feeds = 0
 
-                scheduler_logger.info(f"Starting to process {total_feeds} RSS feeds")
+            scheduler_logger.info(f"Starting to process {total_feeds} RSS feeds")
 
-                feed_ids = [feed.id for feed in session.query(RSSFeed).all()]
+            feed_ids = [feed.id for feed in db.session.query(RSSFeed).all()]
 
-                for feed_id in feed_ids:
-                    try:
-                        feed = session.query(RSSFeed).get(feed_id)
-                        if feed:
-                            scheduler_logger.info(f"Processing feed: {feed.url}")
-                            new_articles = fetch_and_parse_feed_sync(feed_id)
-                            if new_articles is not None:
-                                new_articles_count += new_articles
-                                # Query for the feed again to ensure we have an attached instance
-                                feed = session.query(RSSFeed).get(feed_id)
-                                if feed:
-                                    scheduler_logger.info(
-                                        f"Added {new_articles} new articles from feed: {feed.url}"
-                                    )
-                                else:
-                                    scheduler_logger.warning(
-                                        f"Feed with id {feed_id} not found after processing"
-                                    )
+            for feed_id in feed_ids:
+                try:
+                    feed = db.session.query(RSSFeed).get(feed_id)
+                    if feed:
+                        scheduler_logger.info(f"Processing feed: {feed.url}")
+                        new_articles = fetch_and_parse_feed_sync(feed_id)
+                        if new_articles is not None:
+                            new_articles_count += new_articles
+                            # Query for the feed again to ensure we have an attached instance
+                            feed = db.session.query(RSSFeed).get(feed_id)
+                            if feed:
+                                scheduler_logger.info(
+                                    f"Added {new_articles} new articles from feed: {feed.url}"
+                                )
                             else:
                                 scheduler_logger.warning(
-                                    f"fetch_and_parse_feed returned None for feed {feed.url}"
+                                    f"Feed with id {feed_id} not found after processing"
                                 )
-                            processed_feeds += 1
-                            scheduler_logger.info(
-                                f"Processed {processed_feeds}/{total_feeds} feeds"
-                            )
                         else:
                             scheduler_logger.warning(
-                                f"Feed with id {feed_id} not found"
+                                f"fetch_and_parse_feed returned None for feed {feed.url}"
                             )
-                    except Exception as e:
-                        scheduler_logger.error(
-                            f"Error processing feed {feed_id}: {str(e)}", exc_info=True
+                        processed_feeds += 1
+                        scheduler_logger.info(
+                            f"Processed {processed_feeds}/{total_feeds} feeds"
                         )
+                    else:
+                        scheduler_logger.warning(
+                            f"Feed with id {feed_id} not found"
+                        )
+                except Exception as e:
+                    scheduler_logger.error(
+                        f"Error processing feed {feed_id}: {str(e)}", exc_info=True
+                    )
 
-                    session.commit()
+                db.session.commit()
 
-                scheduler_logger.info(
-                    f"Finished processing {processed_feeds}/{total_feeds} RSS feeds, added {new_articles_count} new articles"
-                )
+            scheduler_logger.info(
+                f"Finished processing {processed_feeds}/{total_feeds} RSS feeds, added {new_articles_count} new articles"
+            )
         asyncio.run(self._start_check_empty_summaries_async())
 
     def start_check_empty_summaries(self):
