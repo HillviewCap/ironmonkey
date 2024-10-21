@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import logging
 import os
-from typing import Dict, List, Any, Optional
+from typing import Dict, List, Any, Optional, Union
 import httpx
 from sqlalchemy import create_engine, inspect
 from uuid import UUID
@@ -23,9 +23,16 @@ logger = logging.getLogger(__name__)
 
 def ensure_db_directory_exists():
     """Ensure the directory for the database file exists."""
-    db_path = current_app.config['SQLALCHEMY_DATABASE_URI'].replace('sqlite:///', '')
+    db_uri = current_app.config.get('SQLALCHEMY_DATABASE_URI', '')
+    if not db_uri:
+        logger.error("SQLALCHEMY_DATABASE_URI is not set in the configuration.")
+        raise ValueError("SQLALCHEMY_DATABASE_URI must be set in the configuration.")
+
+    db_path = db_uri.replace('sqlite:///', '')
     db_dir = os.path.dirname(db_path)
-    if not os.path.exists(db_dir):
+    if not db_dir:
+        logger.error("Database directory path is empty. Check SQLALCHEMY_DATABASE_URI configuration.")
+        raise ValueError("Database directory path is empty. Check SQLALCHEMY_DATABASE_URI configuration.")
         os.makedirs(db_dir)
         logger.info(f"Created directory for database: {db_dir}")
 
@@ -272,7 +279,6 @@ def update_databases() -> None:
     Update the AllTools and AllGroups databases with the latest data from the local JSON files.
     """
     with current_app.app_context():
-        ensure_db_directory_exists()
         create_db_tables()
 
         engine = create_engine(current_app.config["SQLALCHEMY_DATABASE_URI"])

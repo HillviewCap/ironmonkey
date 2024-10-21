@@ -1,4 +1,4 @@
-from .relational.models import db
+from app.extensions import db
 from .relational.user import User
 from .relational.rss_feed import RSSFeed
 from .relational.parsed_content import ParsedContent
@@ -25,4 +25,5 @@ __all__ = [
     "AllGroupsValues",
     "AllGroupsValuesNames",
     "Rollup",
+    "ContentTag",
 ]

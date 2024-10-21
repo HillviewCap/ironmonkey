@@ -23,9 +23,9 @@ def main():
               port=app.config['WAITRESS_PORT'],
               threads=app.config['WAITRESS_THREADS'])
     else:
-        app.run(host=app.config['HOST'], 
-                port=app.config['PORT'], 
-                debug=True)
+        app.run(host=app.config['HOST'],
+                port=app.config['PORT'],
+                debug=app.config.get('DEBUG', False))
 
 if __name__ == "__main__":
     main()
