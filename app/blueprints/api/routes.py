@@ -95,13 +95,11 @@ def example():
 # Add other API routes here
 from flask import Blueprint, jsonify
 from flask_login import login_required
-from flask_limiter import Limiter
-from flask_limiter.util import get_remote_address
+from app.extensions import limiter
 from app.services.news_rollup_service import NewsRollupService
 import logging
 
 api_bp = Blueprint('api', __name__)
-limiter = Limiter(key_func=get_remote_address)
 logger = logging.getLogger('app')
 
 @api_bp.route('/generate_rollups', methods=['GET'])

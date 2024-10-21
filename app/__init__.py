@@ -11,8 +11,7 @@ from flask_migrate import Migrate
 
 from flask_wtf.csrf import CSRFProtect
 from flask_login import LoginManager
-from flask_limiter import Limiter
-from flask_limiter.util import get_remote_address
+from .extensions import init_extensions, limiter
 
 from .extensions import init_extensions, db
 from app.utils.logging_config import setup_logger
@@ -42,7 +41,7 @@ from app.models.relational.rss_feed import RSSFeed
 from app.models.relational.content_tag import ContentTag
 from app.services.initializer import initialize_services
 from app.services.apt_update_service import update_databases
-from app import error_handlers
+from . import error_handlers
 from app.cli.auto_tag_command import init_app as init_auto_tag_command
 
 load_dotenv()
@@ -92,8 +91,8 @@ def create_app(config_name=None):
     logger.info(f"Database URI: {app.config['SQLALCHEMY_DATABASE_URI']}")
     logger.info(f"Flask port: {app.config['PORT']}")
 
-    # Initialize Limiter after the app is created
-    limiter = Limiter(app, key_func=get_remote_address)
+    # Initialize extensions
+    init_extensions(app)
     init_extensions(app)
     csrf.init_app(app)
     login_manager.init_app(app)
@@ -112,9 +111,6 @@ def create_app(config_name=None):
         from app.models.relational.user import User
         from app.models.relational.rss_feed import RSSFeed
         from app.models.relational.content_tag import ContentTag
-        
-        # Create all tables
-        db.create_all()
         
         init_db_connection_manager(app)
         setup_db_pool()
