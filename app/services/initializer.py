@@ -1,3 +1,4 @@
+from app.extensions import db
 import logging
 from app.utils.ollama_client import OllamaAPI
 from app.services.scheduler_service import SchedulerService
@@ -10,7 +11,9 @@ logger = logging.getLogger('app')
 
 def initialize_services():
     with app.app_context():
-        # Initialize Ollama API
+        # Create all tables
+        db.create_all()
+        logger.info("All database tables created")
         app.ollama_api = OllamaAPI()
 
         # Setup scheduler
