@@ -20,7 +20,7 @@ from flask import current_app
 logger = logging.getLogger(__name__)
 
 
-def load_json_file(file_path: str) -> Optional[List[Dict[str, Any]]]:
+def load_json_file(file_path: str) -> List[Dict[str, Any]]:
     """
     Load JSON data from a local file.
 
@@ -28,15 +28,21 @@ def load_json_file(file_path: str) -> Optional[List[Dict[str, Any]]]:
         file_path (str): The path to the JSON file.
 
     Returns:
-        Optional[List[Dict[str, Any]]]: The JSON data as a list of dictionaries, or None if an error occurs.
+        List[Dict[str, Any]]: The JSON data as a list of dictionaries.
     """
     try:
         with open(file_path, "r", encoding="utf-8") as f:
-            return json.load(f)
+            data = json.load(f)
+            if isinstance(data, dict):
+                return [data]
+            elif isinstance(data, list):
+                return data
+            else:
+                logger.error(f"Unexpected data type in {file_path}: {type(data)}")
+                return []
     except Exception as e:
         logger.error(f"Error reading local file {file_path}: {e}")
-
-    return None
+        return []
 
 
 def update_alltools(session: Session, data: List[Dict[str, Any]]) -> None:
@@ -47,18 +53,10 @@ def update_alltools(session: Session, data: List[Dict[str, Any]]) -> None:
         session (Session): The SQLAlchemy session.
         data (List[Dict[str, Any]]): The data to update the database with.
     """
-    if not isinstance(data, list):
-        logger.error(f"Expected a list of tools, but got {type(data)}. Converting to list.")
-        data = [data]
-
     for tool in data:
-        if not isinstance(tool, dict):
-            logger.error(f"Expected a dictionary for tool, but got {type(tool)}. Skipping this tool.")
-            continue
-
         try:
             with session.no_autoflush:
-                tool_uuid = UUID(str(tool.get("uuid", "")))  # Convert to string first, then to UUID
+                tool_uuid = UUID(str(tool.get("uuid", "")))
                 db_tool = (
                     session.query(AllTools).filter(AllTools.uuid == tool_uuid).first()
                 )
@@ -66,11 +64,9 @@ def update_alltools(session: Session, data: List[Dict[str, Any]]) -> None:
                     db_tool = AllTools(uuid=tool_uuid)
                     session.add(db_tool)
 
-                db_tool.authors = (
-                    ", ".join(tool.get("authors", []))
-                    if isinstance(tool.get("authors"), list)
-                    else str(tool.get("authors", ""))
-                )
+                authors = tool.get("authors", [])
+                db_tool.authors = ", ".join(authors) if isinstance(authors, list) else str(authors)
+
             db_tool.category = tool.get("category")
             db_tool.name = tool.get("name")
             db_tool.type = tool.get("type")
@@ -137,14 +133,8 @@ def update_allgroups(session: Session, data: List[Dict[str, Any]]) -> None:
 
     Args:
         session (Session): The SQLAlchemy session.
-        data (List[Dict[str, Any]]]: The data to update the database with.
+        data (List[Dict[str, Any]]): The data to update the database with.
     """
-    if not isinstance(data, list):
-        logger.error(
-            f"Expected a list of groups, but got {type(data)}. Converting to list."
-        )
-        data = [data]
-
     for group in data:
         try:
             if "uuid" not in group:
@@ -188,7 +178,6 @@ def update_allgroups(session: Session, data: List[Dict[str, Any]]) -> None:
 
             # Update AllGroups fields
             for field in [
-                "authors",
                 "category",
                 "name",
                 "type",
@@ -198,6 +187,10 @@ def update_allgroups(session: Session, data: List[Dict[str, Any]]) -> None:
                 "license",
             ]:
                 setattr(db_group, field, group.get(field, ""))
+            
+            authors = group.get("authors", [])
+            db_group.authors = ", ".join(authors) if isinstance(authors, list) else str(authors)
+            
             db_group.last_db_change = group.get("last-db-change", "")
 
             # Process AllGroupsValues
