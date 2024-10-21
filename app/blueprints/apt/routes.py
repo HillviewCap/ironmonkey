@@ -54,6 +54,16 @@ def apt_group_detail(group_uuid):
             if affiliate_group:
                 affiliate_groups.append(affiliate_group)
     
+    # Ensure all attributes are available, even if they're None
+    attributes = [
+        'actor', 'country', 'description', 'motivation', 'first_seen',
+        'observed_sectors', 'observed_countries', 'tools', 'operations',
+        'sponsor', 'counter_operations', 'mitre_attack', 'playbook'
+    ]
+    for attr in attributes:
+        if not hasattr(group, attr):
+            setattr(group, attr, None)
+    
     return render_template('apt-group-detail.html', group=group, affiliate_groups=affiliate_groups)
 
 @bp.route('/apt-tool/<string:tool_name>')
