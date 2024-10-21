@@ -80,7 +80,7 @@ def create_app(config_name=None):
 
     # Ensure database directory exists if using SQLite
     if app.config['SQLALCHEMY_DATABASE_URI'].startswith('sqlite:///'):
-        db_path = Path(app.instance_path) / Path(app.config['SQLALCHEMY_DATABASE_URI'].replace('sqlite:///', ''))
+        db_path = Path(app.instance_path) / 'threats.db'
         db_dir = db_path.parent
         logger.info(f"Attempting to ensure database directory at: {db_dir} for database path: {db_path}")
         db_dir.mkdir(parents=True, exist_ok=True)
