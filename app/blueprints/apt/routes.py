@@ -42,7 +42,7 @@ def apt_group_detail(group_uuid):
     
     # Extract affiliate group names from description
     affiliate_pattern = r'\{\{([^}]+)\}\}'
-    affiliate_matches = re.findall(affiliate_pattern, group.description)
+    affiliate_matches = re.findall(affiliate_pattern, group.description or '')
     
     affiliate_groups = []
     for match in affiliate_matches:

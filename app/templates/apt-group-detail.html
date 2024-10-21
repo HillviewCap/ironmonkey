@@ -1,10 +1,10 @@
 {% extends "base.html" %}
 
-{% block title %}{{ group.actor }} - APT Group Detail{% endblock %}
+{% block title %}{{ group.actor or 'Unknown Actor' }} - APT Group Detail{% endblock %}
 
 {% block content %}
 <div class="container mx-auto px-4 py-8">
-    <h1 class="text-4xl font-bold mb-8 text-center text-gray-800">{{ group.actor }}</h1>
+    <h1 class="text-4xl font-bold mb-8 text-center text-gray-800">{{ group.actor or 'Unknown Actor' }}</h1>
     
     {% if current_user.is_authenticated %}
     <div class="mt-8 text-right">
@@ -22,7 +22,7 @@
             {% include "partials/apt_group_counter_operations.html" %}
             {% include "partials/apt_group_mitre_attack.html" %}
             
-            <p class="text-sm text-gray-500 mt-4"><strong>Last Updated:</strong> {{ group.last_card_change }}</p>
+            <p class="text-sm text-gray-500 mt-4"><strong>Last Updated:</strong> {{ group.last_card_change or 'Unknown' }}</p>
         </div>
     </div>
     
