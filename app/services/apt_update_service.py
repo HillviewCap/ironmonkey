@@ -246,24 +246,45 @@ def update_allgroups(session: Session, data: Union[List[Dict[str, Any]], Dict[st
                 else:
                     setattr(db_value, field, None)
 
+            logger.debug(f"Processing names for group: {group.get('name', 'Unknown')}")
+            logger.debug(f"Names data: {group.get('names', [])}")
+
             # Handle names
             existing_names = {name.name: name for name in db_value.names}
             for name_data in group.get("names", []):
-                name = name_data["name"]
+                if isinstance(name_data, dict):
+                    name = name_data.get("name")
+                    name_giver = name_data.get("name-giver")
+                elif isinstance(name_data, str):
+                    name = name_data
+                    name_giver = None
+                else:
+                    logger.warning(f"Unexpected name data format: {name_data}")
+                    continue
+
+                if not name:
+                    logger.warning(f"Empty name found for group {group.get('name', 'Unknown')}")
+                    continue
+
                 if name in existing_names:
                     db_name = existing_names[name]
-                    db_name.name_giver = name_data.get("name-giver")
+                    db_name.name_giver = name_giver
                 else:
                     db_name = AllGroupsValuesNames(
                         name=name,
-                        name_giver=name_data.get("name-giver"),
+                        name_giver=name_giver,
                         uuid=uuid.uuid4(),
                         allgroups_values_uuid=db_value.uuid
                     )
                     db_value.names.append(db_name)
+                
+                logger.debug(f"Processed name: {name}, name_giver: {name_giver}")
+
+            session.add(db_value)
+
+            logger.debug(f"Number of names for group {group.get('name', 'Unknown')}: {len(db_value.names)}")
 
             session.add(db_group)
-            session.add(db_value)
             session.flush()  # This will assign IDs to new objects without committing
 
         except Exception as e:
@@ -314,6 +335,8 @@ def update_databases() -> None:
             )
             if groups_data is not None:
                 logger.info(f"Loaded AllGroups data: {len(groups_data)} items")
+                for group in groups_data:
+                    logger.debug(f"Group: {group.get('name', 'Unknown')}, Names: {len(group.get('names', []))}")
                 update_allgroups(session, groups_data)
                 logger.info("AllGroups database updated successfully.")
 
@@ -324,6 +347,12 @@ def update_databases() -> None:
                 logger.info(f"AllGroups count: {groups_count}")
                 logger.info(f"AllGroupsValues count: {values_count}")
                 logger.info(f"AllGroupsValuesNames count: {names_count}")
+
+                # Add detailed counts per group
+                for group in session.query(AllGroups).all():
+                    values_count = len(group.values)
+                    names_count = sum(len(value.names) for value in group.values)
+                    logger.info(f"Group {group.name}: Values count: {values_count}, Names count: {names_count}")
             else:
                 logger.warning("Failed to load AllGroups data. Skipping update.")
 
