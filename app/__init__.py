@@ -103,6 +103,9 @@ def create_app(config_name=None):
     # Initialize extensions
     init_extensions(app)
 
+    # Initialize extensions
+    init_extensions(app)
+
     # Initialize database and connection manager
     with app.app_context():
         from app.models.relational.parsed_content import ParsedContent
