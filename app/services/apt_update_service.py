@@ -39,27 +39,44 @@ def ensure_db_directory_exists():
         logger.info(f"Created directory for database: {db_dir}")
 
 def create_db_tables():
-    """Create database tables if they don't exist."""
+    """Create database tables if they don't exist and add missing columns."""
     try:
         engine = create_engine(current_app.config['SQLALCHEMY_DATABASE_URI'])
-        db.session = scoped_session(sessionmaker(bind=engine))
-        
+        db.metadata.create_all(engine)  # Creates tables if they don't exist
+
         inspector = inspect(engine)
-        tables_to_create = [
-            AllTools.__table__,
-            AllToolsValues.__table__,
-            AllToolsValuesNames.__table__,
-            AllGroups.__table__,
-            AllGroupsValues.__table__,
-            AllGroupsValuesNames.__table__
-        ]
+
+        # Check and add missing columns for 'allgroups_values' table
+        with engine.connect() as conn:
+            columns = inspector.get_columns('allgroups_values')
+            column_names = [col['name'] for col in columns]
+
+            # List of required columns to check
+            required_columns = [
+                'motivation',
+                'last_seen',
+                'observed_countries',
+                'observed_sectors',
+                'tools'
+            ]
+
+            # Map of column names to their SQL data types
+            column_definitions = {
+                'motivation': 'TEXT',
+                'last_seen': 'TEXT',
+                'observed_countries': 'TEXT',
+                'observed_sectors': 'TEXT',
+                'tools': 'TEXT'
+            }
+
+            for column in required_columns:
+                if column not in column_names:
+                    # SQLite supports ALTER TABLE ADD COLUMN for adding columns
+                    alter_stmt = f"ALTER TABLE allgroups_values ADD COLUMN {column} {column_definitions[column]};"
+                    conn.execute(alter_stmt)
+                    logger.info(f"Added column '{column}' to 'allgroups_values' table.")
         
-        for table in tables_to_create:
-            if not inspector.has_table(table.name):
-                logger.info(f"Creating table: {table.name}")
-                table.create(engine)
-        
-        logger.info("All necessary tables have been created.")
+        logger.info("All necessary tables have been created and updated.")
     except Exception as e:
         logger.error(f"Error creating database tables: {str(e)}")
         raise
