@@ -138,54 +138,18 @@ def update_allgroups(session: Session, data: List[Dict[str, Any]]) -> None:
     for group in data:
         try:
             if "uuid" not in group:
-                logger.error(
-                    f"Group is missing UUID: {group.get('name', 'Unknown')}. Skipping this group."
-                )
+                logger.error(f"Group is missing UUID: {group.get('name', 'Unknown')}. Skipping this group.")
                 continue
 
-            try:
-                group_uuid = UUID(group["uuid"])  # Convert string UUID to UUID object
-            except ValueError:
-                logger.warning(
-                    f"Invalid UUID for group: {group.get('name', 'Unknown')} - UUID: {group['uuid']}. Attempting to fix."
-                )
-                # Use regex to extract the valid UUID pattern from the string
-                uuid_pattern = r'[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}'
-                match = re.search(uuid_pattern, group["uuid"])
-                if match:
-                    try:
-                        group_uuid = UUID(match.group(0))
-                        logger.info(
-                            f"Successfully fixed UUID for group: {group.get('name', 'Unknown')} - New UUID: {group_uuid}"
-                        )
-                    except ValueError:
-                        logger.error(
-                            f"Unable to parse extracted UUID for group: {group.get('name', 'Unknown')} - Extracted UUID: {match.group(0)}. Skipping this group."
-                        )
-                        continue
-                else:
-                    logger.error(
-                        f"Unable to extract valid UUID for group: {group.get('name', 'Unknown')} - Original UUID: {group['uuid']}. Skipping this group."
-                    )
-                    continue
+            group_uuid = UUID(group["uuid"])
 
-            db_group = (
-                session.query(AllGroups).filter(AllGroups.uuid == group_uuid).first()
-            )
+            db_group = session.query(AllGroups).filter(AllGroups.uuid == group_uuid).first()
             if not db_group:
                 db_group = AllGroups(uuid=group_uuid)
                 session.add(db_group)
 
             # Update AllGroups fields
-            for field in [
-                "category",
-                "name",
-                "type",
-                "source",
-                "description",
-                "tlp",
-                "license",
-            ]:
+            for field in ["category", "name", "type", "source", "description", "tlp", "license"]:
                 setattr(db_group, field, group.get(field, ""))
             
             authors = group.get("authors", [])
@@ -194,37 +158,24 @@ def update_allgroups(session: Session, data: List[Dict[str, Any]]) -> None:
             db_group.last_db_change = group.get("last-db-change", "")
 
             # Process AllGroupsValues
-            db_value = (
-                session.query(AllGroupsValues)
-                .filter(AllGroupsValues.uuid == group_uuid)
-                .first()
-            )
+            db_value = session.query(AllGroupsValues).filter(AllGroupsValues.uuid == group_uuid).first()
             if not db_value:
                 db_value = AllGroupsValues(uuid=group_uuid)
                 db_group.values.append(db_value)
 
             # Update AllGroupsValues fields
-            for field in [
-                "actor",
-                "country",
-                "description",
-                "information",
-                "motivation",
-                "sponsor",
-            ]:
+            for field in ["actor", "country", "description", "information", "motivation", "sponsor"]:
                 value = group.get(field, "")
                 if isinstance(value, list):
                     value = ", ".join(value)
                 setattr(db_value, field, value)
 
-            # Handle fields that need special treatment
             db_value.first_seen = group.get("first-seen", "")
             db_value.observed_sectors = ", ".join(group.get("observed-sectors", []))
             db_value.observed_countries = ", ".join(group.get("observed-countries", []))
             db_value.tools = ", ".join(group.get("tools", []))
             db_value.last_card_change = group.get("last-card-change", "")
 
-            # Handle special fields
             for field in ["operations", "counter_operations"]:
                 json_field = field.replace("_", "-")
                 if json_field in group and isinstance(group[json_field], list):
@@ -241,33 +192,33 @@ def update_allgroups(session: Session, data: List[Dict[str, Any]]) -> None:
 
             # Handle names
             for name_data in group.get("names", []):
-                db_name = (
-                    session.query(AllGroupsValuesNames)
-                    .filter(
-                        AllGroupsValuesNames.name == name_data["name"],
-                        AllGroupsValuesNames.allgroups_values_uuid == db_value.uuid,
-                    )
-                    .first()
-                )
+                db_name = session.query(AllGroupsValuesNames).filter(
+                    AllGroupsValuesNames.name == name_data["name"],
+                    AllGroupsValuesNames.allgroups_values_uuid == db_value.uuid
+                ).first()
                 if not db_name:
                     db_name = AllGroupsValuesNames(
                         name=name_data["name"],
                         name_giver=name_data.get("name-giver"),
-                        uuid=uuid.uuid4(),  # Generate a new UUID object
-                        allgroups_values_uuid=db_value.uuid,  # Use the UUID object directly
+                        uuid=uuid.uuid4(),
+                        allgroups_values_uuid=db_value.uuid
                     )
                     db_value.names.append(db_name)
                 else:
                     db_name.name_giver = name_data.get("name-giver")
 
-            session.commit()
+            session.add(db_group)
+            session.add(db_value)
+            session.flush()  # This will assign IDs to new objects without committing
+
         except Exception as e:
-            logger.error(
-                f"Error processing group {group.get('name', 'Unknown')}: {str(e)}"
-            )
+            logger.error(f"Error processing group {group.get('name', 'Unknown')}: {str(e)}")
             session.rollback()
         else:
-            session.commit()
+            session.commit()  # Commit after each group is processed successfully
+
+    # Final commit to ensure all changes are saved
+    session.commit()
 
 
 def update_databases() -> None:
@@ -316,6 +267,14 @@ def update_databases() -> None:
                 logger.info(f"Loaded AllGroups data: {len(groups_data)} items")
                 update_allgroups(session, groups_data)
                 logger.info("AllGroups database updated successfully.")
+
+                # Verify data insertion
+                groups_count = session.query(AllGroups).count()
+                values_count = session.query(AllGroupsValues).count()
+                names_count = session.query(AllGroupsValuesNames).count()
+                logger.info(f"AllGroups count: {groups_count}")
+                logger.info(f"AllGroupsValues count: {values_count}")
+                logger.info(f"AllGroupsValuesNames count: {names_count}")
             else:
                 logger.warning("Failed to load AllGroups data. Skipping update.")
 
