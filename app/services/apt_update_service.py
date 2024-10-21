@@ -200,18 +200,11 @@ def update_allgroups(session: Session, data: Union[List[Dict[str, Any]], Dict[st
 
     for group in data:
         try:
-            logger.debug(f"Processing group: {group.get('actor', 'Unknown')}")
-            
-            if "uuid" not in group:
-                logger.error(f"Group is missing UUID: {group.get('actor', 'Unknown')}. Skipping this group.")
-                continue
+            logger.debug(f"Processing group: {group.get('name', 'Unknown')}")
 
-            try:
-                group_uuid = UUID(group["uuid"])
-            except ValueError as e:
-                logger.error(f"Invalid UUID for group {group.get('actor', 'Unknown')}: {group['uuid']}. Error: {str(e)}")
-                continue
+            group_uuid = UUID(str(group["uuid"]))
 
+            # Fetch or create the AllGroups object
             db_group = session.query(AllGroups).filter(AllGroups.uuid == group_uuid).first()
             if not db_group:
                 db_group = AllGroups(uuid=group_uuid)
@@ -225,87 +218,89 @@ def update_allgroups(session: Session, data: Union[List[Dict[str, Any]], Dict[st
             db_group.description = group.get("description", "")
             db_group.tlp = group.get("tlp", "")
             db_group.license = group.get("license", "")
-            db_group.last_db_change = group.get("last-card-change", "")
+            db_group.last_db_change = group.get("last-db-change", "")
 
             # Process AllGroupsValues
-            db_value = session.query(AllGroupsValues).filter(AllGroupsValues.uuid == group_uuid).first()
-            if not db_value:
-                db_value = AllGroupsValues(uuid=group_uuid, allgroups_uuid=group_uuid)
-                db_group.values.append(db_value)
+            for value in group.get("values", []):
+                value_uuid = UUID(str(value["uuid"]))
+                db_value = session.query(AllGroupsValues).filter(AllGroupsValues.uuid == value_uuid).first()
+                if not db_value:
+                    db_value = AllGroupsValues(
+                        uuid=value_uuid,
+                        allgroups_uuid=db_group.uuid
+                    )
+                    db_group.values.append(db_value)
 
-            # Update AllGroupsValues fields
-            db_value.actor = group.get("actor", "")
-            db_value.country = stringify_field(group.get("country"))
-            db_value.description = group.get("description", "")
-            db_value.information = stringify_field(group.get("information"))
-            db_value.last_card_change = group.get("last-card-change", "")
-            db_value.motivation = stringify_field(group.get("motivation"))
-            db_value.first_seen = group.get("first-seen", "")
-            db_value.observed_sectors = stringify_field(group.get("observed-sectors"))
-            db_value.observed_countries = stringify_field(group.get("observed-countries"))
-            db_value.tools = stringify_field(group.get("tools"))
-            db_value.sponsor = group.get("sponsor", "")
-            db_value.mitre_attack = stringify_field(group.get("mitre-attack"))
-            db_value.playbook = group.get("playbook", "")
-            
-            # Handle operations
-            operations = group.get("operations", [])
-            # Handle operations
-            for operation_data in group.get("operations", []):
-                operation_uuid = uuid.uuid4()
-                db_operation = AllGroupsOperations(
-                    uuid=operation_uuid,
-                    date=operation_data.get("date", ""),
-                    activity=operation_data.get("activity", ""),
-                    allgroups_values_uuid=db_value.uuid
-                )
-                db_value.operations.append(db_operation)
+                # Update fields in db_value from value
+                db_value.actor = value.get("actor", "")
+                db_value.country = stringify_field(value.get("country"))
+                db_value.description = value.get("description", "")
+                db_value.information = stringify_field(value.get("information"))
+                db_value.last_card_change = value.get("last-card-change", "")
+                db_value.motivation = stringify_field(value.get("motivation"))
+                db_value.first_seen = value.get("first-seen", "")
+                db_value.last_seen = value.get("last-seen", "")
+                db_value.observed_sectors = stringify_field(value.get("observed-sectors"))
+                db_value.observed_countries = stringify_field(value.get("observed-countries"))
+                db_value.tools = stringify_field(value.get("tools"))
+                db_value.sponsor = value.get("sponsor", "")
+                db_value.mitre_attack = stringify_field(value.get("mitre-attack"))
+                db_value.playbook = value.get("playbook", "")
 
-            # Handle counter-operations
-            for counter_op_data in group.get("counter-operations", []):
-                counter_op_uuid = uuid.uuid4()
-                db_counter_op = AllGroupsCounterOperations(
-                    uuid=counter_op_uuid,
-                    date=counter_op_data.get("date", ""),
-                    activity=counter_op_data.get("activity", ""),
-                    allgroups_values_uuid=db_value.uuid
-                )
-                db_value.counter_operations.append(db_counter_op)
-
-            # Handle names
-            existing_names = {name.name: name for name in db_value.names}
-            for name_data in group.get("names", []):
-                name = name_data.get("name")
-                name_giver = name_data.get("name-giver")
-
-                if not name:
-                    logger.warning(f"Empty name found for group {group.get('actor', 'Unknown')}")
-                    continue
-
-                if name in existing_names:
-                    db_name = existing_names[name]
-                    db_name.name_giver = name_giver
-                else:
-                    db_name = AllGroupsValuesNames(
-                        name=name,
-                        name_giver=name_giver,
-                        uuid=uuid.uuid4(),
+                # Handle operations
+                for operation_data in value.get("operations", []):
+                    operation_uuid = uuid.uuid4()
+                    db_operation = AllGroupsOperations(
+                        uuid=operation_uuid,
+                        date=operation_data.get("date", ""),
+                        activity=operation_data.get("activity", ""),
                         allgroups_values_uuid=db_value.uuid
                     )
-                    db_value.names.append(db_name)
-                
-                logger.debug(f"Processed name: {name}, name_giver: {name_giver}")
+                    db_value.operations.append(db_operation)
 
-            session.add(db_value)
-            session.flush()  # This will assign IDs to new objects without committing
+                # Handle counter-operations
+                for counter_op_data in value.get("counter-operations", []):
+                    counter_op_uuid = uuid.uuid4()
+                    db_counter_op = AllGroupsCounterOperations(
+                        uuid=counter_op_uuid,
+                        date=counter_op_data.get("date", ""),
+                        activity=counter_op_data.get("activity", ""),
+                        allgroups_values_uuid=db_value.uuid
+                    )
+                    db_value.counter_operations.append(db_counter_op)
+
+                # Handle names
+                existing_names = {name.name: name for name in db_value.names}
+                for name_data in value.get("names", []):
+                    name = name_data.get("name")
+                    name_giver = name_data.get("name-giver")
+
+                    if not name:
+                        logger.warning(f"Empty name found for value {value_uuid}")
+                        continue
+
+                    if name in existing_names:
+                        db_name = existing_names[name]
+                        db_name.name_giver = name_giver
+                    else:
+                        db_name = AllGroupsValuesNames(
+                            name=name,
+                            name_giver=name_giver,
+                            uuid=uuid.uuid4(),
+                            allgroups_values_uuid=db_value.uuid
+                        )
+                        db_value.names.append(db_name)
+
+                session.add(db_value)
+                session.flush()
 
         except Exception as e:
-            logger.error(f"Error processing group {group.get('actor', 'Unknown')}: {str(e)}")
+            logger.error(f"Error processing group {group.get('name', 'Unknown')}: {str(e)}")
             logger.exception("Exception details:")
             session.rollback()
-            continue  # Skip to the next group without stopping the entire process
+            continue
         else:
-            session.commit()  # Commit after each group is processed successfully
+            session.commit()
 
     # Final commit to ensure all changes are saved
     session.commit()

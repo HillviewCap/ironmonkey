@@ -43,6 +43,7 @@ class AllGroupsValues(db.Model):
     last_card_change = Column(String)
     motivation = Column(Text)
     first_seen = Column(String)
+    last_seen = Column(String)
     observed_sectors = Column(Text)
     observed_countries = Column(Text)
     tools = Column(Text)
