@@ -101,15 +101,9 @@ def create_app(config_name=None):
     # Initialize Flask-Migrate
     migrate.init_app(app, db)
 
-    # Register json_loads filter
-    @app.template_filter("json_loads")
-    def json_loads_filter(s):
-        if not s:
-            return []
-        try:
-            return json.loads(s)
-        except json.JSONDecodeError:
-            return []
+    # Register filters
+    app.jinja_env.filters['from_json'] = from_json
+    app.add_template_filter(json_loads_filter, name='json_loads')
 
     # Initialize database and connection manager
     with app.app_context():
