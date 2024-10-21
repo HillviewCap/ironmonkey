@@ -188,6 +188,9 @@ def update_allgroups(session: Session, data: Union[List[Dict[str, Any]], Dict[st
         session (Session): The SQLAlchemy session.
         data (List[Dict[str, Any]]): The data to update the database with.
     """
+    if isinstance(data, dict):
+        data = [data]
+
     for group in data:
         try:
             if "uuid" not in group:
@@ -244,21 +247,20 @@ def update_allgroups(session: Session, data: Union[List[Dict[str, Any]], Dict[st
                     setattr(db_value, field, None)
 
             # Handle names
+            existing_names = {name.name: name for name in db_value.names}
             for name_data in group.get("names", []):
-                db_name = session.query(AllGroupsValuesNames).filter(
-                    AllGroupsValuesNames.name == name_data["name"],
-                    AllGroupsValuesNames.allgroups_values_uuid == db_value.uuid
-                ).first()
-                if not db_name:
+                name = name_data["name"]
+                if name in existing_names:
+                    db_name = existing_names[name]
+                    db_name.name_giver = name_data.get("name-giver")
+                else:
                     db_name = AllGroupsValuesNames(
-                        name=name_data["name"],
+                        name=name,
                         name_giver=name_data.get("name-giver"),
                         uuid=uuid.uuid4(),
                         allgroups_values_uuid=db_value.uuid
                     )
                     db_value.names.append(db_name)
-                else:
-                    db_name.name_giver = name_data.get("name-giver")
 
             session.add(db_group)
             session.add(db_value)
