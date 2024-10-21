@@ -262,7 +262,7 @@ def update_allgroups(session: Session, data: Union[List[Dict[str, Any]], Dict[st
                 db_value.tools = stringify_field(value.get("tools"))
                 db_value.sponsor = value.get("sponsor", "")
                 db_value.mitre_attack = stringify_field(value.get("mitre-attack"))
-                db_value.playbook = value.get("playbook", "")
+                db_value.playbook = stringify_field(value.get("playbook"))
 
                 # Handle operations
                 for operation_data in value.get("operations", []):
