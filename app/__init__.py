@@ -100,6 +100,9 @@ def create_app(config_name=None):
     app.jinja_env.filters['from_json'] = from_json
     app.add_template_filter(json_loads_filter, name='json_loads')
 
+    # Initialize extensions
+    init_extensions(app)
+
     # Initialize database and connection manager
     with app.app_context():
         from app.models.relational.parsed_content import ParsedContent
