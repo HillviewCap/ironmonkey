@@ -2,6 +2,9 @@ import os
 import json
 import warnings
 import logging
+from pathlib import Path
+from sqlalchemy import create_engine
+from sqlalchemy.orm import scoped_session, sessionmaker
 from dotenv import load_dotenv
 from flask import Flask, jsonify
 from flask_migrate import Migrate
@@ -82,7 +85,10 @@ def create_app(config_name=None):
     # Ensure the instance folder exists
     os.makedirs(app.instance_path, exist_ok=True)
 
-    # Log configuration details
+    # Ensure database directory exists
+    db_path = Path(app.config['SQLALCHEMY_DATABASE_URI'].replace('sqlite:///', ''))
+    db_dir = db_path.parent
+    db_dir.mkdir(parents=True, exist_ok=True)
     logger.info(f"Debug mode set to: {app.config['DEBUG']}")
     logger.info(f"Instance path: {app.instance_path}")
     logger.info(f"Database URI: {app.config['SQLALCHEMY_DATABASE_URI']}")
