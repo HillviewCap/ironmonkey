@@ -181,13 +181,6 @@ def update_alltools(session: Session, data: Union[List[Dict[str, Any]], Dict[str
 
 
 def update_allgroups(session: Session, data: Union[List[Dict[str, Any]], Dict[str, Any]]) -> None:
-    """
-    Update the AllGroups database with the given data.
-
-    Args:
-        session (Session): The SQLAlchemy session.
-        data (List[Dict[str, Any]]): The data to update the database with.
-    """
     if isinstance(data, dict):
         data = [data]
 
@@ -214,75 +207,70 @@ def update_allgroups(session: Session, data: Union[List[Dict[str, Any]], Dict[st
             db_group.last_db_change = group.get("last-db-change", "")
 
             # Process AllGroupsValues
-            db_value = session.query(AllGroupsValues).filter(AllGroupsValues.allgroups_uuid == group_uuid).first()
-            if not db_value:
-                db_value = AllGroupsValues(uuid=uuid.uuid4(), allgroups_uuid=group_uuid)
-                db_group.values.append(db_value)
+            for value in group.get("values", []):
+                db_value = session.query(AllGroupsValues).filter(AllGroupsValues.uuid == UUID(value["uuid"])).first()
+                if not db_value:
+                    db_value = AllGroupsValues(uuid=UUID(value["uuid"]), allgroups_uuid=group_uuid)
+                    db_group.values.append(db_value)
 
-            # Update AllGroupsValues fields
-            for field in ["actor", "country", "description", "information", "motivation", "sponsor"]:
-                value = group.get(field, "")
-                if isinstance(value, list):
-                    value = ", ".join(value)
-                setattr(db_value, field, value)
+                # Update AllGroupsValues fields
+                for field in ["actor", "country", "description", "information", "motivation", "sponsor"]:
+                    value_data = value.get(field, "")
+                    if isinstance(value_data, list):
+                        value_data = ", ".join(value_data)
+                    setattr(db_value, field, value_data)
 
-            db_value.first_seen = group.get("first-seen", "")
-            db_value.observed_sectors = ", ".join(group.get("observed-sectors", []))
-            db_value.observed_countries = ", ".join(group.get("observed-countries", []))
-            db_value.tools = ", ".join(group.get("tools", []))
-            db_value.last_card_change = group.get("last-card-change", "")
+                db_value.first_seen = value.get("first-seen", "")
+                db_value.observed_sectors = ", ".join(value.get("observed-sectors", []))
+                db_value.observed_countries = ", ".join(value.get("observed-countries", []))
+                db_value.tools = ", ".join(value.get("tools", []))
+                db_value.last_card_change = value.get("last-card-change", "")
 
-            for field in ["operations", "counter_operations"]:
-                json_field = field.replace("_", "-")
-                if json_field in group and isinstance(group[json_field], list):
-                    setattr(db_value, field, json.dumps(group[json_field]))
-                else:
-                    setattr(db_value, field, None)
+                for field in ["operations", "counter_operations"]:
+                    json_field = field.replace("_", "-")
+                    if json_field in value and isinstance(value[json_field], list):
+                        setattr(db_value, field, json.dumps(value[json_field]))
+                    else:
+                        setattr(db_value, field, None)
 
-            for field in ["mitre_attack", "playbook"]:
-                json_field = field.replace("_", "-")
-                if json_field in group and isinstance(group[json_field], list):
-                    setattr(db_value, field, ", ".join(group[json_field]))
-                else:
-                    setattr(db_value, field, None)
+                for field in ["mitre_attack", "playbook"]:
+                    json_field = field.replace("_", "-")
+                    if json_field in value and isinstance(value[json_field], list):
+                        setattr(db_value, field, ", ".join(value[json_field]))
+                    else:
+                        setattr(db_value, field, None)
 
-            logger.debug(f"Processing names for group: {group.get('name', 'Unknown')}")
-            logger.debug(f"Names data: {group.get('names', [])}")
+                # Handle names
+                existing_names = {name.name: name for name in db_value.names}
+                for name_data in value.get("names", []):
+                    if not isinstance(name_data, dict):
+                        logger.warning(f"Unexpected name data format: {name_data}")
+                        continue
 
-            # Handle names
-            existing_names = {name.name: name for name in db_value.names}
-            for name_data in group.get("names", []):
-                if isinstance(name_data, dict):
                     name = name_data.get("name")
                     name_giver = name_data.get("name-giver")
-                elif isinstance(name_data, str):
-                    name = name_data
-                    name_giver = None
-                else:
-                    logger.warning(f"Unexpected name data format: {name_data}")
-                    continue
 
-                if not name:
-                    logger.warning(f"Empty name found for group {group.get('name', 'Unknown')}")
-                    continue
+                    if not name:
+                        logger.warning(f"Empty name found for group {group.get('name', 'Unknown')}")
+                        continue
 
-                if name in existing_names:
-                    db_name = existing_names[name]
-                    db_name.name_giver = name_giver
-                else:
-                    db_name = AllGroupsValuesNames(
-                        name=name,
-                        name_giver=name_giver,
-                        uuid=uuid.uuid4(),
-                        allgroups_values_uuid=db_value.uuid
-                    )
-                    db_value.names.append(db_name)
-                
-                logger.debug(f"Processed name: {name}, name_giver: {name_giver}")
+                    if name in existing_names:
+                        db_name = existing_names[name]
+                        db_name.name_giver = name_giver
+                    else:
+                        db_name = AllGroupsValuesNames(
+                            name=name,
+                            name_giver=name_giver,
+                            uuid=uuid.uuid4(),
+                            allgroups_values_uuid=db_value.uuid
+                        )
+                        db_value.names.append(db_name)
+                    
+                    logger.debug(f"Processed name: {name}, name_giver: {name_giver}")
 
-            session.add(db_value)
+                session.add(db_value)
 
-            logger.debug(f"Number of names for group {group.get('name', 'Unknown')}: {len(db_value.names)}")
+            logger.debug(f"Number of names for group {group.get('name', 'Unknown')}: {sum(len(value.names) for value in db_group.values)}")
 
             session.add(db_group)
             session.flush()  # This will assign IDs to new objects without committing
