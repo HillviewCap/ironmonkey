@@ -184,6 +184,14 @@ import json
 import uuid
 from uuid import UUID
 
+def stringify_field(field_data):
+    if isinstance(field_data, list):
+        return ", ".join(field_data)
+    elif field_data:
+        return str(field_data)
+    else:
+        return ""
+
 def update_allgroups(session: Session, data: Union[List[Dict[str, Any]], Dict[str, Any]]) -> None:
     if isinstance(data, dict):
         data = [data]
@@ -225,16 +233,18 @@ def update_allgroups(session: Session, data: Union[List[Dict[str, Any]], Dict[st
 
             # Update AllGroupsValues fields
             db_value.actor = group.get("actor", "")
-            db_value.country = ", ".join(group["country"]) if isinstance(group.get("country"), list) else group.get("country", "")
+            db_value.country = stringify_field(group.get("country"))
             db_value.description = group.get("description", "")
-            db_value.information = ", ".join(group["information"]) if isinstance(group.get("information"), list) else group.get("information", "")
+            db_value.information = stringify_field(group.get("information"))
             db_value.last_card_change = group.get("last-card-change", "")
-            db_value.motivation = ", ".join(group["motivation"]) if isinstance(group.get("motivation"), list) else group.get("motivation", "")
+            db_value.motivation = stringify_field(group.get("motivation"))
             db_value.first_seen = group.get("first-seen", "")
-            db_value.observed_sectors = ", ".join(group.get("observed-sectors", []))
-            db_value.observed_countries = ", ".join(group.get("observed-countries", []))
-            db_value.tools = ", ".join(group.get("tools", []))
+            db_value.observed_sectors = stringify_field(group.get("observed-sectors"))
+            db_value.observed_countries = stringify_field(group.get("observed-countries"))
+            db_value.tools = stringify_field(group.get("tools"))
             db_value.sponsor = group.get("sponsor", "")
+            db_value.mitre_attack = stringify_field(group.get("mitre-attack"))
+            db_value.playbook = group.get("playbook", "")
             
             # Handle operations
             operations = group.get("operations", [])
@@ -259,9 +269,6 @@ def update_allgroups(session: Session, data: Union[List[Dict[str, Any]], Dict[st
                     allgroups_values_uuid=db_value.uuid
                 )
                 db_value.counter_operations.append(db_counter_op)
-
-            # Handle MITRE ATT&CK
-            db_value.mitre_attack = ", ".join(group.get("mitre-attack", []))
 
             # Handle names
             existing_names = {name.name: name for name in db_value.names}
@@ -294,6 +301,7 @@ def update_allgroups(session: Session, data: Union[List[Dict[str, Any]], Dict[st
             logger.error(f"Error processing group {group.get('actor', 'Unknown')}: {str(e)}")
             logger.exception("Exception details:")
             session.rollback()
+            continue  # Skip to the next group without stopping the entire process
         else:
             session.commit()  # Commit after each group is processed successfully
 
