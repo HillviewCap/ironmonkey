@@ -115,6 +115,7 @@ def create_app(config_name=None):
         
         init_db_connection_manager(app)
         setup_db_pool()
+        db.create_all()  # Add this line to create all database tables
         logger.info("Database tables created/updated and connection manager initialized")
 
     # Register blueprints
