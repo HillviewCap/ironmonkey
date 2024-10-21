@@ -279,7 +279,6 @@ def update_databases() -> None:
     Update the AllTools and AllGroups databases with the latest data from the local JSON files.
     """
     with current_app.app_context():
-        ensure_db_directory_exists()
         create_db_tables()
 
         engine = create_engine(current_app.config["SQLALCHEMY_DATABASE_URI"])
