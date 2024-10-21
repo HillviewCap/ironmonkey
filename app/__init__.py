@@ -156,7 +156,7 @@ def create_app(config_name=None):
 
     # Call initialize_services after all blueprints are registered
     with app.app_context():
-        initialize_services()
+        initialize_services(app)
     init_auto_tag_command(app)
     logger.info("Auto-tag command initialized")
 

@@ -5,11 +5,10 @@ from app.services.scheduler_service import SchedulerService
 from app.services.apt_update_service import update_databases
 from app.services.awesome_threat_intel_service import AwesomeThreatIntelService
 from app.utils.threat_group_cards_updater import update_threat_group_cards
-from flask import current_app as app
 
 logger = logging.getLogger('app')
 
-def initialize_services():
+def initialize_services(app):
     with app.app_context():
         # Create all tables
         db.create_all()
