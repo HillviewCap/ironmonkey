@@ -47,10 +47,18 @@ def update_alltools(session: Session, data: List[Dict[str, Any]]) -> None:
         session (Session): The SQLAlchemy session.
         data (List[Dict[str, Any]]): The data to update the database with.
     """
+    if not isinstance(data, list):
+        logger.error(f"Expected a list of tools, but got {type(data)}. Converting to list.")
+        data = [data]
+
     for tool in data:
+        if not isinstance(tool, dict):
+            logger.error(f"Expected a dictionary for tool, but got {type(tool)}. Skipping this tool.")
+            continue
+
         try:
             with session.no_autoflush:
-                tool_uuid = UUID(tool["uuid"])  # Convert string UUID to UUID object
+                tool_uuid = UUID(str(tool.get("uuid", "")))  # Convert to string first, then to UUID
                 db_tool = (
                     session.query(AllTools).filter(AllTools.uuid == tool_uuid).first()
                 )
@@ -61,7 +69,7 @@ def update_alltools(session: Session, data: List[Dict[str, Any]]) -> None:
                 db_tool.authors = (
                     ", ".join(tool.get("authors", []))
                     if isinstance(tool.get("authors"), list)
-                    else tool.get("authors")
+                    else str(tool.get("authors", ""))
                 )
             db_tool.category = tool.get("category")
             db_tool.name = tool.get("name")
