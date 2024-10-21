@@ -22,10 +22,11 @@ scheduler_logger = getLogger("scheduler")
 class SchedulerService:
     _instance = None
 
-    def __new__(cls, app):
+    def __new__(cls, app=None):
         if cls._instance is None:
             cls._instance = super(SchedulerService, cls).__new__(cls)
-            cls._instance.app = app
+            if app is not None:
+                cls._instance.app = app
             cls._instance.config = app.config
             executors = {
                 'default': ThreadPoolExecutor(max_workers=10)  # Adjust max_workers as needed
@@ -36,7 +37,7 @@ class SchedulerService:
 
     def job_with_app_context(self, func):
         def wrapper(*args, **kwargs):
-            with self.app.app_context():
+            with current_app.app_context():
                 return func(*args, **kwargs)
         return wrapper
 
@@ -147,7 +148,7 @@ class SchedulerService:
 
 
     def check_and_process_rss_feeds(self):
-        with self.app.app_context():
+        with current_app.app_context():
             from app.models.relational.rss_feed import RSSFeed
             from app.services.feed_parser_service import fetch_and_parse_feed_sync
             
@@ -206,7 +207,7 @@ class SchedulerService:
         asyncio.run(self._start_check_empty_summaries_async())
 
     async def _start_check_empty_summaries_async(self):
-        with self.app.app_context():
+        with current_app.app_context():
             processed_count = 0
             summary_service = SummaryService()
 
@@ -244,7 +245,7 @@ class SchedulerService:
             )
 
     def create_morning_rollup(self):
-        with self.app.app_context():
+        with current_app.app_context():
             try:
                 asyncio.run(NewsRollupService().create_and_store_rollup("morning"))
                 logger.info("Morning rollup created successfully")
@@ -252,7 +253,7 @@ class SchedulerService:
                 logger.error(f"Error creating morning rollup: {str(e)}")
 
     def create_midday_rollup(self):
-        with self.app.app_context():
+        with current_app.app_context():
             try:
                 asyncio.run(NewsRollupService().create_and_store_rollup("midday"))
                 logger.info("Midday rollup created successfully")
@@ -260,7 +261,7 @@ class SchedulerService:
                 logger.error(f"Error creating midday rollup: {str(e)}")
 
     def create_end_of_day_rollup(self):
-        with self.app.app_context():
+        with current_app.app_context():
             try:
                 asyncio.run(NewsRollupService().create_and_store_rollup("end_of_day"))
                 logger.info("End of day rollup created successfully")
