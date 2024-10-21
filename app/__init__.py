@@ -7,13 +7,10 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import scoped_session, sessionmaker
 from dotenv import load_dotenv
 from flask import Flask, jsonify
-from flask_migrate import Migrate
 
 from flask_wtf.csrf import CSRFProtect
 from flask_login import LoginManager
-from .extensions import init_extensions, limiter
-
-from .extensions import init_extensions, db
+from .extensions import init_extensions, limiter, db
 from app.utils.logging_config import setup_logger
 from app.utils.db_connection_manager import init_db_connection_manager
 from app.utils.db_utils import setup_db_pool
@@ -41,7 +38,7 @@ from app.models.relational.rss_feed import RSSFeed
 from app.models.relational.content_tag import ContentTag
 from app.services.initializer import initialize_services
 from app.services.apt_update_service import update_databases
-from . import error_handlers
+from .error_handlers import error_bp
 from app.cli.auto_tag_command import init_app as init_auto_tag_command
 
 load_dotenv()
@@ -49,7 +46,6 @@ load_dotenv()
 # Configure logging
 logger = setup_logger("app", "app.log")
 
-migrate = Migrate()
 csrf = CSRFProtect()
 login_manager = LoginManager()
 login_manager.login_view = "auth.login"
@@ -97,8 +93,6 @@ def create_app(config_name=None):
     csrf.init_app(app)
     login_manager.init_app(app)
 
-    # Initialize Flask-Migrate
-    migrate.init_app(app, db)
 
     # Register filters
     app.jinja_env.filters['from_json'] = from_json
@@ -143,6 +137,9 @@ def create_app(config_name=None):
         else:
             logger.warning(f"Blueprint {blueprint.name} already registered, skipping.")
 
+
+    # Register error handler blueprint
+    app.register_blueprint(error_bp)
 
     # Call initialize_services after all blueprints are registered
     with app.app_context():
