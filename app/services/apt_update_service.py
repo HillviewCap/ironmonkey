@@ -5,7 +5,7 @@ import logging
 import os
 from typing import Dict, List, Any, Optional, Union
 import httpx
-from sqlalchemy import create_engine, inspect
+from sqlalchemy import create_engine, inspect, text
 from uuid import UUID
 from sqlalchemy.orm import sessionmaker, Session, scoped_session
 from app.models.relational.alltools import AllTools, AllToolsValues, AllToolsValuesNames
@@ -73,7 +73,7 @@ def create_db_tables():
                 if column not in column_names:
                     # SQLite supports ALTER TABLE ADD COLUMN for adding columns
                     alter_stmt = f"ALTER TABLE allgroups_values ADD COLUMN {column} {column_definitions[column]};"
-                    conn.execute(alter_stmt)
+                    conn.execute(text(alter_stmt))
                     logger.info(f"Added column '{column}' to 'allgroups_values' table.")
         
         logger.info("All necessary tables have been created and updated.")
