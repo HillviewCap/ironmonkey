@@ -158,9 +158,9 @@ def update_allgroups(session: Session, data: List[Dict[str, Any]]) -> None:
             db_group.last_db_change = group.get("last-db-change", "")
 
             # Process AllGroupsValues
-            db_value = session.query(AllGroupsValues).filter(AllGroupsValues.uuid == group_uuid).first()
+            db_value = session.query(AllGroupsValues).filter(AllGroupsValues.allgroups_uuid == group_uuid).first()
             if not db_value:
-                db_value = AllGroupsValues(uuid=group_uuid)
+                db_value = AllGroupsValues(uuid=uuid.uuid4(), allgroups_uuid=group_uuid)
                 db_group.values.append(db_value)
 
             # Update AllGroupsValues fields
