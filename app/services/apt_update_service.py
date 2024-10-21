@@ -2,11 +2,12 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 from typing import Dict, List, Any, Optional
 import httpx
 from sqlalchemy import create_engine, inspect
 from uuid import UUID
-from sqlalchemy.orm import sessionmaker, Session
+from sqlalchemy.orm import sessionmaker, Session, scoped_session
 from app.models.relational.alltools import AllTools, AllToolsValues, AllToolsValuesNames
 import re
 from app.models.relational.allgroups import (
@@ -16,8 +17,43 @@ from app.models.relational.allgroups import (
 )
 import uuid
 from flask import current_app
+from app import db
 
 logger = logging.getLogger(__name__)
+
+def ensure_db_directory_exists():
+    """Ensure the directory for the database file exists."""
+    db_path = current_app.config['SQLALCHEMY_DATABASE_URI'].replace('sqlite:///', '')
+    db_dir = os.path.dirname(db_path)
+    if not os.path.exists(db_dir):
+        os.makedirs(db_dir)
+        logger.info(f"Created directory for database: {db_dir}")
+
+def create_db_tables():
+    """Create database tables if they don't exist."""
+    try:
+        engine = create_engine(current_app.config['SQLALCHEMY_DATABASE_URI'])
+        db.session = scoped_session(sessionmaker(bind=engine))
+        
+        inspector = inspect(engine)
+        tables_to_create = [
+            AllTools.__table__,
+            AllToolsValues.__table__,
+            AllToolsValuesNames.__table__,
+            AllGroups.__table__,
+            AllGroupsValues.__table__,
+            AllGroupsValuesNames.__table__
+        ]
+        
+        for table in tables_to_create:
+            if not inspector.has_table(table.name):
+                logger.info(f"Creating table: {table.name}")
+                table.create(engine)
+        
+        logger.info("All necessary tables have been created.")
+    except Exception as e:
+        logger.error(f"Error creating database tables: {str(e)}")
+        raise
 
 
 def load_json_file(file_path: str) -> List[Dict[str, Any]]:
@@ -226,28 +262,14 @@ def update_databases() -> None:
     Update the AllTools and AllGroups databases with the latest data from the local JSON files.
     """
     with current_app.app_context():
+        ensure_db_directory_exists()
+        create_db_tables()
+
         engine = create_engine(current_app.config["SQLALCHEMY_DATABASE_URI"])
         Session = sessionmaker(bind=engine)
         session = Session()
 
         try:
-            # Check if tables exist and create them if they don't
-            inspector = inspect(engine)
-            tables_to_create = [
-                AllTools.__table__,
-                AllToolsValues.__table__,
-                AllToolsValuesNames.__table__,
-                AllGroups.__table__,
-                AllGroupsValues.__table__,
-                AllGroupsValuesNames.__table__
-            ]
-            
-            for table in tables_to_create:
-                if not inspector.has_table(table.name):
-                    logger.error(f"Table {table.name} does not exist. Creating it now.")
-                    table.create(engine)
-                    logger.info(f"Table {table.name} created successfully.")
-
             # Update AllTools
             tools_data = load_json_file(
                 "app/static/json/Threat Group Card - All tools.json"
