@@ -25,4 +25,5 @@ __all__ = [
     "AllGroupsValues",
     "AllGroupsValuesNames",
     "Rollup",
+    "ContentTag",
 ]
