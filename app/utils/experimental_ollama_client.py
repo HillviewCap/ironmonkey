@@ -13,7 +13,9 @@ logger = setup_logger('experimental_ollama_api', 'experimental_ollama_api.log')
 load_dotenv()
 
 class ExperimentalOllamaAPI:
-    def __init__(self):
+    def __init__(self, app_root_path, debug_mode):
+        self.app_root_path = app_root_path
+        self.debug_mode = debug_mode
         self.base_url = os.getenv("OLLAMA_BASE_URL")
         if not self.base_url.startswith("http://") and not self.base_url.startswith("https://"):
             self.base_url = "http://" + self.base_url
@@ -30,12 +32,13 @@ class ExperimentalOllamaAPI:
 
     def load_prompts(self):
         if self.prompts is None:
-            prompts_path = os.path.join(current_app.root_path, 'static', 'yaml', 'experimental_prompts.yaml')
+            prompts_path = os.path.join(self.app_root_path, 'static', 'yaml', 'experimental_prompts.yaml')
             with open(prompts_path, "r") as file:
                 self.prompts = yaml.safe_load(file)
         return self.prompts
 
     async def _generate_json_with_retry(self, prompt_type: str, article: str, max_retries: int = 3) -> dict:
+        logger.debug("Starting _generate_json_with_retry")
         prompts = self.load_prompts()
         prompt_data = prompts.get(prompt_type, {})
         system_prompt = prompt_data.get("system_prompt", "")
@@ -45,9 +48,9 @@ class ExperimentalOllamaAPI:
 
         for attempt in range(max_retries):
             try:
-                output = await loop.run_in_executor(None, self.llm, full_prompt)
+                output = await loop.run_in_executor(None, partial(self.llm.generate, full_prompt))
 
-                if current_app.debug:
+                if self.debug_mode:
                     logger.debug(f"Generated response (attempt {attempt + 1}): {output}")
 
                 # Use dirtyjson to parse the entire output
@@ -122,7 +125,7 @@ class ExperimentalOllamaAPI:
             try:
                 json_response = json.loads(response)
                 if json_response.get('status') == 'ok':
-                    if current_app.debug:
+                    if self.debug_mode:
                         logger.info(f"Successfully connected to Ollama API at {self.base_url} with model: {self.model}")
                     return True
                 return False

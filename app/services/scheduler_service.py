@@ -1,7 +1,7 @@
 import asyncio
 import os
 from datetime import datetime
-from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.executors.pool import ThreadPoolExecutor
 from app.models.relational import ParsedContent, RSSFeed
 from app.services.feed_parser_service import fetch_and_parse_feed_sync
@@ -27,7 +27,7 @@ class SchedulerService:
         executors = {
             'default': ThreadPoolExecutor(max_workers=10)  # Adjust max_workers as needed
         }
-        self.scheduler = BackgroundScheduler(executors=executors)
+        self.scheduler = AsyncIOScheduler()
         self.is_running = False
 
     def job_with_app_context(self, func):
@@ -195,10 +195,10 @@ class SchedulerService:
             scheduler_logger.info(
                 f"Finished processing {processed_feeds}/{total_feeds} RSS feeds, added {new_articles_count} new articles"
             )
-        asyncio.run(self._start_check_empty_summaries_async())
+        asyncio.create_task(self._start_check_empty_summaries_async())
 
     def start_check_empty_summaries(self):
-        asyncio.run(self._start_check_empty_summaries_async())
+        asyncio.create_task(self._start_check_empty_summaries_async())
 
     async def _start_check_empty_summaries_async(self):
         with self.app.app_context():
