@@ -218,7 +218,7 @@ class SchedulerService:
                     with DBConnectionManager.get_session() as session:
                         content = session.query(ParsedContent).get(content_id)
                         if content:
-                            success = await summary_service.enhance_summary(content.id.hex)
+                            success = summary_service.enhance_summary_sync(content.id.hex)
                             if success:
                                 processed_count += 1
                             else:
