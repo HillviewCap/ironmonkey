@@ -195,10 +195,12 @@ class SchedulerService:
             scheduler_logger.info(
                 f"Finished processing {processed_feeds}/{total_feeds} RSS feeds, added {new_articles_count} new articles"
             )
-        asyncio.run(self._start_check_empty_summaries_async())
+        loop = asyncio.get_event_loop()
+        loop.create_task(self._start_check_empty_summaries_async())
 
     def start_check_empty_summaries(self):
-        asyncio.run(self._start_check_empty_summaries_async())
+        loop = asyncio.get_event_loop()
+        loop.create_task(self._start_check_empty_summaries_async())
 
     async def _start_check_empty_summaries_async(self):
         with self.app.app_context():
