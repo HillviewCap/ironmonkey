@@ -50,6 +50,9 @@ class SummaryService:
 
     _semaphore = asyncio.Semaphore(5)  # Adjust the number as needed
 
+    def enhance_summary_sync(self, content_id: str) -> bool:
+        return asyncio.run(self.enhance_summary(content_id))
+
     async def enhance_summary(self, content_id: str) -> bool:
         async with self._semaphore:
             logger.info(f"Processing record {content_id}")
