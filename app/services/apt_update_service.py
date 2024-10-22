@@ -202,6 +202,7 @@ def update_alltools(session: Session, data: Union[List[Dict[str, Any]], Dict[str
 import json
 import uuid
 from uuid import UUID
+from typing import Optional
 
 def stringify_field(field_data):
     if isinstance(field_data, list):
@@ -211,6 +212,13 @@ def stringify_field(field_data):
     else:
         return ""
 
+def get_valid_uuid(uuid_str: Optional[str]) -> UUID:
+    try:
+        return UUID(str(uuid_str))
+    except (ValueError, TypeError, AttributeError):
+        logger.error(f"Invalid or missing UUID: {uuid_str}. Generating a new UUID.")
+        return uuid.uuid4()
+
 def update_allgroups(session: Session, data: Union[List[Dict[str, Any]], Dict[str, Any]]) -> None:
     if isinstance(data, dict):
         data = [data]
@@ -219,7 +227,7 @@ def update_allgroups(session: Session, data: Union[List[Dict[str, Any]], Dict[st
         try:
             logger.debug(f"Processing group: {group.get('name', 'Unknown')}")
 
-            group_uuid = UUID(str(group["uuid"]))
+            group_uuid = get_valid_uuid(group.get("uuid"))
 
             # Fetch or create the AllGroups object
             db_group = session.query(AllGroups).filter(AllGroups.uuid == group_uuid).first()
@@ -239,7 +247,7 @@ def update_allgroups(session: Session, data: Union[List[Dict[str, Any]], Dict[st
 
             # Process AllGroupsValues
             for value in group.get("values", []):
-                value_uuid = UUID(str(value["uuid"]))
+                value_uuid = get_valid_uuid(value.get("uuid"))
                 db_value = session.query(AllGroupsValues).filter(AllGroupsValues.uuid == value_uuid).first()
                 if not db_value:
                     db_value = AllGroupsValues(
