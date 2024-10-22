@@ -15,6 +15,7 @@ import json
 from typing import Optional
 from uuid import UUID
 from app.utils.experimental_ollama_client import ExperimentalOllamaAPI
+from flask import current_app
 
 logger = setup_logger('summary_service', 'summary_service.log')
 
