@@ -1,6 +1,6 @@
 import json
 from flask import render_template, abort, jsonify, request, current_app
-from app.utils.auto_tagger import tag_content
+from app.utils.auto_tagger import tag_text_field
 from datetime import datetime, time
 from .services import ParsedContentService
 from . import bp

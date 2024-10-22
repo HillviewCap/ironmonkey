@@ -43,18 +43,19 @@ class AllGroupsValues(db.Model):
     last_card_change = Column(String)
     motivation = Column(Text)
     first_seen = Column(String)
+    last_seen = Column(String)
     observed_sectors = Column(Text)
     observed_countries = Column(Text)
     tools = Column(Text)
-    operations = Column(Text)
     sponsor = Column(Text)
-    counter_operations = Column(Text)
     mitre_attack = Column(Text)
     playbook = Column(Text)
     allgroups_uuid = Column(UUID(as_uuid=True), ForeignKey('allgroups.uuid'))
 
     allgroup: Mapped["AllGroups"] = relationship("AllGroups", back_populates="values")
     names: Mapped[List["AllGroupsValuesNames"]] = relationship("AllGroupsValuesNames", back_populates="allgroups_value")
+    operations: Mapped[List["AllGroupsOperations"]] = relationship("AllGroupsOperations", back_populates="allgroups_value")
+    counter_operations: Mapped[List["AllGroupsCounterOperations"]] = relationship("AllGroupsCounterOperations", back_populates="allgroups_value")
 
     __table_args__ = (Index('idx_allgroups_values_uuid', uuid),)
 
@@ -70,3 +71,29 @@ class AllGroupsValuesNames(db.Model):
     allgroups_values_uuid = Column(UUID(as_uuid=True), ForeignKey('allgroups_values.uuid'))
 
     allgroups_value: Mapped["AllGroupsValues"] = relationship("AllGroupsValues", back_populates="names")
+
+class AllGroupsOperations(db.Model):
+    """
+    Represents the AllGroupsOperations table in the database.
+    """
+    __tablename__ = 'allgroups_operations'
+
+    uuid = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    date = Column(String)
+    activity = Column(Text)
+    allgroups_values_uuid = Column(UUID(as_uuid=True), ForeignKey('allgroups_values.uuid'))
+
+    allgroups_value: Mapped["AllGroupsValues"] = relationship("AllGroupsValues", back_populates="operations")
+
+class AllGroupsCounterOperations(db.Model):
+    """
+    Represents the AllGroupsCounterOperations table in the database.
+    """
+    __tablename__ = 'allgroups_counter_operations'
+
+    uuid = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    date = Column(String)
+    activity = Column(Text)
+    allgroups_values_uuid = Column(UUID(as_uuid=True), ForeignKey('allgroups_values.uuid'))
+
+    allgroups_value: Mapped["AllGroupsValues"] = relationship("AllGroupsValues", back_populates="counter_operations")

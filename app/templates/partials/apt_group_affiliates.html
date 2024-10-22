@@ -3,7 +3,7 @@
     <h2 class="text-2xl font-semibold mb-2">Affiliate Groups:</h2>
     <ul class="list-disc list-inside">
         {% for affiliate in affiliate_groups %}
-        <li><a href="{{ url_for('apt.apt_group_detail', group_uuid=affiliate.uuid) }}" class="text-blue-500 hover:underline">{{ affiliate.actor }}</a></li>
+        <li><a href="{{ url_for('apt.apt_group_detail', group_uuid=affiliate.uuid) }}" class="text-blue-500 hover:underline">{{ affiliate.actor or 'Unknown Actor' }}</a></li>
         {% endfor %}
     </ul>
 </div>

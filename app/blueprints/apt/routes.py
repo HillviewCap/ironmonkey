@@ -7,6 +7,7 @@ from app.extensions import db
 from sqlalchemy import or_
 import re
 from datetime import datetime
+import dateutil.parser
 
 bp = Blueprint('apt', __name__)
 
@@ -41,7 +42,7 @@ def apt_group_detail(group_uuid):
     
     # Extract affiliate group names from description
     affiliate_pattern = r'\{\{([^}]+)\}\}'
-    affiliate_matches = re.findall(affiliate_pattern, group.description)
+    affiliate_matches = re.findall(affiliate_pattern, group.description or '')
     
     affiliate_groups = []
     for match in affiliate_matches:
@@ -52,6 +53,16 @@ def apt_group_detail(group_uuid):
             ).first()
             if affiliate_group:
                 affiliate_groups.append(affiliate_group)
+    
+    # Ensure all attributes are available, even if they're None
+    attributes = [
+        'actor', 'country', 'description', 'motivation', 'first_seen',
+        'observed_sectors', 'observed_countries', 'tools', 'operations',
+        'sponsor', 'counter_operations', 'mitre_attack', 'playbook'
+    ]
+    for attr in attributes:
+        if not hasattr(group, attr):
+            setattr(group, attr, None)
     
     return render_template('apt-group-detail.html', group=group, affiliate_groups=affiliate_groups)
 
@@ -130,7 +141,14 @@ def edit_apt_group(group_uuid):
         form.observed_countries.data = (group.observed_countries or '').split(', ')
         form.tools.data = (group.tools or '').split(', ')
         if group.first_seen:
-            form.first_seen.data = datetime.strptime(group.first_seen, '%Y-%m-%d')
+            try:
+                # Try to parse the date with multiple formats
+                parsed_date = dateutil.parser.parse(group.first_seen)
+                form.first_seen.data = parsed_date.date()
+            except ValueError:
+                # If parsing fails, set to None and flash a warning
+                form.first_seen.data = None
+                flash(f"Warning: Could not parse the date '{group.first_seen}'. Please update it manually.", 'warning')
     
     if form.validate_on_submit():
         group.actor = form.actor.data

@@ -7,49 +7,53 @@ from app.models.relational import ParsedContent, RSSFeed
 from app.services.feed_parser_service import fetch_and_parse_feed_sync
 from app.services.summary_service import SummaryService
 from app.services.news_rollup_service import NewsRollupService
+from app.services.mongodb_sync_service import MongoDBSyncService
 from flask import current_app
 from app.utils.db_connection_manager import DBConnectionManager
 from logging import getLogger
 from app.utils.auto_tagger import tag_untagged_content
 from app.utils.threat_group_cards_updater import update_threat_group_cards
-from pymongo import MongoClient
 from app.models.relational.parsed_content import ParsedContent
-import json
+from app.extensions import db
 
 logger = getLogger(__name__)
 scheduler_logger = getLogger("scheduler")
 
 
 class SchedulerService:
-    _instance = None
+    def __init__(self, app):
+        self.app = app
+        self.config = app.config
+        executors = {
+            'default': ThreadPoolExecutor(max_workers=10)  # Adjust max_workers as needed
+        }
+        self.scheduler = BackgroundScheduler(executors=executors)
+        self.is_running = False
 
-    def __new__(cls, app):
-        if cls._instance is None:
-            cls._instance = super(SchedulerService, cls).__new__(cls)
-            cls._instance.app = app
-            executors = {
-                'default': ThreadPoolExecutor(max_workers=5)  # Adjust max_workers as needed
-            }
-            cls._instance.scheduler = BackgroundScheduler(executors=executors)
-            cls._instance.is_running = False
-        return cls._instance
+    def job_with_app_context(self, func):
+        def wrapper(*args, **kwargs):
+            with self.app.app_context():
+                return func(*args, **kwargs)
+        return wrapper
 
     def setup_scheduler(self):
         if self.is_running:
             logger.warning("Scheduler is already running. Skipping setup.")
             return
 
-        rss_check_interval = int(os.getenv("RSS_CHECK_INTERVAL", 30))
-        summary_check_interval = int(os.getenv("SUMMARY_CHECK_INTERVAL", 31))
-        auto_tag_interval = int(os.getenv("AUTO_TAG_INTERVAL", 60))  # Default to 60 minutes if not set
+        config = self.app.config
+        rss_check_interval = config['RSS_CHECK_INTERVAL']
+        summary_check_interval = config['SUMMARY_CHECK_INTERVAL']
+        summary_api_choice = config['SUMMARY_API_CHOICE'].lower()
+        auto_tag_interval = config['AUTO_TAG_INTERVAL']
+        sync_interval = config['PARSED_CONTENT_SYNC_INTERVAL']
 
         self.scheduler.add_job(
-            func=self.check_and_process_rss_feeds,
+            func=self.job_with_app_context(self.check_and_process_rss_feeds),
             trigger="interval",
             minutes=rss_check_interval,
         )
 
-        summary_api_choice = os.getenv("SUMMARY_API_CHOICE", "ollama").lower()
         if summary_api_choice == "ollama":
             self.scheduler.add_job(
                 func=self.start_check_empty_summaries,
@@ -60,7 +64,6 @@ class SchedulerService:
                 f"Scheduler configured with Ollama API for summaries, check interval: {summary_check_interval} minutes"
             )
         elif summary_api_choice == "groq":
-            # Add Groq-specific job here if needed
             logger.info(
                 "Scheduler configured with Groq API for summaries, no automatic summary generation scheduled"
             )
@@ -91,7 +94,7 @@ class SchedulerService:
 
         # Add the new auto-tagging job
         self.scheduler.add_job(
-            func=self.auto_tag_untagged_content,
+            func=self.job_with_app_context(self.auto_tag_untagged_content),
             trigger="interval",
             minutes=auto_tag_interval,
         )
@@ -99,7 +102,7 @@ class SchedulerService:
 
         # Schedule the update_threat_group_cards function to run every 12 hours
         self.scheduler.add_job(
-            func=self.update_threat_group_cards_job,
+            func=self.job_with_app_context(self.update_threat_group_cards_job),
             trigger='interval',
             hours=12,  # Adjust the interval as required
             id='update_threat_group_cards_job',
@@ -107,157 +110,91 @@ class SchedulerService:
         )
         logger.info("Scheduled job added: update_threat_group_cards_job")
 
-        # Define the synchronization interval in minutes (default to 60 if not set)
-        sync_interval = int(os.getenv("PARSED_CONTENT_SYNC_INTERVAL", 60))
-
-        # Schedule the sync_parsed_content_to_mongodb job
         self.scheduler.add_job(
-            func=self.sync_parsed_content_to_mongodb,
+            func=self.job_with_app_context(MongoDBSyncService.sync_parsed_content_to_mongodb),
             trigger="interval",
             minutes=sync_interval,
             id='sync_parsed_content_to_mongodb',
             replace_existing=True
         )
+        
+        self.scheduler.add_job(
+            func=self.job_with_app_context(MongoDBSyncService.sync_alltools_to_mongodb),
+            trigger="interval",
+            minutes=sync_interval,
+            id='sync_alltools_to_mongodb',
+            replace_existing=True
+        )
+        
+        self.scheduler.add_job(
+            func=self.job_with_app_context(MongoDBSyncService.sync_allgroups_to_mongodb),
+            trigger="interval",
+            minutes=sync_interval,
+            id='sync_allgroups_to_mongodb',
+            replace_existing=True
+        )
 
-        logger.info(f"Scheduled job 'sync_parsed_content_to_mongodb' to run every {sync_interval} minutes.")
+        logger.info(f"Scheduled MongoDB sync jobs to run every {sync_interval} minutes.")
         self.scheduler.start()
         self.is_running = True
         logger.info(
             f"Scheduler started successfully with RSS check interval: {rss_check_interval} minutes"
         )
 
-    def sync_parsed_content_to_mongodb(self):
-        """Synchronize parsed_content table to MongoDB."""
-        with self.app.app_context():
-            try:
-                # Retrieve MongoDB credentials from environment variables
-                mongo_username = os.getenv('MONGO_USERNAME', 'ironmonkey')
-                mongo_password = os.getenv('MONGO_PASSWORD', 'the')
-                mongo_host = os.getenv('MONGO_HOST', 'localhost')
-                mongo_port = os.getenv('MONGO_PORT', '27017')
-                mongo_db_name = os.getenv('MONGO_DB_NAME', 'threats_db')
-
-                # Construct the MongoDB URI
-                mongo_uri = f"mongodb://{mongo_username}:{mongo_password}@{mongo_host}:{mongo_port}/"
-
-                # Establish connection to MongoDB
-                mongo_client = MongoClient(mongo_uri)
-                mongo_db = mongo_client[mongo_db_name]
-                mongo_collection = mongo_db['parsed_content']
-
-                # Define a collection for sync metadata
-                sync_meta_collection = mongo_db['sync_metadata']
-
-                # Initialize last_sync_time to None
-                last_sync_time = None
-
-                # Load last sync time from MongoDB
-                sync_meta = sync_meta_collection.find_one({'_id': 'last_sync_time'})
-                if sync_meta and 'timestamp' in sync_meta:
-                    last_sync_time = sync_meta['timestamp']
-
-                # Access the parsed_content data
-                with DBConnectionManager.get_session() as session:
-                    query = session.query(ParsedContent)
-                    if last_sync_time is not None:
-                        query = query.filter(ParsedContent.created_at > last_sync_time)
-
-                    parsed_contents = query.all()
-
-                    # Prepare and upsert data
-                    for content in parsed_contents:
-                        document = {
-                            '_id': str(content.id),
-                            'title': content.title,
-                            'url': content.url,
-                            'description': content.description,
-                            'content': content.content,
-                            'summary': content.summary,
-                            'feed_id': str(content.feed_id),
-                            'created_at': content.created_at,
-                            'pub_date': content.pub_date,
-                            'creator': content.creator,
-                            'art_hash': content.art_hash,
-                        }
-
-                        # Upsert the document into MongoDB
-                        mongo_collection.update_one(
-                            {'_id': document['_id']},
-                            {'$set': document},
-                            upsert=True
-                        )
-
-                    # Update last sync time in MongoDB
-                    if parsed_contents:
-                        last_synced_time = parsed_contents[-1].created_at
-                        sync_meta_collection.update_one(
-                            {'_id': 'last_sync_time'},
-                            {'$set': {'timestamp': last_synced_time}},
-                            upsert=True
-                        )
-                        logger.info(f"Incrementally synced {len(parsed_contents)} parsed_content records to MongoDB.")
-                    else:
-                        logger.info("No new records to sync.")
-
-                    logger.info(f"Incrementally synced {len(parsed_contents)} parsed_content records to MongoDB.")
-
-            except Exception as e:
-                logger.error(f"Error syncing parsed_content to MongoDB: {str(e)}")
-            finally:
-                # Close the MongoDB connection
-                mongo_client.close()
 
     def check_and_process_rss_feeds(self):
         with self.app.app_context():
-            with DBConnectionManager.get_session() as session:
-                total_feeds = session.query(RSSFeed).count()
-                new_articles_count = 0
-                processed_feeds = 0
+            from app.models.relational.rss_feed import RSSFeed
+            from app.services.feed_parser_service import fetch_and_parse_feed_sync
+            
+            total_feeds = db.session.query(RSSFeed).count()
+            new_articles_count = 0
+            processed_feeds = 0
 
-                scheduler_logger.info(f"Starting to process {total_feeds} RSS feeds")
+            scheduler_logger.info(f"Starting to process {total_feeds} RSS feeds")
 
-                feed_ids = [feed.id for feed in session.query(RSSFeed).all()]
+            feed_ids = [feed.id for feed in db.session.query(RSSFeed).all()]
 
-                for feed_id in feed_ids:
-                    try:
-                        feed = session.query(RSSFeed).get(feed_id)
-                        if feed:
-                            scheduler_logger.info(f"Processing feed: {feed.url}")
-                            new_articles = fetch_and_parse_feed_sync(feed_id)
-                            if new_articles is not None:
-                                new_articles_count += new_articles
-                                # Query for the feed again to ensure we have an attached instance
-                                feed = session.query(RSSFeed).get(feed_id)
-                                if feed:
-                                    scheduler_logger.info(
-                                        f"Added {new_articles} new articles from feed: {feed.url}"
-                                    )
-                                else:
-                                    scheduler_logger.warning(
-                                        f"Feed with id {feed_id} not found after processing"
-                                    )
+            for feed_id in feed_ids:
+                try:
+                    feed = db.session.query(RSSFeed).get(feed_id)
+                    if feed:
+                        scheduler_logger.info(f"Processing feed: {feed.url}")
+                        new_articles = fetch_and_parse_feed_sync(feed_id)
+                        if new_articles is not None:
+                            new_articles_count += new_articles
+                            # Query for the feed again to ensure we have an attached instance
+                            feed = db.session.query(RSSFeed).get(feed_id)
+                            if feed:
+                                scheduler_logger.info(
+                                    f"Added {new_articles} new articles from feed: {feed.url}"
+                                )
                             else:
                                 scheduler_logger.warning(
-                                    f"fetch_and_parse_feed returned None for feed {feed.url}"
+                                    f"Feed with id {feed_id} not found after processing"
                                 )
-                            processed_feeds += 1
-                            scheduler_logger.info(
-                                f"Processed {processed_feeds}/{total_feeds} feeds"
-                            )
                         else:
                             scheduler_logger.warning(
-                                f"Feed with id {feed_id} not found"
+                                f"fetch_and_parse_feed returned None for feed {feed.url}"
                             )
-                    except Exception as e:
-                        scheduler_logger.error(
-                            f"Error processing feed {feed_id}: {str(e)}", exc_info=True
+                        processed_feeds += 1
+                        scheduler_logger.info(
+                            f"Processed {processed_feeds}/{total_feeds} feeds"
                         )
+                    else:
+                        scheduler_logger.warning(
+                            f"Feed with id {feed_id} not found"
+                        )
+                except Exception as e:
+                    scheduler_logger.error(
+                        f"Error processing feed {feed_id}: {str(e)}", exc_info=True
+                    )
 
-                    session.commit()
+                db.session.commit()
 
-                scheduler_logger.info(
-                    f"Finished processing {processed_feeds}/{total_feeds} RSS feeds, added {new_articles_count} new articles"
-                )
+            scheduler_logger.info(
+                f"Finished processing {processed_feeds}/{total_feeds} RSS feeds, added {new_articles_count} new articles"
+            )
         asyncio.run(self._start_check_empty_summaries_async())
 
     def start_check_empty_summaries(self):
@@ -318,7 +255,7 @@ class SchedulerService:
                 logger.error(f"Error creating midday rollup: {str(e)}")
 
     def create_end_of_day_rollup(self):
-        with self.app.app_context():
+        with current_app.app_context():
             try:
                 asyncio.run(NewsRollupService().create_and_store_rollup("end_of_day"))
                 logger.info("End of day rollup created successfully")

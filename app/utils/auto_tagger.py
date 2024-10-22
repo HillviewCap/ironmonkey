@@ -1,157 +1,322 @@
+import os
+from pymongo import MongoClient
 import spacy
-from app.models.relational.parsed_content import ParsedContent
-from app.models.relational.content_tag import ContentTag
-import uuid
-from sqlalchemy import exists
-from app.models.relational.allgroups import AllGroupsValues
-from app.models.relational.alltools import AllToolsValuesNames
-from app.extensions import db
+from spacy.pipeline import EntityRuler
+import logging
 from flask import current_app
+from app.utils.mongodb_connection import get_mongo_client
+from app.utils.logging_config import setup_logger
 
-nlp = spacy.load("en_core_web_sm")
+# Spacy setup
+nlp = spacy.load("en_core_web_lg")
+ruler = nlp.add_pipe("entity_ruler", before="ner")
 
-def get_entities():
-    actors = {actor.actor.lower(): (str(actor.uuid), 'actor') for actor in AllGroupsValues.query.all()}
-    tools = {tool.name.lower(): (str(tool.uuid), 'tool') for tool in AllToolsValuesNames.query.all()}
-    return {**actors, **tools}
+# Set up a dedicated logger for auto_tagger
+logger = setup_logger('auto_tagger', 'auto_tagger.log', level=logging.DEBUG)
 
-def tag_content(content):
-
-    if isinstance(content, str):
-        # Process the content string
-        # Example tagging logic
-        doc = nlp(content)
-        tagged_content = []
-        for ent in doc.ents:
-            tagged_content.append({
+def tag_additional_entities(doc):
+    additional_tags = []
+    
+    for ent in doc.ents:
+        if ent.label_ in ["PERSON", "ORG", "PRODUCT", "GPE"]:
+            label = {
+                "PERSON": "NAME",
+                "ORG": "COMPANY",
+                "PRODUCT": "PRODUCT",
+                "GPE": "COUNTRY"
+            }.get(ent.label_, ent.label_)
+            
+            additional_tags.append({
                 'text': ent.text,
-                'label': ent.label_
+                'label': label,
+                'start_char': ent.start_char,
+                'end_char': ent.end_char
             })
-        return tagged_content
-    elif isinstance(content, (int, uuid.UUID)):
-        # Retrieve the ParsedContent object and process its content
-        parsed_content = ParsedContent.get_by_id(content)
-        if parsed_content:
-            entities = get_entities()
-            text_to_tag = f"{parsed_content.description or ''} {parsed_content.summary or ''}"
-            doc = nlp(text_to_tag)
+    
+    return additional_tags
 
-            new_tags = []    
-            for ent in doc.ents:        
-                lower_ent = ent.text.lower()
-                if lower_ent in entities:
-                    entity_id, entity_type = entities[lower_ent]
-                    # Check for existing tag
-                    existing_tag = ContentTag.query.filter_by(
-                        parsed_content_id=parsed_content.id,
-                        entity_type=entity_type,
-                        entity_id=uuid.UUID(entity_id),
-                        start_char=ent.start_char,                
-                        end_char=ent.end_char
-                    ).first()
-                    
-                    if existing_tag:
-                        continue  # Skip adding duplicate tag
-                    
-                    # No duplicate exists, create new tag
-                    new_tag = ContentTag(            
-                        id=uuid.uuid4(),
-                        parsed_content_id=parsed_content.id,
-                        entity_type=entity_type,
-                        entity_id=uuid.UUID(entity_id),
-                        entity_name=ent.text,
-                        start_char=ent.start_char,
-                        end_char=ent.end_char
-                    )
-                    new_tags.append(new_tag)
+def tag_text_field(text):
+    try:
+        doc = nlp(text)
+        tags = []
 
-            try:
-                db.session.add_all(new_tags)
-                db.session.commit()
-                return len(new_tags)
-            except Exception as e:
-                current_app.logger.error(f"Error tagging content {content}: {str(e)}")
-                db.session.rollback()
-                return 0
-    else:
-        current_app.logger.error(f"Invalid content type in tag_content: {type(content)}")
-        return content
+        for ent in doc.ents:
+            label = ent.label_
+            if label in ["PERSON", "ORG", "PRODUCT", "GPE", "GROUP_NAME", "TOOL_NAME"]:
+                # Map labels if necessary
+                label = {
+                    "PERSON": "NAME",
+                    "ORG": "COMPANY",
+                    "PRODUCT": "PRODUCT",
+                    "GPE": "COUNTRY"
+                }.get(label, label)
 
-def tag_all_content():
-    from app.models.relational.parsed_content import ParsedContent
+                tags.append({
+                    'text': ent.text,
+                    'label': label,
+                    'start_char': ent.start_char,
+                    'end_char': ent.end_char
+                })
 
-    total_tagged = 0
-    for content in ParsedContent.query.all():
-        total_tagged += tag_content(content.id)
-    current_app.logger.info(f"Completed tagging {total_tagged} content items")
+        logger.debug(f"Tagged text: '{text[:50]}...', Found tags: {tags}")
+        return tags
+    except Exception as e:
+        logger.error(f"Error in tag_text_field: {str(e)}")
+        logger.error(f"Traceback: {traceback.format_exc()}")
+        return []
 
-def get_tagged_content(content_id):
-    from app.models.relational.parsed_content import ParsedContent
-    content = ParsedContent.query.get(content_id)
-    if not content:
-        current_app.logger.warning(f"Content with id {content_id} not found")
-        return None
+# Remove the tag_content function as it's redundant with tag_text_field
 
-    from app.models.relational.content_tag import ContentTag
-    tags = ContentTag.query.filter_by(parsed_content_id=content_id).all()
-    sorted_tags = sorted(tags, key=lambda t: t.start_char)
+def process_and_update_documents():
+    try:
+        logger.info("Starting process_and_update_documents")
+        mongo_client = get_mongo_client()
+        db = mongo_client[current_app.config['MONGO_DB_NAME']]
+        parsed_content_collection = db['parsed_content']
+        allgroups_collection = db['allgroups']
+        alltools_collection = db['alltools']
 
-    description = content.description or ''
-    summary = content.summary or ''
+        # Load group names from the 'values.names' array in each document
+        group_names = []
+        for group in allgroups_collection.find({}, {'values.names.name': 1}):
+            values_array = group.get('values', [])
+            if not isinstance(values_array, list):
+                continue  # Skip if 'values' is not a list
+            for value in values_array:
+                names_list = value.get('names', [])
+                if not isinstance(names_list, list):
+                    continue  # Skip if 'names' is not a list
+                for name_entry in names_list:
+                    name = name_entry.get('name')
+                    if name:
+                        group_names.append(name)
 
-    tagged_description = _insert_tags(description, sorted_tags)
-    tagged_summary = _insert_tags(summary, sorted_tags)
+        # Extract tool names
+        tool_names = [item['name'] for item in alltools_collection.find({}, {'name': 1}) if 'name' in item]
 
-    return {
-        'id': str(content.id),
-        'title': content.title,
-        'description': tagged_description,
-        'summary': tagged_summary,
-        'link': content.link,
-        'published': content.published.isoformat() if content.published else None,
-        'feed_id': str(content.feed_id),
-        'tags': [tag.to_dict() for tag in tags]
-    }
+        # Remove duplicates and empty strings
+        group_names = list(set(filter(None, group_names)))
+        tool_names = list(set(filter(None, tool_names)))
 
-def _insert_tags(text, tags):
-    offset = 0
-    for tag in tags:
-        if tag.start_char < len(text):
-            start = tag.start_char + offset
-            end = tag.end_char + offset
-            link = f'<span class="tagged-entity" data-entity-type="{tag.entity_type}" data-entity-id="{tag.entity_id}" data-entity-name="{tag.entity_name}">{text[start:end]}</span>'
-            text = text[:start] + link + text[end:]
-            offset += len(link) - (end - start)
-    return text
+        logger.info(f"Loaded {len(group_names)} unique group names and {len(tool_names)} unique tool names")
+        logger.debug(f"Sample group names: {group_names[:5]}")
+        logger.debug(f"Sample tool names: {tool_names[:5]}")
 
-def tag_untagged_content(batch_size=1000):
-    from app.models.relational.parsed_content import ParsedContent
-    from app.models.relational.content_tag import ContentTag
+        # Create patterns for EntityRuler
+        patterns = []
+        if group_names:
+            patterns = [{"label": "GROUP_NAME", "pattern": name} for name in group_names]
+        if tool_names:
+            patterns += [{"label": "TOOL_NAME", "pattern": name} for name in tool_names]
 
-    with current_app.app_context():
-        total_checked = 0
-        total_tagged = 0
+        # Add patterns to EntityRuler
+        try:
+            ruler.add_patterns(patterns)
+        except Exception as e:
+            logger.error(f"Error adding patterns to EntityRuler: {str(e)}")
+
+        fields_to_tag = ['content', 'description', 'summary', 'title']
+
+        processed_count = 0
+        tagged_count = 0
+        for document in parsed_content_collection.find():
+            updates = {}
+            for field in fields_to_tag:
+                text = document.get(field)
+                if text:
+                    tags = tag_text_field(text)
+                    updates[f"{field}_tags"] = tags
+
+                    if any(tag['label'] in ['GROUP_NAME', 'TOOL_NAME'] for tag in tags):
+                        tagged_count += 1
+            if updates:
+                parsed_content_collection.update_one(
+                    {'_id': document['_id']},
+                    {'$set': updates}
+                )
+
+            processed_count += 1
+            if processed_count % 100 == 0:
+                logger.info(f"Processed {processed_count} documents, tagged {tagged_count} with GROUP_NAME or TOOL_NAME")
         
-        while True:
-            untagged_content = ParsedContent.query.filter(
-                ~exists().where(ContentTag.parsed_content_id == ParsedContent.id)
-            ).limit(batch_size).all()
+        logger.info(f"Completed process_and_update_documents. Processed {processed_count} documents, tagged {tagged_count} with GROUP_NAME or TOOL_NAME")
+    except Exception as e:
+        logger.exception(f"An error occurred in process_and_update_documents: {e}")
+    finally:
+        mongo_client.close()
 
-            if not untagged_content:
-                break  # No more untagged content
+import traceback
 
-            batch_checked = len(untagged_content)
-            batch_tagged = 0
+def tag_all_content(force_all=True):
+    """
+    Tags all content in the parsed_content collection.
+    If force_all is True, it re-tags all documents, otherwise it only tags untagged documents.
+    """
+    mongo_client = None
+    try:
+        logger.info(f"Starting tag_all_content with force_all={force_all}")
 
-            for content in untagged_content:
-                tags_added = tag_content(content.id)
-                if tags_added > 0:
-                    batch_tagged += 1
+        mongo_client = get_mongo_client()
+        db = mongo_client[current_app.config['MONGO_DB_NAME']]
+        parsed_content_collection = db['parsed_content']
 
-            total_checked += batch_checked
-            total_tagged += batch_tagged
+        # Load group and tool names
+        allgroups_collection = db['allgroups']
+        alltools_collection = db['alltools']
 
-            if batch_checked < batch_size:
-                break  # Processed all available untagged content
+        # Load group names from the 'values.names' array in each document
+        group_names = []
+        for group in allgroups_collection.find({}, {'values.names.name': 1}):
+            values_array = group.get('values', [])
+            if not isinstance(values_array, list):
+                continue  # Skip if 'values' is not a list
+            for value in values_array:
+                names_list = value.get('names', [])
+                if not isinstance(names_list, list):
+                    continue  # Skip if 'names' is not a list
+                for name_entry in names_list:
+                    name = name_entry.get('name')
+                    if name:
+                        group_names.append(name)
 
-        current_app.logger.info(f"Auto-tagging complete: Checked {total_checked} items, tagged {total_tagged} previously untagged content items")
+        # Remove duplicates and empty strings
+        group_names = list(set(filter(None, group_names)))
+
+        # Extract tool names
+        tool_names = [item['name'] for item in alltools_collection.find({}, {'name': 1}) if 'name' in item]
+
+        logger.info(f"Loaded {len(group_names)} unique group names and {len(tool_names)} unique tool names")
+        logger.debug(f"Sample group names: {group_names[:5]}")
+        logger.debug(f"Sample tool names: {tool_names[:5]}")
+
+        # Create patterns for EntityRuler
+        patterns = []
+        if group_names:
+            patterns.extend([{"label": "GROUP_NAME", "pattern": name} for name in group_names if name])
+        if tool_names:
+            patterns.extend([{"label": "TOOL_NAME", "pattern": name} for name in tool_names if name])
+
+        # Add patterns to EntityRuler
+        try:
+            ruler.add_patterns(patterns)
+        except Exception as e:
+            logger.error(f"Error adding patterns to EntityRuler: {str(e)}")
+
+        fields_to_tag = ['content', 'description', 'summary', 'title']
+
+        # Determine which documents to process
+        if force_all:
+            documents_to_process = parsed_content_collection.find()
+            logger.info("Processing all documents for tagging")
+        else:
+            # Find documents without tags
+            documents_to_process = parsed_content_collection.find({
+                "$or": [{f"{field}_tags": {"$exists": False}} for field in fields_to_tag]
+            })
+            logger.info("Processing only untagged documents")
+
+        processed_count = 0
+        tagged_count = 0
+        for document in documents_to_process:
+            try:
+                updates = {}
+                for field in fields_to_tag:
+                    text = document.get(field)
+                    if text:
+                        tags = tag_text_field(text)
+                        updates[f"{field}_tags"] = tags
+
+                        if any(tag['label'] in ['GROUP_NAME', 'TOOL_NAME'] for tag in tags):
+                            tagged_count += 1
+                if updates:
+                    parsed_content_collection.update_one(
+                        {'_id': document['_id']},
+                        {'$set': updates}
+                    )
+
+                processed_count += 1
+                if processed_count % 100 == 0:
+                    logger.info(f"Processed {processed_count} documents, tagged {tagged_count} with GROUP_NAME or TOOL_NAME")
+            except Exception as doc_error:
+                logger.error(f"Error processing document {document.get('_id', 'unknown')}: {str(doc_error)}")
+                logger.error(f"Document error traceback: {traceback.format_exc()}")
+                # Continue with the next document
+        
+        logger.info(f"Completed tag_all_content. Processed {processed_count} documents, tagged {tagged_count} with GROUP_NAME or TOOL_NAME")
+    except Exception as e:
+        logger.error(f"An error occurred in tag_all_content: {str(e)}")
+        logger.error(f"Traceback: {traceback.format_exc()}")
+        raise
+    finally:
+        if mongo_client:
+            mongo_client.close()
+        logger.info("tag_all_content function completed execution")
+
+def tag_untagged_content():
+    """
+    Tags untagged content in the parsed_content collection.
+    """
+    try:
+        mongo_client = get_mongo_client()
+        db = mongo_client[current_app.config['MONGO_DB_NAME']]
+        parsed_content_collection = db['parsed_content']
+
+        # Load group and tool names
+        allgroups_collection = db['allgroups']
+        alltools_collection = db['alltools']
+        group_names = [item['name'] for item in allgroups_collection.find({}, {'name': 1})]
+        tool_names = [item['name'] for item in alltools_collection.find({}, {'name': 1})]
+
+        # Create patterns for EntityRuler
+        patterns = []
+        if group_names:
+            patterns.extend([{"label": "GROUP_NAME", "pattern": name} for name in group_names])
+        if tool_names:
+            patterns.extend([{"label": "TOOL_NAME", "pattern": name} for name in tool_names])
+
+        # Add patterns to EntityRuler
+        try:
+            ruler.add_patterns(patterns)
+        except Exception as e:
+            logger.error(f"Error adding patterns to EntityRuler: {str(e)}")
+
+        fields_to_tag = ['content', 'description', 'summary', 'title']
+
+        # Find documents without tags
+        untagged_docs = parsed_content_collection.find({
+            "$or": [{f"{field}_tags": {"$exists": False}} for field in fields_to_tag]
+        })
+
+        for document in untagged_docs:
+            updates = {}
+            for field in fields_to_tag:
+                if f"{field}_tags" not in document:
+                    text = document.get(field)
+                    tags = tag_text_field(text) if text else []
+                    updates[f"{field}_tags"] = tags
+            if updates:
+                parsed_content_collection.update_one(
+                    {'_id': document['_id']},
+                    {'$set': updates}
+                )
+        
+        logger.info("Completed tagging untagged documents in parsed_content collection")
+    except Exception as e:
+        logger.error(f"An error occurred while tagging untagged content: {e}")
+    finally:
+        mongo_client.close()
+
+if __name__ == "__main__":
+    # This block will only run if the script is executed directly
+    from flask import Flask
+    from config import get_config
+
+    app = Flask(__name__)
+    app.config.from_object(get_config())
+
+    with app.app_context():
+
+        logger.info("Starting auto_tagger main execution")
+        tag_all_content()
+        logger.info("Finished auto_tagger main execution")
+        tag_all_content()

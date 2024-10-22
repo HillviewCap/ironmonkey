@@ -7,6 +7,8 @@ from .search_params import SearchParams
 from .awesome_threat_intel_blog import AwesomeThreatIntelBlog
 from .alltools import AllTools, AllToolsValues, AllToolsValuesNames
 from .allgroups import AllGroups, AllGroupsValues, AllGroupsValuesNames
+from .rollup import Rollup
+from .content_tag import ContentTag
 
 __all__ = [
     "db",
@@ -14,7 +16,6 @@ __all__ = [
     "RSSFeed",
     "ParsedContent",
     "Category",
-    "Threat",
     "SearchParams",
     "AwesomeThreatIntelBlog",
     "AllTools",
@@ -23,4 +24,6 @@ __all__ = [
     "AllGroups",
     "AllGroupsValues",
     "AllGroupsValuesNames",
+    "Rollup",
+    "ContentTag",
 ]
