@@ -112,6 +112,8 @@ class ExperimentalOllamaAPI:
                         merged_result[key] = value  # Overwrite or define custom logic
 
         return merged_result
+
+    async def check_connection(self) -> bool:
         try:
             test_prompt = "Respond with a JSON object containing the key 'status' and value 'ok'."
             response = await asyncio.get_event_loop().run_in_executor(
