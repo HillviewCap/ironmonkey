@@ -31,7 +31,9 @@ class SummaryService:
 
     def _initialize_api(self) -> ExperimentalOllamaAPI:
         if self.api is None:
-            self.api = ExperimentalOllamaAPI()
+            app_root_path = current_app.root_path
+            debug_mode = current_app.debug
+            self.api = ExperimentalOllamaAPI(app_root_path, debug_mode)
         return self.api
 
     async def generate_summary(self, content_id: str, text_to_summarize: str) -> Optional[str]:
@@ -45,7 +47,10 @@ class SummaryService:
     def enhance_summary_sync(self, content_id: str) -> bool:
         return asyncio.run(self.enhance_summary(content_id))
 
+    _semaphore = asyncio.Semaphore(5)  # Adjust the number as needed
+
     async def enhance_summary(self, content_id: str) -> bool:
+        async with self._semaphore:
         logger.info(f"Processing record {content_id}")
 
         # Validate UUID
