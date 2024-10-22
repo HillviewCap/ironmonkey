@@ -74,7 +74,44 @@ class ExperimentalOllamaAPI:
             logger.error(f"Error occurred while generating response: {exc}")
             raise RuntimeError(f"Error occurred while generating response: {exc}")
 
-    async def check_connection(self) -> bool:
+    async def generate_json_stream(self, prompt_type: str, article: str):
+        chunk_size = 4000  # Adjust based on your model's context window size and needs
+        chunks = [article[i:i+chunk_size] for i in range(0, len(article), chunk_size)]
+
+        results = []
+        for i, chunk in enumerate(chunks):
+            logger.debug(f"Processing chunk {i+1} of {len(chunks)}")
+            result = await self.generate_json(prompt_type, chunk)
+            results.append(result)
+
+        # Combine results from all chunks
+        merged_result = self.merge_results(results)
+        return merged_result
+
+    def merge_results(self, results):
+        merged_result = {}
+
+        for result in results:
+            for key, value in result.items():
+                if key not in merged_result:
+                    merged_result[key] = value
+                else:
+                    if isinstance(value, list):
+                        # Ensure merged_result[key] is a list
+                        if not isinstance(merged_result[key], list):
+                            merged_result[key] = [merged_result[key]] if merged_result[key] else []
+                        merged_result[key].extend(value)
+                    elif isinstance(value, dict):
+                        # Merge dictionaries (shallow merge)
+                        merged_result[key] = {**merged_result[key], **value}
+                    elif isinstance(value, str):
+                        # Concatenate strings with a space separator
+                        merged_result[key] = f"{merged_result[key]} {value}"
+                    else:
+                        # Handle other data types as needed
+                        merged_result[key] = value  # Overwrite or define custom logic
+
+        return merged_result
         try:
             test_prompt = "Respond with a JSON object containing the key 'status' and value 'ok'."
             response = await asyncio.get_event_loop().run_in_executor(
