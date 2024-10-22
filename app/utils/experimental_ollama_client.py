@@ -3,7 +3,7 @@ import yaml
 import asyncio
 import dirtyjson as json
 from dotenv import load_dotenv
-from langchain_community.llms import Ollama
+from langchain_community.llms.ollama import Ollama
 from app.utils.logging_config import setup_logger
 from functools import partial
 from flask import current_app
@@ -24,7 +24,7 @@ class ExperimentalOllamaAPI:
         if not self.model:
             logger.error("OLLAMA_MODEL must be set in the .env file")
             raise ValueError("OLLAMA_MODEL must be set in the .env file")
-        self.llm = Ollama(base_url=self.base_url, model=self.model, num_ctx=128000)
+        self.llm = Ollama(base_url=self.base_url, model=self.model, num_ctx=4096)
         self.prompts = None
         logger.info(f"Initialized ExperimentalOllamaAPI with base_url: {self.base_url} and model: {self.model}")
 
@@ -39,13 +39,13 @@ class ExperimentalOllamaAPI:
         prompts = self.load_prompts()
         prompt_data = prompts.get(prompt_type, {})
         system_prompt = prompt_data.get("system_prompt", "")
-        full_prompt = f"Human: {system_prompt}\n\nArticle: {article}\n\nRespond with a valid JSON object."
+        full_prompt = f"{system_prompt}\n\nArticle: {article}\n\nRespond with a valid JSON object."
+
+        loop = asyncio.get_event_loop()
 
         for attempt in range(max_retries):
             try:
-                output = await asyncio.get_event_loop().run_in_executor(
-                    None, partial(self.llm.invoke, full_prompt)
-                )
+                output = await loop.run_in_executor(None, self.llm, full_prompt)
 
                 if current_app.debug:
                     logger.debug(f"Generated response (attempt {attempt + 1}): {output}")
