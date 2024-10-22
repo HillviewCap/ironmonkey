@@ -1,4 +1,23 @@
+version: '3.8'
+
 services:
+  flask_frontend:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    ports:
+      - "8181:8181"
+    volumes:
+      - ../app:/app
+      - ../app/instance:/app/instance
+    environment:
+      - FLASK_ENV=production
+    depends_on:
+      - mongodb
+      - neo4j
+      - weaviate
+    restart: always
+
   weaviate:
     command:
       - --host
@@ -72,7 +91,7 @@ services:
     ports:
       - "11434:11434"
     volumes:
-      - ./ollama_models:/root/.ollama/models # Persist models
+      - ./ollama_models:/root/.ollama/models
     command: /bin/bash -c "/ollama_models/run_ollama.sh"
     deploy:
       resources:
@@ -85,25 +104,17 @@ services:
       test: ollama --version || exit 1
     restart: always
 
-  flask_frontend:
-    build:
-      context: ./flask_frontend
-      dockerfile: Dockerfile
-    ports:
-      - "5001:5000"
+  dozzle:
+    image: amir20/dozzle:latest
     volumes:
-      - ./flask_frontend:/app
-      - ../app/instance:/app/instance
-    depends_on:
-      - sync_service
-    environment:
-      - FLASK_ENV=development
-    restart: always
+      - /var/run/docker.sock:/var/run/docker.sock
+    ports:
+      - 8080:8080
 
 volumes:
   weaviate_data:
   mongodb_data:
-  ollama_models: # Persist Ollama models locally
+  ollama_models:
 
 secrets:
   neo4j_auth_file:

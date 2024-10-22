@@ -80,6 +80,18 @@ def create_app(config_name=None):
         'DATABASE_URL', f"sqlite:///{app.instance_path}/threats.db"
     )
 
+    # Update database configurations
+    app.config['MONGODB_SETTINGS'] = {
+        'host': f"mongodb://{os.getenv('MONGO_INITDB_ROOT_USERNAME')}:{os.getenv('MONGO_INITDB_ROOT_PASSWORD')}@mongodb:27017/{os.getenv('MONGO_INITDB_DATABASE')}",
+        'connect': False,
+    }
+
+    app.config['NEO4J_URI'] = "bolt://neo4j:7687"
+    app.config['NEO4J_USER'] = os.getenv('NEO4J_USER')
+    app.config['NEO4J_PASSWORD'] = os.getenv('NEO4J_PASSWORD')
+
+    app.config['WEAVIATE_URL'] = "http://weaviate:6578"
+
     # Ensure the instance folder exists
     os.makedirs(app.instance_path, exist_ok=True)
 
