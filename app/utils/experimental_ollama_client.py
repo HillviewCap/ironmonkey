@@ -24,7 +24,7 @@ class ExperimentalOllamaAPI:
         if not self.model:
             logger.error("OLLAMA_MODEL must be set in the .env file")
             raise ValueError("OLLAMA_MODEL must be set in the .env file")
-        self.llm = Ollama(base_url=self.base_url, model=self.model, num_ctx=8200)
+        self.llm = Ollama(base_url=self.base_url, model=self.model, num_ctx=128000)
         self.prompts = None
         logger.info(f"Initialized ExperimentalOllamaAPI with base_url: {self.base_url} and model: {self.model}")
 
