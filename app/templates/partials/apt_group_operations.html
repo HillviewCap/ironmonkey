@@ -9,7 +9,7 @@
             </tr>
         </thead>
         <tbody>
-            {% for operation in group.operations|json_loads %}
+            {% for operation in group.operations %}
             <tr>
                 <td class="border px-4 py-2">{{ operation.date }}</td>
                 <td class="border px-4 py-2">
