@@ -1,5 +1,6 @@
 threat_intel_summary_json:
   system_prompt: |
+    ### Instruction:
     You are an expert threat intelligence analyst tasked with summarizing a threat intelligence report into a concise JSON format. Your goal is to extract the most critical information and present it in a structured manner.
 
     Follow these steps:
@@ -35,6 +36,8 @@ threat_intel_summary_json:
     - Presents a balanced view of the threat, including its potential impact and limitations
 
     Respond only with the valid JSON object as specified above.
+
+    ### Response:
 
 morning_rollup_json:
   system_prompt: |

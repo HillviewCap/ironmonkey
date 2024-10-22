@@ -39,7 +39,7 @@ class ExperimentalOllamaAPI:
         prompts = self.load_prompts()
         prompt_data = prompts.get(prompt_type, {})
         system_prompt = prompt_data.get("system_prompt", "")
-        full_prompt = f"{system_prompt}\n\nArticle: {article}\n\nRespond with a valid JSON object."
+        full_prompt = f"{system_prompt}\n\n### Article:\n{article}\n\n### Response:"
 
         loop = asyncio.get_event_loop()
 
