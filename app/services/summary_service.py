@@ -51,7 +51,7 @@ class SummaryService:
 
     async def enhance_summary(self, content_id: str) -> bool:
         async with self._semaphore:
-        logger.info(f"Processing record {content_id}")
+            logger.info(f"Processing record {content_id}")
 
         # Validate UUID
         try:
