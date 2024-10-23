@@ -48,14 +48,18 @@ class ExperimentalOllamaAPI:
 
         for attempt in range(max_retries):
             try:
-                output = await loop.run_in_executor(None, partial(self.llm.generate, full_prompt))
+                # Wrap the full_prompt in a list to match the expected input type
+                output = await loop.run_in_executor(None, partial(self.llm.generate, [full_prompt]))
 
                 if self.debug_mode:
                     logger.debug(f"Generated response (attempt {attempt + 1}): {output}")
 
-                # Use dirtyjson to parse the entire output
+                # Extract the generated text from the output
+                generated_text = output.generations[0][0].text if output.generations else ""
+
+                # Use dirtyjson to parse the generated text
                 try:
-                    json_output = json.loads(output)
+                    json_output = json.loads(generated_text)
                     return json_output
                 except json.Error as e:
                     logger.warning(f"Failed to parse JSON (attempt {attempt + 1}): {e}")
