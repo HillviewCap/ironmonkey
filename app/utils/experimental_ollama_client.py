@@ -54,6 +54,28 @@ class ExperimentalOllamaAPI:
                 self.prompts = yaml.safe_load(file)
         return self.prompts
 
+    async def fix_json(self, malformed_json: str) -> dict:
+        fix_prompt = f"""
+        The following text is supposed to be a JSON object, but it may have syntax errors. 
+        Please fix any errors and return a valid JSON object. If you can't fix it, return an empty JSON object {{}}.
+        
+        Text to fix:
+        {malformed_json}
+        
+        Fixed JSON:
+        """
+        
+        loop = asyncio.get_event_loop()
+        output = await loop.run_in_executor(None, partial(self.llm.generate, [fix_prompt]))
+        
+        fixed_text = output.generations[0][0].text if output.generations else "{}"
+        
+        try:
+            return json.loads(fixed_text)
+        except json.Error as e:
+            logger.error(f"Failed to parse fixed JSON: {e}")
+            return {}
+
     @retry_with_exponential_backoff(max_retries=3, base_delay=1)
     async def _generate_json_with_retry(self, prompt_type: str, article: str) -> dict:
         logger.debug("Starting _generate_json_with_retry")
@@ -75,26 +97,25 @@ class ExperimentalOllamaAPI:
         if json_match:
             json_str = json_match.group(0)
             try:
-                json_output = json.loads(json_str)
-                return json_output
+                return json.loads(json_str)
             except json.Error as e:
-                logger.error(f"Failed to parse extracted JSON: {e}")
-                raise ValueError(f"Invalid JSON structure: {json_str}")
+                logger.warning(f"Failed to parse extracted JSON: {e}. Attempting to fix...")
+                return await self.fix_json(json_str)
         else:
-            logger.error("No JSON object found in the generated text")
-            raise ValueError("No JSON object found in the generated text")
+            logger.warning("No JSON object found in the generated text. Attempting to fix...")
+            return await self.fix_json(generated_text)
 
     async def generate_json(self, prompt_type: str, article: str) -> dict:
         """Generate a JSON response based on the prompt type and article."""
         try:
-            return await self._generate_json_with_retry(prompt_type, article)
-        except ValueError as ve:
-            logger.error(f"Error in JSON generation: {ve}")
-            # Return a default or partial JSON structure
-            return {"error": str(ve), "partial_content": True}
+            result = await self._generate_json_with_retry(prompt_type, article)
+            if not result:
+                logger.warning(f"Empty result for prompt type: {prompt_type}")
+                return {"error": "Empty result", "partial_content": True}
+            return result
         except Exception as exc:
             logger.error(f"Unexpected error occurred while generating response: {exc}")
-            raise RuntimeError(f"Unexpected error occurred while generating response: {exc}")
+            return {"error": str(exc), "partial_content": True}
 
     async def generate_json_stream(self, prompt_type: str, article: str):
         chunk_size = 4000  # Adjust based on your model's context window size and needs
