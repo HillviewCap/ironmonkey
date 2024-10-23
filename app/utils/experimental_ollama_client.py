@@ -58,6 +58,7 @@ class ExperimentalOllamaAPI:
         fix_prompt = f"""
         The following text is supposed to be a JSON object, but it may have syntax errors. 
         Please fix any errors and return a valid JSON object. If you can't fix it, return an empty JSON object {{}}.
+        Ensure your response starts and ends with curly braces {{}}.
         
         Text to fix:
         {malformed_json}
@@ -70,11 +71,16 @@ class ExperimentalOllamaAPI:
         
         fixed_text = output.generations[0][0].text if output.generations else "{}"
         
-        try:
-            return json.loads(fixed_text)
-        except json.Error as e:
-            logger.error(f"Failed to parse fixed JSON: {e}")
-            return {}
+        # Try to extract JSON from the fixed text
+        json_match = re.search(r'\{.*\}', fixed_text, re.DOTALL)
+        if json_match:
+            try:
+                return json.loads(json_match.group(0))
+            except json.Error as e:
+                logger.error(f"Failed to parse extracted JSON after fixing: {e}")
+        
+        logger.error(f"Could not extract valid JSON from LLM response: {fixed_text}")
+        return {}
 
     @retry_with_exponential_backoff(max_retries=3, base_delay=1)
     async def _generate_json_with_retry(self, prompt_type: str, article: str) -> dict:
@@ -102,7 +108,7 @@ class ExperimentalOllamaAPI:
                 logger.warning(f"Failed to parse extracted JSON: {e}. Attempting to fix...")
                 return await self.fix_json(json_str)
         else:
-            logger.warning("No JSON object found in the generated text. Attempting to fix...")
+            logger.warning(f"No JSON object found in the generated text. Full text: {generated_text}")
             return await self.fix_json(generated_text)
 
     async def generate_json(self, prompt_type: str, article: str) -> dict:
