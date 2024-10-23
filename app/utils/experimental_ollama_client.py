@@ -2,6 +2,7 @@ import os
 import yaml
 import asyncio
 import dirtyjson as json
+import re
 from dotenv import load_dotenv
 from langchain_community.llms.ollama import Ollama
 from app.utils.logging_config import setup_logger
@@ -69,20 +70,31 @@ class ExperimentalOllamaAPI:
 
         generated_text = output.generations[0][0].text if output.generations else ""
 
-        try:
-            json_output = json.loads(generated_text)
-            return json_output
-        except json.Error as e:
-            logger.error(f"Failed to parse JSON: {e}")
-            raise
+        # Attempt to extract JSON from the generated text
+        json_match = re.search(r'\{.*\}', generated_text, re.DOTALL)
+        if json_match:
+            json_str = json_match.group(0)
+            try:
+                json_output = json.loads(json_str)
+                return json_output
+            except json.Error as e:
+                logger.error(f"Failed to parse extracted JSON: {e}")
+                raise ValueError(f"Invalid JSON structure: {json_str}")
+        else:
+            logger.error("No JSON object found in the generated text")
+            raise ValueError("No JSON object found in the generated text")
 
     async def generate_json(self, prompt_type: str, article: str) -> dict:
         """Generate a JSON response based on the prompt type and article."""
         try:
             return await self._generate_json_with_retry(prompt_type, article)
+        except ValueError as ve:
+            logger.error(f"Error in JSON generation: {ve}")
+            # Return a default or partial JSON structure
+            return {"error": str(ve), "partial_content": True}
         except Exception as exc:
-            logger.error(f"Error occurred while generating response: {exc}")
-            raise RuntimeError(f"Error occurred while generating response: {exc}")
+            logger.error(f"Unexpected error occurred while generating response: {exc}")
+            raise RuntimeError(f"Unexpected error occurred while generating response: {exc}")
 
     async def generate_json_stream(self, prompt_type: str, article: str):
         chunk_size = 4000  # Adjust based on your model's context window size and needs
