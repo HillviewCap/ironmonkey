@@ -5,12 +5,28 @@ import dirtyjson as json
 from dotenv import load_dotenv
 from langchain_community.llms.ollama import Ollama
 from app.utils.logging_config import setup_logger
-from functools import partial
+from functools import partial, wraps
 from flask import current_app
 
 logger = setup_logger('experimental_ollama_api', 'experimental_ollama_api.log')
 
 load_dotenv()
+
+def retry_with_exponential_backoff(max_retries=3, base_delay=1):
+    def decorator(func):
+        @wraps(func)
+        async def wrapper(*args, **kwargs):
+            for attempt in range(max_retries):
+                try:
+                    return await func(*args, **kwargs)
+                except Exception as e:
+                    if attempt == max_retries - 1:
+                        raise
+                    delay = base_delay * (2 ** attempt)
+                    logger.warning(f"Error occurred: {str(e)}. Retrying in {delay:.2f} seconds. Attempt {attempt + 1}/{max_retries}")
+                    await asyncio.sleep(delay)
+        return wrapper
+    return decorator
 
 class ExperimentalOllamaAPI:
     def __init__(self, app_root_path, debug_mode):
@@ -37,7 +53,8 @@ class ExperimentalOllamaAPI:
                 self.prompts = yaml.safe_load(file)
         return self.prompts
 
-    async def _generate_json_with_retry(self, prompt_type: str, article: str, max_retries: int = 3) -> dict:
+    @retry_with_exponential_backoff(max_retries=3, base_delay=1)
+    async def _generate_json_with_retry(self, prompt_type: str, article: str) -> dict:
         logger.debug("Starting _generate_json_with_retry")
         prompts = self.load_prompts()
         prompt_data = prompts.get(prompt_type, {})
@@ -45,33 +62,19 @@ class ExperimentalOllamaAPI:
         full_prompt = f"{system_prompt}\n\n### Article:\n{article}\n\n### Response:"
 
         loop = asyncio.get_event_loop()
+        output = await loop.run_in_executor(None, partial(self.llm.generate, [full_prompt]))
 
-        for attempt in range(max_retries):
-            try:
-                # Wrap the full_prompt in a list to match the expected input type
-                output = await loop.run_in_executor(None, partial(self.llm.generate, [full_prompt]))
+        if self.debug_mode:
+            logger.debug(f"Generated response: {output}")
 
-                if self.debug_mode:
-                    logger.debug(f"Generated response (attempt {attempt + 1}): {output}")
+        generated_text = output.generations[0][0].text if output.generations else ""
 
-                # Extract the generated text from the output
-                generated_text = output.generations[0][0].text if output.generations else ""
-
-                # Use dirtyjson to parse the generated text
-                try:
-                    json_output = json.loads(generated_text)
-                    return json_output
-                except json.Error as e:
-                    logger.warning(f"Failed to parse JSON (attempt {attempt + 1}): {e}")
-
-                if attempt < max_retries - 1:
-                    await asyncio.sleep(1)  # Wait for 1 second before retrying
-            except Exception as exc:
-                logger.error(f"Error occurred while generating response (attempt {attempt + 1}): {exc}")
-                if attempt < max_retries - 1:
-                    await asyncio.sleep(1)  # Wait for 1 second before retrying
-
-        return {"error": "Failed to generate valid JSON after multiple attempts"}
+        try:
+            json_output = json.loads(generated_text)
+            return json_output
+        except json.Error as e:
+            logger.error(f"Failed to parse JSON: {e}")
+            raise
 
     async def generate_json(self, prompt_type: str, article: str) -> dict:
         """Generate a JSON response based on the prompt type and article."""
