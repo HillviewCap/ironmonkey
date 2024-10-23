@@ -195,12 +195,12 @@ class SchedulerService:
             scheduler_logger.info(
                 f"Finished processing {processed_feeds}/{total_feeds} RSS feeds, added {new_articles_count} new articles"
             )
-        asyncio.run(self._start_check_empty_summaries_async())
+        self.start_check_empty_summaries()
 
     def start_check_empty_summaries(self):
-        asyncio.run(self._start_check_empty_summaries_async())
+        self._start_check_empty_summaries()
 
-    async def _start_check_empty_summaries_async(self):
+    def _start_check_empty_summaries(self):
         with self.app.app_context():
             processed_count = 0
             summary_service = SummaryService()
@@ -218,7 +218,7 @@ class SchedulerService:
                     with DBConnectionManager.get_session() as session:
                         content = session.query(ParsedContent).get(content_id)
                         if content:
-                            success = await summary_service.enhance_summary(content.id.hex)
+                            success = summary_service.enhance_summary_sync(content.id.hex)
                             if success:
                                 processed_count += 1
                             else:
