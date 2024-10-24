@@ -2,6 +2,7 @@ import sqlite3
 import json
 import os
 from datetime import datetime
+import argparse
 
 def backup_schema(cursor, table):
     cursor.execute(f"SELECT sql FROM sqlite_master WHERE type='table' AND name='{table}'")
@@ -97,12 +98,18 @@ def restore_tables(backup_dir, target_db):
     conn.close()
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Backup or restore SQLite database")
+    parser.add_argument("--backup", action="store_true", help="Perform database backup")
+    parser.add_argument("--restore", action="store_true", help="Perform database restore")
+    args = parser.parse_args()
+
     source_db = "threats.db"
     backup_dir = "db_backup"
     target_db = "new_threats.db"
 
-    # Backup tables
-    backup_tables(source_db, backup_dir)
-
-    # Restore tables (uncomment when ready to restore)
-    # restore_tables(backup_dir, target_db)
+    if args.backup:
+        backup_tables(source_db, backup_dir)
+    elif args.restore:
+        restore_tables(backup_dir, target_db)
+    else:
+        print("Please specify either --backup or --restore")
