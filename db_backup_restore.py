@@ -3,6 +3,7 @@ import json
 import os
 from datetime import datetime
 import argparse
+from pathlib import Path
 
 def backup_schema(cursor, table):
     cursor.execute(f"SELECT sql FROM sqlite_master WHERE type='table' AND name='{table}'")
@@ -110,9 +111,9 @@ if __name__ == "__main__":
     parser.add_argument("--restore", action="store_true", help="Perform database restore")
     args = parser.parse_args()
 
-    source_db = "threats.db"
+    source_db = os.path.join("instance", "threats.db")
     backup_dir = "db_backup"
-    target_db = "new_threats.db"
+    target_db = os.path.join("instance", "new_threats.db")
 
     if args.backup:
         backup_tables(source_db, backup_dir)
