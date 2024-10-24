@@ -7,7 +7,7 @@ and storing new entries in the database.
 
 from __future__ import annotations
 
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timezone
 from typing import Optional, Tuple, List
 
 import httpx
@@ -129,13 +129,13 @@ async def fetch_and_parse_feed(feed_id: str, force_update: bool = False) -> int:
                         try:
                             parsed_date = date_parser.parse(pub_date)
                             if parsed_date.tzinfo is None:
-                                parsed_date = parsed_date.replace(tzinfo=datetime.timezone.utc)
+                                parsed_date = parsed_date.replace(tzinfo=timezone.utc)
                         except Exception as e:
                             logger.warning(f"Could not parse date: {pub_date}. Error: {str(e)}. Using current date and time.")
-                            parsed_date = datetime.now(datetime.timezone.utc)
+                            parsed_date = datetime.now(timezone.utc)
                     else:
                         logger.warning(f"Invalid or no published date found: {pub_date}. Using current date and time.")
-                        parsed_date = datetime.now(datetime.timezone.utc)
+                        parsed_date = datetime.now(timezone.utc)
 
                     existing_content = session.execute(
                         select(ParsedContent).filter_by(url=url, feed_id=feed.id).with_for_update(nowait=True)
