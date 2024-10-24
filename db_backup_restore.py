@@ -6,7 +6,10 @@ import argparse
 
 def backup_schema(cursor, table):
     cursor.execute(f"SELECT sql FROM sqlite_master WHERE type='table' AND name='{table}'")
-    return cursor.fetchone()[0]
+    result = cursor.fetchone()
+    if result is None:
+        return None
+    return result[0]
 
 def backup_tables(source_db, backup_dir):
     # Connect to the source database
@@ -26,6 +29,10 @@ def backup_tables(source_db, backup_dir):
     for table in tables:
         # Backup schema
         schema = backup_schema(cursor, table)
+        
+        if schema is None:
+            print(f"Table {table} does not exist in the database. Skipping.")
+            continue
         
         # Fetch all data from the table
         cursor.execute(f"SELECT * FROM {table}")
