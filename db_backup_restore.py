@@ -68,38 +68,45 @@ def restore_tables(backup_dir, target_db):
     cursor = conn.cursor()
 
     # Enable foreign key support
-    cursor.execute("PRAGMA foreign_keys = ON;")
+    cursor.execute("PRAGMA foreign_keys = OFF;")
+
+    # Define the order of table restoration
+    table_order = ['category', 'rss_feed', 'parsed_content', 'parsed_content_categories']
 
     # Get all JSON files in the backup directory
     backup_files = [f for f in os.listdir(backup_dir) if f.endswith('.json')]
 
-    for backup_file in backup_files:
-        table_name = backup_file.split('_backup_')[0]
+    for table_name in table_order:
+        backup_file = next((f for f in backup_files if f.startswith(f"{table_name}_backup_")), None)
+        
+        if backup_file:
+            # Read data from the JSON file
+            with open(os.path.join(backup_dir, backup_file), 'r') as f:
+                backup_data = json.load(f)
 
-        # Read data from the JSON file
-        with open(os.path.join(backup_dir, backup_file), 'r') as f:
-            backup_data = json.load(f)
+            # Extract schema and data
+            schema = backup_data['schema']
+            data = backup_data['data']
 
-        # Extract schema and data
-        schema = backup_data['schema']
-        data = backup_data['data']
+            if data:
+                # Create the table using the backed-up schema
+                cursor.execute(f"DROP TABLE IF EXISTS {table_name}")
+                cursor.execute(schema)
 
-        if data:
-            # Create the table using the backed-up schema
-            cursor.execute(f"DROP TABLE IF EXISTS {table_name}")
-            cursor.execute(schema)
+                # Get column names from the first item in the data
+                columns = list(data[0].keys())
 
-            # Get column names from the first item in the data
-            columns = list(data[0].keys())
+                # Insert data into the table
+                placeholders = ', '.join(['?' for _ in columns])
+                insert_sql = f"INSERT INTO {table_name} ({', '.join(columns)}) VALUES ({placeholders})"
+                
+                for row in data:
+                    cursor.execute(insert_sql, [row.get(col) for col in columns])
 
-            # Insert data into the table
-            placeholders = ', '.join(['?' for _ in columns])
-            insert_sql = f"INSERT INTO {table_name} ({', '.join(columns)}) VALUES ({placeholders})"
-            
-            for row in data:
-                cursor.execute(insert_sql, [row.get(col) for col in columns])
+                print(f"Restored {table_name} from {backup_file}")
 
-            print(f"Restored {table_name} from {backup_file}")
+    # Re-enable foreign key support
+    cursor.execute("PRAGMA foreign_keys = ON;")
 
     # Commit changes and close the connection
     conn.commit()
