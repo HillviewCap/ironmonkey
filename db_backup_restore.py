@@ -3,6 +3,10 @@ import json
 import os
 from datetime import datetime
 
+def backup_schema(cursor, table):
+    cursor.execute(f"SELECT sql FROM sqlite_master WHERE type='table' AND name='{table}'")
+    return cursor.fetchone()[0]
+
 def backup_tables(source_db, backup_dir):
     # Connect to the source database
     conn = sqlite3.connect(source_db)
@@ -19,6 +23,9 @@ def backup_tables(source_db, backup_dir):
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 
     for table in tables:
+        # Backup schema
+        schema = backup_schema(cursor, table)
+        
         # Fetch all data from the table
         cursor.execute(f"SELECT * FROM {table}")
         rows = cursor.fetchall()
@@ -30,10 +37,16 @@ def backup_tables(source_db, backup_dir):
         # Prepare data as a list of dictionaries
         data = [dict(zip(columns, row)) for row in rows]
 
+        # Prepare backup data including schema and table data
+        backup_data = {
+            'schema': schema,
+            'data': data
+        }
+
         # Write data to a JSON file
         backup_file = os.path.join(backup_dir, f"{table}_backup_{timestamp}.json")
         with open(backup_file, 'w') as f:
-            json.dump(data, f, indent=2, default=str)
+            json.dump(backup_data, f, indent=2, default=str)
 
         print(f"Backed up {table} to {backup_file}")
 
@@ -45,6 +58,9 @@ def restore_tables(backup_dir, target_db):
     conn = sqlite3.connect(target_db)
     cursor = conn.cursor()
 
+    # Enable foreign key support
+    cursor.execute("PRAGMA foreign_keys = ON;")
+
     # Get all JSON files in the backup directory
     backup_files = [f for f in os.listdir(backup_dir) if f.endswith('.json')]
 
@@ -53,15 +69,19 @@ def restore_tables(backup_dir, target_db):
 
         # Read data from the JSON file
         with open(os.path.join(backup_dir, backup_file), 'r') as f:
-            data = json.load(f)
+            backup_data = json.load(f)
+
+        # Extract schema and data
+        schema = backup_data['schema']
+        data = backup_data['data']
 
         if data:
+            # Create the table using the backed-up schema
+            cursor.execute(f"DROP TABLE IF EXISTS {table_name}")
+            cursor.execute(schema)
+
             # Get column names from the first item in the data
             columns = list(data[0].keys())
-
-            # Create the table if it doesn't exist
-            columns_sql = ', '.join([f'"{col}" TEXT' for col in columns])
-            cursor.execute(f"CREATE TABLE IF NOT EXISTS {table_name} ({columns_sql})")
 
             # Insert data into the table
             placeholders = ', '.join(['?' for _ in columns])
